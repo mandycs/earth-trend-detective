@@ -70,6 +70,9 @@ class Ledger:
     def add_test(self, record: TestRecord) -> None:
         self._tests[record.id] = record
 
+    def test(self, test_id: str) -> TestRecord | None:
+        return self._tests.get(test_id)
+
     @property
     def n_tests(self) -> int:
         return len(self._tests)

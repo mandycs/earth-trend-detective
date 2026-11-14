@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 import pandas as pd
 
 from app.catalog import Variable
+from app.detective.board import Suspect
 from app.detective.ledger import Ledger
 from app.detective.place import Place
 
@@ -20,7 +21,7 @@ class Session:
     start: int = 2003
     end: int = 2024
     map: list[dict] = field(default_factory=list)
-    board: dict[str, dict] = field(default_factory=dict)
+    board: dict[str, Suspect] = field(default_factory=dict)  # suspect id -> Suspect (app.detective.board)
 
 
 SESSIONS: dict[str, Session] = {}  # keyed by thread_id

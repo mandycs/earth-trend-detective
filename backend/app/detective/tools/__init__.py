@@ -7,11 +7,11 @@ arguments only (never `session`). Later plans add entries here.
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import NamedTuple
+from typing import Literal, NamedTuple
 
 from pydantic import BaseModel, Field
 
-from app.detective.tools import analysis, context, data
+from app.detective.tools import analysis, case_board, context, data, mapping
 
 
 class ToolSpec(NamedTuple):
@@ -75,6 +75,48 @@ class SolvedCaseArgs(BaseModel):
 
 class YearsNeededArgs(BaseModel):
     series_id: str = Field(description="series_id returned by get_series.")
+
+
+class ShowLayerArgs(BaseModel):
+    layer_id: str = Field(
+        description="Map layer id: one of the curated GIBS layers (true_colour, true_colour_viirs, land_cover, "
+        "precipitation, ndvi, lst_day, soil_moisture, snow_cover, night_lights, active_fires, sst, chlorophyll) "
+        "or, inside a solved case, one of that case's layers (e.g. 'trend_lst_day', 'relief', 'base_hq')."
+    )
+    date: str | None = Field(default=None, description="Day to show, YYYY-MM-DD (for daily, 8-day or monthly layers).")
+    year: int | None = Field(default=None, description="Year to show (for yearly layers such as land_cover).")
+    opacity: float = Field(default=0.8, ge=0, le=1, description="Layer opacity, 0 to 1.")
+
+
+class SetYearArgs(BaseModel):
+    year: int = Field(description="Year to move the map's year slider to.")
+
+
+class BeforeAfterArgs(BaseModel):
+    layer_id: str = Field(description="Map layer id (same ids as show_layer).")
+    year_a: int = Field(description="Year on the 'before' side of the curtain.")
+    year_b: int = Field(description="Year on the 'after' side of the curtain.")
+
+
+class FlyToArgs(BaseModel):
+    bbox: list[float] = Field(description="[min_lon, min_lat, max_lon, max_lat] in degrees.")
+    pitch: float = Field(default=55, description="Camera tilt in degrees (0 = straight down, up to 85).")
+    bearing: float = Field(default=0, description="Camera heading in degrees (0 = north up).")
+
+
+class ShowFootprintArgs(BaseModel):
+    source: Literal["grace", "power", "gldas"] = Field(
+        description="Source whose data cell to outline: grace (~300 km), power (~50 km) or gldas (~25 km)."
+    )
+
+
+class UpdateBoardArgs(BaseModel):
+    suspect: str = Field(description="Short name of the suspect, e.g. 'irrigation' or 'less rain'.")
+    status: Literal["open", "supported", "hint", "ruled_out"] = Field(
+        description="Status you propose; the code may downgrade it (supported -> hint, ruled_out -> open)."
+    )
+    evidence_ids: list[str] = Field(description="evidence_id values of the tool results that back this status.")
+    note: str = Field(description="One plain sentence on why, using only figures from tool results.")
 
 
 TOOLS: dict[str, ToolSpec] = {
@@ -166,6 +208,46 @@ TOOLS: dict[str, ToolSpec] = {
         "by the climate we measured, plus the case caveats. Already corrected inside the case; it logs "
         "no new tests. Use it to compare with a similar place, not as evidence about this place.",
         SolvedCaseArgs,
+    ),
+    "show_layer": ToolSpec(
+        mapping.show_layer,
+        "Puts one layer on the map: the evidence of the current step (the variable just tested, for its year "
+        "or day), with its legend, source and resolution shown to the user. Unknown ids or dates outside the "
+        "layer are rejected. A map instruction: not a test, no figure comes from it.",
+        ShowLayerArgs,
+    ),
+    "set_year": ToolSpec(
+        mapping.set_year,
+        "Moves the map's year slider (yearly layers follow it). A map instruction, not a test.",
+        SetYearArgs,
+    ),
+    "show_before_after": ToolSpec(
+        mapping.show_before_after,
+        "Shows a before/after curtain of one map layer for two years, to compare by eye. Visual only: never "
+        "measure from it. A map instruction, not a test.",
+        BeforeAfterArgs,
+    ),
+    "fly_to": ToolSpec(
+        mapping.fly_to,
+        "Moves the map camera to a box, with a 3D tilt (pitch) and heading (bearing), e.g. to show the upstream "
+        "basin or the place itself. A map instruction, not a test.",
+        FlyToArgs,
+    ),
+    "show_footprint": ToolSpec(
+        mapping.show_footprint,
+        "Outlines on the map the data cell of a coarse source (GRACE ~300 km, POWER ~50 km, GLDAS ~25 km) around "
+        "this place, to show that one value covers that whole cell. Use it whenever you cite a value from a "
+        "source whose cell is bigger than the place. A map instruction, not a test.",
+        ShowFootprintArgs,
+    ),
+    "update_board": ToolSpec(
+        case_board.update_board,
+        "Writes one suspect on the case board with a status (open / supported / hint / ruled_out), the "
+        "evidence_ids that back it and a short note. The code keeps the board honest: 'supported' needs an "
+        "evidence test that survives the correction over every test of this investigation, otherwise it is "
+        "shown as 'hint' with the reason; 'ruled_out' needs a test with no clear trend and enough years, "
+        "otherwise 'open'. Report the status the board returns, not the one you asked for.",
+        UpdateBoardArgs,
     ),
 }
 
