@@ -1,11 +1,18 @@
 import type { Metadata, Viewport } from 'next'
-import { Archivo } from 'next/font/google'
+import { Archivo, Manrope } from 'next/font/google'
 import './globals.css'
 
 const archivo = Archivo({
   subsets: ['latin'],
   axes: ['wdth'],
   variable: '--font-archivo',
+  display: 'swap',
+})
+
+const manrope = Manrope({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700'],
+  variable: '--font-manrope',
   display: 'swap',
 })
 
@@ -18,12 +25,12 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#0b0d10',
+  themeColor: '#0e1012',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={archivo.variable}>
+    <html lang="en" className={`${archivo.variable} ${manrope.variable}`}>
       <body>{children}</body>
     </html>
   )

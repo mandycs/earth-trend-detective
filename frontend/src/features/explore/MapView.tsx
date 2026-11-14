@@ -46,7 +46,7 @@ export default function MapView({ place, onPick }: Props) {
         // Only a failed style means no map at all; a missing tile is harmless.
         if (!m.isStyleLoaded() && String(e.error?.message ?? "").toLowerCase().includes("style")) setFailed(true);
       });
-      marker.current = new maplibregl.Marker({ color: "#ffd23f" });
+      marker.current = new maplibregl.Marker({ color: "#e9ecee" });
       map.current = m;
       setReady(true);
     })().catch(() => setFailed(true));

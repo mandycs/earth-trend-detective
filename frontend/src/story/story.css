@@ -1198,18 +1198,19 @@
 }
 
 .lp-chip-analysed {
-  background: var(--accent);
-  color: var(--on-accent);
+  background: var(--ink);
+  color: var(--ground);
 }
 
 .lp-chip-observed {
-  background: #b9d7f0;
-  color: #0d2233;
+  box-shadow: inset 0 0 0 2px var(--ink); /* taste-skill-ignore: outline chip, not a shadow */
+  color: var(--ink);
 }
 
 .lp-chip-visual_only {
-  background: var(--surface-3);
-  color: var(--ink);
+  outline: 2px dashed var(--ink-3);
+  outline-offset: -2px;
+  color: var(--ink-2);
 }
 
 .lp-year {

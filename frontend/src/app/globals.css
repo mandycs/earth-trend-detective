@@ -4,24 +4,29 @@
  * near-black ground, one ink, one marker-yellow accent. See DESIGN.md.
  */
 :root {
-  --ground: #0b0d10;
-  --surface: #13171c;
-  --surface-2: #1b2027;
-  --surface-3: #252b33;
-  --ink: #eef0ea;
-  --ink-2: #b7bec6;
-  --ink-3: #8c949d;
-  --accent: #ffd23f;
-  --accent-press: #f2c21c;
-  --on-accent: #14120a;
-  --focus: #ffd23f;
+  /* Design B+C (DESIGN.md): ink on ground; colour belongs to the data only. */
+  --ground: #0e1012;
+  --surface: #15181b;
+  --surface-2: #1c2024;
+  --surface-3: #262b30;
+  --line: #3a4146;
+  --ink: #e9ecee;
+  --ink-2: #aeb6bc;
+  --ink-3: #8f989f;
+  /* The old accent role is now plain ink, so no chrome is coloured. */
+  --accent: var(--ink);
+  --accent-press: #ffffff;
+  --on-accent: var(--ground);
+  --focus: var(--ink);
 
   /* Data colours, from the pipeline's RdBu_r map: never used alone, always with words or arrows. */
   --warm: #e48066;
   --cool: #6bacd1;
   --climate: #46586b;
 
-  --font: var(--font-archivo), 'Archivo', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-ui: var(--font-manrope), 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: var(--font-archivo), 'Archivo', system-ui, sans-serif;
+  --font: var(--font-ui);
   --gutter: clamp(16px, 2.4vw, 32px);
   --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
@@ -110,11 +115,31 @@ img {
 /* ------------------------------------------------------------ shared bits */
 
 .wide {
+  font-family: var(--font-display);
   font-stretch: 112%;
 }
 
 .narrow {
+  font-family: var(--font-display);
   font-stretch: 75%;
+}
+
+/* Instrument mode: one big thin figure. */
+.thin-figure {
+  font-family: var(--font-ui);
+  font-weight: 300;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Uppercase labels for chapter names and keys. */
+.kicker {
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-2);
 }
 
 .btn {
@@ -158,6 +183,7 @@ img {
 
 /* The verdict stamp: icon + words + fill strength, never colour alone. */
 .stamp {
+  font-family: var(--font-display);
   display: inline-flex;
   align-items: center;
   gap: 0.4em;
@@ -180,7 +206,7 @@ img {
 }
 
 .stamp-unknown {
-  color: var(--ink-2);
+  color: var(--ink-3);
   border-style: dashed;
 }
 
@@ -302,11 +328,13 @@ img {
 }
 
 .ev-split-number {
-  font-size: clamp(4rem, 9vw, 7.5rem);
-  font-weight: 800;
+  font-family: var(--font-ui) !important;
+  font-stretch: 100% !important;
+  font-size: clamp(3.6rem, 8vw, 6.5rem);
+  font-weight: 300;
   line-height: 0.9;
   letter-spacing: -0.03em;
-  color: var(--accent);
+  color: var(--ink);
   margin-bottom: 14px;
 }
 
@@ -319,14 +347,10 @@ img {
   background: var(--accent);
 }
 
-.ev-split-maybe {
-  background: var(--accent);
-  opacity: 0.4;
-}
-
+.ev-split-maybe,
 .ev-key-maybe {
-  background: var(--accent);
-  opacity: 0.4;
+  /* Model range: hatched ink. */
+  background: repeating-linear-gradient(135deg, var(--ink) 0 2px, transparent 2px 6px);
 }
 
 .ev-split-right {
