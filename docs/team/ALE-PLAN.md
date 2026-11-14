@@ -65,8 +65,12 @@ Ahora son las **16:25 del sábado**. Todo lo que sigue está en hora local.
 ### Sáb 16:25 – 17:30 · Cerrar el arranque
 - [x] Escena 3D mínima cargando `_example` (hecho y verificado en navegador)
 - [x] Boceto de la pantalla principal: título, una frase, un botón (hecho, en código)
-- [ ] **Decidir el 3er sitio con Mandy** → propuesta: **Doñana** si el NDVI/agua tiene señal clara; si no,
-      Rondônia. Criterio: señal visible en 5 minutos de datos, no en un paper.
+- [ ] **Decidir el 3er sitio con Mandy** → **recomendación cerrada: Doñana.** La investigación está hecha y
+      puntuada: Doñana 35, Málaga 30, Mead 28, Aletsch 27, Rondônia 23. Argumento decisivo: el paper de Doñana
+      **ya hace** la separación clima/no clima que nosotros automatizamos (83 % de 316 lagunas se inundan menos
+      de lo que explica el clima). Brief para la conversación: [`../story/SITE-3-DECISION.md`](../story/SITE-3-DECISION.md).
+      Plan B si Doñana no da señal en 45 min: Rondônia. Málaga va al **modo explora** como demo del
+      "can't tell yet" (su embalse pasó del 17 % al 96 % en 18 meses: episodio, no tendencia).
 - [ ] Mandy confirma si va a usar Next.js o se queda con `frontend/` tal cual. Si no contesta antes de las
       18:00, asumo que se queda.
 
@@ -308,3 +312,25 @@ uv run --python 3.11 --with pillow --with numpy python ../sites/_example/make_fa
 | El deck se llena de texto | más de 40 palabras por slide | recorto a la mitad, sin piedad |
 | El pitch se va de tiempo | el ensayo pasa de 2:00 | quito la slide 6 y la digo de viva voz |
 | Los datos reales llegan a las 08:00 del domingo | checkpoint 2 sin sitio 1 | activo el plan 2D y aviso a Mandy en el momento |
+
+---
+
+## 13. Reglas verificadas de la convocatoria (afectan a mi trabajo)
+
+Fuente: [`../submission/rules.md`](../submission/rules.md) — con URL por cada afirmación y una lista explícita
+de lo que **no** se pudo confirmar.
+
+| Regla | Consecuencia para mí |
+|---|---|
+| Project Demo: **vídeo ≤ 30 s o deck ≤ 7 diapositivas** (portada e intro incluidas). Pasarse = fuera de Global Judging | Deck de 7, contadas. Si sobra tiempo, vídeo de 29,5 s como respaldo |
+| Todo el texto enviado va **en inglés** (nombre, resumen, descripción, referencias, UI enlazada, README, slides, subtítulos) | también el README del repo y los textos de la UI |
+| 2026 lo llama **"Super Intelligence (SI)"**, no "AI", y hay un campo obligatorio del formulario | la declaración va redactada y lista para pegar, no improvisada a las 15:50 |
+| **Imágenes o vídeo generados por SI llevan marca de agua visible** | **cero imágenes generadas por IA en el deck**. Capturas de la app y diagramas hechos por nosotros |
+| La insignia de NASA **no** es de dominio público y no puede aparecer junto a contenido generado por SI | cero meatball/worm/seal en UI, slides, vídeo y repo. Se dice "built with NASA data", nunca "according to NASA" |
+| Licencia: **Apache-2.0** por defecto si no se indica otra | añadir `LICENSE` Apache-2.0 al repo (lo hace Mandy en el cierre) |
+| **Al menos un dataset NASA** es obligatorio para optar a Global Award | la tabla de la slide 6 y de la página Project ya lo cubre |
+| Los jueces ven las marcas de SI y evalúan originalidad | mejor decir nosotros lo que usamos que esconderlo |
+
+Lo que sigue **sin confirmar** y hay que preguntar el sábado a las 17:30: formato y duración del pitch local,
+si el Project Demo admite vídeo además del deck, y si el puesto UX requiere inscripción.
+
