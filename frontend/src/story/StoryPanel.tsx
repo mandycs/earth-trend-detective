@@ -8,11 +8,13 @@ import { SeriesLine } from '../lib/SeriesLine'
 import { RangeBar, SplitBar } from '../lib/Evidence'
 import { fmt, leadVariable, residualText, shortName, slopeText, stampFor } from '../lib/cases'
 import { API_URL } from '../features/explore/api'
+import { FootprintGlyph, footprintOf, footprintVsMap } from '../lib/footprint'
 
 export interface StoryPanelProps {
   site: Site
   variable: SiteVariable
   step: number
+  mapKm: number
   onSelectVariable: (id: string) => void
   onStep: (step: number) => void
 }
@@ -50,7 +52,7 @@ function usePair(siteId: string): BeforeAfterPair | null {
   return pair.id === siteId ? pair.value : null
 }
 
-function Changing({ site, variable, onSelectVariable }: { site: Site; variable: SiteVariable; onSelectVariable: (id: string) => void }) {
+function Changing({ site, variable, mapKm, onSelectVariable }: { site: Site; variable: SiteVariable; mapKm: number; onSelectVariable: (id: string) => void }) {
   const pair = usePair(site.id)
   return (
     <>
@@ -86,6 +88,12 @@ function Changing({ site, variable, onSelectVariable }: { site: Site; variable: 
                   <span className="sp-var-line" />
                 )}
                 <Stamp verdict={entry.verdict} direction={entry.direction} className="sp-var-stamp" />
+                <span className="sp-var-area">
+                  <FootprintGlyph fp={footprintOf(entry.id)} mapKm={mapKm} className="sp-var-glyph" />
+                  <span>
+                    Over {footprintOf(entry.id).words}: {footprintVsMap(footprintOf(entry.id), mapKm)}
+                  </span>
+                </span>
               </button>
             </li>
           )
@@ -281,7 +289,7 @@ function Climate({ site, variable, onSelectVariable }: { site: Site; variable: S
   )
 }
 
-export function StoryPanel({ site, variable, step, onSelectVariable, onStep }: StoryPanelProps) {
+export function StoryPanel({ site, variable, step, mapKm, onSelectVariable, onStep }: StoryPanelProps) {
   const lead = leadVariable(site)
   const sources = site.sources ?? []
 
@@ -318,7 +326,7 @@ export function StoryPanel({ site, variable, step, onSelectVariable, onStep }: S
       </div>
 
       <div className="sp-body" id="sp-body" role="tabpanel" aria-labelledby={`tab-${step}`} key={step}>
-        {step === 0 ? <Changing site={site} variable={variable} onSelectVariable={onSelectVariable} /> : null}
+        {step === 0 ? <Changing site={site} variable={variable} mapKm={mapKm} onSelectVariable={onSelectVariable} /> : null}
         {step === 1 ? <Real site={site} variable={variable} /> : null}
         {step === 2 ? <Climate site={site} variable={variable} onSelectVariable={onSelectVariable} /> : null}
       </div>

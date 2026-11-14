@@ -1,6 +1,7 @@
 import type { SiteVariable } from './types'
 import { fmt } from '../lib/cases'
 import { PlayPauseIcon } from '../lib/Icons'
+import { footprintOf } from '../lib/footprint'
 
 export interface TimelineProps {
   first: number
@@ -10,6 +11,8 @@ export interface TimelineProps {
   variable: SiteVariable | null
   /** True when the map shows one picture per year, so the terrain follows too. */
   mapFollows: boolean
+  /** Width of the map on screen, to say how the record's area compares. */
+  mapKm: number
   onScrub: (year: number) => void
   onToggle: () => void
 }
@@ -23,7 +26,8 @@ const PAD_Y = 14
  * cursor on the current year. A real <input type=range> sits on top, so
  * keyboard, screen readers and thumbs all work.
  */
-export function Timeline({ first, last, year, playing, variable, mapFollows, onScrub, onToggle }: TimelineProps) {
+export function Timeline({ first, last, year, playing, variable, mapFollows, mapKm, onScrub, onToggle }: TimelineProps) {
+  const fp = variable ? footprintOf(variable.id) : null
   const series = variable?.series ?? []
   const values = series.map((p) => p.value)
   const min = values.length ? Math.min(...values) : 0
@@ -97,7 +101,8 @@ export function Timeline({ first, last, year, playing, variable, mapFollows, onS
         <span className="tl-value narrow">{readout}</span>
         <span className="tl-label">
           {variable ? variable.label : 'No record selected'}
-          {mapFollows ? ' · map follows the year' : ''}
+          {fp ? ` · ${fp.perPixel ? 'average of the map' : `over ${fp.words}`}` : ''}
+          {mapFollows ? ' · the map follows the year' : ''}
         </span>
       </div>
     </div>

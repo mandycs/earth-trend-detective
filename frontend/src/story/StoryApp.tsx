@@ -8,6 +8,7 @@ import { StoryScene } from './StoryScene'
 import { StoryPanel } from './StoryPanel'
 import { Timeline } from './Timeline'
 import type { SiteVariable } from './types'
+import { bboxWidthMeters } from './types'
 import { CASE_IDS, leadVariable, shortName } from '../lib/cases'
 
 const CASE_LABELS: Record<string, string> = {
@@ -16,7 +17,10 @@ const CASE_LABELS: Record<string, string> = {
   donana: 'Doñana',
 }
 
-const PLAY_SPEED = 1.6 // years per second
+/** Seconds per year while playing: the frame holds, then fades to the next. */
+const YEAR_SECONDS = 1.8
+/** Share of each year spent holding still before the fade starts. */
+const HOLD = 0.7
 
 function layerName(layer: MapLayer, label: string | undefined, single: boolean): string {
   const how = layer.kind === 'year' ? 'Year by year' : 'Trend'
@@ -43,6 +47,7 @@ export default function StoryApp({ caseId }: { caseId: string }) {
   const firstYear = site?.years[0] ?? 2003
   const lastYear = site?.years[1] ?? 2024
   const yearRef = useRef(firstYear)
+  const clockRef = useRef(0)
 
   const variable: SiteVariable | null = useMemo(() => {
     if (!site || site.variables.length === 0) return null
@@ -57,6 +62,7 @@ export default function StoryApp({ caseId }: { caseId: string }) {
     setLayerKey('none')
     setExaggeration(null)
     yearRef.current = site.years[0]
+    clockRef.current = 0
     setDisplayYear(site.years[0])
     setStep(0)
     setPlaying(!window.matchMedia('(prefers-reduced-motion: reduce)').matches)
@@ -71,9 +77,16 @@ export default function StoryApp({ caseId }: { caseId: string }) {
     const tick = (now: number) => {
       const delta = Math.min((now - previous) / 1000, 0.1)
       previous = now
-      yearRef.current += delta * PLAY_SPEED
-      if (yearRef.current > lastYear + 0.6) yearRef.current = firstYear
-      setDisplayYear(Math.min(Math.floor(yearRef.current), lastYear))
+      const span = lastYear - firstYear
+      clockRef.current += delta
+      // Hold an extra year's time on the last frame before starting again.
+      if (clockRef.current > (span + 2) * YEAR_SECONDS) clockRef.current = 0
+      const index = Math.min(Math.floor(clockRef.current / YEAR_SECONDS), span)
+      const phase = (clockRef.current / YEAR_SECONDS) % 1
+      const fade = index >= span ? 0 : Math.max(0, (phase - HOLD) / (1 - HOLD))
+      const eased = fade * fade * (3 - 2 * fade)
+      yearRef.current = firstYear + index + eased
+      setDisplayYear(firstYear + index + (eased > 0.5 ? 1 : 0))
       frame = requestAnimationFrame(tick)
     }
     frame = requestAnimationFrame(tick)
@@ -85,10 +98,27 @@ export default function StoryApp({ caseId }: { caseId: string }) {
   const handleScrub = (year: number) => {
     setPlaying(false)
     yearRef.current = year
+    clockRef.current = (year - firstYear) * YEAR_SECONDS
     setDisplayYear(year)
   }
 
   const showYears = layer?.kind === 'year' && assets.years.length > 1
+  // The chart follows the map: with a data layer on, it shows that record.
+  const layerVariable = layer ? site?.variables.find((v) => v.id === layer.variable) ?? null : null
+  const timelineVariable = layerVariable ?? variable
+  const mapKm = site ? bboxWidthMeters(site.bbox) / 1000 : 80
+  const frameRead = showYears ? assets.reads[(displayYear || firstYear) - firstYear] ?? null : null
+  const frameWords = frameRead
+    ? frameRead.warmer > 0.6
+      ? 'warmer than usual over most of the area'
+      : frameRead.cooler > 0.6
+        ? 'cooler than usual over most of the area'
+        : frameRead.warmer > frameRead.cooler + 0.15
+          ? 'mixed, leaning warmer than usual'
+          : frameRead.cooler > frameRead.warmer + 0.15
+            ? 'mixed, leaning cooler than usual'
+            : 'close to usual, warmer in places and cooler in others'
+    : null
   // Close to true scale reads as a real place; the pipeline's value is a ceiling.
   const vx = exaggeration ?? Math.min(site?.vertical_exaggeration ?? 1.5, 2)
 
@@ -146,6 +176,15 @@ export default function StoryApp({ caseId }: { caseId: string }) {
             {site && !assets.error && assets.loading ? (
               <div className="st-loading" role="status">
                 <span className="spinner" aria-hidden="true" /> Loading the terrain and satellite layers…
+              </div>
+            ) : null}
+
+            {frameWords && legend ? (
+              <div className="st-yearnote" aria-live="polite">
+                <span className="st-yearnote-year narrow">{displayYear || firstYear}</span>
+                <span>
+                  {legend.label}: {frameWords}
+                </span>
               </div>
             ) : null}
 
@@ -219,15 +258,27 @@ export default function StoryApp({ caseId }: { caseId: string }) {
             last={lastYear}
             year={displayYear || firstYear}
             playing={playing}
-            variable={variable}
+            variable={timelineVariable}
             mapFollows={showYears}
+            mapKm={mapKm}
             onScrub={handleScrub}
             onToggle={() => setPlaying((value) => !value)}
           />
         </section>
 
         {site && variable ? (
-          <StoryPanel site={site} variable={variable} step={step} onSelectVariable={setVariableId} onStep={setStep} />
+          <StoryPanel
+            site={site}
+            variable={variable}
+            step={step}
+            mapKm={mapKm}
+            onSelectVariable={(id) => {
+              setVariableId(id)
+              // Picking a record that has no map layer takes the map back to the picture.
+              if (layer && layer.variable !== id) setLayerKey('none')
+            }}
+            onStep={setStep}
+          />
         ) : (
           <aside className="sp sp-empty" aria-label="Case details">
             <p>{error ? 'Pick another case above.' : `Opening ${CASE_LABELS[caseId] ?? shortName(caseId)}…`}</p>

@@ -825,3 +825,65 @@
     padding: 0 16px;
   }
 }
+
+/* year note over the relief while a yearly layer plays */
+.st-yearnote {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  max-width: min(560px, calc(100% - 240px));
+  padding: 10px 16px 12px;
+  background: var(--ground);
+  font-size: 1.1rem;
+  line-height: 1.3;
+}
+
+.st-yearnote-year {
+  font-size: 2.6rem;
+  font-weight: 850;
+  line-height: 0.9;
+  color: var(--accent);
+}
+
+/* where each record is measured */
+.sp-var {
+  grid-template-areas:
+    'name line'
+    'slope stamp'
+    'area area';
+}
+
+.sp-var-area {
+  grid-area: area;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+  color: var(--ink-2);
+  font-size: 1rem;
+  line-height: 1.3;
+}
+
+.sp-var-glyph {
+  flex: none;
+  color: var(--ink-2);
+}
+
+.sp-var-on .sp-var-glyph {
+  color: var(--accent);
+}
+
+@media (max-width: 720px) {
+  .st-yearnote {
+    top: 8px;
+    left: 8px;
+    max-width: calc(100% - 16px);
+    top: 60px;
+  }
+  .st-yearnote-year {
+    font-size: 2rem;
+  }
+}

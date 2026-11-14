@@ -145,6 +145,44 @@ export function useLegend(siteId: string | null, file: string | null): LayerLege
   return legend.key === key ? legend.value : null
 }
 
+/** How a yearly anomaly frame reads overall: which way most of the area leans. */
+export interface FrameRead {
+  warmer: number
+  cooler: number
+}
+
+/**
+ * Reads one anomaly frame back from its colours (red side vs blue side of
+ * the pipeline's diverging map). Pale and transparent pixels count as neither.
+ */
+function readFrame(texture: THREE.Texture): FrameRead | null {
+  const image = texture.image as CanvasImageSource | undefined
+  if (!image || typeof document === 'undefined') return null
+  try {
+    const canvas = document.createElement('canvas')
+    canvas.width = 64
+    canvas.height = 64
+    const context = canvas.getContext('2d', { willReadFrequently: true })
+    if (!context) return null
+    context.drawImage(image, 0, 0, 64, 64)
+    const data = context.getImageData(0, 0, 64, 64).data
+    let warm = 0
+    let cool = 0
+    let seen = 0
+    for (let i = 0; i < data.length; i += 4) {
+      if (data[i + 3] < 100) continue
+      seen += 1
+      const lean = data[i] - data[i + 2]
+      if (lean > 40) warm += 1
+      else if (lean < -40) cool += 1
+    }
+    if (seen === 0) return null
+    return { warmer: warm / seen, cooler: cool / seen }
+  } catch {
+    return null
+  }
+}
+
 export interface StoryAssets {
   grid: HeightGrid | null
   base: THREE.Texture | null
@@ -152,11 +190,13 @@ export interface StoryAssets {
   trend: THREE.Texture | null
   /** One texture per year, oldest first. Empty when the layer is not yearly. */
   years: THREE.Texture[]
+  /** One reading per yearly frame, same order as `years`. */
+  reads: Array<FrameRead | null>
   loading: boolean
   error: string | null
 }
 
-const EMPTY: StoryAssets = { grid: null, base: null, hillshade: null, trend: null, years: [], loading: true, error: null }
+const EMPTY: StoryAssets = { grid: null, base: null, hillshade: null, trend: null, years: [], reads: [], loading: true, error: null }
 
 /** Loads the relief and the base picture once per site, then the chosen map layer. */
 export function useStoryAssets(site: Site | null, layer: MapLayer | null): StoryAssets {
@@ -167,10 +207,11 @@ export function useStoryAssets(site: Site | null, layer: MapLayer | null): Story
     hillshade: null,
     error: null,
   })
-  const [overlay, setOverlay] = useState<{ key: string; trend: THREE.Texture | null; years: THREE.Texture[] }>({
+  const [overlay, setOverlay] = useState<{ key: string; trend: THREE.Texture | null; years: THREE.Texture[]; reads: Array<FrameRead | null> }>({
     key: '',
     trend: null,
     years: [],
+    reads: [],
   })
   const cache = useRef(new Map<string, THREE.Texture>())
 
@@ -228,13 +269,16 @@ export function useStoryAssets(site: Site | null, layer: MapLayer | null): Story
     const base = siteAssetBase(site.id)
     if (layer.kind === 'trend') {
       get(base + layer.file, true)
-        .then((t) => alive && setOverlay({ key: overlayKey, trend: t, years: [] }))
-        .catch(() => alive && setOverlay({ key: overlayKey, trend: null, years: [] }))
+        .then((t) => alive && setOverlay({ key: overlayKey, trend: t, years: [], reads: [] }))
+        .catch(() => alive && setOverlay({ key: overlayKey, trend: null, years: [], reads: [] }))
     } else {
       Promise.all(yearList.map((y) => get(base + layer.file.replace('{YYYY}', String(y)), true).catch(() => null))).then(
         (list) => {
           if (alive)
-            setOverlay({ key: overlayKey, trend: null, years: list.filter((t): t is THREE.Texture => Boolean(t)) })
+          {
+            const years = list.filter((t): t is THREE.Texture => Boolean(t))
+            setOverlay({ key: overlayKey, trend: null, years, reads: years.map(readFrame) })
+          }
         },
       )
     }
@@ -253,6 +297,7 @@ export function useStoryAssets(site: Site | null, layer: MapLayer | null): Story
     hillshade: groundReady ? ground.hillshade : null,
     trend: overlayReady && layer ? overlay.trend : null,
     years: overlayReady && layer ? overlay.years : [],
+    reads: overlayReady && layer ? overlay.reads : [],
     loading: !groundReady || !overlayReady,
     error: groundReady ? ground.error : null,
   }
