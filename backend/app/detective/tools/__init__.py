@@ -11,7 +11,7 @@ from typing import NamedTuple
 
 from pydantic import BaseModel, Field
 
-from app.detective.tools import analysis, data
+from app.detective.tools import analysis, context, data
 
 
 class ToolSpec(NamedTuple):
@@ -57,6 +57,20 @@ class CompareArgs(BaseModel):
     var_id: str = Field(description="Variable id from list_variables.")
     a: CompareSide = Field(description="Side a: a place {lat, lon} and/or a period {start, end}.")
     b: CompareSide = Field(description="Side b: a place {lat, lon} and/or a period {start, end}.")
+
+
+class LandCoverArgs(BaseModel):
+    year_a: int = Field(default=2003, description="Earlier year (default 2003).")
+    year_b: int = Field(default=2023, description="Later year (default 2023; the land cover map ends in 2023).")
+
+
+class SatellitePictureArgs(BaseModel):
+    year_a: int = Field(default=2003, description="Year of the 'before' picture (default 2003).")
+    year_b: int = Field(default=2024, description="Year of the 'after' picture (default 2024).")
+
+
+class SolvedCaseArgs(BaseModel):
+    site_id: str = Field(description="Id of a solved case, e.g. 'lake_mead'.")
 
 
 class YearsNeededArgs(BaseModel):
@@ -129,6 +143,28 @@ TOOLS: dict[str, ToolSpec] = {
         "could be told apart from natural ups and downs (null when no trend is in sight). Does not "
         "count as a test.",
         YearsNeededArgs,
+    ),
+    "land_cover_change": ToolSpec(
+        context.land_cover_change,
+        "Shows how the land cover around this place changed between two years (MODIS, 500 m): the "
+        "classes whose share moved most, with before and after shares, and shows the land cover layer "
+        "on the map. Always repeat the returned caveat: at 500 m, orchards and tree crops can be "
+        "classed as savanna or woody vegetation. Not a statistical test.",
+        LandCoverArgs,
+    ),
+    "satellite_picture": ToolSpec(
+        context.satellite_picture,
+        "Shows a clear before and after satellite picture of this place on the map. Visual only: no "
+        "figure comes from it, so describe what it is, never measure from it. Not a test.",
+        SatellitePictureArgs,
+    ),
+    "solved_case": ToolSpec(
+        context.solved_case,
+        "Reads the precomputed findings of one of the solved cases (for example 'lake_mead'): per "
+        "variable the verdict, direction, slope per decade with its range and the share not explained "
+        "by the climate we measured, plus the case caveats. Already corrected inside the case; it logs "
+        "no new tests. Use it to compare with a similar place, not as evidence about this place.",
+        SolvedCaseArgs,
     ),
 }
 
