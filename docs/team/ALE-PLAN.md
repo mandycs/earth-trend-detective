@@ -227,8 +227,12 @@ Regla de oro: **si el texto necesita el gráfico para entenderse, está mal escr
 | 6 | Recurso NASA | Tabla recurso → función real (GRACE, MODIS, GPM, POWER) | "Sin NASA no hay producto" |
 | 7 | Qué hay / qué falta | Tabla **built / simulated / next** + un enlace | Lo que funciona hoy, sin adornos |
 
-Regla: **una idea por slide, texto de 40 palabras como máximo**, tipografía ≥ 24 pt. Si una slide necesita
-explicación, la slide está mal.
+Regla: **una idea por slide**. Las de prosa, ≤ 40 palabras (la portada real tiene 56 contando etiquetas; el
+cuerpo son 12). Las de tabla o listas, ≤ 120, porque el deck se lee solo, sin narrador: un jurado que lo abre
+en la plataforma no te oye. Si una slide de prosa necesita explicación, la slide está mal.
+
+El deck vive en `frontend/public/deck.html` (un solo fichero, 7 slides de 1280×720, imprimible a PDF con
+Ctrl+P). Se sirve en `<url>/deck.html`, así que el enlace público es el mismo deploy de la app.
 
 ---
 
