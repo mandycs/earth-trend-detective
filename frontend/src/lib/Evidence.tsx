@@ -64,7 +64,7 @@ export function SplitBar({ variable }: { variable: Pick<SiteVariable, 'residual_
       </div>
       <figcaption className="ev-split-legend">
         <span>
-          <span className="ev-key ev-key-left" aria-hidden="true" /> {left} the climate does not explain
+          <span className="ev-key ev-key-left" aria-hidden="true" /> the climate does not explain
         </span>
         {isRange ? (
           <span>
