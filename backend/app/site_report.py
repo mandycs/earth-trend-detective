@@ -16,6 +16,29 @@ from app.stats import compute_residuals, run_sweep
 # without irrigation or pumping, so its residual is not reported as "non-climate %".
 OBSERVED_SOURCES = frozenset({"grace", "appeears"})
 
+# GRACE sees ~300 km regions. At snow/glacier sites the regional signal is dominated by
+# snow and ice melt, which the residual model has no driver for, so melt would be
+# misread as "non-climate". The % is withheld there; MODIS variables still get it.
+SNOW_TAGS = frozenset({"snow", "glacier"})
+
+MODEL_REASON = (
+    "This comes from a computer model of the land that does not include human water use, "
+    "so it cannot show a human signal."
+)
+GRACE_SNOW_REASON = (
+    "GRACE sees the whole region (about 300 km), where melting snow and ice dominate, "
+    "and our climate model has no snow term, so the split would be misleading here."
+)
+
+
+def residual_withheld_reason(source: str | None, site_tags: Sequence[str]) -> str | None:
+    """Plain-English reason to hide the non-climate %, or None to show it."""
+    if source not in OBSERVED_SOURCES:
+        return MODEL_REASON
+    if source == "grace" and SNOW_TAGS & set(site_tags):
+        return GRACE_SNOW_REASON
+    return None
+
 GatherFn = Callable[[Site, Sequence[Variable], int, int], GatherResult]
 
 
@@ -31,9 +54,13 @@ def report_from_gathered(
         row = r.to_dict()
         res = residuals.get(r.id)
         if res is not None:
-            observed = sources_by_var.get(r.id) in OBSERVED_SOURCES
-            row["residual_pct_non_climate"] = res.pct_non_climate if observed else None
-            row["residual"] = res.to_dict() | {"observed": observed}
+            source = sources_by_var.get(r.id)
+            withheld = residual_withheld_reason(source, site.tags)
+            row["residual_pct_non_climate"] = res.pct_non_climate if withheld is None else None
+            row["residual"] = res.to_dict() | {
+                "observed": source in OBSERVED_SOURCES,
+                "withheld_reason": withheld,
+            }
         variables_out.append(row)
     return {
         "site": {"id": site.id, "name": site.name, "bbox": list(site.bbox), "tags": list(site.tags)},

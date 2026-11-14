@@ -35,7 +35,7 @@
       "verdict": "real",
       "direction": "down",
       "years_needed": null,
-      "residual_pct_non_climate": 85.1,
+      "residual_pct_non_climate": null,
       "badge": "↓ Real"
     },
     {
@@ -123,7 +123,7 @@
     "Is it real or chance?",
     "Is it the climate?"
   ],
-  "headline": "Total water stored is going down for real (−6.9 cm per decade). About 85% of that change is not explained by climate.",
+  "headline": null,
   "narrative": null,
   "validation": null,
   "sources": [
