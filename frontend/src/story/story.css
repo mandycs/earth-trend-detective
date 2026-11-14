@@ -491,6 +491,17 @@
   color: var(--ink-2);
 }
 
+/* The hand-written closing line, used only where the pipeline could not summarise
+   the case. Marker rule on the left so it reads as the editorial voice, not data. */
+.sp-editorial {
+  margin-top: 10px;
+  padding-left: 12px;
+  border-left: 2px solid var(--accent);
+  color: var(--ink);
+  font-size: 1.02rem;
+  line-height: 1.45;
+}
+
 .sp-note {
   color: var(--ink-2);
 }
@@ -689,9 +700,18 @@
 }
 
 .sp-sources a {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
   padding: 6px 0;
   color: var(--ink-2);
+}
+
+/* Tap targets: a source link is the smallest thing on the page, so it grows on touch. */
+@media (max-width: 640px) {
+  .sp-sources a {
+    min-height: 44px;
+  }
 }
 
 /* ---------------------------------------------------------- small screens */
