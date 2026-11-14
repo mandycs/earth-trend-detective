@@ -1,0 +1,45 @@
+{
+  "_note": "FAKE DATA for development only. Replace with real output from the backend pipeline.",
+  "id": "_example",
+  "name": "Example site",
+  "bbox": [-114.9, 35.9, -114.0, 36.6],
+  "vertical_exaggeration": 3,
+  "years": [2003, 2024],
+  "assets": {
+    "heightmap": "heightmap.png",
+    "base": "base.jpg",
+    "trend": { "grace_tws": "trend_grace_tws.png" },
+    "yearly": { "grace_tws": "year_grace_tws_{YYYY}.png" }
+  },
+  "variables": [
+    {
+      "id": "grace_tws",
+      "label": "Total water stored",
+      "unit": "cm",
+      "sen_slope_per_decade": -9.9,
+      "p_value": 0.001,
+      "verdict": "real",
+      "direction": "down",
+      "years_needed": null,
+      "residual_pct_non_climate": 70
+    },
+    {
+      "id": "precip",
+      "label": "Rainfall",
+      "unit": "mm/month",
+      "sen_slope_per_decade": -0.5,
+      "p_value": 0.4,
+      "verdict": "unknown",
+      "direction": "flat",
+      "years_needed": 15,
+      "residual_pct_non_climate": null
+    }
+  ],
+  "steps": [
+    "What is changing here?",
+    "Is it real or chance?",
+    "Is it the climate?"
+  ],
+  "narrative": "FAKE: Water is dropping for real, but rainfall shows no clear trend. Most of the drop is not explained by climate.",
+  "sources": [{ "title": "", "url": "" }]
+}

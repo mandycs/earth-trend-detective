@@ -1,0 +1,26 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Node
+node_modules/
+.next/
+dist/
+
+# Data caches
+data/cache/
+*.nc
+*.h5
+*.hdf
+
+# OS / editors
+.DS_Store
+.vscode/
+.idea/
