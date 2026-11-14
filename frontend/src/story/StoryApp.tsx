@@ -18,10 +18,10 @@ interface CaseEntry {
  * kept first while the pipeline is still generating the real ones.
  */
 const CASES: CaseEntry[] = [
-  { id: '_example', label: 'Preview case', where: 'sample assets' },
   { id: 'lake_mead', label: 'Lake Mead', where: 'United States' },
   { id: 'aletsch', label: 'Aletsch', where: 'Switzerland' },
   { id: 'donana', label: 'Doñana', where: 'Spain' },
+  { id: '_example', label: 'Preview case', where: 'sample assets' },
 ]
 
 const PLAY_SPEED = 2.4 // years per second
@@ -172,17 +172,21 @@ export default function StoryApp() {
               onScrub={handleScrub}
               onToggle={() => setPlaying((value) => !value)}
             />
-            <ul className="legend" aria-label="Map legend">
-              <li>
-                <span className="swatch swatch-loss" aria-hidden="true" /> Losing
-              </li>
-              <li>
-                <span className="swatch swatch-gain" aria-hidden="true" /> Gaining
-              </li>
-              <li>
-                <span className="swatch swatch-nodata" aria-hidden="true" /> Not significant
-              </li>
-            </ul>
+            {assets.trend ? (
+              <ul className="legend" aria-label="Map legend">
+                <li>
+                  <span className="swatch swatch-loss" aria-hidden="true" /> Losing
+                </li>
+                <li>
+                  <span className="swatch swatch-gain" aria-hidden="true" /> Gaining
+                </li>
+                <li>
+                  <span className="swatch swatch-nodata" aria-hidden="true" /> Not significant
+                </li>
+              </ul>
+            ) : (
+              <p className="legend-note">Regional series · no per-pixel layer yet</p>
+            )}
           </div>
         </section>
 
@@ -191,6 +195,7 @@ export default function StoryApp() {
             site={site}
             variable={variable}
             step={step}
+            hasTrendLayer={Boolean(assets.trend)}
             onSelectVariable={setVariableId}
             onStep={setStep}
           />

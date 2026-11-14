@@ -6,6 +6,7 @@ export interface StoryPanelProps {
   site: Site
   variable: SiteVariable
   step: number
+  hasTrendLayer: boolean
   onSelectVariable: (id: string) => void
   onStep: (step: number) => void
 }
@@ -24,6 +25,7 @@ const DEFAULT_BODIES = [
 
 function stepTitle(site: Site, index: number): string {
   const entry = site.steps[index]
+  if (typeof entry === 'string' && entry.trim()) return entry
   if (entry && typeof entry === 'object' && entry.title) return entry.title
   return STEP_TITLES[index] ?? STEP_TITLES[0]
 }
@@ -47,9 +49,11 @@ function slopeSentence(variable: SiteVariable): string {
   return `${sign}${formatNumber(variable.sen_slope_per_decade)} ${variable.unit} per decade`
 }
 
-export function StoryPanel({ site, variable, step, onSelectVariable, onStep }: StoryPanelProps) {
+export function StoryPanel({ site, variable, step, hasTrendLayer, onSelectVariable, onStep }: StoryPanelProps) {
   const [firstYear, lastYear] = site.years
   const isPreview = site.id.startsWith('_')
+  const sources = site.sources ?? []
+  const narrative = site.narrative ?? site.headline ?? ''
 
   return (
     <aside className="panel" aria-label={`Story: ${site.name}`}>
@@ -129,6 +133,12 @@ export function StoryPanel({ site, variable, step, onSelectVariable, onStep }: S
                 </dd>
               </div>
             </dl>
+            {!hasTrendLayer ? (
+              <p className="callout">
+                No per-pixel trend map for this case yet. The numbers below come from the
+                regional series, which is what the pipeline has computed so far.
+              </p>
+            ) : null}
             <p>{chanceSentence(variable.p_value)}</p>
             {variable.years_needed ? (
               <p className="callout">
@@ -170,10 +180,10 @@ export function StoryPanel({ site, variable, step, onSelectVariable, onStep }: S
                     drivers we tested
                   </li>
                 </ul>
-                <p>{site.narrative}</p>
+                <p>{narrative}</p>
               </>
             ) : (
-              <p>{site.narrative}</p>
+              <p>{narrative}</p>
             )}
             <p className="callout callout-warn">
               This is a clue, not a verdict on who is responsible. Factors we did not measure
@@ -193,9 +203,9 @@ export function StoryPanel({ site, variable, step, onSelectVariable, onStep }: S
             ← Run the case again
           </button>
         )}
-        {site.sources.length > 0 ? (
+        {sources.length > 0 ? (
           <ul className="sources">
-            {site.sources.map((source) => (
+            {sources.map((source) => (
               <li key={source.url}>
                 <a href={source.url} target="_blank" rel="noreferrer noopener">
                   {source.title}

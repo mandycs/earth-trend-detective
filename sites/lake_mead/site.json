@@ -1,0 +1,156 @@
+{
+  "id": "lake_mead",
+  "name": "Lake Mead (USA)",
+  "bbox": [
+    -114.9,
+    35.9,
+    -114.0,
+    36.6
+  ],
+  "vertical_exaggeration": 3,
+  "years": [
+    2003,
+    2024
+  ],
+  "assets": {
+    "heightmap": "heightmap.png",
+    "heightmap_range_m": [
+      165.0,
+      2373.0
+    ],
+    "base": "base.jpg",
+    "trend": {},
+    "yearly": {}
+  },
+  "variables": [
+    {
+      "id": "grace_tws",
+      "label": "Total water stored",
+      "unit": "cm",
+      "sen_slope_per_decade": -6.47,
+      "ci_low": -9.59,
+      "ci_high": -3.62,
+      "p_value": 0.000212,
+      "q_value": 0.000636,
+      "verdict": "real",
+      "direction": "down",
+      "years_needed": null,
+      "residual_pct_non_climate": 83.7,
+      "badge": "↓ Real"
+    },
+    {
+      "id": "t2m",
+      "label": "Air temperature",
+      "unit": "°C",
+      "sen_slope_per_decade": 0.598,
+      "ci_low": 0.307,
+      "ci_high": 0.907,
+      "p_value": 0.000109,
+      "q_value": 0.000636,
+      "verdict": "real",
+      "direction": "up",
+      "years_needed": null,
+      "residual_pct_non_climate": null,
+      "badge": "↑ Real"
+    },
+    {
+      "id": "soil_moisture",
+      "label": "Topsoil moisture",
+      "unit": "kg/m²",
+      "sen_slope_per_decade": -0.357,
+      "ci_low": -0.8,
+      "ci_high": 0.07,
+      "p_value": 0.104,
+      "q_value": 0.209,
+      "verdict": "unknown",
+      "direction": "flat",
+      "years_needed": 14,
+      "residual_pct_non_climate": null,
+      "badge": "? Can't tell yet"
+    },
+    {
+      "id": "precip",
+      "label": "Rainfall",
+      "unit": "mm/day",
+      "sen_slope_per_decade": -0.048,
+      "ci_low": -0.154,
+      "ci_high": 0.05,
+      "p_value": 0.345,
+      "q_value": 0.42,
+      "verdict": "unknown",
+      "direction": "flat",
+      "years_needed": 18,
+      "residual_pct_non_climate": null,
+      "badge": "? Can't tell yet"
+    },
+    {
+      "id": "runoff",
+      "label": "Surface runoff",
+      "unit": "mm/day",
+      "sen_slope_per_decade": -0.000413,
+      "ci_low": -0.00149,
+      "ci_high": 0.000468,
+      "p_value": 0.35,
+      "q_value": 0.42,
+      "verdict": "unknown",
+      "direction": "flat",
+      "years_needed": null,
+      "residual_pct_non_climate": null,
+      "badge": "? Can't tell yet"
+    },
+    {
+      "id": "solar",
+      "label": "Sunlight at the surface",
+      "unit": "MJ/m²/day",
+      "sen_slope_per_decade": -0.0262,
+      "ci_low": -0.167,
+      "ci_high": 0.111,
+      "p_value": 0.718,
+      "q_value": 0.718,
+      "verdict": "unknown",
+      "direction": "flat",
+      "years_needed": null,
+      "residual_pct_non_climate": null,
+      "badge": "? Can't tell yet"
+    }
+  ],
+  "missing": {
+    "lst_day": "Satellite data still being processed by NASA AppEEARS. Check back later."
+  },
+  "steps": [
+    "What is changing here?",
+    "Is it real or chance?",
+    "Is it the climate?"
+  ],
+  "headline": "Total water stored is going down for real (−6.5 cm per decade). About 84% of that change is not explained by climate.",
+  "narrative": null,
+  "validation": {
+    "source": "U.S. Bureau of Reclamation (not NASA, validation only)",
+    "url": "https://www.usbr.gov/lc/region/g4000/hourly/mead-elv.html",
+    "metric": "correlation of monthly anomalies",
+    "r": 0.702,
+    "n_months": 233,
+    "elevation_trend_m_per_decade": -11.4
+  },
+  "sources": [
+    {
+      "title": "NASA POWER monthly climate (MERRA-2, IMERG, CERES)",
+      "url": "https://power.larc.nasa.gov"
+    },
+    {
+      "title": "GLDAS Noah 0.25° monthly v2.1 (NASA GES DISC)",
+      "url": "https://disc.gsfc.nasa.gov/datasets/GLDAS_NOAH025_M_2.1/summary"
+    },
+    {
+      "title": "GRACE/GRACE-FO JPL mascons RL06.3 (NASA PO.DAAC)",
+      "url": "https://podaac.jpl.nasa.gov/dataset/TELLUS_GRAC-GRFO_MASCON_CRI_GRID_RL06.3_V4"
+    },
+    {
+      "title": "U.S. Bureau of Reclamation (not NASA, validation only)",
+      "url": "https://www.usbr.gov/lc/region/g4000/hourly/mead-elv.html",
+      "validation": true
+    }
+  ],
+  "generated_at": "2026-11-14",
+  "pipeline_version": "0.1"
+}

@@ -37,7 +37,9 @@ export interface SiteSource {
 export interface SiteAssets {
   heightmap: string
   base: string
-  trend: Record<string, string>
+  /** [min, max] metres, as written by the pipeline. */
+  heightmap_range_m?: [number, number]
+  trend?: Record<string, string>
   yearly?: Record<string, string>
 }
 
@@ -52,11 +54,15 @@ export interface Site {
   years: [number, number]
   assets: SiteAssets
   variables: SiteVariable[]
-  /** Objects preferred; plain strings are accepted for early fixtures. */
+  /** Objects preferred; plain strings (pipeline output) are used as titles. */
   steps: Array<string | SiteStep>
-  narrative: string
-  sources: SiteSource[]
+  /** The pipeline writes a one-line headline when the prose is not generated yet. */
+  narrative: string | null
+  headline?: string | null
+  sources?: SiteSource[]
   caveats?: string[]
+  /** Variables the pipeline could not fetch, with a reason. */
+  missing?: Record<string, string>
 }
 
 /** Metres of horizontal extent covered by the bbox (approximate, flat Earth). */
@@ -73,7 +79,8 @@ export function bboxWidthMeters(bbox: [number, number, number, number]): number 
  * displace a 1x1 plane without knowing the real-world scale.
  */
 export function reliefUnits(site: Site): number {
-  const [minElev, maxElev] = site.elevation_m ?? [0, 1000]
-  const range = Math.max(maxElev - minElev, 50)
-  return (range / bboxWidthMeters(site.bbox)) * (site.vertical_exaggeration || 3)
+  const range = site.elevation_m ?? site.assets.heightmap_range_m ?? [0, 1000]
+  const [minElev, maxElev] = range
+  const span = Math.max(maxElev - minElev, 50)
+  return (span / bboxWidthMeters(site.bbox)) * (site.vertical_exaggeration || 3)
 }

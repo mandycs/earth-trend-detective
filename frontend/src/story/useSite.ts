@@ -27,6 +27,26 @@ function loadTexture(url: string, srgb: boolean): Promise<THREE.Texture> {
   })
 }
 
+/**
+ * The pipeline and this viewer grew up separately, so the manifest is normalised
+ * here: missing arrays become empty arrays, absent layers become empty maps, and
+ * the headline stands in when the prose has not been generated yet.
+ */
+function normaliseSite(raw: Site): Site {
+  return {
+    ...raw,
+    steps: Array.isArray(raw.steps) ? raw.steps : [],
+    narrative: raw.narrative ?? null,
+    sources: Array.isArray(raw.sources) ? raw.sources : [],
+    variables: Array.isArray(raw.variables) ? raw.variables : [],
+    assets: {
+      ...raw.assets,
+      trend: raw.assets?.trend ?? {},
+      yearly: raw.assets?.yearly ?? {},
+    },
+  }
+}
+
 export function useSite(siteId: string) {
   const [site, setSite] = useState<Site | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -41,7 +61,7 @@ export function useSite(siteId: string) {
         return response.json() as Promise<Site>
       })
       .then((data) => {
-        if (alive) setSite(data)
+        if (alive) setSite(normaliseSite(data))
       })
       .catch((cause: unknown) => {
         if (alive) setError(cause instanceof Error ? cause.message : 'Unknown error loading site')
@@ -76,7 +96,7 @@ export function useStoryAssets(site: Site | null, variableId: string | null): St
   })
   const cache = useRef(new Map<string, THREE.Texture>())
 
-  const trendFile = site && variableId ? site.assets.trend[variableId] : undefined
+  const trendFile = site && variableId ? site.assets.trend?.[variableId] : undefined
   const yearlyPattern = site && variableId ? site.assets.yearly?.[variableId] : undefined
   const yearList = useMemo(() => {
     if (!site) return []
@@ -105,9 +125,7 @@ export function useStoryAssets(site: Site | null, variableId: string | null): St
       get(base + site.assets.base, true),
     ])
       .then(async ([height, map]) => {
-        const trend = trendFile && site.assets.trend[variableId ?? '']
-          ? await get(base + trendFile, true).catch(() => null)
-          : null
+        const trend = trendFile ? await get(base + trendFile, true).catch(() => null) : null
         let years: THREE.Texture[] = []
         if (yearlyPattern) {
           years = await Promise.all(
