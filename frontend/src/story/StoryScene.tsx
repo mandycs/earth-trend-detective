@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { OrbitControls } from '@react-three/drei'
+import { OrbitControls, Sky } from '@react-three/drei'
 import * as THREE from 'three'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 import type { Site } from './types'
@@ -16,12 +16,16 @@ export interface StorySceneProps {
   exaggeration: number
 }
 
-const GROUND = '#0b0d10'
+/** Haze at the horizon; the fog fades the far ground into it. */
+const HAZE = '#c3cfdb'
+/** Sun direction: low afternoon light from the west-south-west, about 28° up. */
+const SUN: [number, number, number] = [-2.2, 1.25, 1.1]
 
 /** Low oblique view the camera settles into, scaled to the slab's depth. */
 function restingView(aspect: number, peak: number): THREE.Vector3 {
-  const distance = 1.3 + Math.max(aspect - 1, 0) * 0.45
-  return new THREE.Vector3(-0.2 * distance, 0.42 * distance + peak * 0.5, 0.84 * distance)
+  // An aircraft's view: low and oblique, the horizon in frame.
+  const distance = 0.78 + Math.max(aspect - 1, 0) * 0.3
+  return new THREE.Vector3(-0.22 * distance, 0.24 * distance + peak * 0.9, 0.92 * distance)
 }
 
 function easeOutCubic(t: number) {
@@ -75,10 +79,10 @@ function CameraRig({ siteId, aspect, peak }: { siteId: string; aspect: number; p
       enableDamping
       dampingFactor={0.08}
       rotateSpeed={0.55}
-      minDistance={0.45}
+      minDistance={0.18}
       maxDistance={2.4}
       minPolarAngle={0.12}
-      maxPolarAngle={Math.PI / 2.25}
+      maxPolarAngle={Math.PI / 2.08}
       autoRotate
       autoRotateSpeed={0.35}
       onStart={() => {
@@ -95,10 +99,10 @@ function Sun() {
     const l = light.current
     if (!l) return
     const cam = l.shadow.camera as THREE.OrthographicCamera
-    cam.left = -0.9
-    cam.right = 0.9
-    cam.top = 0.9
-    cam.bottom = -0.9
+    cam.left = -0.75
+    cam.right = 0.75
+    cam.top = 0.75
+    cam.bottom = -0.75
     cam.near = 0.1
     cam.far = 6
     cam.updateProjectionMatrix()
@@ -111,9 +115,9 @@ function Sun() {
   return (
     <directionalLight
       ref={light}
-      position={[-1.9, 1.05, -0.9]}
-      intensity={3.4}
-      color="#ffe9c9"
+      position={SUN}
+      intensity={3.1}
+      color="#fff3e2"
       castShadow
     />
   )
@@ -135,15 +139,13 @@ export function StoryScene({ site, assets, yearProgress, showYears, exaggeration
     <Canvas
       shadows="soft"
       dpr={[1, 2]}
-      camera={{ position: [0, 2.6, 0.02], fov: 34, near: 0.01, far: 30 }}
-      gl={{ antialias: true, alpha: false, powerPreference: 'high-performance', toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.22 }}
+      camera={{ position: [0, 2.6, 0.02], fov: 42, near: 0.003, far: 80 }}
+      gl={{ antialias: true, alpha: false, powerPreference: 'high-performance', toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 0.9 }}
     >
-      <color attach="background" args={[GROUND]} />
-      <fog attach="fog" args={[GROUND, 2.2, 5.5]} />
-      <hemisphereLight args={['#a9c4e6', '#3a2c20', 0.75]} />
-      <ambientLight intensity={0.18} />
+      <Sky distance={30} sunPosition={SUN} turbidity={6} rayleigh={1.4} mieCoefficient={0.006} mieDirectionalG={0.8} />
+      <fog attach="fog" args={[HAZE, 0.9, 7]} />
+      <hemisphereLight args={['#bcd3ee', '#6f6253', 0.85]} />
       <Sun />
-      <directionalLight position={[1.6, 0.7, 1.4]} intensity={0.35} color="#8fb4ff" />
       <group position={[0, 0, 0]}>
         <Terrain
           grid={grid}
@@ -158,10 +160,6 @@ export function StoryScene({ site, assets, yearProgress, showYears, exaggeration
           aspect={aspect}
         />
       </group>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.0451, 0]} receiveShadow>
-        <circleGeometry args={[3, 64]} />
-        <shadowMaterial opacity={0.45} />
-      </mesh>
       <CameraRig siteId={site.id} aspect={aspect} peak={peak} />
     </Canvas>
   )

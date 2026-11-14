@@ -53,8 +53,8 @@ export default function StoryApp({ caseId }: { caseId: string }) {
   useEffect(() => {
     if (!site) return
     setVariableId(leadVariable(site)?.id ?? null)
-    const all = mapLayers(site)
-    setLayerKey((all.find((l) => l.kind === 'year') ?? all[0])?.key ?? 'none')
+    // True colours first; the data layers are one tap away.
+    setLayerKey('none')
     setExaggeration(null)
     yearRef.current = site.years[0]
     setDisplayYear(site.years[0])
@@ -89,7 +89,8 @@ export default function StoryApp({ caseId }: { caseId: string }) {
   }
 
   const showYears = layer?.kind === 'year' && assets.years.length > 1
-  const vx = exaggeration ?? site?.vertical_exaggeration ?? 3
+  // Close to true scale reads as a real place; the pipeline's value is a ceiling.
+  const vx = exaggeration ?? Math.min(site?.vertical_exaggeration ?? 1.5, 2)
 
   return (
     <div className="st">

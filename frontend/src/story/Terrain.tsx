@@ -24,6 +24,146 @@ export interface TerrainProps {
 /** Depth of the slab under the terrain, as a fraction of the plane width. */
 export const SLAB = 0.045
 
+/** Share of the width over which the edges ease down to the ground. */
+const EDGE = 0.035
+
+/**
+ * Height of a still water surface in the elevation model, if there is one.
+ * Radar elevation models record lakes and the sea as perfectly flat, so a
+ * still surface shows up as one 1-metre bin holding a large share of the
+ * pixels. Returns metres, or null when no such flat level exists.
+ */
+export function waterLevel(grid: HeightGrid): number | null {
+  const counts = new Map<number, number>()
+  const step = Math.max(1, Math.floor(grid.data.length / 400_000))
+  let total = 0
+  for (let i = 0; i < grid.data.length; i += step) {
+    const bin = Math.round(grid.data[i])
+    counts.set(bin, (counts.get(bin) ?? 0) + 1)
+    total += 1
+  }
+  let best = 0
+  let level = 0
+  for (const [bin, n] of counts) {
+    if (n > best) {
+      best = n
+      level = bin
+    }
+  }
+  if (best / total < 0.03) return null
+  // The surface is exactly flat: take the precise value, not the rounded bin.
+  let sum = 0
+  let flat = 0
+  for (let i = 0; i < grid.data.length; i += step) {
+    if (Math.abs(grid.data[i] - level) < 0.5) {
+      sum += grid.data[i]
+      flat += 1
+    }
+  }
+  const exact = sum / Math.max(flat, 1)
+  let onLevel = 0
+  for (let i = 0; i < grid.data.length; i += step) if (Math.abs(grid.data[i] - exact) < WATER_TOLERANCE) onLevel += 1
+  return onLevel / total > 0.03 ? exact : null
+}
+
+/**
+ * Which pixels are open water: on the flat level, and part of a large compact
+ * body (sea, lake, wide river). Isolated flat pixels, like dry marsh that the
+ * radar also recorded at sea level, are left as land.
+ */
+export function waterMask(grid: HeightGrid, level: number): Uint8Array {
+  const { width: w, height: h, data } = grid
+  const flat = new Uint8Array(w * h)
+  for (let i = 0; i < flat.length; i += 1) flat[i] = Math.abs(data[i] - level) < WATER_TOLERANCE ? 1 : 0
+  // Erode by 2 px: thin and speckled patches disappear.
+  const eroded = new Uint8Array(w * h)
+  for (let y = 2; y < h - 2; y += 1) {
+    for (let x = 2; x < w - 2; x += 1) {
+      let all = 1
+      for (let dy = -2; dy <= 2 && all; dy += 1) for (let dx = -2; dx <= 2; dx += 1) if (!flat[(y + dy) * w + x + dx]) { all = 0; break }
+      eroded[y * w + x] = all
+    }
+  }
+  // Keep only components bigger than 0.5% of the picture.
+  const label = new Int32Array(w * h)
+  const keep = new Uint8Array(w * h)
+  const stack: number[] = []
+  let next = 1
+  for (let start = 0; start < eroded.length; start += 1) {
+    if (!eroded[start] || label[start]) continue
+    const members: number[] = []
+    label[start] = next
+    stack.push(start)
+    while (stack.length) {
+      const i = stack.pop() as number
+      members.push(i)
+      const x = i % w
+      const neighbours = [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, i - w, i + w]
+      for (const n of neighbours) {
+        if (n >= 0 && n < eroded.length && eroded[n] && !label[n]) {
+          label[n] = next
+          stack.push(n)
+        }
+      }
+    }
+    if (members.length > eroded.length * 0.005) for (const i of members) keep[i] = 1
+    next += 1
+  }
+  // Grow back by 2 px, but only over flat pixels, so shorelines stay where they were.
+  const out = new Uint8Array(w * h)
+  for (let y = 0; y < h; y += 1) {
+    for (let x = 0; x < w; x += 1) {
+      const i = y * w + x
+      if (!flat[i]) continue
+      let near = 0
+      for (let dy = -2; dy <= 2 && !near; dy += 1) {
+        const yy = y + dy
+        if (yy < 0 || yy >= h) continue
+        for (let dx = -2; dx <= 2; dx += 1) {
+          const xx = x + dx
+          if (xx >= 0 && xx < w && keep[yy * w + xx]) { near = 1; break }
+        }
+      }
+      out[i] = near
+    }
+  }
+  return out
+}
+
+/** Metres within which a height counts as the flat water surface. */
+const WATER_TOLERANCE = 0.06
+/** How far under the water surface flat pixels are pushed, in metres. */
+const WATER_DEPTH = 2
+
+/** Mean colour of a picture, for the ground that runs on to the horizon. */
+export function meanColour(texture: THREE.Texture): THREE.Color {
+  const image = texture.image as CanvasImageSource | undefined
+  const colour = new THREE.Color('#6b5a48')
+  if (!image || typeof document === 'undefined') return colour
+  try {
+    const canvas = document.createElement('canvas')
+    canvas.width = 16
+    canvas.height = 16
+    const context = canvas.getContext('2d')
+    if (!context) return colour
+    context.drawImage(image, 0, 0, 16, 16)
+    const data = context.getImageData(0, 0, 16, 16).data
+    let r = 0
+    let g = 0
+    let b = 0
+    for (let i = 0; i < data.length; i += 4) {
+      r += data[i]
+      g += data[i + 1]
+      b += data[i + 2]
+    }
+    const n = data.length / 4
+    colour.setRGB(r / n / 255, g / n / 255, b / n / 255, THREE.SRGBColorSpace)
+  } catch {
+    /* keep the fallback */
+  }
+  return colour
+}
+
 interface Uniforms {
   [key: string]: THREE.IUniform
   uTrend: THREE.IUniform<THREE.Texture | null>
@@ -34,6 +174,7 @@ interface Uniforms {
   uTrendOn: THREE.IUniform<number>
   uYearOn: THREE.IUniform<number>
   uShadeOn: THREE.IUniform<number>
+  uGround: THREE.IUniform<THREE.Color>
 }
 
 /**
@@ -41,8 +182,9 @@ interface Uniforms {
  * shadows and silhouettes come from real metres, then cuts it out as a slab
  * with earth-coloured sides, like a museum relief model.
  */
-function buildGeometry(grid: HeightGrid, aspect: number, scale: number) {
-  const segX = Math.min(grid.width - 1, 420)
+function buildGeometry(grid: HeightGrid, aspect: number, scale: number, water: number | null) {
+  const mask = water == null ? null : waterMask(grid, water)
+  const segX = Math.min(grid.width - 1, 512)
   const segZ = Math.max(8, Math.min(grid.height - 1, Math.round(segX * aspect)))
   const top = new THREE.PlaneGeometry(1, aspect, segX, segZ)
   top.rotateX(-Math.PI / 2)
@@ -51,7 +193,19 @@ function buildGeometry(grid: HeightGrid, aspect: number, scale: number) {
   for (let i = 0; i < position.count; i += 1) {
     const u = uv.getX(i)
     const v = 1 - uv.getY(i) // 0 at the north edge
-    position.setY(i, (sampleHeight(grid, u, v) - grid.min) * scale)
+    // Ease the last few percent of each edge down to the surrounding ground,
+    // so the relief meets the horizon instead of ending in a cut-out block.
+    const edge = Math.min(u, 1 - u, v, 1 - v)
+    const t = Math.min(edge / EDGE, 1)
+    const taper = t * t * (3 - 2 * t)
+    let h = sampleHeight(grid, u, v)
+    if (water != null && mask) {
+      const px = Math.min(grid.width - 1, Math.round(u * (grid.width - 1)))
+      const py = Math.min(grid.height - 1, Math.round(v * (grid.height - 1)))
+      if (mask[py * grid.width + px]) h = water - WATER_DEPTH
+      else if (h < water + WATER_TOLERANCE) h = water + WATER_TOLERANCE * 2
+    }
+    position.setY(i, (h - grid.min) * scale * taper)
   }
   top.computeVertexNormals()
 
@@ -101,7 +255,8 @@ export function Terrain({
   const uniforms = useRef<Uniforms | null>(null)
   const scale = exaggeration / Math.max(widthMetres, 1)
 
-  const { top, sides } = useMemo(() => buildGeometry(grid, aspect, scale), [grid, aspect, scale])
+  const water = useMemo(() => waterLevel(grid), [grid])
+  const { top, sides } = useMemo(() => buildGeometry(grid, aspect, scale, water), [grid, aspect, scale, water])
 
   const material = useMemo(() => {
     const created = new THREE.MeshStandardMaterial({ map: base, roughness: 0.96, metalness: 0, dithering: true })
@@ -115,6 +270,7 @@ export function Terrain({
         uTrendOn: { value: 0 },
         uYearOn: { value: 0 },
         uShadeOn: { value: 0 },
+        uGround: { value: meanColour(base) },
       }
       Object.assign(shader.uniforms, own)
       uniforms.current = own
@@ -129,7 +285,8 @@ export function Terrain({
            uniform float uYearMix;
            uniform float uTrendOn;
            uniform float uYearOn;
-           uniform float uShadeOn;`,
+           uniform float uShadeOn;
+           uniform vec3 uGround;`,
         )
         .replace(
           '#include <map_fragment>',
@@ -150,11 +307,16 @@ export function Terrain({
              // Multiply, so the satellite picture (the lake, the ice) stays readable under the tint.
              layer = mix( layer, layer * y.rgb * 1.12, y.a * uYearOn );
            }
+           float border = min( min( vMapUv.x, 1.0 - vMapUv.x ), min( vMapUv.y, 1.0 - vMapUv.y ) );
+           layer = mix( uGround, layer, smoothstep( 0.0, 0.03, border ) );
            diffuseColor.rgb *= layer;`,
         )
     }
     return created
   }, [base])
+
+  const groundColour = useMemo(() => meanColour(base), [base])
+  const waterY = water == null ? null : (water - grid.min + 0.05) * scale
 
   const sideMaterial = useMemo(
     () => new THREE.MeshStandardMaterial({ color: '#2a241e', roughness: 1, metalness: 0, side: THREE.DoubleSide }),
@@ -200,7 +362,16 @@ export function Terrain({
   return (
     <group>
       <mesh geometry={top} material={material} castShadow receiveShadow />
-      <mesh geometry={sides} material={sideMaterial} receiveShadow />
+      {waterY != null ? (
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, waterY, 0]} receiveShadow>
+          <planeGeometry args={[1 - EDGE * 1.6, aspect * (1 - EDGE * 1.6)]} />
+          <meshStandardMaterial color="#21465c" roughness={0.12} metalness={0.25} transparent opacity={0.88} />
+        </mesh>
+      ) : null}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.0005, 0]} receiveShadow>
+        <planeGeometry args={[60, 60]} />
+        <meshStandardMaterial color={groundColour} roughness={1} metalness={0} />
+      </mesh>
     </group>
   )
 }
