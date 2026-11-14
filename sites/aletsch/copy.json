@@ -1,0 +1,22 @@
+{
+  "_note": "Prose for the story mode. Kept out of site.json so the pipeline can regenerate that file without destroying it. Merged at load time.",
+  "steps": [
+    {
+      "title": "What is changing here?",
+      "body": "Every NASA variable that applies to this glacier is tested. The ice itself is one of them."
+    },
+    {
+      "title": "Is it real, or is it chance?",
+      "body": "People have walked out and measured this glacier almost every year since the 1870s. The retreat is steady and large, not one hot summer."
+    },
+    {
+      "title": "Is it the climate?",
+      "body": "Nothing is pumped here. No reservoir, no irrigation, no change in land use. Temperature is the driver, and the ice answers."
+    }
+  ],
+  "narrative": "Some changes are not our doing, and it matters that we say so. A detector that blames people for everything is not a detector.",
+  "caveats": [
+    "A retreating glacier is not a water-supply forecast.",
+    "Ice loss here is slow enough to see only decade by decade."
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "_note": "Prose for the story mode. Kept out of site.json so the pipeline can regenerate that file without destroying it. Merged at load time.",
+  "steps": [
+    {
+      "title": "What is changing here?",
+      "body": "Every NASA variable that applies to this wetland is tested. Its ponds are not simply waiting for rain."
+    },
+    {
+      "title": "Is it real, or is it chance?",
+      "body": "From space, most ponds now flood less than rain and heat alone would allow. The gap is measured, not guessed."
+    },
+    {
+      "title": "Is it the climate?",
+      "body": "The park is protected. The aquifer that feeds it is not. Water pumped for berries and for a beach town never reaches the ponds."
+    }
+  ],
+  "narrative": "One lagoon dried twice in fifty years, then three years in a row. Rain explains part of it. The pumps explain the rest.",
+  "caveats": [
+    "The aquifer reaches far beyond the park boundary.",
+    "Drought makes it worse; it does not start it."
+  ]
+}
