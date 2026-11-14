@@ -21,6 +21,10 @@ import { useOverlays } from './layers/useOverlays'
 import { valueAt } from './layers/assets'
 import { sampleHeight } from './heights'
 import { API_URL } from '../features/explore/api'
+import { CHAPTER_NAMES, chaptersFor } from '../lib/chapters'
+
+/** Seconds each documentary chapter stays on screen when playing. */
+const CHAPTER_SECONDS = 9
 
 const CASE_LABELS: Record<string, string> = {
   lake_mead: 'Lake Mead',
@@ -84,6 +88,11 @@ export default function StoryApp({ caseId }: { caseId: string }) {
   const [step, setStep] = useState(0)
   const [playing, setPlaying] = useState(false)
   const [displayYear, setDisplayYear] = useState(0)
+  // Documentary first (DESIGN.md): three chapters, then free exploring.
+  const [mode, setMode] = useState<'doc' | 'free'>('doc')
+  const [chapter, setChapter] = useState(0)
+  const [chapterT, setChapterT] = useState(0)
+  const [docPlaying, setDocPlaying] = useState(true)
 
   const assets = useStoryAssets(site, null)
 
@@ -108,8 +117,61 @@ export default function StoryApp({ caseId }: { caseId: string }) {
     clockRef.current = 0
     setDisplayYear(site.years[0])
     setStep(0)
-    setPlaying(!window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    setPlaying(false)
+    setMode('doc')
+    setChapter(0)
+    setChapterT(0)
+    setDocPlaying(!reduced)
   }, [site])
+
+  // Documentary clock: chapter 1 runs the years, then each chapter holds its subtitle.
+  useEffect(() => {
+    if (mode !== 'doc' || !docPlaying || !site) return
+    let frame = 0
+    let previous = performance.now()
+    const tick = (now: number) => {
+      const delta = Math.min((now - previous) / 1000, 0.1)
+      previous = now
+      setChapterT((t) => {
+        const next = t + delta / CHAPTER_SECONDS
+        if (next >= 1) {
+          setChapter((c) => {
+            if (c >= CHAPTER_NAMES.length - 1) {
+              setDocPlaying(false)
+              return c
+            }
+            return c + 1
+          })
+          return chapter >= CHAPTER_NAMES.length - 1 ? 1 : 0
+        }
+        return next
+      })
+      frame = requestAnimationFrame(tick)
+    }
+    frame = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame)
+  }, [mode, docPlaying, site, chapter])
+
+  // In chapter 1 the year sweeps the record; later chapters talk about the whole period.
+  useEffect(() => {
+    if (mode !== 'doc' || !site) return
+    const [a, b] = site.years
+    setDisplayYear(chapter === 0 ? Math.min(b, a + Math.floor(chapterT * (b - a + 1))) : b)
+  }, [mode, chapter, chapterT, site])
+
+  const enterFree = () => {
+    setMode('free')
+    setDocPlaying(false)
+  }
+  const nextChapter = () => {
+    if (chapter >= CHAPTER_NAMES.length - 1) {
+      enterFree()
+      return
+    }
+    setChapter((c) => c + 1)
+    setChapterT(0)
+  }
 
   useEffect(() => {
     setStack(defaultStack(layers))
@@ -322,7 +384,7 @@ export default function StoryApp({ caseId }: { caseId: string }) {
     : { title: 'Satellite picture', note: 'one date, not per year', status: 'visual_only' as const }
 
   return (
-    <div className="st">
+    <div className={mode === 'doc' ? 'st st-documentary' : 'st'}>
       <header className="st-bar">
         <Link href="/" className="st-wordmark wide">
           Earth Trend Detective
@@ -350,8 +412,78 @@ export default function StoryApp({ caseId }: { caseId: string }) {
       <main className="st-stage">
         <section className="st-viewer" aria-label="3D terrain">
           <div className={identify ? 'st-canvas st-identify' : 'st-canvas'}>
+            {site && mode === 'doc' ? (
+              <div className="doc">
+                <div className="doc-top">
+                  <Link href="/" className="doc-wordmark wide">
+                    Earth Trend Detective
+                  </Link>
+                  <ol className="doc-chapters" aria-label="Chapters">
+                    {CHAPTER_NAMES.map((name, i) => (
+                      <li key={name}>
+                        <button
+                          type="button"
+                          className={i === chapter ? 'doc-chapter doc-chapter-on' : 'doc-chapter'}
+                          aria-current={i === chapter ? 'step' : undefined}
+                          onClick={() => {
+                            setChapter(i)
+                            setChapterT(0)
+                          }}
+                        >
+                          {name}
+                        </button>
+                      </li>
+                    ))}
+                  </ol>
+                  <span className="doc-year narrow" aria-live="off">
+                    {chapter === 0 ? shownYear : `${firstYear}–${lastYear}`}
+                  </span>
+                </div>
+                {(() => {
+                  const c = chaptersFor(site)[chapter]
+                  return (
+                    <div className="doc-sub" key={`${site.id}-${chapter}`} aria-live="polite">
+                      <p className="doc-place">{shortName(site.name)}</p>
+                      <p className="doc-headline narrow">{c.headline}</p>
+                      {c.line ? <p className="doc-line">{c.line}</p> : null}
+                    </div>
+                  )
+                })()}
+                <div className="doc-bottom">
+                  <div
+                    className="doc-progress"
+                    role="progressbar"
+                    aria-label="Story progress"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={Math.round(((chapter + chapterT) / CHAPTER_NAMES.length) * 100)}
+                  >
+                    <i style={{ width: `${((chapter + chapterT) / CHAPTER_NAMES.length) * 100}%` }} />
+                  </div>
+                  <div className="doc-controls">
+                    <button type="button" className="doc-quiet" onClick={enterFree}>
+                      Explore
+                    </button>
+                    <button type="button" className="doc-quiet" onClick={() => setDocPlaying((p) => !p)} aria-pressed={!docPlaying}>
+                      {docPlaying ? 'Pause' : 'Play'}
+                    </button>
+                    <button type="button" className="btn btn-primary" onClick={nextChapter}>
+                      {chapter >= CHAPTER_NAMES.length - 1 ? 'Explore freely →' : `Next: ${CHAPTER_NAMES[chapter + 1].replace(/\?$/, '').toLowerCase()} →`}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
             {site && !error && !drone ? (
-              <StoryScene site={site} assets={assets} overlays={overlays} onPick={identify ? onPick : undefined} exaggeration={vx} />
+              <StoryScene
+                site={site}
+                assets={assets}
+                overlays={mode === 'doc' ? [] : overlays}
+                onPick={identify && mode === 'free' ? onPick : undefined}
+                exaggeration={vx}
+                shot={mode === 'doc' ? chapter : null}
+              />
             ) : null}
 
             {drone && detail.assets ? (

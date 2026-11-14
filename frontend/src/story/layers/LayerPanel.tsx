@@ -97,7 +97,7 @@ export function LayerPanel({
   const [open, setOpen] = useState<string | null>(null)
   const [question, setQuestion] = useState('')
   const [dragging, setDragging] = useState<string | null>(null)
-  const [folded, setFolded] = useState(false)
+  const [folded, setFolded] = useState(true)
   const onCount = stack.filter((s) => s.on).length
 
   const update = (id: string, patch: Partial<StackEntry>) =>

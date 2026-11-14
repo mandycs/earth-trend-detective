@@ -15,6 +15,8 @@ export interface StorySceneProps {
   overlays: Overlay[]
   onPick?: (uv: THREE.Vector2) => void
   exaggeration: number
+  /** Documentary chapter shot (0-2); null hands the camera to the visitor. */
+  shot?: number | null
 }
 
 /** Haze at the horizon; the fog fades the far ground into it. */
@@ -29,6 +31,17 @@ function restingView(aspect: number, peak: number): THREE.Vector3 {
   return new THREE.Vector3(-0.22 * distance, 0.24 * distance + peak * 0.9, 0.92 * distance)
 }
 
+/**
+ * Documentary shots, one per chapter: the oblique overview, a low look
+ * across the relief from the other side, then a high view of the whole area.
+ */
+function shotView(shot: number, aspect: number, peak: number): THREE.Vector3 {
+  const d = 0.78 + Math.max(aspect - 1, 0) * 0.3
+  if (shot === 1) return new THREE.Vector3(0.62 * d, 0.16 * d + peak * 0.9, 0.5 * d)
+  if (shot === 2) return new THREE.Vector3(-0.08 * d, 0.95 * d + peak, 0.55 * d)
+  return restingView(aspect, peak)
+}
+
 function easeOutCubic(t: number) {
   return 1 - Math.pow(1 - t, 3)
 }
@@ -38,7 +51,7 @@ function easeOutCubic(t: number) {
  * the place, down to a low angle where the relief reads. Then hands control
  * to the visitor, with a slow drift until they touch it.
  */
-function CameraRig({ siteId, aspect, peak }: { siteId: string; aspect: number; peak: number }) {
+function CameraRig({ siteId, aspect, peak, shot }: { siteId: string; aspect: number; peak: number; shot: number | null }) {
   const { camera } = useThree()
   const controls = useRef<OrbitControlsImpl | null>(null)
   const start = useRef(0)
@@ -56,9 +69,22 @@ function CameraRig({ siteId, aspect, peak }: { siteId: string; aspect: number; p
     camera.lookAt(target)
   }, [siteId, camera, from, to, target])
 
-  useFrame(() => {
+  const shotTarget = useMemo(() => (shot == null ? null : shotView(shot, aspect, peak)), [shot, aspect, peak])
+
+  useFrame((_, delta) => {
     const c = controls.current
     if (!c) return
+    // Documentary: the camera glides to each chapter's shot; no orbit control.
+    if (shotTarget && done.current) {
+      c.enabled = false
+      c.autoRotate = false
+      const k = reduced.current ? 1 : Math.min(delta * 0.9, 1)
+      camera.position.lerp(shotTarget, k)
+      c.target.lerp(target, k)
+      c.update()
+      return
+    }
+    if (!shotTarget && done.current && !c.enabled) c.enabled = true
     if (!done.current) {
       const t = reduced.current ? 1 : Math.min((performance.now() - start.current) / 2600, 1)
       camera.position.lerpVectors(from, to, easeOutCubic(t))
@@ -124,7 +150,7 @@ function Sun() {
   )
 }
 
-export function StoryScene({ site, assets, overlays, onPick, exaggeration }: StorySceneProps) {
+export function StoryScene({ site, assets, overlays, onPick, exaggeration, shot = null }: StorySceneProps) {
   const [west, south, east, north] = site.bbox
   const midLat = ((south + north) / 2) * (Math.PI / 180)
   const widthMetres = Math.abs(east - west) * 111_320 * Math.cos(midLat)
@@ -158,7 +184,7 @@ export function StoryScene({ site, assets, overlays, onPick, exaggeration }: Sto
           aspect={aspect}
         />
       </group>
-      <CameraRig siteId={site.id} aspect={aspect} peak={peak} />
+      <CameraRig siteId={site.id} aspect={aspect} peak={peak} shot={shot} />
     </Canvas>
   )
 }
