@@ -279,3 +279,25 @@ def test_water_area_dispatch_when_downloaded(fake_sources, monkeypatch, tmp_path
     assert calls["bundle"].name == "lake_mead_water"
     assert "water_area" in result.series and "appeears_water" in result.sources
     assert "water_area" not in gather_site_series(ALETSCH, load_catalog(), 2003, 2024).series
+
+
+def test_local_netcdf_sources_never_overlap_with_the_pool(fake_sources, monkeypatch):
+    """netCDF4/HDF5 is not thread-safe: AppEEARS reads start only after GRACE is done."""
+    import threading
+
+    grace_done = threading.Event()
+    seen = {}
+
+    def slow_grace(bbox, start, end, **_):
+        grace_done.set()
+        return monthly("2002-04-01", "2025-06-01", name="grace_tws")
+
+    def check_appeears(site_id, **_):
+        seen["grace_done_first"] = grace_done.is_set()
+        seen["thread"] = threading.current_thread() is threading.main_thread()
+        return {}
+
+    monkeypatch.setattr(grace, "fetch_grace_series", slow_grace)
+    monkeypatch.setattr(appeears, "fetch_site_series", check_appeears)
+    gather_site_series(LAKE, load_catalog(), 2003, 2024)
+    assert seen == {"grace_done_first": True, "thread": True}

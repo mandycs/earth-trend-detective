@@ -11,7 +11,7 @@ import pytest
 
 from app.catalog import load_catalog
 from app.extractors import appeears as ae
-from tests.nc_synth import write_layer
+from tests.nc_synth import write_layer, write_lst
 
 FIXTURE = Path(__file__).parent / "fixtures" / "appeears_stats_lst_snow.csv"
 ALETSCH_BBOX = (7.95, 46.38, 8.15, 46.56)
@@ -38,7 +38,7 @@ def test_open_layer_decodes_julian_time_scale_and_fill(tmp_path, catalog):
     times = pd.date_range("2003-01-01", periods=4, freq="8D")
     k = np.full((4, 3, 2), 300.0)
     k[0, 0, 0] = np.nan  # fill (0)
-    write_layer(tmp_path / "MOD11A2.061_1km_aid0001.nc", "LST_Day_1km", k, times, ALETSCH_BBOX, "uint16", 0, 0.02)
+    write_lst(tmp_path / "MOD11A2.061_1km_aid0001.nc", k, times, ALETSCH_BBOX)
     da = ae.open_layer(tmp_path, "LST_Day_1km")
     assert isinstance(da.indexes["time"], pd.DatetimeIndex)
     assert list(da["time"].values) == list(times.values)
@@ -183,3 +183,63 @@ def test_chunked_tasks_get_their_own_folder(tmp_path):
     assert ae.bundle_dest(tmp_path, rec("aletsch@2009-2014", "aletsch", "t")) == tmp_path / "aletsch" / "2009-2014"
     assert ae.bundle_dest(tmp_path, rec("donana", "donana", "t")) == tmp_path / "donana"
     assert ae.story_site("lake_mead_water") == "lake_mead"
+
+
+# --------------------------------------------------------------------------- real-bundle regressions
+
+
+QC_ONLY_CSV = """File,aid,Date,2,17,33,49,65,81,97,113,129,145
+QC_Day_2002361_aid0001,aid0001,2002-12-27 00:00:00+00:00,6.0,3307.0,,,555.0,2917.0,,,,
+QC_Day_2003001_aid0001,aid0001,2003-01-01 00:00:00+00:00,16.0,5211.0,,,540.0,915.0,,,,
+"""
+QC_LOOKUP_CSV = """Value,MODLAND,Data Quality flag,Emis Error flag,LST Error Flag
+2,LST not produced due to cloud effects,Good data quality,Average emissivity error <= 0.01,Average LST error <= 1K
+"""
+
+
+def lst_bundle(bundle: Path, kelvin: np.ndarray, times: pd.DatetimeIndex, qc=None) -> Path:
+    bundle.mkdir(parents=True, exist_ok=True)
+    (bundle / "MOD11A2-061-QC-Day-Statistics-QA.csv").write_text(QC_ONLY_CSV)
+    (bundle / "MOD11A2-061-QC-Day-lookup.csv").write_text(QC_LOOKUP_CSV)
+    return write_lst(bundle / "MOD11A2.061_1km_aid0001.nc", kelvin, times, (-114.9, 35.9, -114.0, 36.6), qc)
+
+
+def test_qc_only_csv_bundle_reads_lst_from_netcdf(tmp_path, catalog):
+    """Real lake_mead bundle shape: QC statistics CSV next to the NetCDF -> no KeyError."""
+    times = pd.date_range("2002-12-27", "2003-03-31", freq="8D")
+    lst_bundle(tmp_path / "lake_mead", np.full((len(times), 4, 4), 310.15), times)
+    assert ae.stats_csvs(tmp_path / "lake_mead") == []
+    assert ae.parse_bundle(tmp_path / "lake_mead", list(catalog)) == {}
+    series = ae.fetch_site_series("lake_mead", cache_dir=tmp_path, catalog=catalog)
+    assert series["lst_day"][pd.Timestamp("2003-02-01")] == pytest.approx(37.0, abs=0.01)
+
+
+def test_lst_qc_filter_drops_large_error_pixels(tmp_path, catalog):
+    times = pd.date_range("2003-01-01", periods=3, freq="8D")
+    k = np.full((3, 2, 2), 300.15)
+    k[:, 0, 0] = 350.15  # bad pixel ...
+    qc = np.zeros((3, 2, 2), dtype=int)
+    qc[:, 0, 0] = 129  # ... flagged LST error > 2 K
+    qc[:, 0, 1] = 65  # other quality, error <= 2 K -> kept
+    lst_bundle(tmp_path, k, times, qc)
+    units = ae.load_layer_units(tmp_path, var(catalog, "lst_day"))
+    assert np.isnan(units.values[:, 0, 0]).all()
+    assert np.isfinite(units.values[:, 1:, :]).all() and np.isfinite(units.values[:, 0, 1]).all()
+    assert ae.lst_qc_good(np.array([np.nan, 0, 17, 65, 129, 145, 2])).tolist() == [True, True, True, True, False, False, False]
+
+
+def test_netcdf_preferred_over_matching_stats_csv(tmp_path, catalog):
+    times = pd.date_range("2003-01-01", "2003-01-31", freq="8D")
+    bundle = tmp_path / "lake_mead"
+    lst_bundle(bundle, np.full((len(times), 3, 3), 283.15), times)
+    shutil.copy(FIXTURE, bundle / "MOD11A2-061-Statistics.csv")  # says ~1-2 °C in Jan 2003
+    series = ae.fetch_site_series("lake_mead", cache_dir=tmp_path, catalog=catalog)
+    assert series["lst_day"][pd.Timestamp("2003-01-01")] == pytest.approx(10.0, abs=0.01)
+
+
+def test_stats_csv_fallback_when_no_netcdf_layer(tmp_path, catalog):
+    bundle = tmp_path / "lake_mead"
+    bundle.mkdir()
+    shutil.copy(FIXTURE, bundle / "MOD11A2-061-Statistics.csv")
+    series = ae.fetch_site_series("lake_mead", cache_dir=tmp_path, catalog=catalog)
+    assert series["lst_day"][pd.Timestamp("2003-01-01")] == pytest.approx(1.0, abs=0.01)

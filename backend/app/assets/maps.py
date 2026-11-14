@@ -221,13 +221,12 @@ class Grid:
 
 
 def load_monthly_grid(bundle_dir: Path, var: Variable) -> Grid | None:
-    da = appeears.open_layer(bundle_dir, var.band)
-    if da is None:
+    units = appeears.load_layer_units(bundle_dir, var)  # flags masked, QC-filtered
+    if units is None:
         return None
-    units = appeears.layer_to_units(da, var)
     min_frac = appeears.SNOW_MIN_VALID_FRACTION if var.band == appeears.SNOW_BAND else 0.0
     times, monthly = appeears.monthly_grid(units, min_valid_fraction=min_frac)
-    return Grid(times, monthly, np.asarray(da["lat"].values), np.asarray(da["lon"].values))
+    return Grid(times, monthly, np.asarray(units["lat"].values), np.asarray(units["lon"].values))
 
 
 def write_variable_maps(

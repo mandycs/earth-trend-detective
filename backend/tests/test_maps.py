@@ -14,7 +14,7 @@ from PIL import Image
 from app.assets import maps
 from app.catalog import load_catalog
 from app.extractors import water
-from tests.nc_synth import write_layer, trend_cube
+from tests.nc_synth import trend_cube, write_layer, write_lst
 
 LAKE_BBOX = (-114.9, 35.9, -114.0, 36.6)
 NY, NX = 8, 10
@@ -27,12 +27,14 @@ def lake_env(tmp_path):
     sites = tmp_path / "sites"
     (sites / "lake_mead").mkdir(parents=True)
     Image.new("RGB", BASE_SIZE).save(sites / "lake_mead" / "base.jpg")
-    times = pd.date_range("2003-01-01", "2024-12-31", freq="8D")
+    times = pd.date_range("2002-12-27", "2024-12-31", freq="8D")  # real file starts 2002-12-27
     slope = np.zeros((NY, NX))
     slope[:, : NX // 2] = 0.15  # west half warms 1.5 °C/decade, east half flat
     kelvin = trend_cube(times, NY, NX, base=300.0, slope_per_year=slope, amp=10.0, noise=0.8)
     kelvin[:, 0, -1] = np.nan  # never observed -> transparent
-    write_layer(cache / "lake_mead" / "MOD11A2.061_1km_aid0001.nc", "LST_Day_1km", kelvin, times, LAKE_BBOX, "uint16", 0, 0.02)
+    qc = np.where(np.isfinite(kelvin), 0, 2)
+    qc[:, -1, :] = 129  # LST error > 2 K on the southern row -> dropped by QC
+    write_lst(cache / "lake_mead" / "MOD11A2.061_1km_aid0001.nc", kelvin, times, LAKE_BBOX, qc)
     return cache, sites
 
 
@@ -52,6 +54,7 @@ def test_trend_png_sign_colours_and_faded_pixels(lake_env):
     assert west[3] == maps.ALPHA_SIGNIFICANT
     assert east[3] == maps.ALPHA_FADED  # flat + noise -> not significant, drawn faded
     assert img[0, -1, 3] == 0  # no data -> transparent
+    assert img[-1, img.shape[1] // 8, 3] == 0  # QC-rejected row -> transparent
     meta = json.loads((site / "trend_lst_day.json").read_text())
     assert meta["vmin"] == -meta["vmax"] and 1.2 < meta["vmax"] < 2.0
     assert meta["unit"] == "°C per decade" and meta["colormap"] == "RdBu_r"

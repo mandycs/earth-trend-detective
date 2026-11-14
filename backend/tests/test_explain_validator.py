@@ -50,9 +50,9 @@ def test_accepts_rounded_percentage(report, pct):
 
 
 def test_rejects_invented_number(report):
-    result = validate_narrative(GOOD.replace("6.5 cm", "9 cm"), report)
+    result = validate_narrative(GOOD.replace("6.5 cm", "37 cm"), report)
     assert kinds(result) == ["number"]
-    assert "'9'" in result.rejected[0].detail
+    assert "'37'" in result.rejected[0].detail
 
 
 def test_rejects_unit_conversion(report):

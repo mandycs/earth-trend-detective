@@ -24,8 +24,12 @@
       2373.0
     ],
     "base": "base.jpg",
-    "trend": {},
-    "yearly": {}
+    "trend": {
+      "lst_day": "trend_lst_day.png"
+    },
+    "yearly": {
+      "lst_day": "year_lst_day_{YYYY}.png"
+    }
   },
   "variables": [
     {
@@ -36,7 +40,7 @@
       "ci_low": -9.59,
       "ci_high": -3.62,
       "p_value": 0.000212,
-      "q_value": 0.000849,
+      "q_value": 0.000955,
       "verdict": "real",
       "direction": "down",
       "years_needed": null,
@@ -133,7 +137,7 @@
       "ci_low": 0.307,
       "ci_high": 0.907,
       "p_value": 0.000109,
-      "q_value": 0.000849,
+      "q_value": 0.000955,
       "verdict": "real",
       "direction": "up",
       "years_needed": null,
@@ -238,7 +242,7 @@
       "ci_low": -0.209,
       "ci_high": -0.0617,
       "p_value": 0.000367,
-      "q_value": 0.00098,
+      "q_value": 0.0011,
       "verdict": "real",
       "direction": "down",
       "years_needed": null,
@@ -343,7 +347,7 @@
       "ci_low": -0.0682,
       "ci_high": 0.815,
       "p_value": 0.0979,
-      "q_value": 0.167,
+      "q_value": 0.188,
       "verdict": "likely",
       "direction": "up",
       "years_needed": 1,
@@ -441,6 +445,111 @@
       ]
     },
     {
+      "id": "lst_day",
+      "label": "Daytime ground temperature",
+      "unit": "°C",
+      "sen_slope_per_decade": 0.291,
+      "ci_low": -0.139,
+      "ci_high": 0.692,
+      "p_value": 0.189,
+      "q_value": 0.283,
+      "verdict": "unknown",
+      "direction": "flat",
+      "years_needed": 9,
+      "residual_pct_non_climate": null,
+      "badge": "? Can't tell yet",
+      "series": [
+        {
+          "year": 2003,
+          "value": 31.2
+        },
+        {
+          "year": 2004,
+          "value": 31.1
+        },
+        {
+          "year": 2005,
+          "value": 30.4
+        },
+        {
+          "year": 2006,
+          "value": 31.6
+        },
+        {
+          "year": 2007,
+          "value": 32.2
+        },
+        {
+          "year": 2008,
+          "value": 32.0
+        },
+        {
+          "year": 2009,
+          "value": 32.4
+        },
+        {
+          "year": 2010,
+          "value": 31.2
+        },
+        {
+          "year": 2011,
+          "value": 31.3
+        },
+        {
+          "year": 2012,
+          "value": 32.6
+        },
+        {
+          "year": 2013,
+          "value": 32.0
+        },
+        {
+          "year": 2014,
+          "value": 32.9
+        },
+        {
+          "year": 2015,
+          "value": 32.0
+        },
+        {
+          "year": 2016,
+          "value": 31.9
+        },
+        {
+          "year": 2017,
+          "value": 32.8
+        },
+        {
+          "year": 2018,
+          "value": 32.3
+        },
+        {
+          "year": 2019,
+          "value": 30.9
+        },
+        {
+          "year": 2020,
+          "value": 32.9
+        },
+        {
+          "year": 2021,
+          "value": 33.0
+        },
+        {
+          "year": 2022,
+          "value": 31.9
+        },
+        {
+          "year": 2023,
+          "value": 30.5
+        },
+        {
+          "year": 2024,
+          "value": 30.5
+        }
+      ]
+    },
+    {
       "id": "soil_moisture",
       "label": "Topsoil moisture",
       "unit": "kg/m²",
@@ -448,7 +557,7 @@
       "ci_low": -0.8,
       "ci_high": 0.07,
       "p_value": 0.104,
-      "q_value": 0.167,
+      "q_value": 0.188,
       "verdict": "unknown",
       "direction": "flat",
       "years_needed": 14,
@@ -554,7 +663,7 @@
       "ci_low": -0.154,
       "ci_high": 0.05,
       "p_value": 0.345,
-      "q_value": 0.4,
+      "q_value": 0.394,
       "verdict": "unknown",
       "direction": "flat",
       "years_needed": 18,
@@ -659,7 +768,7 @@
       "ci_low": -0.00149,
       "ci_high": 0.000468,
       "p_value": 0.35,
-      "q_value": 0.4,
+      "q_value": 0.394,
       "verdict": "unknown",
       "direction": "flat",
       "years_needed": null,
@@ -864,7 +973,6 @@
     }
   ],
   "missing": {
-    "lst_day": "We could not read the satellite data downloaded from NASA AppEEARS. Try again later.",
     "water_area": "Satellite data still being processed by NASA AppEEARS. Check back later."
   },
   "steps": [
@@ -886,6 +994,10 @@
     {
       "title": "NASA POWER monthly climate (MERRA-2, IMERG, CERES)",
       "url": "https://power.larc.nasa.gov"
+    },
+    {
+      "title": "MODIS land products via NASA AppEEARS",
+      "url": "https://appeears.earthdatacloud.nasa.gov"
     },
     {
       "title": "GLDAS Noah 0.25° monthly v2.1 (NASA GES DISC)",

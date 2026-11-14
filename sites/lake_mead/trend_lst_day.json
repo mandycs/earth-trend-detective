@@ -1,0 +1,39 @@
+{
+  "var": "lst_day",
+  "label": "Daytime ground temperature",
+  "kind": "trend",
+  "unit": "°C per decade",
+  "vmin": -1.634,
+  "vmax": 1.634,
+  "colormap": "RdBu_r",
+  "stops": [
+    "#053061",
+    "#2a71b2",
+    "#6bacd1",
+    "#c2ddec",
+    "#f7f6f6",
+    "#fbccb4",
+    "#e48066",
+    "#ba2832",
+    "#67001f"
+  ],
+  "legend": {
+    "more": "↑ more heat (warmer ground)",
+    "less": "↓ less heat (cooler ground)",
+    "faded": "Faded = not statistically significant (Mann-Kendall p ≥ 0.05)",
+    "transparent": "Transparent = not enough data"
+  },
+  "alpha": {
+    "significant": 230,
+    "faded": 70
+  },
+  "years": [
+    2003,
+    2024
+  ],
+  "pixels": 9072,
+  "share_significant": 0.1159,
+  "share_up": 0.8839,
+  "method": "Per pixel: Sen slope and Mann-Kendall S on annual means of deseasonalized monthly anomalies.",
+  "source": "MOD11A2.061"
+}

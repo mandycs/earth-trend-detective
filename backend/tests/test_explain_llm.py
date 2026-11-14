@@ -28,13 +28,13 @@ def test_good_llm_text_is_returned():
 
 
 def test_retry_with_errors_then_success():
-    bad = GOOD.replace("6.5 cm", "9 cm")
+    bad = GOOD.replace("6.5 cm", "37 cm")
     client = fake_client(bad, GOOD)
     result = explain_report(lake_mead_report(), AnthropicLLM(client))
     assert result.source == "llm"
     assert len(result.attempts) == 1
     retry_prompt = client.beta.messages.create.call_args_list[1].kwargs["messages"][0]["content"]
-    assert "was rejected" in retry_prompt and "'9' is not a number in the report" in retry_prompt
+    assert "was rejected" in retry_prompt and "'37' is not a number in the report" in retry_prompt
 
 
 def test_two_bad_drafts_fall_back_to_template():

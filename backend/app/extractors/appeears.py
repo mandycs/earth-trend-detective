@@ -229,10 +229,27 @@ def parse_stats_csv(path: Path, variables: Sequence[Variable]) -> dict[str, pd.S
     return result
 
 
-def parse_bundle(bundle_dir: Path, variables: Sequence[Variable]) -> dict[str, pd.Series]:
-    """Merge every statistics CSV found in a downloaded bundle directory."""
-    parts: dict[str, list[pd.Series]] = {}
+STATS_COLUMNS = frozenset({"Dataset", "Date", "Mean"})
+
+
+def stats_csvs(bundle_dir: Path) -> list[Path]:
+    """Layer statistics CSVs of a bundle; QC/QA statistics and lookup tables are skipped."""
+    found = []
     for csv in sorted(bundle_dir.rglob("*Statistics*.csv")):
+        if "-QA" in csv.stem or "lookup" in csv.stem.lower():
+            continue
+        header = {c.strip() for c in pd.read_csv(csv, nrows=0).columns}
+        if STATS_COLUMNS <= header:
+            found.append(csv)
+        else:
+            logger.info("skip %s: not a layer statistics CSV", csv.name)
+    return found
+
+
+def parse_bundle(bundle_dir: Path, variables: Sequence[Variable]) -> dict[str, pd.Series]:
+    """Merge every layer statistics CSV found in a downloaded bundle directory."""
+    parts: dict[str, list[pd.Series]] = {}
+    for csv in stats_csvs(bundle_dir):
         for var_id, series in parse_stats_csv(csv, variables).items():
             parts.setdefault(var_id, []).append(series)
     result: dict[str, pd.Series] = {}
@@ -348,18 +365,23 @@ def fetch_site_series(
     site = next(s for s in load_sites() if s.id == site_id)
     variables = appeears_variables(cat, site)
     bundle = cache_dir / site_id
-    result = parse_bundle(bundle, variables)
+    result: dict[str, pd.Series] = {}
+    from_csv = [v for v in variables if v.band not in _nc_bands(bundle)]
     for var in variables:
-        if var.band != SNOW_BAND:
+        if var in from_csv:
             continue
-        pixel = snow_cover_monthly(bundle)
-        if pixel is not None and pixel.notna().any():
-            logger.info("%s: snow_cover from pixel-wise MOD10A1 NetCDF (%d months)", site_id, pixel.notna().sum())
-            result = {**result, var.id: pixel.rename(var.id)}
-        elif var.id in result:
-            logger.info("%s: snow_cover from stats CSV (no MOD10A1 NetCDF)", site_id)
+        series = area_monthly_series(bundle, var)
+        if series is not None and series.notna().any():
+            logger.info("%s/%s: from NetCDF, pixel-wise (%d months)", site_id, var.id, series.notna().sum())
+            result = {**result, var.id: series.rename(var.id)}
+        else:
+            from_csv.append(var)
+    if from_csv:
+        csv = parse_bundle(bundle, from_csv)
+        logger.info("%s: stats-CSV fallback for %s", site_id, sorted(csv))
+        result = {**result, **csv}
     check_units(result)
-    return result
+    return {v.id: result[v.id] for v in variables if v.id in result}
 
 
 def check_units(series: Mapping[str, pd.Series]) -> list[str]:
@@ -389,6 +411,14 @@ def nc_times(values: np.ndarray) -> pd.DatetimeIndex:
 
 def _nc_files(bundle_dir: Path) -> list[Path]:
     return sorted(p for p in bundle_dir.rglob("*.nc") if p.is_file()) if bundle_dir.is_dir() else []
+
+
+def _nc_bands(bundle_dir: Path) -> set[str]:
+    bands: set[str] = set()
+    for path in _nc_files(bundle_dir):
+        with xr.open_dataset(path, decode_cf=False) as ds:
+            bands |= set(ds.data_vars)
+    return bands
 
 
 def open_layer(bundle_dir: Path, band: str) -> xr.DataArray | None:
@@ -428,6 +458,71 @@ def layer_to_units(da: xr.DataArray, var: Variable) -> xr.DataArray:
     return values + var.offset
 
 
+# QC layer that ships with a layer in the same AppEEARS NetCDF, and its good-pixel test.
+QC_LAYERS: Mapping[str, str] = {"LST_Day_1km": "QC_Day"}
+MAX_LST_ERROR_CODE = 1  # QC bits 6-7: 0 = LST error <= 1 K, 1 = <= 2 K
+
+
+def lst_qc_good(qc: np.ndarray) -> np.ndarray:
+    """MOD11 QC: keep MODLAND 00 (good) and 01 (other) with LST error <= 2 K.
+
+    AppEEARS declares `_FillValue = 0` on QC_Day, but 0 is also "good quality, all
+    bits zero", so xarray turns the best pixels into NaN: NaN is read back as 0 here
+    (where LST itself is fill, the LST mask already drops the pixel).
+    """
+    q = np.nan_to_num(np.asarray(qc, dtype=float), nan=0.0).astype(np.int64)
+    mandatory = q & 0b11
+    lst_error = (q >> 6) & 0b11
+    return (mandatory == 0) | ((mandatory == 1) & (lst_error <= MAX_LST_ERROR_CODE))
+
+
+def load_layer_units(bundle_dir: Path, var: Variable) -> xr.DataArray | None:
+    """Layer in catalog units, flags masked and (when its QC layer is there) QC-filtered."""
+    da = open_layer(bundle_dir, var.band)
+    if da is None:
+        return None
+    units = layer_to_units(da, var)
+    qc_band = QC_LAYERS.get(var.band)
+    qc = open_layer(bundle_dir, qc_band) if qc_band else None
+    if qc is not None and qc.shape == da.shape:
+        good = lst_qc_good(qc.values)
+        logger.info("%s: QC keeps %.0f%% of valid pixels", var.band, 100 * good[np.isfinite(units.values)].mean())
+        units = units.where(good)
+    return units
+
+
+def area_monthly(units: xr.DataArray, min_valid_fraction: float) -> pd.Series:
+    """Monthly mean over all valid pixel-observations of the month (site area mean).
+
+    NaN when the valid pixel-observations are below `min_valid_fraction` of all of them.
+    """
+    flat = np.asarray(units.values, dtype=float).reshape(units.shape[0], -1)
+    frame = pd.DataFrame(
+        {"sum": np.nansum(flat, axis=1), "valid": np.isfinite(flat).sum(axis=1), "total": flat.shape[1]},
+        index=pd.DatetimeIndex(units["time"].values),
+    )
+    monthly = frame.resample("MS").sum()
+    with np.errstate(invalid="ignore", divide="ignore"):
+        value = monthly["sum"] / monthly["valid"]
+    ok = (monthly["total"] > 0) & (monthly["valid"] > 0) & (monthly["valid"] >= min_valid_fraction * monthly["total"])
+    return value.where(ok)
+
+
+MIN_VALID_FRACTION = 0.1  # non-snow layers: share of valid pixel-observations a month needs
+
+
+def min_valid_fraction(var: Variable) -> float:
+    return SNOW_MIN_VALID_FRACTION if var.band == SNOW_BAND else MIN_VALID_FRACTION
+
+
+def area_monthly_series(bundle_dir: Path, var: Variable) -> pd.Series | None:
+    """Site-mean monthly series of `var` from the bundle NetCDF, or None if absent."""
+    units = load_layer_units(bundle_dir, var)
+    if units is None:
+        return None
+    return area_monthly(units, min_valid_fraction(var)).rename(var.id)
+
+
 def monthly_grid(
     da: xr.DataArray, min_valid_fraction: float = 0.0
 ) -> tuple[pd.DatetimeIndex, np.ndarray]:
@@ -463,19 +558,8 @@ def snow_cover_monthly(
     da = open_layer(bundle_dir, SNOW_BAND)
     if da is None:
         return None
-    data = np.asarray(da.values, dtype=float)
-    data = np.where((data >= 0) & (data <= 100), data, np.nan)
-    times = pd.DatetimeIndex(da["time"].values)
-    flat = data.reshape(data.shape[0], -1)
-    frame = pd.DataFrame(
-        {"sum": np.nansum(flat, axis=1), "valid": np.isfinite(flat).sum(axis=1), "total": flat.shape[1]},
-        index=times,
-    )
-    monthly = frame.resample("MS").sum()
-    with np.errstate(invalid="ignore", divide="ignore"):
-        value = monthly["sum"] / monthly["valid"]
-    ok = (monthly["total"] > 0) & (monthly["valid"] >= min_valid_fraction * monthly["total"])
-    return value.where(ok).rename("snow_cover")
+    units = da.astype(float).where((da >= 0) & (da <= 100))
+    return area_monthly(units, min_valid_fraction).rename("snow_cover")
 
 
 # --------------------------------------------------------------------------- CLI

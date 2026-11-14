@@ -187,6 +187,10 @@ FETCHERS: Mapping[str, Fetcher] = MappingProxyType(
 )
 
 
+# Sources read from local NetCDF bundles; kept out of the thread pool (HDF5 not thread-safe).
+LOCAL_NETCDF_SOURCES = frozenset({"appeears", "appeears_water"})
+
+
 # --------------------------------------------------------------------------- helpers
 
 
@@ -287,12 +291,18 @@ def gather_site_series(
         )
 
     jobs = {s: tuple(vs) for s, vs in by_source.items() if s in FETCHERS}
-    with ThreadPoolExecutor(max_workers=max(1, len(jobs))) as pool:
+    remote = {s: vs for s, vs in jobs.items() if s not in LOCAL_NETCDF_SOURCES}
+    with ThreadPoolExecutor(max_workers=max(1, len(remote))) as pool:
         futures = {
             s: pool.submit(_run_source, s, site, vs, catalog, start, end)
-            for s, vs in jobs.items()
+            for s, vs in remote.items()
         }
         outcomes = {s: f.result() for s, f in futures.items()}
+    # Local AppEEARS NetCDF reads run after the pool, one at a time: netCDF4/HDF5 is
+    # not thread-safe ("NetCDF: Can't open HDF5 attribute" next to the GRACE read).
+    for s, vs in jobs.items():
+        if s in LOCAL_NETCDF_SOURCES:
+            outcomes[s] = _run_source(s, site, vs, catalog, start, end)
 
     contributing: list[str] = []
     for source in jobs:
