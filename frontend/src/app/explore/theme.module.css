@@ -2,7 +2,7 @@
    These aliases keep the explore module's variable names working. */
 .theme {
   --muted: var(--ink-2);
-  --on-accent: #14120a;
+  --on-accent: var(--ground);
   --up: var(--warm);
   --down: var(--cool);
   min-height: 100dvh;

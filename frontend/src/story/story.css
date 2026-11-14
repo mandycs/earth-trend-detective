@@ -1198,18 +1198,19 @@
 }
 
 .lp-chip-analysed {
-  background: var(--accent);
-  color: var(--on-accent);
+  background: var(--ink);
+  color: var(--ground);
 }
 
 .lp-chip-observed {
-  background: #b9d7f0;
-  color: #0d2233;
+  box-shadow: inset 0 0 0 2px var(--ink); /* taste-skill-ignore: outline chip, not a shadow */
+  color: var(--ink);
 }
 
 .lp-chip-visual_only {
-  background: var(--surface-3);
-  color: var(--ink);
+  outline: 2px dashed var(--ink-3);
+  outline-offset: -2px;
+  color: var(--ink-2);
 }
 
 .lp-year {
@@ -1412,5 +1413,567 @@
 @media (max-width: 480px) {
   .st-explore-last {
     display: none;
+  }
+}
+
+/* ----------------------------------------------------- documentary mode */
+
+.st-documentary .st-bar,
+.st-documentary .sp,
+.st-documentary .tl,
+.st-documentary .lp,
+.st-documentary .st-yearcard,
+.st-documentary .st-drone-toggle,
+.st-documentary .st-relief,
+.st-documentary .st-identify-card,
+.st-documentary .st-loading {
+  display: none !important;
+}
+
+.st-documentary .st-stage {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.st-documentary .st-canvas {
+  flex: 1;
+  height: 100dvh;
+  min-height: 100dvh;
+}
+
+.doc {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  color: #fff;
+}
+
+.doc > * {
+  pointer-events: auto;
+}
+
+.doc::after {
+  /* Subtitle scrim: bottom fade only (DESIGN.md). */
+  content: '';
+  position: absolute;
+  inset: auto 0 0;
+  height: 48%;
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0)); /* taste-skill-ignore: neutral scrim over a photograph (DESIGN.md) */
+  pointer-events: none;
+}
+
+.doc-top {
+  position: absolute;
+  inset: 16px var(--gutter) auto;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: start;
+  gap: 16px;
+}
+
+.doc-wordmark {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  font-weight: 800;
+  font-size: 1rem;
+  text-decoration: none;
+  color: #fff;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.5); /* taste-skill-ignore: scrim under text on a photo */
+}
+
+.doc-chapters {
+  display: flex;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.doc-chapter {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase; /* taste-skill-ignore: chapter names and keys, uppercase by DESIGN.md */
+  color: rgba(255, 255, 255, 0.6);
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.6); /* taste-skill-ignore: scrim under text on a photo */
+  transition: color 200ms var(--ease);
+}
+
+.doc-chapter:hover,
+.doc-chapter-on {
+  color: #fff;
+}
+
+.doc-chapter-on {
+  box-shadow: inset 0 -2px 0 #fff; /* taste-skill-ignore: underline marker, not a shadow */
+}
+
+.doc-year {
+  justify-self: end;
+  font-size: clamp(2.4rem, 4.6vw, 4rem);
+  font-weight: 850;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.94);
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.5); /* taste-skill-ignore: scrim under text on a photo */
+}
+
+.doc-sub {
+  position: absolute;
+  left: 50%;
+  bottom: 130px;
+  z-index: 1;
+  width: min(70%, 980px);
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  animation: docfade 600ms var(--ease-out) both;
+}
+
+@keyframes docfade {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.doc-place {
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase; /* taste-skill-ignore: chapter names and keys, uppercase by DESIGN.md */
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.doc-headline {
+  font-size: clamp(2.2rem, 4.4vw, 3.8rem);
+  font-weight: 850;
+  line-height: 1;
+  letter-spacing: -0.01em;
+}
+
+.doc-line {
+  max-width: 60ch;
+  font-size: clamp(1.05rem, 1.4vw, 1.3rem);
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.doc-bottom {
+  position: absolute;
+  left: 15%;
+  right: 15%;
+  bottom: 24px;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.doc-progress {
+  position: relative;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.doc-progress i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: #fff;
+}
+
+.doc-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.doc-quiet {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 600;
+}
+
+.doc-quiet:hover {
+  color: #fff;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+@media (max-width: 720px) {
+  .doc-top {
+    grid-template-columns: 1fr auto;
+  }
+  .doc-chapters {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-content: center;
+  }
+  .doc-chapter {
+    padding: 0 6px;
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
+  }
+  .doc-sub {
+    width: calc(100% - 32px);
+    bottom: 150px;
+  }
+  .doc-bottom {
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+  }
+  .doc-controls {
+    flex-wrap: wrap;
+  }
+}
+
+.doc::before {
+  /* Top fade so chapter names and the year read over a bright sky. */
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 22%;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0)); /* taste-skill-ignore: neutral scrim over a photograph (DESIGN.md) */
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------ curtain */
+
+.curtain {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.curtain-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: #fff;
+}
+
+.curtain-handle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  transform: translate(-50%, -50%);
+  background: var(--ink);
+  color: var(--ground);
+  font-weight: 800;
+  cursor: ew-resize;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.curtain-label {
+  position: absolute;
+  top: 50%;
+  margin-top: 34px;
+  padding: 4px 10px;
+  background: rgba(14, 16, 18, 0.8);
+  color: #fff;
+  font-weight: 600;
+  font-size: 1rem;
+  white-space: nowrap;
+}
+
+.curtain-left {
+  margin-right: 10px;
+}
+
+.curtain-right {
+  margin-left: 10px;
+}
+
+.curtain-still .curtain-label {
+  top: 40%;
+  font-family: var(--font-display);
+  font-stretch: 75%;
+  font-weight: 850;
+  font-size: clamp(2rem, 3.4vw, 3rem);
+  background: transparent;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.7); /* taste-skill-ignore: scrim under text on a photo */
+}
+
+.lp-compare {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--ink-2);
+}
+
+.lp-compare select {
+  min-height: 44px;
+  padding: 0 10px;
+  border: 0;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 1rem;
+}
+
+/* ---------------------------------------------- instrument (free) mode */
+
+.curtain-still .curtain-line {
+  /* Stop above the documentary subtitle block. */
+  bottom: 300px;
+  mask-image: linear-gradient(180deg, #000 80%, transparent); /* taste-skill-ignore: fades a divider line, not a fill */
+}
+
+.lp-notice {
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+.sp-tabs {
+  background: transparent;
+  gap: 12px;
+}
+
+.sp-tab,
+.sp-tab:hover {
+  min-height: 52px;
+  background: transparent;
+  box-shadow: inset 0 2px 0 var(--line); /* taste-skill-ignore: stepper track, not a shadow */
+  color: var(--ink-3);
+  font-size: 0.95rem;
+  text-align: left;
+  padding: 10px 0 6px;
+}
+
+.sp-tab:hover {
+  color: var(--ink);
+}
+
+.sp-tab-on,
+.sp-tab-on:hover {
+  background: transparent;
+  color: var(--ink);
+  box-shadow: inset 0 2px 0 var(--ink); /* taste-skill-ignore: stepper track, not a shadow */
+}
+
+.ev-range-value strong,
+.sp-check-r,
+.tl-value {
+  font-family: var(--font-ui);
+  font-stretch: 100%;
+  font-weight: 300;
+}
+
+@media (min-width: 1101px) {
+  .st:not(.st-documentary) .st-stage {
+    position: relative;
+    display: block;
+  }
+
+  .st:not(.st-documentary) .st-viewer {
+    height: 100%;
+  }
+
+  /* Left scrim: the reading side of the map. */
+  .st:not(.st-documentary) .st-canvas::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(90deg, rgba(14, 16, 18, 0.94) 0%, rgba(14, 16, 18, 0.8) 30%, rgba(14, 16, 18, 0.45) 40%, rgba(14, 16, 18, 0) 60%); /* taste-skill-ignore: neutral scrim over a photograph (DESIGN.md) */
+    pointer-events: none;
+  }
+
+  .st:not(.st-documentary) .sp {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 126px;
+    z-index: 3;
+    width: 38%;
+    min-width: 420px;
+    max-width: 600px;
+    background: transparent;
+  }
+
+  .st:not(.st-documentary) .sp-tabs,
+  .st:not(.st-documentary) .sp-foot {
+    background: transparent;
+  }
+
+  .st:not(.st-documentary) .sp-head {
+    padding-top: 28px;
+  }
+
+  .st:not(.st-documentary) .lp {
+    left: auto;
+    right: 16px;
+  }
+
+  .st:not(.st-documentary) .st-identify-card {
+    top: auto;
+    bottom: calc(16px);
+    right: 16px;
+  }
+}
+
+@media (min-width: 1101px) {
+  .st:not(.st-documentary) .sp-foot {
+    position: static;
+  }
+}
+
+@media (min-width: 1101px) {
+  /* Sticky stepper needs a solid ground so scrolled text does not show through. */
+  .st:not(.st-documentary) .sp-tabs {
+    background: rgba(14, 16, 18, 0.96);
+  }
+
+  /* B's transparent top band over the map. */
+  .st:not(.st-documentary) {
+    position: relative;
+  }
+
+  .st:not(.st-documentary) .st-bar {
+    position: absolute;
+    inset: 0 0 auto;
+    z-index: 6;
+    background: linear-gradient(180deg, rgba(14, 16, 18, 0.94) 0%, rgba(14, 16, 18, 0.8) 60%, rgba(14, 16, 18, 0) 100%); /* taste-skill-ignore: neutral scrim over a photograph (DESIGN.md) */
+    padding-bottom: 22px;
+  }
+
+  .st:not(.st-documentary) .st-stage {
+    height: 100dvh;
+  }
+
+  .st:not(.st-documentary) .sp-head {
+    padding-top: 84px;
+  }
+
+  .st:not(.st-documentary) .st-relief {
+    top: 76px;
+  }
+
+  .st:not(.st-documentary) .st-drone-toggle {
+    top: 126px;
+  }
+
+  .st:not(.st-documentary) .st-drone-on {
+    top: 76px;
+  }
+
+  .st-case,
+  .st-case:hover {
+    background: transparent;
+  }
+
+  .st-case-on,
+  .st-case-on:hover {
+    background: transparent;
+    color: var(--ink);
+    box-shadow: inset 0 -2px 0 var(--ink); /* taste-skill-ignore: underline marker, not a shadow */
+  }
+}
+
+/* ------------------------------------------------ drone: a clean view */
+/* In the drone the ground is the subject: the story panel and its scrim step aside,
+   the flying help leaves after a few seconds and the picture note folds away. */
+.st-in-drone .sp {
+  display: none;
+}
+
+.st-in-drone .st-drone-hud {
+  /* sits above the folded Layers button, which owns the bottom-right corner */
+  inset: auto 16px 72px auto;
+  width: auto;
+  max-width: min(440px, calc(100% - 32px));
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.st-in-drone .st-drone-help {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 10px;
+  padding: 6px 12px;
+  font-size: 0.95rem;
+}
+
+.st-drone-keys {
+  min-height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink-2);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.st-drone-keys:hover {
+  color: var(--ink);
+}
+
+.st-in-drone .st-drone-note {
+  order: -1;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  pointer-events: auto;
+}
+
+.st-in-drone .st-drone-note summary {
+  display: inline-block;
+  padding: 6px 12px;
+  background: var(--ground);
+  color: var(--ink-2);
+  font-size: 0.95rem;
+  cursor: pointer;
+  float: right;
+}
+
+.st-in-drone .st-drone-note[open] summary {
+  color: var(--ink);
+}
+
+.st-in-drone .st-drone-note p {
+  clear: both;
+  margin: 0;
+  padding: 10px 14px;
+  background: var(--ground);
+  color: var(--ink-2);
+  line-height: 1.35;
+}
+
+@media (min-width: 1101px) {
+  .st.st-in-drone .st-canvas::after {
+    display: none;
+  }
+
+  .st.st-in-drone .st-yearcard {
+    top: 76px;
+    max-width: min(520px, calc(100% - 340px));
   }
 }

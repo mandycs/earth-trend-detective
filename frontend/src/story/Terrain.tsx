@@ -9,6 +9,8 @@ export interface TerrainProps {
   base: THREE.Texture
   /** Drawn bottom to top over the base picture; up to MAX_OVERLAYS. */
   overlays: Overlay[]
+  /** Curtain position as a share of the canvas width (0-1). */
+  split?: number
   /** Called with texture coordinates when the visitor clicks the ground (not after a drag). */
   onPick?: (uv: THREE.Vector2) => void
   /** Ground width in metres of the plane's x extent. */
@@ -20,6 +22,8 @@ export interface TerrainProps {
   autoWater?: boolean
   /** Mesh resolution along the width. */
   segments?: number
+  /** Hide the detected water surface (e.g. while then-and-now pictures show the shore). */
+  hideWater?: boolean
 }
 
 /** Depth of the slab under the terrain, as a fraction of the plane width. */
@@ -171,6 +175,8 @@ export interface Overlay {
   blend: 'normal' | 'multiply'
   /** Where this picture sits in the terrain's texture space: [offsetU, offsetV, scaleU, scaleV]. */
   rect?: [number, number, number, number]
+  /** Curtain: -1 draws only left of the split, 1 only right of it, 0 everywhere. */
+  side?: -1 | 0 | 1
 }
 
 export const MAX_OVERLAYS = 4
@@ -249,12 +255,14 @@ export function Terrain({
   grid,
   base,
   overlays,
+  split = 0.5,
   onPick,
   widthMetres,
   exaggeration,
   aspect,
   autoWater = true,
   segments = 512,
+  hideWater = false,
 }: TerrainProps) {
   const uniforms = useRef<Uniforms | null>(null)
   const scale = exaggeration / Math.max(widthMetres, 1)
@@ -265,22 +273,23 @@ export function Terrain({
   const material = useMemo(() => {
     const created = new THREE.MeshStandardMaterial({ map: base, roughness: 0.96, metalness: 0, dithering: true })
     created.onBeforeCompile = (shader) => {
-      const own: Uniforms = { uGround: { value: meanColour(base) } }
+      const own: Uniforms = { uGround: { value: meanColour(base) }, uSplit: { value: 0.5 }, uWidth: { value: 1 } }
       for (const i of SLOTS) {
         own[`uL${i}`] = { value: null }
         own[`uOp${i}`] = { value: 0 }
         own[`uMul${i}`] = { value: 0 }
         own[`uRect${i}`] = { value: new THREE.Vector4(0, 0, 1, 1) }
+        own[`uSide${i}`] = { value: 0 }
       }
       Object.assign(shader.uniforms, own)
       uniforms.current = own
       const declare = SLOTS.map(
-        (i) => `uniform sampler2D uL${i}; uniform float uOp${i}; uniform float uMul${i}; uniform vec4 uRect${i};`,
+        (i) => `uniform sampler2D uL${i}; uniform float uOp${i}; uniform float uMul${i}; uniform vec4 uRect${i}; uniform float uSide${i};`,
       ).join('\n')
       // One block per slot, unrolled, bottom layer first.
       const draw = SLOTS.map(
         (i) => `
-           if ( uOp${i} > 0.001 ) {
+           if ( uOp${i} > 0.001 && !( uSide${i} > 0.5 && gl_FragCoord.x < uSplit * uWidth ) && !( uSide${i} < -0.5 && gl_FragCoord.x >= uSplit * uWidth ) ) {
              vec2 st${i} = uRect${i}.xy + vMapUv * uRect${i}.zw;
              if ( st${i}.x >= 0.0 && st${i}.x <= 1.0 && st${i}.y >= 0.0 && st${i}.y <= 1.0 ) {
                vec4 c${i} = texture2D( uL${i}, st${i} );
@@ -293,7 +302,7 @@ export function Terrain({
            }`,
       ).join('')
       shader.fragmentShader = shader.fragmentShader
-        .replace('#include <common>', `#include <common>\n${declare}\nuniform vec3 uGround;`)
+        .replace('#include <common>', `#include <common>\n${declare}\nuniform vec3 uGround;\nuniform float uSplit;\nuniform float uWidth;`)
         .replace(
           '#include <map_fragment>',
           `vec3 layer = texture2D( map, vMapUv ).rgb;
@@ -331,9 +340,11 @@ export function Terrain({
     [top, sides],
   )
 
-  useFrame(() => {
+  useFrame((state) => {
     const own = uniforms.current
     if (!own) return
+    own.uSplit.value = split
+    own.uWidth.value = state.gl.domElement.width
     for (const i of SLOTS) {
       const o = overlays[i]
       own[`uL${i}`].value = o ? o.texture : null
@@ -341,6 +352,7 @@ export function Terrain({
       own[`uMul${i}`].value = o?.blend === 'multiply' ? 1 : 0
       const r = o?.rect ?? [0, 0, 1, 1]
       ;(own[`uRect${i}`].value as THREE.Vector4).set(r[0], r[1], r[2], r[3])
+      own[`uSide${i}`].value = o?.side ?? 0
     }
   })
 
@@ -357,7 +369,7 @@ export function Terrain({
           onPick(e.uv.clone())
         }}
       />
-      {waterY != null ? (
+      {waterY != null && !hideWater ? (
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, waterY, 0]} receiveShadow>
           <planeGeometry args={[1 - EDGE * 1.6, aspect * (1 - EDGE * 1.6)]} />
           <meshStandardMaterial color="#21465c" roughness={0.12} metalness={0.25} transparent opacity={0.88} />
