@@ -183,6 +183,29 @@ Curated layer catalog by zone (ids checked against GIBS capabilities by the buil
 Record 3–4 real runs (SSE to JSON) — e.g. Doñana, Lake Mead, a surprise point, one that ends
 "can't tell yet" — and a replay mode (`?replay=<id>`) that plays them with real timing. Live run as bonus.
 
+### 5.7 Fit to the challenge text (gaps closed, decided 2026-11-15)
+
+The challenge asks: select variables, acquire them for a region, visualise the time series, rate of change +
+significance; "what, where, how much, significant"; "a variable can trend one way in one region and the
+opposite way in another"; audience high school / college; simple variable definitions; demonstration
+examples to watch; AI that picks data from the region's character (desert, rainforest, tidal estuary, the
+atmosphere above a large city); MODIS, OMI, AIRS, GPM, MERRA-2, GLDAS.
+
+1. **Atmosphere zone** (`city`, `atmosphere` tags): OMI NO₂ / ozone and AIRS (air temperature or CO aloft)
+   as GIBS map layers, and point/box series from GES DISC via OPeNDAP with the Earthdata token (GLDAS
+   pattern). OMI row anomaly (since 2007) stated as a caveat.
+2. **Plain definition for every variable** in `variables.yaml` (`definition`, one sentence, English), shown in
+   the UI next to each result and returned by `list_variables`.
+3. **A time-series chart in every evidence scene** (annual values + Sen line + CI band), not only a figure.
+4. **"Where"**: per-pixel trend map live where the source gives a grid (ERDDAP sea; GIBS yearly values on
+   land), otherwise sub-area comparison.
+5. **`compare` is a star scene, not a cut**: same variable, different direction or certainty in two regions
+   (e.g. sea temperature off the Mar Menor +0.28 °C/decade, real, vs off Málaga +0.10, can't tell yet).
+6. **Message order**: lead with "find what's changing, where, how much, and whether it's real". "Is it the
+   climate, or is it us?" stays as the hook question; **answers never say "this part is human"**: they say
+   "X % not explained by the climate we measured — a clue, not proof", and human suspects are supported only
+   by their own evidence on the board.
+
 ## 6. Statistical honesty (mandatory)
 
 - **Session-wide FDR**: every `trend_test`/`correlate` is logged; the final verdicts shown in the answer and
@@ -228,7 +251,7 @@ Record 3–4 real runs (SSE to JSON) — e.g. Doñana, Lake Mead, a surprise poi
 2. Prompt tuning on 5 test questions (tonight / early morning).
 3. Front detective screen with MapLibre 3D + board (morning).
 4. Recording + replay (by 13:00). **After 13:00 no new features.**
-Cut if late, in order: `compare` → `satellite_picture` → GIBS yearly at any point (keep POWER/GRACE/GLDAS) →
+Cut if late, in order: `satellite_picture` → GIBS yearly at any point (keep POWER/GRACE/GLDAS) →
 3D terrain (flat MapLibre). Never cut: real tool loop, session FDR, validator, case board.
 
 ## 9. Left to the builder
