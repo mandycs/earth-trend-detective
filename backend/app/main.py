@@ -32,7 +32,17 @@ app = FastAPI(title="Earth Trend Detective API", version="0.1.0")
 app.add_middleware(
     CORSMiddleware,
     # Comma-separated list, e.g. "http://localhost:3000,https://earth-trend-detective.example".
-    allow_origins=[o.strip() for o in os.environ.get("CORS_ORIGINS", "http://localhost:3000").split(",") if o.strip()],
+    # The dev server runs on :5180 and is often opened as 127.0.0.1, so both hosts are
+    # allowed by default: without them the narrator, the map sweep and the investigator
+    # fail in the browser with no visible reason. Production must set CORS_ORIGINS.
+    allow_origins=[
+        o.strip()
+        for o in os.environ.get(
+            "CORS_ORIGINS",
+            "http://localhost:3000,http://127.0.0.1:3000,http://localhost:5180,http://127.0.0.1:5180",
+        ).split(",")
+        if o.strip()
+    ],
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
