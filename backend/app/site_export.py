@@ -35,7 +35,14 @@ SITES_DIR = Path(__file__).resolve().parents[2] / "sites"
 PIPELINE_VERSION = "0.1"
 DEFAULT_EXAGGERATION = 3.0
 VERTICAL_EXAGGERATION: Mapping[str, float] = {"lake_mead": 3, "aletsch": 1.5, "donana": 8}
-STEPS = ("What is changing here?", "Is it real or chance?", "Is it the climate?")
+STEPS = ("What is changing here?", "Is it real, or is it chance?", "Is it the climate?")
+COUNTRY: Mapping[str, str] = {"lake_mead": "United States", "aletsch": "Switzerland", "donana": "Spain"}
+MIN_MONTHS_PER_YEAR = 8
+BASE_CAVEATS = ("The leftover share is a clue, not an attribution.",)
+GRACE_CAVEAT = (
+    "Total water stored comes from the GRACE satellites, which see a region about 300 km wide, "
+    "not only this place."
+)
 VARIABLE_FIELDS = (
     "id",
     "label",
@@ -80,12 +87,47 @@ def find_assets(site_dir: Path) -> dict:
     }
 
 
-def variable_rows(report_rows: Sequence[Mapping]) -> list[dict]:
-    """Story-mode variable rows (subset of the sweep row) plus the UX badge."""
-    return [
-        {k: row.get(k) for k in VARIABLE_FIELDS} | {"badge": badge(row["verdict"], row["direction"])}
-        for row in report_rows
-    ]
+def yearly_series(series: pd.Series | None) -> list[dict]:
+    """Calendar-year means for the story sparkline; years with < MIN_MONTHS_PER_YEAR are left out."""
+    if series is None:
+        return []
+    valid = series.dropna()
+    grouped = valid.groupby(valid.index.year)
+    means = grouped.mean()[grouped.count() >= MIN_MONTHS_PER_YEAR]
+    return [{"year": int(y), "value": float(v)} for y, v in means.items()]
+
+
+def _withheld(row: Mapping) -> str | None:
+    residual = row.get("residual") or {}
+    return residual.get("withheld_reason")
+
+
+def variable_rows(
+    report_rows: Sequence[Mapping], series: Mapping[str, pd.Series] | None = None
+) -> list[dict]:
+    """Story-mode variable rows (subset of the sweep row) plus the UX badge, yearly series
+    and, when the non-climate share is withheld, a plain-English note."""
+    series = series or {}
+    rows = []
+    for row in report_rows:
+        out = {k: row.get(k) for k in VARIABLE_FIELDS} | {"badge": badge(row["verdict"], row["direction"])}
+        out["series"] = yearly_series(series.get(row["id"]))
+        if note := _withheld(row):
+            out["note"] = note
+        rows.append(out)
+    return rows
+
+
+def site_caveats(report_rows: Sequence[Mapping]) -> list[str]:
+    """Caveats shown with the case: base wording, GRACE footprint, withheld reasons (deduplicated)."""
+    caveats = list(BASE_CAVEATS)
+    if any(r["id"] == "grace_tws" for r in report_rows):
+        caveats.append(GRACE_CAVEAT)
+    for row in report_rows:
+        note = _withheld(row)
+        if note and note not in caveats:
+            caveats.append(note)
+    return caveats
 
 
 def _default_validator(grace_tws: pd.Series, start: int, end: int) -> Mapping:
@@ -108,7 +150,7 @@ def build_site_json(
     """The full site.json document for `site` (no file written)."""
     gathered = gather(site, catalog, start, end)
     report = report_from_gathered(site, catalog, start, end, gathered)
-    rows = variable_rows(report["variables"])
+    rows = variable_rows(report["variables"], gathered.series)
     impacts = frozenset(v.id for v in catalog if v.role == "impact")
     sources = [{"title": s["title"], "url": s["url"]} for s in report["sources"]]
 
@@ -126,13 +168,16 @@ def build_site_json(
     if validation is not None:
         sources.append({"title": SOURCE_TITLE, "url": USBR_MEAD_URL, "validation": True})
 
+    assets = find_assets(site_dir)
     doc = {
         "id": site.id,
         "name": site.name,
+        "country": COUNTRY.get(site.id),
         "bbox": list(site.bbox),
         "vertical_exaggeration": VERTICAL_EXAGGERATION.get(site.id, DEFAULT_EXAGGERATION),
+        "elevation_m": assets["heightmap_range_m"],
         "years": [start, end],
-        "assets": find_assets(site_dir),
+        "assets": assets,
         "variables": round_floats(rows),
         "missing": dict(report["missing"]),
         "steps": list(STEPS),
@@ -140,6 +185,7 @@ def build_site_json(
         "narrative": None,
         "validation": round_floats(validation) if validation is not None else None,
         "sources": sources,
+        "caveats": site_caveats(report["variables"]),
         "generated_at": (today or dt.date.today()).isoformat(),
         "pipeline_version": PIPELINE_VERSION,
     }

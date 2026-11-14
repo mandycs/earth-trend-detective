@@ -1,6 +1,7 @@
 {
   "id": "donana",
   "name": "Doñana wetlands (Spain)",
+  "country": "Spain",
   "bbox": [
     -6.6,
     36.8,
@@ -8,6 +9,10 @@
     37.15
   ],
   "vertical_exaggeration": 8,
+  "elevation_m": [
+    0.0,
+    79.0
+  ],
   "years": [
     2003,
     2024
@@ -36,7 +41,89 @@
       "direction": "down",
       "years_needed": 1,
       "residual_pct_non_climate": 62.2,
-      "badge": "↓ Likely"
+      "badge": "↓ Likely",
+      "series": [
+        {
+          "year": 2003,
+          "value": 4.81
+        },
+        {
+          "year": 2004,
+          "value": 7.92
+        },
+        {
+          "year": 2005,
+          "value": -3.17
+        },
+        {
+          "year": 2006,
+          "value": -1.85
+        },
+        {
+          "year": 2007,
+          "value": -2.81
+        },
+        {
+          "year": 2008,
+          "value": -4.64
+        },
+        {
+          "year": 2009,
+          "value": 4.55
+        },
+        {
+          "year": 2010,
+          "value": 15.8
+        },
+        {
+          "year": 2011,
+          "value": 15.4
+        },
+        {
+          "year": 2012,
+          "value": 9.54
+        },
+        {
+          "year": 2013,
+          "value": 14.9
+        },
+        {
+          "year": 2014,
+          "value": 8.27
+        },
+        {
+          "year": 2015,
+          "value": 6.85
+        },
+        {
+          "year": 2016,
+          "value": 0.642
+        },
+        {
+          "year": 2019,
+          "value": -3.48
+        },
+        {
+          "year": 2020,
+          "value": -7.06
+        },
+        {
+          "year": 2021,
+          "value": -8.42
+        },
+        {
+          "year": 2022,
+          "value": -14.5
+        },
+        {
+          "year": 2023,
+          "value": -15.0
+        },
+        {
+          "year": 2024,
+          "value": -14.5
+        }
+      ]
     },
     {
       "id": "t2m",
@@ -51,7 +138,97 @@
       "direction": "up",
       "years_needed": null,
       "residual_pct_non_climate": null,
-      "badge": "↑ Real"
+      "badge": "↑ Real",
+      "series": [
+        {
+          "year": 2003,
+          "value": 18.4
+        },
+        {
+          "year": 2004,
+          "value": 18.4
+        },
+        {
+          "year": 2005,
+          "value": 18.3
+        },
+        {
+          "year": 2006,
+          "value": 18.6
+        },
+        {
+          "year": 2007,
+          "value": 18.0
+        },
+        {
+          "year": 2008,
+          "value": 18.0
+        },
+        {
+          "year": 2009,
+          "value": 18.8
+        },
+        {
+          "year": 2010,
+          "value": 18.2
+        },
+        {
+          "year": 2011,
+          "value": 18.6
+        },
+        {
+          "year": 2012,
+          "value": 18.2
+        },
+        {
+          "year": 2013,
+          "value": 18.0
+        },
+        {
+          "year": 2014,
+          "value": 18.5
+        },
+        {
+          "year": 2015,
+          "value": 18.8
+        },
+        {
+          "year": 2016,
+          "value": 18.7
+        },
+        {
+          "year": 2017,
+          "value": 19.0
+        },
+        {
+          "year": 2018,
+          "value": 17.9
+        },
+        {
+          "year": 2019,
+          "value": 18.6
+        },
+        {
+          "year": 2020,
+          "value": 19.2
+        },
+        {
+          "year": 2021,
+          "value": 19.0
+        },
+        {
+          "year": 2022,
+          "value": 19.8
+        },
+        {
+          "year": 2023,
+          "value": 19.8
+        },
+        {
+          "year": 2024,
+          "value": 19.3
+        }
+      ]
     },
     {
       "id": "soil_moisture",
@@ -66,7 +243,98 @@
       "direction": "down",
       "years_needed": null,
       "residual_pct_non_climate": null,
-      "badge": "↓ Real"
+      "badge": "↓ Real",
+      "series": [
+        {
+          "year": 2003,
+          "value": 28.7
+        },
+        {
+          "year": 2004,
+          "value": 27.2
+        },
+        {
+          "year": 2005,
+          "value": 23.7
+        },
+        {
+          "year": 2006,
+          "value": 28.5
+        },
+        {
+          "year": 2007,
+          "value": 27.3
+        },
+        {
+          "year": 2008,
+          "value": 27.1
+        },
+        {
+          "year": 2009,
+          "value": 26.5
+        },
+        {
+          "year": 2010,
+          "value": 29.2
+        },
+        {
+          "year": 2011,
+          "value": 28.7
+        },
+        {
+          "year": 2012,
+          "value": 24.6
+        },
+        {
+          "year": 2013,
+          "value": 27.2
+        },
+        {
+          "year": 2014,
+          "value": 27.2
+        },
+        {
+          "year": 2015,
+          "value": 25.8
+        },
+        {
+          "year": 2016,
+          "value": 26.1
+        },
+        {
+          "year": 2017,
+          "value": 25.4
+        },
+        {
+          "year": 2018,
+          "value": 27.5
+        },
+        {
+          "year": 2019,
+          "value": 24.2
+        },
+        {
+          "year": 2020,
+          "value": 26.5
+        },
+        {
+          "year": 2021,
+          "value": 25.8
+        },
+        {
+          "year": 2022,
+          "value": 24.3
+        },
+        {
+          "year": 2023,
+          "value": 24.6
+        },
+        {
+          "year": 2024,
+          "value": 26.1
+        }
+      ],
+      "note": "This comes from a computer model of the land that does not include human water use, so it cannot show a human signal."
     },
     {
       "id": "solar",
@@ -81,7 +349,97 @@
       "direction": "up",
       "years_needed": 6,
       "residual_pct_non_climate": null,
-      "badge": "↑ Likely"
+      "badge": "↑ Likely",
+      "series": [
+        {
+          "year": 2003,
+          "value": 18.3
+        },
+        {
+          "year": 2004,
+          "value": 18.5
+        },
+        {
+          "year": 2005,
+          "value": 18.8
+        },
+        {
+          "year": 2006,
+          "value": 18.1
+        },
+        {
+          "year": 2007,
+          "value": 18.6
+        },
+        {
+          "year": 2008,
+          "value": 18.7
+        },
+        {
+          "year": 2009,
+          "value": 18.7
+        },
+        {
+          "year": 2010,
+          "value": 18.0
+        },
+        {
+          "year": 2011,
+          "value": 18.5
+        },
+        {
+          "year": 2012,
+          "value": 18.9
+        },
+        {
+          "year": 2013,
+          "value": 18.5
+        },
+        {
+          "year": 2014,
+          "value": 18.7
+        },
+        {
+          "year": 2015,
+          "value": 18.4
+        },
+        {
+          "year": 2016,
+          "value": 18.7
+        },
+        {
+          "year": 2017,
+          "value": 19.1
+        },
+        {
+          "year": 2018,
+          "value": 18.3
+        },
+        {
+          "year": 2019,
+          "value": 19.3
+        },
+        {
+          "year": 2020,
+          "value": 18.7
+        },
+        {
+          "year": 2021,
+          "value": 18.7
+        },
+        {
+          "year": 2022,
+          "value": 18.4
+        },
+        {
+          "year": 2023,
+          "value": 19.0
+        },
+        {
+          "year": 2024,
+          "value": 18.4
+        }
+      ]
     },
     {
       "id": "precip",
@@ -96,7 +454,97 @@
       "direction": "flat",
       "years_needed": 33,
       "residual_pct_non_climate": null,
-      "badge": "? Can't tell yet"
+      "badge": "? Can't tell yet",
+      "series": [
+        {
+          "year": 2003,
+          "value": 1.86
+        },
+        {
+          "year": 2004,
+          "value": 0.977
+        },
+        {
+          "year": 2005,
+          "value": 0.786
+        },
+        {
+          "year": 2006,
+          "value": 1.67
+        },
+        {
+          "year": 2007,
+          "value": 1.05
+        },
+        {
+          "year": 2008,
+          "value": 1.52
+        },
+        {
+          "year": 2009,
+          "value": 1.53
+        },
+        {
+          "year": 2010,
+          "value": 2.54
+        },
+        {
+          "year": 2011,
+          "value": 1.35
+        },
+        {
+          "year": 2012,
+          "value": 1.1
+        },
+        {
+          "year": 2013,
+          "value": 1.16
+        },
+        {
+          "year": 2014,
+          "value": 1.5
+        },
+        {
+          "year": 2015,
+          "value": 0.88
+        },
+        {
+          "year": 2016,
+          "value": 1.76
+        },
+        {
+          "year": 2017,
+          "value": 1.17
+        },
+        {
+          "year": 2018,
+          "value": 1.86
+        },
+        {
+          "year": 2019,
+          "value": 0.684
+        },
+        {
+          "year": 2020,
+          "value": 1.39
+        },
+        {
+          "year": 2021,
+          "value": 1.01
+        },
+        {
+          "year": 2022,
+          "value": 1.27
+        },
+        {
+          "year": 2023,
+          "value": 0.849
+        },
+        {
+          "year": 2024,
+          "value": 1.72
+        }
+      ]
     },
     {
       "id": "runoff",
@@ -111,7 +559,98 @@
       "direction": "flat",
       "years_needed": null,
       "residual_pct_non_climate": null,
-      "badge": "? Can't tell yet"
+      "badge": "? Can't tell yet",
+      "series": [
+        {
+          "year": 2003,
+          "value": 0.287
+        },
+        {
+          "year": 2004,
+          "value": 0.133
+        },
+        {
+          "year": 2005,
+          "value": 0.0873
+        },
+        {
+          "year": 2006,
+          "value": 0.214
+        },
+        {
+          "year": 2007,
+          "value": 0.124
+        },
+        {
+          "year": 2008,
+          "value": 0.285
+        },
+        {
+          "year": 2009,
+          "value": 0.326
+        },
+        {
+          "year": 2010,
+          "value": 0.605
+        },
+        {
+          "year": 2011,
+          "value": 0.284
+        },
+        {
+          "year": 2012,
+          "value": 0.189
+        },
+        {
+          "year": 2013,
+          "value": 0.273
+        },
+        {
+          "year": 2014,
+          "value": 0.324
+        },
+        {
+          "year": 2015,
+          "value": 0.147
+        },
+        {
+          "year": 2016,
+          "value": 0.233
+        },
+        {
+          "year": 2017,
+          "value": 0.179
+        },
+        {
+          "year": 2018,
+          "value": 0.355
+        },
+        {
+          "year": 2019,
+          "value": 0.0709
+        },
+        {
+          "year": 2020,
+          "value": 0.224
+        },
+        {
+          "year": 2021,
+          "value": 0.221
+        },
+        {
+          "year": 2022,
+          "value": 0.249
+        },
+        {
+          "year": 2023,
+          "value": 0.112
+        },
+        {
+          "year": 2024,
+          "value": 0.478
+        }
+      ],
+      "note": "This comes from a computer model of the land that does not include human water use, so it cannot show a human signal."
     }
   ],
   "missing": {
@@ -121,7 +660,7 @@
   },
   "steps": [
     "What is changing here?",
-    "Is it real or chance?",
+    "Is it real, or is it chance?",
     "Is it the climate?"
   ],
   "headline": null,
@@ -140,6 +679,11 @@
       "title": "GRACE/GRACE-FO JPL mascons RL06.3 (NASA PO.DAAC)",
       "url": "https://podaac.jpl.nasa.gov/dataset/TELLUS_GRAC-GRFO_MASCON_CRI_GRID_RL06.3_V4"
     }
+  ],
+  "caveats": [
+    "The leftover share is a clue, not an attribution.",
+    "Total water stored comes from the GRACE satellites, which see a region about 300 km wide, not only this place.",
+    "This comes from a computer model of the land that does not include human water use, so it cannot show a human signal."
   ],
   "generated_at": "2026-11-14",
   "pipeline_version": "0.1"

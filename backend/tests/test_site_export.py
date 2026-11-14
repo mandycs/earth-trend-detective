@@ -60,7 +60,15 @@ def test_shape_contains_example_keys(lake, tmp_path):
     for row in doc["variables"]:
         assert example_var_keys <= set(row)
         assert {"badge", "ci_low", "ci_high", "q_value"} <= set(row)
-    assert doc["steps"] == example["steps"]
+    # Story contract (frontend/src/story/types.ts): steps may be objects (Ale's copy) or plain
+    # titles (pipeline output); the pipeline never writes step bodies itself.
+    titles = [st["title"] if isinstance(st, dict) else st for st in example["steps"]]
+    assert doc["steps"] == titles
+    assert doc["country"] == "United States"
+    assert doc["elevation_m"] == doc["assets"]["heightmap_range_m"]
+    assert doc["caveats"][0] == "The leftover share is a clue, not an attribution."
+    for row in doc["variables"]:
+        assert all(set(pt) == {"year", "value"} for pt in row["series"])
     assert doc["narrative"] is None
     assert doc["years"] == [2003, 2024] and doc["vertical_exaggeration"] == 3
     assert doc["generated_at"] == "2026-11-14" and doc["pipeline_version"] == "0.1"
