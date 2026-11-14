@@ -689,9 +689,18 @@
 }
 
 .sp-sources a {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
   padding: 6px 0;
   color: var(--ink-2);
+}
+
+/* Tap targets: a source link is the smallest thing on the page, so it grows on touch. */
+@media (max-width: 640px) {
+  .sp-sources a {
+    min-height: 44px;
+  }
 }
 
 /* ---------------------------------------------------------- small screens */

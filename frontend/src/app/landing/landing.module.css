@@ -477,11 +477,19 @@
 }
 
 .footerCols a {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
   padding: 6px 0;
   color: var(--ink-2);
   text-decoration-color: var(--ink-3);
   text-underline-offset: 3px;
+}
+
+@media (max-width: 640px) {
+  .footerCols a {
+    min-height: 44px;
+  }
 }
 
 .footerCols a:hover {
