@@ -105,6 +105,9 @@ variables:
     scale: 1.0
     offset: 0.0
     temporal: daily
+    # Monthly value computed pixel-wise from the MOD10A1 NetCDF: values > 100
+    # (cloud/night/water flags, 255 fill) masked per pixel before averaging; mean over
+    # valid pixel-days; NaN if < 20% valid. Stats CSV only as fallback (no NetCDF).
     tags: [snow, ice]
     applies_to: [snow, glacier, mountain]
     drivers: [t2m, precip]
@@ -153,3 +156,79 @@ variables:
     tags: [water, groundwater]
     applies_to: [any]
     drivers: [precip, t2m]
+
+  # --- Impact variables (MODIS MOD09A1 open water via AppEEARS, Earthdata Login) ---
+  # Own AppEEARS task per site (`<site>_water` in tasks.json); see app/extractors/water.py.
+  - id: water_area
+    label: Open-water area
+    role: impact
+    source: appeears_water
+    dataset: MOD09A1.061
+    band: "NDWI(sur_refl_b04, sur_refl_b02) > 0, clear sky (sur_refl_state_500m)"
+    units: "km²"
+    scale: 1.0
+    offset: 0.0
+    temporal: 8-day
+    tags: [water, reservoir]
+    applies_to: [water_body]
+    drivers: [precip, t2m]
+
+  # --- Extra climate drivers, selected per site in sites.yaml (NOT by tags: applies_to: []) ---
+  # Only used as candidate regressors in the residual model selection (stats/residual.py);
+  # no impact lists them in `drivers`, so their absence never skips a residual.
+  # They are trend-tested and listed like the other drivers in the sweep.
+  - id: t2m_upstream
+    label: Air temperature upstream
+    role: driver
+    source: power
+    dataset: NASA POWER (MERRA-2), mean of the site's upstream_climate points
+    band: T2M
+    units: "°C"
+    scale: 1.0
+    offset: 0.0
+    temporal: monthly
+    tags: [climate, temperature, upstream]
+    applies_to: []
+    drivers: []
+
+  - id: precip_upstream
+    label: Rainfall and snowfall upstream
+    role: driver
+    source: power
+    dataset: NASA POWER (MERRA-2 + IMERG corrected), mean of the site's upstream_climate points
+    band: PRECTOTCORR
+    units: "mm/day"
+    scale: 1.0
+    offset: 0.0
+    temporal: monthly
+    tags: [climate, water, upstream]
+    applies_to: []
+    drivers: []
+
+  - id: degree_days
+    label: Melt warmth (degree-days)
+    role: driver
+    source: power
+    dataset: NASA POWER (MERRA-2), derived from monthly T2M as max(T2M, 0) x days in month
+    band: T2M
+    units: "°C·day"
+    scale: 1.0
+    offset: 0.0
+    temporal: monthly
+    tags: [climate, snow, temperature]
+    applies_to: []
+    drivers: []
+
+  - id: winter_precip
+    label: Winter snowfall and rain so far
+    role: driver
+    source: power
+    dataset: NASA POWER (MERRA-2 + IMERG corrected), derived from monthly PRECTOTCORR as Oct-Apr water-year total
+    band: PRECTOTCORR
+    units: "mm"
+    scale: 1.0
+    offset: 0.0
+    temporal: monthly
+    tags: [climate, snow, water]
+    applies_to: []
+    drivers: []

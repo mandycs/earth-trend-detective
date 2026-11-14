@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import datetime as dt
 import logging
+import math
 from pathlib import Path
 
 import httpx
+import pandas as pd
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -16,6 +18,7 @@ from app.gather import gather_site_series
 from app.site_report import OBSERVED_SOURCES, build_site_report  # noqa: F401 - re-export
 from app.sites import load_sites
 from app.stats import run_sweep
+from app.stats.deseason import monthly_anomalies
 
 logger = logging.getLogger(__name__)
 # httpx logs full request URLs at INFO; signed Earthdata download links carry the user id.
@@ -51,6 +54,26 @@ def get_power_cache_dir() -> Path:
     return DEFAULT_CACHE_DIR
 
 
+def _finite_or_none(value: float) -> float | None:
+    return float(value) if pd.notna(value) and math.isfinite(value) else None
+
+
+def _series_payload(series: dict[str, pd.Series]) -> dict[str, list[dict]]:
+    """Monthly value + anomaly per variable for the explore-mode charts (NaN -> null)."""
+    payload: dict[str, list[dict]] = {}
+    for var_id, values in series.items():
+        anomalies = monthly_anomalies(values)
+        payload[var_id] = [
+            {
+                "date": ts.strftime("%Y-%m"),
+                "value": _finite_or_none(value),
+                "anomaly": _finite_or_none(anomalies.loc[ts]),
+            }
+            for ts, value in values.items()
+        ]
+    return payload
+
+
 def _validate_sweep_query(lat: float, lon: float, start: int, end: int) -> None:
     last_year = dt.date.today().year
     if not -90 <= lat <= 90:
@@ -71,12 +94,19 @@ def sweep(
     lon: float,
     start: int = 2003,
     end: int = 2024,
+    include_series: bool = False,
     cache_dir: Path = Depends(get_power_cache_dir),
 ) -> dict:
-    """Trend sweep of the NASA POWER climate variables at one point."""
+    """Trend sweep of the NASA POWER climate variables at one point.
+
+    With `include_series=true` the response also carries the monthly series
+    (`series: {var_id: [{date, value, anomaly}]}`) for charts.
+    """
     _validate_sweep_query(lat, lon, start, end)
     catalog = load_catalog()
-    bands = {v.id: v.band for v in catalog if v.source == "power"}
+    # Only point variables that apply anywhere; site-only derived ones (upstream means,
+    # degree-days) would just repeat the raw band at the clicked point.
+    bands = {v.id: v.band for v in catalog if v.source == "power" and "any" in v.applies_to}
     try:
         series = fetch_monthly(lat, lon, bands, start, end, cache_dir=cache_dir)
     except httpx.TimeoutException:
@@ -90,7 +120,7 @@ def sweep(
             "Try again in a minute, or pick a different point.",
         ) from None
     results = run_sweep(series, catalog)
-    return {
+    body = {
         "lat": lat,
         "lon": lon,
         "start": start,
@@ -98,6 +128,9 @@ def sweep(
         "source": "NASA POWER monthly (power.larc.nasa.gov)",
         "variables": [r.to_dict() for r in results],
     }
+    if include_series:
+        body["series"] = _series_payload(series)
+    return body
 
 
 @app.get("/sites")
@@ -129,3 +162,9 @@ def site_sweep(site_id: str, start: int | None = None, end: int | None = None) -
         )
     # Looked up here (not bound at import) so tests can monkeypatch app.main.gather_site_series.
     return build_site_report(site, load_catalog(), start, end, gather=gather_site_series)
+
+
+# /explain: question routing + verified narrative (app/explain/).
+from app.explain.router import router as explain_router  # noqa: E402
+
+app.include_router(explain_router)

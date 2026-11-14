@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 
 from app import gather as gather_mod
 from app.catalog import load_catalog
-from app.extractors import appeears, gldas, grace, power
+from app.extractors import appeears, gldas, grace, power, water
 from app.extractors.appeears import TaskRecord
 from app.gather import (
     APPEEARS_NOT_REQUESTED,
@@ -81,11 +81,13 @@ def fake_sources(monkeypatch, calls):
     monkeypatch.setattr(grace, "fetch_grace_series", fake_grace)
     monkeypatch.setattr(gldas, "fetch_monthly", fake_gldas)
     monkeypatch.setattr(appeears, "fetch_site_series", fake_appeears)
+    monkeypatch.setattr(water, "bundle_paths", lambda *a, **k: [])  # never the real cache
     monkeypatch.setattr(
         appeears,
         "load_tasks",
         lambda *a, **k: {
-            "lake_mead": TaskRecord("lake_mead", "lake_mead", "t1", "now")
+            "lake_mead": TaskRecord("lake_mead", "lake_mead", "t1", "now"),
+            "lake_mead_water": TaskRecord("lake_mead_water", "lake_mead_water", "t2", "now"),
         },
     )
 
@@ -146,7 +148,7 @@ def test_dispatch_per_source(fake_sources, calls):
         "runoff",
         "grace_tws",
     }
-    assert result.missing == {"lst_day": APPEEARS_PENDING}
+    assert result.missing == {"lst_day": APPEEARS_PENDING, "water_area": APPEEARS_PENDING}
     assert set(result.sources) == {"power", "grace", "gldas"}
 
 
@@ -223,11 +225,15 @@ def test_site_sweep_endpoint(fake_sources):
     assert body["start"] == 2003 and body["end"] == 2024
     assert body["site"]["id"] == "lake_mead"
     ids = {v["id"] for v in body["variables"]}
-    assert ids == {"t2m", "precip", "solar", "soil_moisture", "runoff", "grace_tws"}
+    # lake_mead declares upstream_climate in sites.yaml -> two extra driver rows
+    assert ids == {
+        "t2m", "precip", "solar", "t2m_upstream", "precip_upstream",
+        "soil_moisture", "runoff", "grace_tws",
+    }
     assert all(v["residual_pct_non_climate"] is None for v in body["variables"])
     grace_row = next(v for v in body["variables"] if v["id"] == "grace_tws")
     assert grace_row["direction"] == "down"
-    assert body["missing"] == {"lst_day": APPEEARS_PENDING}
+    assert body["missing"] == {"lst_day": APPEEARS_PENDING, "water_area": APPEEARS_PENDING}
     assert {s["id"] for s in body["sources"]} == {"power", "grace", "gldas"}
 
 
@@ -251,3 +257,25 @@ def test_site_sweep_bad_years_422():
         "/sites/lake_mead/sweep", params={"start": 2020, "end": 2010}
     )
     assert response.status_code == 422
+
+
+def test_water_area_not_downloaded_is_missing_with_appeears_wording(fake_sources, monkeypatch):
+    monkeypatch.setattr(appeears, "load_tasks", lambda *a, **k: {})
+    result = gather_site_series(LAKE, load_catalog(), 2003, 2024)
+    assert result.missing["water_area"] == APPEEARS_NOT_REQUESTED
+    assert "appeears_water" not in result.sources
+
+
+def test_water_area_dispatch_when_downloaded(fake_sources, monkeypatch, tmp_path):
+    calls = {}
+
+    def fake_fetch(bundle, start, end):
+        calls["bundle"] = bundle
+        return monthly(f"{start}-01-01", f"{end}-12-01", slope=-0.1, name="water_area")
+
+    monkeypatch.setattr(water, "bundle_paths", lambda *a, **k: [tmp_path / "x.nc"])
+    monkeypatch.setattr(water, "fetch_water_area", fake_fetch)
+    result = gather_site_series(LAKE, load_catalog(), 2003, 2024)
+    assert calls["bundle"].name == "lake_mead_water"
+    assert "water_area" in result.series and "appeears_water" in result.sources
+    assert "water_area" not in gather_site_series(ALETSCH, load_catalog(), 2003, 2024).series

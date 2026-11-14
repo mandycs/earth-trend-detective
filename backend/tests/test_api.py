@@ -87,3 +87,28 @@ def test_sweep_upstream_timeout_is_a_clear_504(client):
     response = client.get("/sweep", params={"lat": 36.2, "lon": -114.5})
     assert response.status_code == 504
     assert "NASA POWER" in response.json()["detail"]
+
+
+@respx.mock
+def test_sweep_default_has_no_series(client):
+    respx.get(POWER_MONTHLY_URL).mock(return_value=httpx.Response(200, json=power_payload(2003, 2024)))
+    body = client.get("/sweep", params={"lat": 36.2, "lon": -114.5}).json()
+    assert "series" not in body
+
+
+@respx.mock
+def test_sweep_include_series_returns_monthly_points(client):
+    payload = power_payload(2003, 2024)
+    payload["properties"]["parameter"]["T2M"]["200305"] = -999.0  # fill value -> null
+    respx.get(POWER_MONTHLY_URL).mock(return_value=httpx.Response(200, json=payload))
+    response = client.get("/sweep", params={"lat": 36.2, "lon": -114.5, "include_series": "true"})
+    assert response.status_code == 200
+    series = response.json()["series"]
+    assert set(series) == {"t2m", "precip", "solar"}
+    t2m = series["t2m"]
+    assert len(t2m) == 22 * 12
+    assert t2m[0]["date"] == "2003-01"
+    assert set(t2m[0]) == {"date", "value", "anomaly"}
+    assert isinstance(t2m[0]["value"], float) and isinstance(t2m[0]["anomaly"], float)
+    may = next(p for p in t2m if p["date"] == "2003-05")
+    assert may["value"] is None and may["anomaly"] is None

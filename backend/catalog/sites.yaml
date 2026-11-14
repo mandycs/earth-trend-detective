@@ -11,12 +11,25 @@ sites:
     bbox: [-114.9, 35.9, -114.0, 36.6]
     point: [-114.5, 36.2]
     tags: [water_body, desert]
+    # Lake Mead is fed by Lake Powell releases, i.e. by Upper Colorado snowmelt ~500-900 km
+    # upstream, not by rain at the lake. Two headwater points, averaged (POWER snaps each
+    # to a ~0.5° MERRA-2 cell): Colorado mainstem + Gunnison headwaters in the Colorado
+    # Rockies (~half of the natural flow at Lees Ferry) and the Upper Green River at the
+    # Wind River Range, Wyoming (~a third). The San Juan (~1/6) is left out on purpose.
+    upstream_climate:
+      label: Upper Colorado basin (Rocky Mountains)
+      points:
+        - [-106.5, 39.5]
+        - [-109.7, 42.9]
 
   - id: aletsch
     name: Aletsch Glacier (Swiss Alps)
     bbox: [7.95, 46.38, 8.15, 46.56]
     point: [8.03, 46.47]
     tags: [snow, glacier, mountain]
+    # Snow and ice store winter precipitation and release it with summer warmth: add
+    # degree-days and winter (Oct-Apr) precipitation as candidate drivers.
+    snow_terms: true
 
   - id: donana
     name: Doñana wetlands (Spain)

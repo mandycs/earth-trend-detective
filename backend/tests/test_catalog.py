@@ -3,10 +3,11 @@ import pytest
 from app.catalog import Variable, load_catalog, variables_for_site
 
 
-def test_catalog_has_ten_unique_variables():
+def test_catalog_has_unique_variables():
     catalog = load_catalog()
-    assert len(catalog) == 10
-    assert len({v.id for v in catalog}) == 10
+    assert len(catalog) >= 11
+    assert len({v.id for v in catalog}) == len(catalog)
+    assert {"ndvi", "lst_day", "et", "snow_cover", "water_area"} <= {v.id for v in catalog}
     assert all(isinstance(v, Variable) for v in catalog)
 
 

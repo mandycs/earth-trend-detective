@@ -17,8 +17,9 @@ from types import MappingProxyType
 import pandas as pd
 
 from app.catalog import Variable, variables_for_site
-from app.extractors import appeears, gldas, grace, power
+from app.extractors import appeears, gldas, grace, power, water
 from app.sites import Site
+from app.stats.residual import SNOW_DRIVERS, UPSTREAM_DRIVERS, degree_days, winter_precip
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +52,11 @@ SOURCES: Mapping[str, SourceInfo] = MappingProxyType(
             "MODIS land products via NASA AppEEARS",
             "https://appeears.earthdatacloud.nasa.gov",
             "We could not read the satellite data downloaded from NASA AppEEARS. Try again later.",
+        ),
+        "appeears_water": SourceInfo(
+            "MODIS MOD09A1 surface reflectance via NASA AppEEARS (open-water NDWI)",
+            "https://appeears.earthdatacloud.nasa.gov",
+            "We could not read the satellite water data downloaded from NASA AppEEARS. Try again later.",
         ),
     }
 )
@@ -85,8 +91,44 @@ def _fetch_power(
     start: int,
     end: int,
 ) -> dict[str, pd.Series]:
+    upstream = [v for v in variables if v.id in UPSTREAM_DRIVERS]
+    local = [v for v in variables if v.id not in UPSTREAM_DRIVERS]
+    bands = {v.id: v.band for v in local}
+    out = dict(power.fetch_monthly(site.lat, site.lon, bands, start, end))
+    for var_id, derive in SNOW_DERIVATIONS.items():
+        if var_id in out:  # fetched as the raw POWER band, turned into the derived driver
+            out[var_id] = derive(out[var_id])
+    if upstream and site.upstream_climate is not None:
+        out.update(_fetch_upstream(site, upstream, start, end))
+    return out
+
+
+SNOW_DERIVATIONS: Mapping[str, Callable[[pd.Series], pd.Series]] = MappingProxyType(
+    {"degree_days": degree_days, "winter_precip": winter_precip}
+)
+
+
+def _fetch_upstream(
+    site: Site, variables: Sequence[Variable], start: int, end: int
+) -> dict[str, pd.Series]:
+    """Upstream drivers: POWER at each upstream point, averaged month by month.
+
+    A failure here only loses the upstream drivers (the residual then falls back to the
+    local-only model); the local climate drivers are kept.
+    """
     bands = {v.id: v.band for v in variables}
-    return power.fetch_monthly(site.lat, site.lon, bands, start, end)
+    try:
+        per_point = [
+            power.fetch_monthly(lat, lon, bands, start, end)
+            for lon, lat in site.upstream_climate.points
+        ]
+    except Exception as exc:  # noqa: BLE001 - upstream drivers are optional
+        logger.warning("upstream POWER failed for site %s: %s: %s", site.id, type(exc).__name__, exc)
+        return {}
+    return {
+        var_id: pd.concat([p[var_id] for p in per_point], axis=1).mean(axis=1, skipna=False).rename(var_id)
+        for var_id in bands
+    }
 
 
 def _fetch_grace(
@@ -120,12 +162,27 @@ def _fetch_appeears(
     return appeears.fetch_site_series(site.id, catalog=catalog)
 
 
+def _fetch_appeears_water(
+    site: Site,
+    variables: Sequence[Variable],
+    _: Sequence[Variable],
+    start: int,
+    end: int,
+) -> dict[str, pd.Series]:
+    bundle = appeears.water_bundle_dir(site.id)
+    if not water.bundle_paths(bundle):
+        return {}  # not downloaded yet -> `missing` with the AppEEARS wording
+    series = water.fetch_water_area(bundle, start, end)
+    return {v.id: series.rename(v.id) for v in variables}
+
+
 FETCHERS: Mapping[str, Fetcher] = MappingProxyType(
     {
         "power": _fetch_power,
         "grace": _fetch_grace,
         "gldas": _fetch_gldas,
         "appeears": _fetch_appeears,
+        "appeears_water": _fetch_appeears_water,
     }
 )
 
@@ -157,6 +214,8 @@ def _empty_reason(
 ) -> str:
     if source == "appeears":
         return _appeears_reason(site_id)
+    if source == "appeears_water":
+        return _appeears_reason(f"{site_id}{appeears.WATER_SUFFIX}")
     return f"{var.dataset} has no {var.label.lower()} values for this site in {start}-{end}."
 
 
@@ -196,11 +255,24 @@ def _run_source(
 # --------------------------------------------------------------------------- public
 
 
+def site_extra_drivers(site: Site, catalog: Sequence[Variable]) -> tuple[Variable, ...]:
+    """Candidate climate drivers the site opts into in sites.yaml (not picked by tags).
+
+    They feed the residual model selection and are listed like the other drivers.
+    """
+    wanted: set[str] = set()
+    if site.upstream_climate is not None:
+        wanted |= set(UPSTREAM_DRIVERS)
+    if site.snow_terms:
+        wanted |= set(SNOW_DRIVERS)
+    return tuple(v for v in catalog if v.id in wanted and v.role == "driver")
+
+
 def gather_site_series(
     site: Site, catalog: Sequence[Variable], start: int, end: int
 ) -> GatherResult:
     """Every applicable variable for `site` over [start, end], from all NASA sources in parallel."""
-    applicable = variables_for_site(catalog, site.tags)
+    applicable = variables_for_site(catalog, site.tags) + site_extra_drivers(site, catalog)
     by_source: dict[str, list[Variable]] = {}
     for var in applicable:
         by_source.setdefault(var.source, []).append(var)

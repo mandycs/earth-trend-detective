@@ -11,12 +11,25 @@ SITES_PATH = Path(__file__).resolve().parent.parent / "catalog" / "sites.yaml"
 
 
 @dataclass(frozen=True)
+class UpstreamClimate:
+    """Extra climate driver location(s) for a site whose impact depends on a remote basin.
+
+    POWER is fetched at each point and the series are averaged into `*_upstream` drivers.
+    """
+
+    points: tuple[tuple[float, float], ...]  # [lon, lat] each
+    label: str
+
+
+@dataclass(frozen=True)
 class Site:
     id: str
     name: str
     bbox: tuple[float, float, float, float]  # [min_lon, min_lat, max_lon, max_lat]
     point: tuple[float, float]  # [lon, lat]
     tags: tuple[str, ...]
+    upstream_climate: UpstreamClimate | None = None
+    snow_terms: bool = False  # derive degree-days and winter precipitation drivers
 
     @property
     def lat(self) -> float:
@@ -34,6 +47,23 @@ class SiteCatalog:
 
     def get(self, site_id: str) -> Site | None:
         return next((s for s in self.sites if s.id == site_id), None)
+
+
+def _parse_upstream(site_id: str, raw: object) -> UpstreamClimate | None:
+    if raw is None:
+        return None
+    if not isinstance(raw, dict):
+        raise ValueError(f"site {site_id!r}: upstream_climate must be a mapping")
+    pts = raw.get("points") or ([raw["point"]] if "point" in raw else [])
+    if not pts:
+        raise ValueError(f"site {site_id!r}: upstream_climate needs point or points")
+    points = []
+    for p in pts:
+        lon, lat = (float(x) for x in p)
+        if not (-180 <= lon <= 180 and -90 <= lat <= 90):
+            raise ValueError(f"site {site_id!r}: upstream_climate point {p} is not [lon, lat]")
+        points.append((lon, lat))
+    return UpstreamClimate(points=tuple(points), label=str(raw.get("label") or "upstream"))
 
 
 def _parse_site(raw: dict) -> Site:
@@ -58,6 +88,8 @@ def _parse_site(raw: dict) -> Site:
         bbox=bbox,  # type: ignore[arg-type]
         point=point,  # type: ignore[arg-type]
         tags=tuple(str(t) for t in raw.get("tags") or ()),
+        upstream_climate=_parse_upstream(site_id, raw.get("upstream_climate")),
+        snow_terms=bool(raw.get("snow_terms", False)),
     )
 
 
