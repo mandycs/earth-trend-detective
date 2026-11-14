@@ -1,0 +1,212 @@
+{
+  "site": "lake_mead",
+  "version": 1,
+  "layers": [
+    {
+      "id": "base",
+      "kind": "image",
+      "title": "Satellite picture",
+      "file": "base.jpg",
+      "status": "visual_only",
+      "source": {
+        "name": "MODIS Terra corrected reflectance true colour, via GIBS",
+        "url": "https://nasa-gibs.github.io/gibs-api-docs/"
+      },
+      "dates": [
+        "2024-06-20"
+      ]
+    },
+    {
+      "id": "base_hq",
+      "kind": "image",
+      "title": "Cloud-free satellite picture (30 m)",
+      "file": "base_hq.jpg",
+      "status": "visual_only",
+      "source": {
+        "name": "NASA Harmonized Landsat Sentinel-2 (HLS) 30 m, via GIBS",
+        "url": "https://www.earthdata.nasa.gov/data/projects/hls"
+      },
+      "dates": [
+        "2024-06-13",
+        "2024-06-14",
+        "2024-06-28",
+        "2024-06-30",
+        "2024-07-03",
+        "2024-07-08",
+        "2024-07-28",
+        "2024-08-09",
+        "2024-08-25",
+        "2024-09-02",
+        "2024-09-10",
+        "2024-09-11"
+      ],
+      "method": "per-pixel median of NASA HLS 30 m scenes (GIBS)"
+    },
+    {
+      "id": "relief",
+      "kind": "heightmap",
+      "title": "Terrain height",
+      "file": "heightmap_rgb.png",
+      "encoding": "terrain-rgb",
+      "range_m": [
+        165.0,
+        2373.0
+      ],
+      "status": "visual_only",
+      "source": {
+        "name": "NASADEM elevation (NASA JPL / LP DAAC)",
+        "url": "https://lpdaac.usgs.gov/products/nasadem_hgtv001/"
+      }
+    },
+    {
+      "id": "hillshade",
+      "kind": "shading",
+      "title": "Relief shading",
+      "file": "hillshade.png",
+      "status": "visual_only",
+      "source": {
+        "name": "NASADEM elevation (NASA JPL / LP DAAC)",
+        "url": "https://lpdaac.usgs.gov/products/nasadem_hgtv001/"
+      }
+    },
+    {
+      "id": "before_after",
+      "kind": "before_after",
+      "title": "Then and now (2003 vs 2024)",
+      "status": "visual_only",
+      "source": {
+        "name": "MODIS Terra corrected reflectance true colour, via GIBS",
+        "url": "https://nasa-gibs.github.io/gibs-api-docs/"
+      },
+      "season": [
+        "06-01",
+        "08-31"
+      ],
+      "note": "Two pictures of the same season, not a measured trend.",
+      "before": {
+        "file": "before.jpg",
+        "year": 2003,
+        "dates": [
+          "2003-06-01",
+          "2003-06-02",
+          "2003-06-03",
+          "2003-06-04",
+          "2003-06-06"
+        ]
+      },
+      "after": {
+        "file": "after.jpg",
+        "year": 2024,
+        "dates": [
+          "2024-06-02",
+          "2024-06-04",
+          "2024-06-07",
+          "2024-06-12",
+          "2024-06-13"
+        ]
+      }
+    },
+    {
+      "id": "trend_lst_day",
+      "kind": "trend",
+      "var": "lst_day",
+      "title": "Daytime ground temperature: trend",
+      "file": "trend_lst_day.png",
+      "status": "analysed",
+      "years": [
+        2003,
+        2024
+      ],
+      "legend": {
+        "unit": "°C per decade",
+        "labels": {
+          "more": "↑ more heat (warmer ground)",
+          "less": "↓ less heat (cooler ground)",
+          "faded": "Faded = not statistically significant (Mann-Kendall p ≥ 0.05)",
+          "transparent": "Transparent = not enough data"
+        },
+        "stops": [
+          "#053061",
+          "#2a71b2",
+          "#6bacd1",
+          "#c2ddec",
+          "#f7f6f6",
+          "#fbccb4",
+          "#e48066",
+          "#ba2832",
+          "#67001f"
+        ],
+        "range": [
+          -1.634,
+          1.634
+        ]
+      },
+      "method": "Per pixel: Sen slope and Mann-Kendall S on annual means of deseasonalized monthly anomalies.",
+      "source": {
+        "name": "MODIS Terra land surface temperature (MOD11A2 v061), via AppEEARS",
+        "url": "https://lpdaac.usgs.gov/products/mod11a2v061/"
+      }
+    },
+    {
+      "id": "year_lst_day",
+      "kind": "yearly",
+      "var": "lst_day",
+      "title": "Daytime ground temperature: year by year",
+      "file_pattern": "year_lst_day_{YYYY}.png",
+      "status": "analysed",
+      "years": [
+        2003,
+        2004,
+        2005,
+        2006,
+        2007,
+        2008,
+        2009,
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024
+      ],
+      "legend": {
+        "unit": "°C",
+        "labels": {
+          "more": "↑ more heat (warmer ground) than usual",
+          "less": "↓ less heat (cooler ground) than usual",
+          "transparent": "Transparent = not enough data that year"
+        },
+        "stops": [
+          "#053061",
+          "#2a71b2",
+          "#6bacd1",
+          "#c2ddec",
+          "#f7f6f6",
+          "#fbccb4",
+          "#e48066",
+          "#ba2832",
+          "#67001f"
+        ],
+        "range": [
+          -1.898,
+          1.898
+        ]
+      },
+      "method": null,
+      "source": {
+        "name": "MODIS Terra land surface temperature (MOD11A2 v061), via AppEEARS",
+        "url": "https://lpdaac.usgs.gov/products/mod11a2v061/"
+      },
+      "baseline": "2003-2024 average for each calendar month"
+    }
+  ]
+}

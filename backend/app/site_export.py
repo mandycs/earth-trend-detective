@@ -23,6 +23,7 @@ import pandas as pd
 
 from app.catalog import Variable, load_catalog
 from app.gather import gather_site_series
+from app.layers import write_layers
 from app.site_report import GatherFn, report_from_gathered
 from app.site_story import badge, headline, round_floats
 from app.sites import Site, load_sites
@@ -211,6 +212,7 @@ def export_site(site_id: str, sites_dir: Path = SITES_DIR) -> dict:
     site_dir = sites_dir / site.id
     doc = build_site_json(site, load_catalog(), start, end, site_dir)
     path = write_site_json(doc, site_dir)
+    write_layers(site.id, site_dir)
     logger.info("wrote %s", path)
     return doc
 

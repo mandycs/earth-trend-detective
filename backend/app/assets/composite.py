@@ -36,10 +36,11 @@ MAX_BAD_SHARE = 0.35
 TIMEOUT_S = 120.0
 
 
-def native_width(bbox: Sequence[float]) -> int:
+def native_width(bbox: Sequence[float], native_m: float = NATIVE_M) -> int:
+    """~2x the native pixel count across the bbox, capped at MAX_WIDTH."""
     w, s, e, n = bbox
     width_m = math.radians(e - w) * 6_371_008.8 * math.cos(math.radians((s + n) / 2))
-    return min(MAX_WIDTH, int(2 * width_m / NATIVE_M))
+    return min(MAX_WIDTH, int(2 * width_m / native_m))
 
 
 def bad_share(rgb: np.ndarray) -> float:
@@ -78,11 +79,13 @@ def build_composite(
     dates: Sequence[str],
     n_best: int = 12,
     width: int | None = None,
+    layers: Sequence[str] = HLS_LAYERS,
+    method: str = "per-pixel median of NASA HLS 30 m scenes (GIBS)",
 ) -> dict:
     width = width or native_width(bbox)
     with httpx.Client(timeout=TIMEOUT_S) as client:
         scored = []
-        for layer in HLS_LAYERS:
+        for layer in layers:
             for date in dates:
                 thumb = _get(client, bbox, date, THUMB_WIDTH, layer)
                 if thumb is not None:
@@ -91,12 +94,12 @@ def build_composite(
                         scored.append((score, date, layer))
         best = sorted(scored)[:n_best]
         if not best:
-            raise RuntimeError("no usable HLS scene in the requested dates")
+            raise RuntimeError(f"no usable scene of {', '.join(layers)} in the requested dates")
         scenes = [s for s in (_get(client, bbox, d, width, layer) for _, d, layer in best) if s is not None]
     composite = median_composite(scenes)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     Image.fromarray(composite).save(out_path, quality=92)
     meta = {"width": composite.shape[1], "height": composite.shape[0], "scenes": [[d, layer] for _, d, layer in best],
-            "method": "per-pixel median of NASA HLS 30 m scenes (GIBS)"}
+            "method": method}
     logger.info("composite %s: %d scenes, %dx%d", out_path.name, len(scenes), composite.shape[1], composite.shape[0])
     return meta
