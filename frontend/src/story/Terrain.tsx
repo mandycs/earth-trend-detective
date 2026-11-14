@@ -7,13 +7,10 @@ import { sampleHeight } from './heights'
 export interface TerrainProps {
   grid: HeightGrid
   base: THREE.Texture
-  hillshade: THREE.Texture | null
-  trend: THREE.Texture | null
-  /** One texture per year, oldest first. */
-  years: THREE.Texture[]
-  /** Float position inside `years` (0 .. years.length-1). */
-  yearProgress: () => number
-  showYears: boolean
+  /** Drawn bottom to top over the base picture; up to MAX_OVERLAYS. */
+  overlays: Overlay[]
+  /** Called with texture coordinates when the visitor clicks the ground (not after a drag). */
+  onPick?: (uv: THREE.Vector2) => void
   /** Ground width in metres of the plane's x extent. */
   widthMetres: number
   exaggeration: number
@@ -168,18 +165,22 @@ export function meanColour(texture: THREE.Texture): THREE.Color {
   return colour
 }
 
+export interface Overlay {
+  texture: THREE.Texture
+  opacity: number
+  blend: 'normal' | 'multiply'
+  /** Where this picture sits in the terrain's texture space: [offsetU, offsetV, scaleU, scaleV]. */
+  rect?: [number, number, number, number]
+}
+
+export const MAX_OVERLAYS = 4
+
 interface Uniforms {
   [key: string]: THREE.IUniform
-  uTrend: THREE.IUniform<THREE.Texture | null>
-  uYearA: THREE.IUniform<THREE.Texture | null>
-  uYearB: THREE.IUniform<THREE.Texture | null>
-  uShade: THREE.IUniform<THREE.Texture | null>
-  uYearMix: THREE.IUniform<number>
-  uTrendOn: THREE.IUniform<number>
-  uYearOn: THREE.IUniform<number>
-  uShadeOn: THREE.IUniform<number>
   uGround: THREE.IUniform<THREE.Color>
 }
+
+const SLOTS = Array.from({ length: MAX_OVERLAYS }, (_, i) => i)
 
 /**
  * Builds the relief on the CPU from full-precision heights, so normals,
@@ -247,11 +248,8 @@ function buildGeometry(grid: HeightGrid, aspect: number, scale: number, water: n
 export function Terrain({
   grid,
   base,
-  hillshade,
-  trend,
-  years,
-  yearProgress,
-  showYears,
+  overlays,
+  onPick,
   widthMetres,
   exaggeration,
   aspect,
@@ -267,52 +265,39 @@ export function Terrain({
   const material = useMemo(() => {
     const created = new THREE.MeshStandardMaterial({ map: base, roughness: 0.96, metalness: 0, dithering: true })
     created.onBeforeCompile = (shader) => {
-      const own: Uniforms = {
-        uTrend: { value: null },
-        uYearA: { value: null },
-        uYearB: { value: null },
-        uShade: { value: null },
-        uYearMix: { value: 0 },
-        uTrendOn: { value: 0 },
-        uYearOn: { value: 0 },
-        uShadeOn: { value: 0 },
-        uGround: { value: meanColour(base) },
+      const own: Uniforms = { uGround: { value: meanColour(base) } }
+      for (const i of SLOTS) {
+        own[`uL${i}`] = { value: null }
+        own[`uOp${i}`] = { value: 0 }
+        own[`uMul${i}`] = { value: 0 }
+        own[`uRect${i}`] = { value: new THREE.Vector4(0, 0, 1, 1) }
       }
       Object.assign(shader.uniforms, own)
       uniforms.current = own
+      const declare = SLOTS.map(
+        (i) => `uniform sampler2D uL${i}; uniform float uOp${i}; uniform float uMul${i}; uniform vec4 uRect${i};`,
+      ).join('\n')
+      // One block per slot, unrolled, bottom layer first.
+      const draw = SLOTS.map(
+        (i) => `
+           if ( uOp${i} > 0.001 ) {
+             vec2 st${i} = uRect${i}.xy + vMapUv * uRect${i}.zw;
+             if ( st${i}.x >= 0.0 && st${i}.x <= 1.0 && st${i}.y >= 0.0 && st${i}.y <= 1.0 ) {
+               vec4 c${i} = texture2D( uL${i}, st${i} );
+               if ( uMul${i} > 0.5 ) {
+                 layer = mix( layer, layer * mix( 0.72, 1.12, c${i}.r ), uOp${i} );
+               } else {
+                 layer = mix( layer, c${i}.rgb, c${i}.a * uOp${i} );
+               }
+             }
+           }`,
+      ).join('')
       shader.fragmentShader = shader.fragmentShader
-        .replace(
-          '#include <common>',
-          `#include <common>
-           uniform sampler2D uTrend;
-           uniform sampler2D uYearA;
-           uniform sampler2D uYearB;
-           uniform sampler2D uShade;
-           uniform float uYearMix;
-           uniform float uTrendOn;
-           uniform float uYearOn;
-           uniform float uShadeOn;
-           uniform vec3 uGround;`,
-        )
+        .replace('#include <common>', `#include <common>\n${declare}\nuniform vec3 uGround;`)
         .replace(
           '#include <map_fragment>',
-          `vec4 baseSample = texture2D( map, vMapUv );
-           vec3 layer = baseSample.rgb;
-           if ( uShadeOn > 0.5 ) {
-             float shade = texture2D( uShade, vMapUv ).r;
-             layer *= mix( 0.72, 1.12, shade );
-           }
-           if ( uTrendOn > 0.5 ) {
-             vec4 t = texture2D( uTrend, vMapUv );
-             layer = mix( layer, mix( layer * t.rgb * 1.12, t.rgb, 0.35 ), t.a * uTrendOn );
-           }
-           if ( uYearOn > 0.0 ) {
-             vec4 a = texture2D( uYearA, vMapUv );
-             vec4 b = texture2D( uYearB, vMapUv );
-             vec4 y = mix( a, b, uYearMix );
-             // Multiply, so the satellite picture (the lake, the ice) stays readable under the tint.
-             layer = mix( layer, layer * y.rgb * 1.12, y.a * uYearOn );
-           }
+          `vec3 layer = texture2D( map, vMapUv ).rgb;
+           ${draw}
            float border = min( min( vMapUv.x, 1.0 - vMapUv.x ), min( vMapUv.y, 1.0 - vMapUv.y ) );
            layer = mix( uGround, layer, smoothstep( 0.0, 0.03, border ) );
            diffuseColor.rgb *= layer;`,
@@ -346,35 +331,32 @@ export function Terrain({
     [top, sides],
   )
 
-  // Fade layers in and out instead of popping them.
-  const yearFade = useRef(0)
-  const trendFade = useRef(0)
-
-  useFrame((_, delta) => {
+  useFrame(() => {
     const own = uniforms.current
     if (!own) return
-    const k = Math.min(delta * 4, 1)
-    const wantYears = showYears && years.length > 1 ? 1 : 0
-    yearFade.current += (wantYears - yearFade.current) * k
-    trendFade.current += ((trend ? 1 : 0) - trendFade.current) * k
-    own.uShade.value = hillshade
-    own.uShadeOn.value = hillshade ? 1 : 0
-    if (trend) own.uTrend.value = trend
-    own.uTrendOn.value = trendFade.current > 0.01 ? trendFade.current : 0
-    if (years.length > 0) {
-      const progress = Math.min(Math.max(yearProgress(), 0), years.length - 1)
-      const lower = Math.floor(progress)
-      const upper = Math.min(lower + 1, years.length - 1)
-      own.uYearA.value = years[lower]
-      own.uYearB.value = years[upper]
-      own.uYearMix.value = progress - lower
+    for (const i of SLOTS) {
+      const o = overlays[i]
+      own[`uL${i}`].value = o ? o.texture : null
+      own[`uOp${i}`].value = o ? o.opacity : 0
+      own[`uMul${i}`].value = o?.blend === 'multiply' ? 1 : 0
+      const r = o?.rect ?? [0, 0, 1, 1]
+      ;(own[`uRect${i}`].value as THREE.Vector4).set(r[0], r[1], r[2], r[3])
     }
-    own.uYearOn.value = yearFade.current > 0.01 && years.length > 0 ? yearFade.current : 0
   })
 
   return (
     <group>
-      <mesh geometry={top} material={material} castShadow receiveShadow />
+      <mesh
+        geometry={top}
+        material={material}
+        castShadow
+        receiveShadow
+        onClick={(e) => {
+          if (!onPick || !e.uv || e.delta > 6) return
+          e.stopPropagation()
+          onPick(e.uv.clone())
+        }}
+      />
       {waterY != null ? (
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, waterY, 0]} receiveShadow>
           <planeGeometry args={[1 - EDGE * 1.6, aspect * (1 - EDGE * 1.6)]} />

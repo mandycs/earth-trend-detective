@@ -3,6 +3,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Sky } from '@react-three/drei'
 import * as THREE from 'three'
 import { Terrain } from '../Terrain'
+import type { Overlay } from '../Terrain'
 import { sampleHeight } from '../heights'
 import type { DetailAssets } from './useDetail'
 
@@ -15,6 +16,8 @@ export interface DroneSceneProps {
   level: number | null
   /** Aerial photo for the year, drawn instead of the base picture. */
   photo?: THREE.Texture | null
+  overlays: Overlay[]
+  onPick?: (uv: THREE.Vector2) => void
   exaggeration: number
   onAltitude?: (metres: number) => void
 }
@@ -176,7 +179,7 @@ function Flight({ detail, scale, aspect, onAltitude }: { detail: DetailAssets; s
   return null
 }
 
-export function DroneScene({ detail, photo, level, exaggeration, onAltitude }: DroneSceneProps) {
+export function DroneScene({ detail, photo, overlays, onPick, level, exaggeration, onAltitude }: DroneSceneProps) {
   const { width, depth } = widthOf(detail.info.bbox)
   const aspect = depth / width
   const scale = exaggeration / width
@@ -195,11 +198,8 @@ export function DroneScene({ detail, photo, level, exaggeration, onAltitude }: D
       <Terrain
         grid={detail.grid}
         base={photo ?? detail.base}
-        hillshade={detail.hillshade}
-        trend={null}
-        years={[]}
-        yearProgress={() => 0}
-        showYears={false}
+        overlays={overlays}
+        onPick={onPick}
         widthMetres={width}
         exaggeration={exaggeration}
         aspect={aspect}

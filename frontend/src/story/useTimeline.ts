@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react'
+import type { LayerDef } from './layers/model'
+import { parseLayers } from './layers/model'
 
 /** The `timeline` block of sites/<id>/layers.json. */
 export interface CaseTimeline {
@@ -6,21 +8,29 @@ export interface CaseTimeline {
   layers: Record<string, { mode: 'yearly' | 'span' | 'pair' | 'static'; years?: number[]; new_photo_years?: number[]; water_years?: number[] }>
   /** Years with a yearly value, per record. */
   records: Record<string, number[]>
-  /** Yearly map layer id for a record, or null when it has no map. */
+  /** Map layer id for a record, or null when it has no map. */
   record_map: Record<string, string | null>
 }
 
-export function useTimeline(siteId: string): CaseTimeline | null {
-  const [state, setState] = useState<{ id: string; value: CaseTimeline | null }>({ id: '', value: null })
+export interface CaseLayers {
+  timeline: CaseTimeline | null
+  layers: LayerDef[]
+}
+
+const EMPTY: CaseLayers = { timeline: null, layers: [] }
+
+/** sites/<id>/layers.json: the stackable layers and the shared timeline. */
+export function useCaseLayers(siteId: string): CaseLayers {
+  const [state, setState] = useState<{ id: string; value: CaseLayers }>({ id: '', value: EMPTY })
   useEffect(() => {
     let alive = true
     fetch(`/sites/${siteId}/layers.json`)
       .then((r) => (r.ok ? r.json() : null))
-      .then((file: { timeline?: CaseTimeline } | null) => alive && setState({ id: siteId, value: file?.timeline ?? null }))
-      .catch(() => alive && setState({ id: siteId, value: null }))
+      .then((file) => alive && setState({ id: siteId, value: { timeline: file?.timeline ?? null, layers: parseLayers(file) } }))
+      .catch(() => alive && setState({ id: siteId, value: EMPTY }))
     return () => {
       alive = false
     }
   }, [siteId])
-  return state.id === siteId ? state.value : null
+  return state.id === siteId ? state.value : EMPTY
 }

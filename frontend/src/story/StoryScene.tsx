@@ -7,12 +7,13 @@ import type { Site } from './types'
 import { bboxWidthMeters } from './types'
 import type { StoryAssets } from './useSite'
 import { Terrain } from './Terrain'
+import type { Overlay } from './Terrain'
 
 export interface StorySceneProps {
   site: Site
   assets: StoryAssets
-  yearProgress: () => number
-  showYears: boolean
+  overlays: Overlay[]
+  onPick?: (uv: THREE.Vector2) => void
   exaggeration: number
 }
 
@@ -123,7 +124,7 @@ function Sun() {
   )
 }
 
-export function StoryScene({ site, assets, yearProgress, showYears, exaggeration }: StorySceneProps) {
+export function StoryScene({ site, assets, overlays, onPick, exaggeration }: StorySceneProps) {
   const [west, south, east, north] = site.bbox
   const midLat = ((south + north) / 2) * (Math.PI / 180)
   const widthMetres = Math.abs(east - west) * 111_320 * Math.cos(midLat)
@@ -150,11 +151,8 @@ export function StoryScene({ site, assets, yearProgress, showYears, exaggeration
         <Terrain
           grid={grid}
           base={assets.base}
-          hillshade={assets.hillshade}
-          trend={assets.trend}
-          years={assets.years}
-          yearProgress={yearProgress}
-          showYears={showYears}
+          overlays={overlays}
+          onPick={onPick}
           widthMetres={widthMetres}
           exaggeration={exaggeration}
           aspect={aspect}

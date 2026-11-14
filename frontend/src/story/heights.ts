@@ -28,7 +28,7 @@ function paeth(a: number, b: number, c: number): number {
 }
 
 /** 16-bit (or 8-bit) greyscale PNG -> raw sample values. */
-async function decodeGreyPng(buffer: ArrayBuffer): Promise<{ width: number; height: number; samples: Float32Array; maxSample: number }> {
+export async function decodeGreyPng(buffer: ArrayBuffer): Promise<{ width: number; height: number; samples: Float32Array; maxSample: number }> {
   const view = new DataView(buffer)
   const bytes = new Uint8Array(buffer)
   let offset = 8
