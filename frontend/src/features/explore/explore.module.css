@@ -669,7 +669,7 @@
     position: absolute;
     inset: 0;
     z-index: 1;
-    background: linear-gradient(90deg, rgba(14, 16, 18, 0.94) 0%, rgba(14, 16, 18, 0.82) 32%, rgba(14, 16, 18, 0.45) 42%, rgba(14, 16, 18, 0) 62%);
+    background: linear-gradient(90deg, rgba(14, 16, 18, 0.94) 0%, rgba(14, 16, 18, 0.82) 32%, rgba(14, 16, 18, 0.45) 42%, rgba(14, 16, 18, 0) 62%); /* taste-skill-ignore: neutral scrim over a photograph (DESIGN.md) */
     pointer-events: none;
   }
 

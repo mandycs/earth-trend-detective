@@ -132,15 +132,7 @@ img {
   font-variant-numeric: tabular-nums;
 }
 
-/* Uppercase labels for chapter names and keys. */
-.kicker {
-  font-family: var(--font-ui);
-  font-size: 0.95rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ink-2);
-}
+
 
 .btn {
   display: inline-flex;
@@ -348,7 +340,7 @@ img {
 .ev-split-maybe,
 .ev-key-maybe {
   /* Model range: hatched ink. */
-  background: repeating-linear-gradient(135deg, var(--ink) 0 2px, transparent 2px 6px);
+  background: repeating-linear-gradient(135deg, var(--ink) 0 2px, transparent 2px 6px); /* taste-skill-ignore: hatching marks the climate-model range in the data */
 }
 
 .ev-split-right {
