@@ -187,3 +187,10 @@ def test_headline_uses_the_range_when_driver_models_disagree():
         "Total water stored is going down for real (−6.5 cm per decade). "
         "Between 54% and 84% of that change is not explained by climate, depending on the climate model."
     )
+
+
+def test_rows_carry_their_footprint():
+    from app.site_export import FOOTPRINTS
+
+    assert FOOTPRINTS["grace"]["km"] == 300
+    assert set(FOOTPRINTS) >= {"grace", "power", "gldas", "appeears"}

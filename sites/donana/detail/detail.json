@@ -1,0 +1,67 @@
+{
+  "bbox": [
+    -6.5,
+    36.955,
+    -6.43,
+    37.01
+  ],
+  "label": "Santa Olalla and Dulce lagoons, Doñana",
+  "size_px": {
+    "heightmap": [
+      2048,
+      2014
+    ],
+    "base": [
+      3000,
+      2951
+    ]
+  },
+  "resolution_m": {
+    "heightmap": 3.04,
+    "base": 2.07
+  },
+  "height_range_m": [
+    0.0,
+    23.6
+  ],
+  "encoding": "terrain-rgb: height_m = -10000 + (R*65536 + G*256 + B) * 0.1",
+  "photos_by_year": {
+    "2004": {
+      "file": "photos/2004.jpg"
+    },
+    "2006": {
+      "file": "photos/2006.jpg"
+    },
+    "2008": {
+      "file": "photos/2008.jpg"
+    },
+    "2010": {
+      "file": "photos/2010.jpg"
+    },
+    "2013": {
+      "file": "photos/2013.jpg"
+    },
+    "2016": {
+      "file": "photos/2016.jpg"
+    },
+    "2019": {
+      "file": "photos/2019.jpg"
+    },
+    "2022": {
+      "file": "photos/2022.jpg"
+    }
+  },
+  "photo_note": "PNOA photos exist only for the years Andalucía was flown. Flight months differ, and the marsh floods by season, so compare years with care.",
+  "note": "Ground and photos are pictures, not measurements of change.",
+  "status": "visual_only",
+  "sources": [
+    {
+      "name": "IGN Spain MDT05 elevation model, 5 m",
+      "url": "https://centrodedescargas.cnig.es/"
+    },
+    {
+      "name": "IGN Spain PNOA orthophotos (historic series)",
+      "url": "https://pnoa.ign.es/"
+    }
+  ]
+}

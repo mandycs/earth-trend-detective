@@ -155,3 +155,36 @@ def test_detail_crop_listed_only_when_complete(tmp_path: Path) -> None:
     assert layer["id"] == "detail" and layer["status"] == "visual_only"
     assert layer["files"]["base"] == "detail/base.jpg"
     assert layer["drawable_years"] == [2003]
+
+
+def test_timeline_lists_years_per_layer_and_record(tmp_path: Path) -> None:
+    site = tmp_path / "s"
+    _touch(site / "year_lst_day.json", YEARLY)
+    _touch(site / "year_lst_day_2003.png")
+    _touch(site / "year_lst_day_2004.png")
+    _touch(site / "base.jpg")
+    _touch(site / "site.json", {
+        "years": [2003, 2005],
+        "variables": [
+            {"id": "lst_day", "series": [{"year": 2003, "value": 1.0}, {"year": 2004, "value": None}]},
+            {"id": "grace_tws", "series": [{"year": 2005, "value": -3.0}]},
+        ],
+    })
+    tl = build_layers("s", site)["timeline"]
+    assert tl["years"] == [2003, 2004, 2005]
+    assert tl["layers"]["year_lst_day"] == {"mode": "yearly", "years": [2003, 2004]}
+    assert tl["layers"]["base"] == {"mode": "static"}
+    assert tl["records"] == {"lst_day": [2003], "grace_tws": [2005]}
+    assert tl["record_map"] == {"lst_day": "year_lst_day", "grace_tws": None}
+
+
+def test_timeline_detail_photos_and_water(tmp_path: Path) -> None:
+    site = tmp_path / "s"
+    _touch(site / "detail" / "heightmap_rgb.png")
+    _touch(site / "detail" / "base.jpg")
+    _touch(site / "detail" / "detail.json", {
+        "photos_by_year": {"2003": {"file": "photos/2003.jpg"}, "2004": {"file": "photos/2003.jpg", "same_as": 2003}},
+        "water_level_m_by_year": {"2003": 340.0}, "drawable_years": [2003],
+    })
+    tl = build_layers("s", site)["timeline"]["layers"]["detail"]
+    assert tl == {"mode": "yearly", "years": [2003, 2004], "new_photo_years": [2003], "water_years": [2003]}

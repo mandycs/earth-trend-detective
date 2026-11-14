@@ -192,6 +192,8 @@ def _detail(site_dir: Path) -> list[dict]:
         "height_range_m": meta.get("height_range_m"),
         "water_level_m_by_year": meta.get("water_level_m_by_year"),
         "drawable_years": meta.get("drawable_years"),
+        "photos_by_year": meta.get("photos_by_year"),
+        "photo_note": meta.get("photo_note"),
         "lidar_water_surface_m": meta.get("lidar_water_surface_m"),
         "note": meta.get("note"),
         "sources": meta.get("sources", []),
@@ -250,6 +252,50 @@ def _analysed_layers(site_dir: Path, names: set[str]) -> list[dict]:
     return layers
 
 
+def _layer_years(layer: dict) -> dict:
+    """How one layer behaves on the shared timeline."""
+    kind = layer["kind"]
+    if kind == "yearly":
+        return {"mode": "yearly", "years": list(layer["years"])}
+    if kind == "trend":
+        return {"mode": "span", "years": list(layer.get("years", []))}
+    if kind == "before_after":
+        return {"mode": "pair", "years": [layer["before"]["year"], layer["after"]["year"]]}
+    if kind == "detail":
+        photos = layer.get("photos_by_year") or {}
+        out = {"mode": "static"}
+        if photos:
+            out = {
+                "mode": "yearly",
+                "years": sorted(int(y) for y in photos),
+                "new_photo_years": sorted(int(y) for y, p in photos.items() if "same_as" not in p),
+            }
+        if layer.get("water_level_m_by_year"):
+            out["water_years"] = list(layer.get("drawable_years") or [])
+        return out
+    return {"mode": "static"}
+
+
+def build_timeline(layers: list[dict], site_dir: Path) -> dict:
+    """One shared timeline for the site: the study years, which layer has what each year,
+    and which record (site.json variable) has a yearly value each year."""
+    site_json = _read_json(site_dir / "site.json") if (site_dir / "site.json").is_file() else None
+    span = (site_json or {}).get("years") or []
+    years = list(range(span[0], span[1] + 1)) if len(span) == 2 else []
+    records = {
+        v["id"]: [p["year"] for p in v.get("series", []) if p.get("value") is not None]
+        for v in (site_json or {}).get("variables", [])
+    }
+    maps_for = {layer["var"]: layer["id"] for layer in layers if layer["kind"] == "yearly" and "var" in layer}
+    return {
+        "years": years,
+        "layers": {layer["id"]: _layer_years(layer) for layer in layers},
+        "records": records,
+        # record id -> its own yearly map layer, when one exists; otherwise the map shows a picture.
+        "record_map": {rid: maps_for.get(rid) for rid in records},
+    }
+
+
 def build_layers(site_id: str, site_dir: Path) -> dict:
     """The layers.json document for one site (no file written)."""
     names = {p.name for p in site_dir.iterdir() if p.is_file()} if site_dir.is_dir() else set()
@@ -260,7 +306,12 @@ def build_layers(site_id: str, site_dir: Path) -> dict:
         *_detail(site_dir),
         *_analysed_layers(site_dir, names),
     ]
-    return {"site": site_id, "version": LAYERS_VERSION, "layers": layers}
+    return {
+        "site": site_id,
+        "version": LAYERS_VERSION,
+        "layers": layers,
+        "timeline": build_timeline(layers, site_dir),
+    }
 
 
 def write_layers(site_id: str, site_dir: Path) -> Path:

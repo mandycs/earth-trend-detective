@@ -64,6 +64,15 @@ OPTIONAL_ASSETS: Mapping[str, str] = {
     "hillshade": "hillshade.png",
     "base_hq": "base_hq.jpg",
 }
+# Ground area each source averages over (approximate width, plain words for the UI).
+FOOTPRINTS: Mapping[str, dict] = {
+    "grace": {"km": 300, "label": "a region about 300 km wide (GRACE satellites)"},
+    "power": {"km": 50, "label": "a climate-model cell about 50 km wide (NASA POWER)"},
+    "gldas": {"km": 25, "label": "a land-model cell about 25 km wide (GLDAS)"},
+    "appeears": {"km": 1, "label": "the site's 1 km MODIS pixels, averaged"},
+    "appeears_water": {"km": 0.5, "label": "the site's 500 m MODIS pixels"},
+}
+UPSTREAM_FOOTPRINT = {"km": 50, "label": "two climate cells far upstream, in the river's mountain headwaters (NASA POWER)"}
 _TREND_RE = re.compile(r"^trend_(?P<var>.+)\.png$")
 _YEAR_RE = re.compile(r"^year_(?P<var>.+)_(?P<year>\d{4})\.png$")
 
@@ -161,6 +170,11 @@ def build_site_json(
     gathered = gather(site, catalog, start, end)
     report = report_from_gathered(site, catalog, start, end, gathered)
     rows = variable_rows(report["variables"], gathered.series)
+    source_of = {v.id: v.source for v in catalog}
+    for row in rows:
+        fp = UPSTREAM_FOOTPRINT if row["id"].endswith("_upstream") else FOOTPRINTS.get(source_of.get(row["id"], ""))
+        if fp is not None:
+            row["footprint"] = dict(fp)
     impacts = frozenset(v.id for v in catalog if v.role == "impact")
     sources = [{"title": s["title"], "url": s["url"]} for s in report["sources"]]
 
