@@ -17,6 +17,7 @@ from app import layers
 from app.detective.session import Session
 from app.detective.tools import data
 from app.investigate import landcover, thennow
+from app.sites import load_sites
 
 logger = logging.getLogger(__name__)
 
@@ -106,9 +107,10 @@ def solved_case(session: Session, site_id: str) -> dict:
 
 
 def _case(site_id: str) -> dict:
-    path = layers.SITES_DIR / site_id / "site.json" if SITE_ID_RE.match(site_id or "") else None
+    real = SITE_ID_RE.fullmatch(site_id or "") and load_sites().get(site_id) is not None
+    path = layers.SITES_DIR / site_id / "site.json" if real else None
     if path is None or not path.is_file():
-        return _not_available(f"no solved case {site_id!r}", site_id=site_id)
+        return _not_available(f"no solved case {site_id!r}. Not a solved case.", site_id=site_id)
     try:
         site = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError) as exc:

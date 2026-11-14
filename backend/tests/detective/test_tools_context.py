@@ -80,7 +80,7 @@ def test_solved_case_reads_site_json():
     assert s.ledger.n_tests == 0
 
 
-@pytest.mark.parametrize("bad", ["nope", "../etc", ""])
+@pytest.mark.parametrize("bad", ["nope", "../etc", "", "_example", "lake_mead\n"])
 def test_unknown_case_is_not_available(bad):
     out = context.solved_case(_session(), site_id=bad)
     assert out["status"] == "not_available"
@@ -89,3 +89,18 @@ def test_unknown_case_is_not_available(bad):
 def test_registered():
     for name in ("land_cover_change", "satellite_picture", "solved_case"):
         assert name in TOOLS
+
+
+def test_example_case_is_not_a_solved_case():
+    out = context.solved_case(_session(), site_id="_example")
+    assert out["status"] == "not_available" and "Not a solved case." in out["reason"]
+
+
+def test_cache_hit_same_result_and_no_duplicate_map(monkeypatch):
+    pair = [LandCover(2003, {"Cropland": 0.6, "Savanna": 0.4}), LandCover(2023, {"Cropland": 0.4, "Savanna": 0.6})]
+    monkeypatch.setattr(landcover, "land_cover_pair", lambda lat, lon, years: pair)
+    s = _session()
+    first = context.land_cover_change(s)
+    second = context.land_cover_change(s)
+    assert first == second
+    assert len(s.map) == 1
