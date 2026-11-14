@@ -24,6 +24,9 @@
       2373.0
     ],
     "base": "base.jpg",
+    "heightmap_rgb": "heightmap_rgb.png",
+    "hillshade": "hillshade.png",
+    "base_hq": "base_hq.jpg",
     "trend": {
       "lst_day": "trend_lst_day.png"
     },

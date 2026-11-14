@@ -58,6 +58,11 @@ VARIABLE_FIELDS = (
     "years_needed",
     "residual_pct_non_climate",
 )
+OPTIONAL_ASSETS: Mapping[str, str] = {
+    "heightmap_rgb": "heightmap_rgb.png",
+    "hillshade": "hillshade.png",
+    "base_hq": "base_hq.jpg",
+}
 _TREND_RE = re.compile(r"^trend_(?P<var>.+)\.png$")
 _YEAR_RE = re.compile(r"^year_(?P<var>.+)_(?P<year>\d{4})\.png$")
 
@@ -83,6 +88,9 @@ def find_assets(site_dir: Path) -> dict:
         "heightmap": "heightmap.png" if "heightmap.png" in names else None,
         "heightmap_range_m": range_m,  # PNG 0 -> min_m, 65535 -> max_m
         "base": "base.jpg" if "base.jpg" in names else None,
+        # Optional extras for the 3D view: terrain-RGB heights (0.1 m), relief shading,
+        # cloud-free 30 m median base. Absent files are left out, never guessed.
+        **{key: name for key, name in OPTIONAL_ASSETS.items() if name in names},
         "trend": trend,
         "yearly": yearly,
     }

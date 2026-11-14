@@ -166,3 +166,13 @@ def test_rounding_helpers():
     assert round_sig(float("nan")) is None and round_sig(5) == 5 and round_sig(True) is True
     assert format_number(-6.4949) == "−6.5" and format_number(0.04213) == "0.042" and format_number(123.4) == "120"
     assert not math.isnan(round_sig(1e-12))
+
+
+def test_find_assets_lists_optional_relief_files_only_when_present(tmp_path):
+    from app.site_export import find_assets
+
+    (tmp_path / "base.jpg").write_bytes(b"x")
+    (tmp_path / "hillshade.png").write_bytes(b"x")
+    assets = find_assets(tmp_path)
+    assert assets["hillshade"] == "hillshade.png"
+    assert "heightmap_rgb" not in assets and "base_hq" not in assets
