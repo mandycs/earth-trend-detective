@@ -68,11 +68,53 @@ def _climate(row: Mapping) -> str:
     )
 
 
+def _answer_parts(
+    rows: Sequence[Mapping], opening: list[str], focus: Mapping | None, unknown: str | None
+) -> list[str]:
+    """Sentences for a question: the asked trend first, then the climate split of the
+    top impact (a climate variable has no split of its own)."""
+    parts = list(opening)
+    if focus is None:
+        return parts + ([unknown] if unknown else [])
+    change = _change(focus)
+    parts.append(f"What we can see: {change[0].lower()}{change[1:]}" if opening else change)
+    parts.append(_reality(focus))
+    if focus.get("residual_pct_non_climate") is not None:
+        parts.append(_climate(focus))
+        return parts
+    impact = next(
+        (r for r in rows if r is not focus and _has_trend(r, frozenset({"real"}))
+         and r.get("residual_pct_non_climate") is not None),
+        None,
+    )
+    if impact is not None:
+        other = _change(impact)
+        parts.append(f"Over the same years, {other[0].lower()}{other[1:]}")
+        parts.append(_climate(impact))
+    return parts
+
+
 def template_narrative(report: Mapping) -> str:
-    """3-5 plain sentences: What's changing? Is it real? Is it the climate?"""
+    """3-5 plain sentences: What's changing? Is it real? Is it the climate?
+
+    With `focus_ids` in the report (the variables a user question is about), the first
+    sentence is about them.
+    """
     rows = _trend_rows(report)
-    focus = _focus(rows)
+    asked_ids = list(report.get("focus_ids") or ())
+    asked = sorted((r for r in rows if r.get("id") in asked_ids), key=lambda r: asked_ids.index(r["id"]))
+    opening: list[str] = []
+    focus = None
+    if asked:
+        focus = next((r for r in asked if _has_trend(r, frozenset({"real", "likely"}))), None)
+        if focus is None:
+            opening.append(
+                f"For {asked[0]['label'].lower()}, we can't tell yet whether it is going up or down here."
+            )
+    focus = focus or _focus(rows)
     unknown = _unknown_sentence(rows)
+    if asked:
+        return " ".join(_answer_parts(rows, opening, focus, unknown)[:5])
     if focus is None:
         parts = ["Nothing here is changing in a clear way yet."]
         parts.append(unknown or "The changes we see are still too small to tell apart from chance.")

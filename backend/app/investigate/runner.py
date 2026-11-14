@@ -122,7 +122,13 @@ def _gather_step(state: _State, step_id: str, gather: GatherFn) -> dict:
 
 
 def _run_step(
-    planned: PlannedStep, state: _State, lat: float, lon: float, llm: LLM | None, gather: GatherFn
+    planned: PlannedStep,
+    state: _State,
+    lat: float,
+    lon: float,
+    llm: LLM | None,
+    gather: GatherFn,
+    question: str = "",
 ) -> dict:
     sid = planned.id
     if sid == "land_cover":
@@ -135,7 +141,7 @@ def _run_step(
         report = state.report()
         if not report["variables"]:
             return {"text": None, "source": None, "note": "No measured trend to summarise for this point."}
-        return explain_report(report, llm).to_dict()
+        return explain_report(report, llm, question).to_dict()
     raise KeyError(sid)
 
 
@@ -177,7 +183,7 @@ def investigate(
         yield _event("step_start", index=i, id=planned.id, title=planned.step.title)
         t0 = time.monotonic()
         try:
-            result = _run_step(planned, state, lat, lon, llm, gather)
+            result = _run_step(planned, state, lat, lon, llm, gather, question)
         except Exception as exc:  # noqa: BLE001 - one failing step must not end the investigation
             logger.warning("step %s failed: %s: %s", planned.id, type(exc).__name__, exc)
             yield _event("step_failed", index=i, id=planned.id, message=FAILED.get(planned.id, "This step failed."))

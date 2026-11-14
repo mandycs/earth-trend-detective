@@ -25,6 +25,7 @@ Hard rules:
 - If a trend has a "percent_not_explained_by_climate_range_across_climate_models", give that range (for example "between 54% and 84%, depending on the climate model") instead of the single percent.
 - The share "not explained by climate" is a lead, not proof: you must write the exact words "a lead, not proof". Never say it proves anything or that people caused it.
 - No jargon: do not write Mann-Kendall, FDR, p-value, q-value, significance, regression, residual or statistics words.
+- If the facts include a "question", your FIRST sentence answers it directly with the trends in "answer_with": say whether each is going up, going down, or can't be told yet. After that, mention at most two other trends, and only if they help answer the question.
 - No headings, lists or markdown. Return only the paragraph."""
 
 _FACT_KEYS = {
@@ -55,7 +56,12 @@ def report_facts(report: Mapping) -> dict:
     for row in report.get("variables") or ():
         fact = {out: row.get(key) for key, out in _FACT_KEYS.items() if row.get(key) is not None}
         variables.append(fact)
-    return {"place": site_name(report), "years": list(years), "trends_in_rank_order": variables}
+    facts = {"place": site_name(report), "years": list(years), "trends_in_rank_order": variables}
+    if report.get("question"):
+        labels = {r.get("id"): r.get("label") for r in report.get("variables") or ()}
+        facts["question"] = str(report["question"])
+        facts["answer_with"] = [labels[i] for i in report.get("focus_ids") or () if labels.get(i)]
+    return facts
 
 
 def route_user(question: str, choices: Mapping[str, str]) -> str:

@@ -164,3 +164,25 @@ def test_range_bounds_are_allowed_and_template_uses_range():
     text = template_narrative(report)
     assert "Between 54% and 84%" in text
     assert validate_narrative(text, report).ok
+
+
+def test_template_opens_with_the_asked_variable():
+    from app.explain.narrative import explain_report
+    from tests.explain_fakes import lake_mead_report
+
+    result = explain_report(lake_mead_report(), None, question="Is it getting hotter here?")
+    assert result.source == "template"
+    assert result.text.lower().startswith("what we can see: air temperature") or result.text.startswith(
+        "Air temperature"
+    ) or "air temperature" in result.text.split(".")[0].lower()
+    assert result.validation.ok
+
+
+def test_question_facts_carry_answer_with():
+    from app.explain.prompts import report_facts
+    from tests.explain_fakes import lake_mead_report
+
+    report = {**lake_mead_report(), "question": "Is it hotter?", "focus_ids": ["t2m"]}
+    facts = report_facts(report)
+    assert facts["question"] == "Is it hotter?"
+    assert facts["answer_with"] == ["Air temperature"]
