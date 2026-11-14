@@ -72,7 +72,24 @@ nuevo y actualizar `.env` a mano (el hook impide a Claude escribir `.env`).
 - Otra sesión (`earth-trend-detective-bf`) recibió las fuentes de presión humana (MCD12Q1, Black Marble 2012–24,
   INE Almonte, USBR consumo). Ojo: Las Vegas usa ~4 % del Colorado → no es el sospechoso de Lake Mead.
 
-## 6. Siguiente bloque propuesto (acordado en concepto, sin empezar)
+## 6. Investigador agente + capas — backend HECHO (sáb 14, ~19:00)
+
+- `sites/<id>/layers.json` (`app/layers.py`, también lo escribe `site_export`): capa, fuente NASA + URL,
+  leyenda (stops, rango, unidad), fechas, `analysed|visual_only`. Regenerar: `python -m app.layers --all`.
+- Antes/después (`app/assets/beforeafter.py`): mediana MODIS true colour 2003 vs 2024, misma estación.
+  **Solo Lake Mead** (se ve el lago encoger); Aletsch y Doñana excluidos (`SKIP`): a 250 m es un borrón.
+- `POST /investigate` (`app/investigate/`), SSE. Body `{question, site_id}` o `{question, lat, lon}`.
+  Eventos: `place` (tags del entorno) → `plan` (`source: llm|default`) → `step_start` / `step_done` |
+  `step_failed` por paso → `done`. Pasos del menú: `land_cover` (MCD12Q1 vía GIBS, 2003 vs 2023, sin auth),
+  `climate` (POWER), `water_storage` (GRACE + residuo), `then_and_now` (URLs GIBS del día más limpio),
+  `soil_and_runoff` (GLDAS, lento); siempre cierra `explain` (narrativa validada). Los `why` del LLM con
+  cifras se sustituyen por el texto del menú. Probado en real: Aral 13,5 s.
+- Cada `step_done.result` trae `layer` para pintar: `wms` (cobertura), `footprint` (GRACE ~300 km), `point`.
+- Falta en front: pantalla del investigador (consumir SSE con `fetch` + ReadableStream; `EventSource` no hace POST),
+  pila de capas desde `layers.json`, cortina antes/después.
+- Backend reiniciado en 100.70.153.87:8765 con `/investigate`; log en `backend/data/cache/uvicorn.log`.
+
+## 6b. Diseño original del bloque (referencia)
 
 **Investigador agente + capas.** El usuario elige sitio/punto y pregunta; el LLM arma un plan de 3–6 pasos
 **solo con piezas de un menú cerrado** (salida estructurada); el código ejecuta y la UI enseña el avance y pinta la
