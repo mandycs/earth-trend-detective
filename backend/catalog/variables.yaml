@@ -109,17 +109,18 @@ variables:
     applies_to: [snow, glacier, mountain]
     drivers: [t2m, precip]
 
-  # --- Impact variables (GLDAS via Hydrology data rods, Earthdata Login) ---
+  # --- Impact variables (GLDAS Noah monthly via Earthdata Cloud OPeNDAP, Earthdata Login) ---
+  # Hydrology Data Rods and on-prem GES DISC OPeNDAP are retired (HTTP 410).
   - id: soil_moisture
     label: Topsoil moisture
     role: impact
-    source: datarods
-    dataset: GLDAS_NOAH025_3H_v2.1
+    source: gldas
+    dataset: GLDAS_NOAH025_M.2.1
     band: SoilMoi0_10cm_inst
-    units: "kg/m²"
+    units: "kg/m²"            # water in the top 10 cm (1 kg/m² = 1 mm); monthly mean
     scale: 1.0
     offset: 0.0
-    temporal: 3-hourly
+    temporal: monthly
     tags: [water, soil]
     applies_to: [any]
     drivers: [precip, t2m]
@@ -127,13 +128,13 @@ variables:
   - id: runoff
     label: Surface runoff
     role: impact
-    source: datarods
-    dataset: GLDAS_NOAH025_3H_v2.1
+    source: gldas
+    dataset: GLDAS_NOAH025_M.2.1
     band: Qs_acc
-    units: "kg/m²/3h"
-    scale: 1.0
+    units: "mm/day"
+    scale: 8.0                # monthly file = mean 3-hourly accumulation (kg/m²/3h); x8 -> mm/day
     offset: 0.0
-    temporal: 3-hourly
+    temporal: monthly
     tags: [water]
     applies_to: [any]
     drivers: [precip]
