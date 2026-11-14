@@ -3,7 +3,7 @@
   "steps": [
     {
       "title": "What is changing here?",
-      "body": "Every NASA variable that applies to this basin is tested. The one that moved most is already selected: total water stored."
+      "body": "Every NASA variable that applies to this basin is tested. Pick one on the left to see it painted on the land."
     },
     {
       "title": "Is it real, or is it chance?",
