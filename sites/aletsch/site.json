@@ -1,0 +1,145 @@
+{
+  "id": "aletsch",
+  "name": "Aletsch Glacier (Swiss Alps)",
+  "bbox": [
+    7.95,
+    46.38,
+    8.15,
+    46.56
+  ],
+  "vertical_exaggeration": 1.5,
+  "years": [
+    2003,
+    2024
+  ],
+  "assets": {
+    "heightmap": "heightmap.png",
+    "heightmap_range_m": [
+      910.0,
+      4172.0
+    ],
+    "base": "base.jpg",
+    "trend": {},
+    "yearly": {}
+  },
+  "variables": [
+    {
+      "id": "grace_tws",
+      "label": "Total water stored",
+      "unit": "cm",
+      "sen_slope_per_decade": -6.92,
+      "ci_low": -8.84,
+      "ci_high": -4.97,
+      "p_value": 6.99e-09,
+      "q_value": 2.1e-08,
+      "verdict": "real",
+      "direction": "down",
+      "years_needed": null,
+      "residual_pct_non_climate": 85.1,
+      "badge": "↓ Real"
+    },
+    {
+      "id": "t2m",
+      "label": "Air temperature",
+      "unit": "°C",
+      "sen_slope_per_decade": 1.0,
+      "ci_low": 0.731,
+      "ci_high": 1.29,
+      "p_value": 1.29e-11,
+      "q_value": 7.76e-11,
+      "verdict": "real",
+      "direction": "up",
+      "years_needed": null,
+      "residual_pct_non_climate": null,
+      "badge": "↑ Real"
+    },
+    {
+      "id": "precip",
+      "label": "Rainfall",
+      "unit": "mm/day",
+      "sen_slope_per_decade": 0.362,
+      "ci_low": 0.149,
+      "ci_high": 0.571,
+      "p_value": 0.000846,
+      "q_value": 0.00127,
+      "verdict": "real",
+      "direction": "up",
+      "years_needed": null,
+      "residual_pct_non_climate": null,
+      "badge": "↑ Real"
+    },
+    {
+      "id": "runoff",
+      "label": "Surface runoff",
+      "unit": "mm/day",
+      "sen_slope_per_decade": 0.0153,
+      "ci_low": 0.00615,
+      "ci_high": 0.0322,
+      "p_value": 1.53e-05,
+      "q_value": 3.06e-05,
+      "verdict": "real",
+      "direction": "up",
+      "years_needed": null,
+      "residual_pct_non_climate": null,
+      "badge": "↑ Real"
+    },
+    {
+      "id": "soil_moisture",
+      "label": "Topsoil moisture",
+      "unit": "kg/m²",
+      "sen_slope_per_decade": 0.52,
+      "ci_low": -0.425,
+      "ci_high": 1.66,
+      "p_value": 0.277,
+      "q_value": 0.332,
+      "verdict": "unknown",
+      "direction": "flat",
+      "years_needed": 26,
+      "residual_pct_non_climate": null,
+      "badge": "? Can't tell yet"
+    },
+    {
+      "id": "solar",
+      "label": "Sunlight at the surface",
+      "unit": "MJ/m²/day",
+      "sen_slope_per_decade": 0.0862,
+      "ci_low": -0.129,
+      "ci_high": 0.292,
+      "p_value": 0.416,
+      "q_value": 0.416,
+      "verdict": "unknown",
+      "direction": "flat",
+      "years_needed": 29,
+      "residual_pct_non_climate": null,
+      "badge": "? Can't tell yet"
+    }
+  ],
+  "missing": {
+    "lst_day": "Satellite data still being processed by NASA AppEEARS. Check back later.",
+    "snow_cover": "Satellite data still being processed by NASA AppEEARS. Check back later."
+  },
+  "steps": [
+    "What is changing here?",
+    "Is it real or chance?",
+    "Is it the climate?"
+  ],
+  "headline": "Total water stored is going down for real (−6.9 cm per decade). About 85% of that change is not explained by climate.",
+  "narrative": null,
+  "validation": null,
+  "sources": [
+    {
+      "title": "NASA POWER monthly climate (MERRA-2, IMERG, CERES)",
+      "url": "https://power.larc.nasa.gov"
+    },
+    {
+      "title": "GLDAS Noah 0.25° monthly v2.1 (NASA GES DISC)",
+      "url": "https://disc.gsfc.nasa.gov/datasets/GLDAS_NOAH025_M_2.1/summary"
+    },
+    {
+      "title": "GRACE/GRACE-FO JPL mascons RL06.3 (NASA PO.DAAC)",
+      "url": "https://podaac.jpl.nasa.gov/dataset/TELLUS_GRAC-GRFO_MASCON_CRI_GRID_RL06.3_V4"
+    }
+  ],
+  "generated_at": "2026-11-14",
+  "pipeline_version": "0.1"
+}

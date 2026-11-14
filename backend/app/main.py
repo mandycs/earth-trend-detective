@@ -12,18 +12,16 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.catalog import load_catalog
 from app.extractors.power import DEFAULT_CACHE_DIR, fetch_monthly
-from app.gather import SOURCES, gather_site_series
+from app.gather import gather_site_series
+from app.site_report import OBSERVED_SOURCES, build_site_report  # noqa: F401 - re-export
 from app.sites import load_sites
-from app.stats import compute_residuals, run_sweep
+from app.stats import run_sweep
 
 logger = logging.getLogger(__name__)
 # httpx logs full request URLs at INFO; signed Earthdata download links carry the user id.
 logging.getLogger("httpx").setLevel(logging.WARNING)
 
 POWER_FIRST_YEAR = 1981
-# Only observed impacts can carry a human signal in the residual. GLDAS is a land model
-# without irrigation or pumping, so its residual is not reported as "non-climate %".
-OBSERVED_SOURCES = frozenset({"grace", "appeears"})
 
 app = FastAPI(title="Earth Trend Detective API", version="0.1.0")
 
@@ -129,25 +127,5 @@ def site_sweep(site_id: str, start: int | None = None, end: int | None = None) -
             f"Years must satisfy {POWER_FIRST_YEAR} <= start <= end <= {last_year}. "
             "Choose a valid period and try again.",
         )
-    catalog = load_catalog()
-    gathered = gather_site_series(site, catalog, start, end)
-    results = run_sweep(gathered.series, catalog) if gathered.series else []
-    residuals = compute_residuals(gathered.series, catalog) if gathered.series else {}
-    sources_by_var = {v.id: v.source for v in catalog}
-    variables_out = []
-    for r in results:
-        row = r.to_dict()
-        res = residuals.get(r.id)
-        if res is not None:
-            observed = sources_by_var.get(r.id) in OBSERVED_SOURCES
-            row["residual_pct_non_climate"] = res.pct_non_climate if observed else None
-            row["residual"] = res.to_dict() | {"observed": observed}
-        variables_out.append(row)
-    return {
-        "site": {"id": site.id, "name": site.name, "bbox": list(site.bbox), "tags": list(site.tags)},
-        "start": start,
-        "end": end,
-        "variables": variables_out,
-        "missing": dict(gathered.missing),
-        "sources": [{"id": k, "title": SOURCES[k].title, "url": SOURCES[k].url} for k in gathered.sources],
-    }
+    # Looked up here (not bound at import) so tests can monkeypatch app.main.gather_site_series.
+    return build_site_report(site, load_catalog(), start, end, gather=gather_site_series)
