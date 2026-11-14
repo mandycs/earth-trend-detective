@@ -7,8 +7,9 @@ from __future__ import annotations
 
 import logging
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
+from app.explain.answer import build_answer
 from app.explain.llm import LLM
 from app.explain.prompts import NARRATIVE_SYSTEM, narrative_user
 from app.explain.route import route_question
@@ -26,14 +27,18 @@ class NarrativeResult:
     source: str  # "llm" | "template"
     validation: ValidationResult
     attempts: tuple[ValidationResult, ...] = ()  # rejected LLM drafts, if any
+    answer: dict | None = None  # headline block for a question (see app.explain.answer)
 
     def to_dict(self) -> dict:
-        return {
+        out = {
             "text": self.text,
             "source": self.source,
             "validation": self.validation.to_dict(),
             "rejected_attempts": [a.to_dict() for a in self.attempts],
         }
+        if self.answer is not None:
+            out["answer"] = self.answer
+        return out
 
 
 def _template(report: Mapping, attempts: tuple[ValidationResult, ...]) -> NarrativeResult:
@@ -52,9 +57,15 @@ def focus_on_question(report: Mapping, question: str, llm: LLM | None) -> dict:
 
 
 def explain_report(report: Mapping, llm: LLM | None, question: str | None = None) -> NarrativeResult:
-    """Narrative of `report`; with a `question`, it opens by answering that question."""
-    if question:
-        report = focus_on_question(report, question, llm)
+    """Narrative of `report`; with a `question`, it opens by answering that question
+    and carries the answer block built in code."""
+    if not question:
+        return _narrate(report, llm)
+    focused = focus_on_question(report, question, llm)
+    return replace(_narrate(focused, llm), answer=build_answer(focused))
+
+
+def _narrate(report: Mapping, llm: LLM | None) -> NarrativeResult:
     if llm is None:
         return _template(report, ())
     previous: str | None = None
