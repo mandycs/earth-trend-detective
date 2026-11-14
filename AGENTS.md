@@ -22,16 +22,19 @@ deploy) y **Ale** (3D, historia, copy, demo, pitch).
 ## Comandos
 
 ```bash
-# web (modo historia 3D)
+# web (modo historia 3D) — Next.js 16
 cd frontend && npm run dev          # http://127.0.0.1:5180
-cd frontend && npm run build        # type-check + bundle + copia ../sites a dist/sites
+cd frontend && npm run build        # build de producción
+cd frontend && npm run typecheck    # tsc --noEmit
 
 # regenerar los assets sintéticos del caso de muestra
 uv run --python 3.11 --with pillow --with numpy python sites/_example/make_fake_assets.py
 ```
 
-Stack fijado: React 18.3 · @react-three/fiber 8.17 · three 0.169 · Vite 7. **No actualizar versiones durante
-el hackathon.**
+Stack fijado: Next 16.4 · React 19.3 · @react-three/fiber 9.8 · three 0.187. **No actualizar versiones
+durante el hackathon.** Los assets se sirven desde `sites/` de la raíz mediante `scripts/sync-sites.mjs`
+(Next solo sirve desde `public/`); y `127.0.0.1` está en `allowedDevOrigins` porque sin eso el dev server
+sirve el HTML pero **no hidrata** y todos los botones quedan muertos.
 
 ## Contrato de datos del modo historia
 

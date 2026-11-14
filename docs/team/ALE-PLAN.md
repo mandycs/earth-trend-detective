@@ -26,14 +26,15 @@ compromete la demo.
 
 ## 1. Decisiones tomadas (y por qué)
 
-1. **`frontend/` con Vite + React + TS, no Next.js.** A las 15:47 el repo no tenía frontend y el 3D era el
-   camino crítico. Vite arranca en 20 s. La escena vive en `frontend/src/story/` y es **React puro + three.js**:
-   si Mandy trae un esqueleto Next.js, se copia la carpeta y se añade `dynamic(..., { ssr: false })`. 15 minutos.
-2. **Stack fijado y no se toca hasta el domingo:** React 18.3 · `@react-three/fiber` 8.17 · `three` 0.169 ·
-   Vite 7. Probado y funcionando. Actualizar versiones en mitad de un hackathon es cómo se pierden tardes.
-3. **Los assets del modo historia se sirven desde `sites/` de la raíz**, no duplicados en `frontend/public`.
-   Un plugin de Vite (30 líneas) los sirve en dev en `/sites/*` y los copia a `dist/sites` en el build.
-   Mandy escribe en `sites/`, yo consumo la misma ruta. Cero pasos manuales.
+1. **`frontend/` con Next.js 16 + React 19 + react-three-fiber 9.** Decisión del equipo. La escena vive en
+   `src/story/` y solo `StoryApp.tsx` lleva `'use client'`; `src/app/page.tsx` es un server component que
+   la monta. Los assets se sirven desde `sites/` mediante `scripts/sync-sites.mjs` → `public/sites`.
+   Trampa documentada: sin `allowedDevOrigins: ['127.0.0.1']` el dev server entrega el HTML pero **no
+   hidrata**, y parece que la app está rota cuando en realidad es el origen del HMR.
+3. **Los assets del modo historia se sirven desde `sites/` de la raíz**, no duplicados a mano. Next solo
+   sirve desde `public/`, así que `scripts/sync-sites.mjs` espeja `sites/` → `public/sites` en `predev` y
+   `prebuild`. Mandy escribe en `sites/`, yo consumo la misma ruta. Cero pasos manuales, y si `sites/` no
+   existe el build no falla: la UI enseña su estado honesto de "este caso no tiene assets".
 4. **La escena se alimenta de `site.json` + PNGs, nunca de números escritos en el código.** La regla de cifras
    del producto (el LLM no inventa cifras) también aplica a mí: si un número aparece en pantalla, viene del JSON.
 5. **Assets falsos generados y marcados.** `sites/_example/make_fake_assets.py` produce heightmap, textura base,
@@ -155,8 +156,9 @@ Pregunta única: **¿el sitio 1 se ve bien con datos reales?**
 ### Comandos
 ```bash
 cd frontend
-npm run dev        # http://127.0.0.1:5180
-npm run build      # tsc -b + vite build, copia sites/ a dist/sites
+npm run dev        # http://127.0.0.1:5180 (Next 16, sincroniza sites/ antes)
+npm run build      # build de producción
+npm run typecheck  # tsc --noEmit
 # regenerar assets falsos:
 uv run --python 3.11 --with pillow --with numpy python sites/_example/make_fake_assets.py
 ```

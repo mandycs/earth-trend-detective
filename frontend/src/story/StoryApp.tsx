@@ -1,28 +1,32 @@
+'use client'
+
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import './styles.css'
-import { useSite, useStoryAssets } from './story/useSite'
-import { StoryScene } from './story/StoryScene'
-import { StoryPanel } from './story/StoryPanel'
-import { Timeline } from './story/Timeline'
-import type { SiteVariable } from './story/types'
+import { useSite, useStoryAssets } from './useSite'
+import { StoryScene } from './StoryScene'
+import { StoryPanel } from './StoryPanel'
+import { Timeline } from './Timeline'
+import type { SiteVariable } from './types'
 
 interface CaseEntry {
   id: string
   label: string
   where: string
-  ready: boolean
 }
 
-/** The three story-mode cases. `_example` is the fixture with placeholder art. */
+/**
+ * The three story-mode cases. `_example` is the fixture with placeholder art,
+ * kept first while the pipeline is still generating the real ones.
+ */
 const CASES: CaseEntry[] = [
-  { id: '_example', label: 'Preview case', where: 'sample assets', ready: true },
-  { id: 'lake_mead', label: 'Lake Mead', where: 'United States', ready: false },
-  { id: 'aletsch', label: 'Aletsch', where: 'Switzerland', ready: false },
+  { id: '_example', label: 'Preview case', where: 'sample assets' },
+  { id: 'lake_mead', label: 'Lake Mead', where: 'United States' },
+  { id: 'aletsch', label: 'Aletsch', where: 'Switzerland' },
+  { id: 'donana', label: 'Doñana', where: 'Spain' },
 ]
 
 const PLAY_SPEED = 2.4 // years per second
 
-export default function App() {
+export default function StoryApp() {
   const [caseId, setCaseId] = useState(CASES[0].id)
   const [variableId, setVariableId] = useState<string | null>(null)
   const [step, setStep] = useState(0)

@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import type { Site } from './types'
 
 export function siteAssetBase(siteId: string): string {
-  return `${import.meta.env.BASE_URL}sites/${siteId}/`
+  return `/sites/${siteId}/`
 }
 
 function loadTexture(url: string, srgb: boolean): Promise<THREE.Texture> {
