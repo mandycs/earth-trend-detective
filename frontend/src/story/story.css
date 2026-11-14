@@ -1654,3 +1654,84 @@
   background: linear-gradient(180deg, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0));
   pointer-events: none;
 }
+
+/* ------------------------------------------------------------ curtain */
+
+.curtain {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.curtain-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: #fff;
+}
+
+.curtain-handle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  transform: translate(-50%, -50%);
+  background: var(--ink);
+  color: var(--ground);
+  font-weight: 800;
+  cursor: ew-resize;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.curtain-label {
+  position: absolute;
+  top: 50%;
+  margin-top: 34px;
+  padding: 4px 10px;
+  background: rgba(14, 16, 18, 0.8);
+  color: #fff;
+  font-weight: 600;
+  font-size: 1rem;
+  white-space: nowrap;
+}
+
+.curtain-left {
+  margin-right: 10px;
+}
+
+.curtain-right {
+  margin-left: 10px;
+}
+
+.curtain-still .curtain-label {
+  top: 40%;
+  font-family: var(--font-display);
+  font-stretch: 75%;
+  font-weight: 850;
+  font-size: clamp(2rem, 3.4vw, 3rem);
+  background: transparent;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.7); /* taste-skill-ignore: scrim under text on a photo */
+}
+
+.lp-compare {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--ink-2);
+}
+
+.lp-compare select {
+  min-height: 44px;
+  padding: 0 10px;
+  border: 0;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 1rem;
+}

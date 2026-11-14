@@ -18,6 +18,7 @@ export interface DroneSceneProps {
   photo?: THREE.Texture | null
   overlays: Overlay[]
   onPick?: (uv: THREE.Vector2) => void
+  split?: number
   exaggeration: number
   onAltitude?: (metres: number) => void
 }
@@ -179,7 +180,7 @@ function Flight({ detail, scale, aspect, onAltitude }: { detail: DetailAssets; s
   return null
 }
 
-export function DroneScene({ detail, photo, overlays, onPick, level, exaggeration, onAltitude }: DroneSceneProps) {
+export function DroneScene({ detail, photo, overlays, onPick, split = 0.5, level, exaggeration, onAltitude }: DroneSceneProps) {
   const { width, depth } = widthOf(detail.info.bbox)
   const aspect = depth / width
   const scale = exaggeration / width
@@ -199,6 +200,7 @@ export function DroneScene({ detail, photo, overlays, onPick, level, exaggeratio
         grid={detail.grid}
         base={photo ?? detail.base}
         overlays={overlays}
+        split={split}
         onPick={onPick}
         widthMetres={width}
         exaggeration={exaggeration}

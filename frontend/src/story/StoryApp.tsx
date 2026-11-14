@@ -15,6 +15,11 @@ import type { SiteVariable } from './types'
 import { bboxWidthMeters } from './types'
 import { CASE_IDS, fmt, leadVariable, shortName } from '../lib/cases'
 import { LayerPanel } from './layers/LayerPanel'
+import { Curtain } from './layers/Curtain'
+import { layerTexture } from './layers/assets'
+import type { Overlay } from './Terrain'
+import { pairFromLayers } from '../lib/beforeAfterPair'
+import type { BeforeAfterPair } from '../lib/beforeAfterPair'
 import type { StackEntry } from './layers/model'
 import { defaultStack, fileFor, yearStatus } from './layers/model'
 import { useOverlays } from './layers/useOverlays'
@@ -81,6 +86,9 @@ export default function StoryApp({ caseId }: { caseId: string }) {
   const [asking, setAsking] = useState(false)
   const [askError, setAskError] = useState<string | null>(null)
   const [identify, setIdentify] = useState(false)
+  const [compareId, setCompareId] = useState<string | null>(null)
+  const [split, setSplit] = useState(0.5)
+  const [pair, setPair] = useState<{ id: string; value: BeforeAfterPair | null; textures: [Overlay, Overlay] | null }>({ id: '', value: null, textures: null })
   const [picked, setPicked] = useState<IdentifyResult | null>(null)
   const [noMapFor, setNoMapFor] = useState<string | null>(null)
   const [altitude, setAltitude] = useState<number | null>(null)
@@ -219,8 +227,16 @@ export default function StoryApp({ caseId }: { caseId: string }) {
   }
 
   /** Turning a layer on puts its record on the timeline. */
-  const changeStack = (next: StackEntry[]) => {
-    const newlyOn = next.find((s) => s.on && !stack.find((p) => p.id === s.id)?.on)
+  const changeStack = (incoming: StackEntry[]) => {
+    const newlyOn = incoming.find((s) => s.on && !stack.find((p) => p.id === s.id)?.on)
+    const isColoured = (id: string) => layers.find((l) => l.id === id)?.blend === 'normal'
+    // One coloured layer at a time; a second one is seen through the curtain.
+    const next =
+      newlyOn && isColoured(newlyOn.id)
+        ? incoming.map((s) => (s.id !== newlyOn.id && s.on && isColoured(s.id) ? { ...s, on: false } : s))
+        : incoming
+    if (newlyOn && newlyOn.id === compareId) setCompareId(null)
+    if (!next.some((s) => s.on && isColoured(s.id))) setCompareId(null)
     setStack(next)
     if (newlyOn) {
       const def = layers.find((l) => l.id === newlyOn.id)
@@ -280,8 +296,40 @@ export default function StoryApp({ caseId }: { caseId: string }) {
     return [(w - W) / (E - W), (s - S) / (N - S), (e - w) / (E - W), (n - s) / (N - S)]
   }, [site, detailInfo])
 
-  const overlays = useOverlays(caseId, layers, stack, shownYear)
-  const droneOverlays = useOverlays(caseId, layers, stack, shownYear, detailRect)
+  const overlays = useOverlays(caseId, layers, stack, shownYear, undefined, compareId)
+  const droneOverlays = useOverlays(caseId, layers, stack, shownYear, detailRect, compareId)
+
+  // Then-and-now pair (2003 | 2024) for the documentary's first chapter.
+  useEffect(() => {
+    let alive = true
+    fetch(`/sites/${caseId}/layers.json`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then(async (file) => {
+        const value = pairFromLayers(caseId, file)
+        if (!value) {
+          if (alive) setPair({ id: caseId, value: null, textures: null })
+          return
+        }
+        const [a, b] = await Promise.all([layerTexture(value.before.src, false), layerTexture(value.after.src, false)])
+        if (alive)
+          setPair({
+            id: caseId,
+            value,
+            textures: [
+              { texture: a, opacity: 1, blend: 'normal', side: -1 },
+              { texture: b, opacity: 1, blend: 'normal', side: 1 },
+            ],
+          })
+      })
+      .catch(() => alive && setPair({ id: caseId, value: null, textures: null }))
+    return () => {
+      alive = false
+    }
+  }, [caseId])
+  const docPair = pair.id === caseId ? pair : null
+  const docCurtain = mode === 'doc' && chapter === 0 && docPair?.textures ? docPair : null
+  // In chapter 1 the curtain sweeps from the first picture to the last.
+  const docSplit = 0.85 - 0.7 * Math.min(1, chapterT * 1.15)
 
   // Words for the trend-tested yearly anomaly layer, read back from its colours.
   const anomalyLayer = stack.find((s) => s.on && layers.find((l) => l.id === s.id)?.id.startsWith('year_'))
@@ -436,9 +484,18 @@ export default function StoryApp({ caseId }: { caseId: string }) {
                     ))}
                   </ol>
                   <span className="doc-year narrow" aria-live="off">
-                    {chapter === 0 ? shownYear : `${firstYear}–${lastYear}`}
+                    {`${firstYear}–${lastYear}`}
                   </span>
                 </div>
+                {docCurtain?.value ? (
+                  <Curtain
+                    split={docSplit}
+                    onSplit={() => undefined}
+                    left={String(docCurtain.value.before.year)}
+                    right={String(docCurtain.value.after.year)}
+                    interactive={false}
+                  />
+                ) : null}
                 {(() => {
                   const c = chaptersFor(site)[chapter]
                   return (
@@ -479,7 +536,9 @@ export default function StoryApp({ caseId }: { caseId: string }) {
               <StoryScene
                 site={site}
                 assets={assets}
-                overlays={mode === 'doc' ? [] : overlays}
+                overlays={mode === 'doc' ? (docCurtain?.textures ?? []) : overlays}
+                split={mode === 'doc' ? docSplit : split}
+                hideWater={Boolean(docCurtain)}
                 onPick={identify && mode === 'free' ? onPick : undefined}
                 exaggeration={vx}
                 shot={mode === 'doc' ? chapter : null}
@@ -491,6 +550,7 @@ export default function StoryApp({ caseId }: { caseId: string }) {
                 detail={detail.assets}
                 photo={photoTexture}
                 overlays={droneOverlays}
+                split={split}
                 onPick={identify ? onPick : undefined}
                 level={droneLevel}
                 exaggeration={1}
@@ -588,6 +648,15 @@ export default function StoryApp({ caseId }: { caseId: string }) {
               </button>
             ) : null}
 
+            {mode === 'free' && compareId ? (
+              <Curtain
+                split={split}
+                onSplit={setSplit}
+                left={layers.find((l) => stack.some((s) => s.on && s.id === l.id) && l.blend === 'normal')?.title ?? 'Layer'}
+                right={layers.find((l) => l.id === compareId)?.title ?? 'Compared layer'}
+              />
+            ) : null}
+
             {picked ? (
               <div className="st-identify-card" role="status">
                 <div className="st-identify-head">
@@ -654,6 +723,8 @@ export default function StoryApp({ caseId }: { caseId: string }) {
                 if (!on) setPicked(null)
               }}
               cropKm={drone ? cropKm : undefined}
+              compareId={compareId}
+              onCompare={setCompareId}
             />
           ) : null}
 

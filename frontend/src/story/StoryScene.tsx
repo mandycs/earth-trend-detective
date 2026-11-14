@@ -15,6 +15,8 @@ export interface StorySceneProps {
   overlays: Overlay[]
   onPick?: (uv: THREE.Vector2) => void
   exaggeration: number
+  split?: number
+  hideWater?: boolean
   /** Documentary chapter shot (0-2); null hands the camera to the visitor. */
   shot?: number | null
 }
@@ -150,7 +152,7 @@ function Sun() {
   )
 }
 
-export function StoryScene({ site, assets, overlays, onPick, exaggeration, shot = null }: StorySceneProps) {
+export function StoryScene({ site, assets, overlays, onPick, exaggeration, shot = null, split = 0.5, hideWater = false }: StorySceneProps) {
   const [west, south, east, north] = site.bbox
   const midLat = ((south + north) / 2) * (Math.PI / 180)
   const widthMetres = Math.abs(east - west) * 111_320 * Math.cos(midLat)
@@ -178,6 +180,8 @@ export function StoryScene({ site, assets, overlays, onPick, exaggeration, shot 
           grid={grid}
           base={assets.base}
           overlays={overlays}
+          split={split}
+          hideWater={hideWater}
           onPick={onPick}
           widthMetres={widthMetres}
           exaggeration={exaggeration}
