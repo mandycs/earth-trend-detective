@@ -35,5 +35,9 @@
   "share_significant": 0.1159,
   "share_up": 0.8839,
   "method": "Per pixel: Sen slope and Mann-Kendall S on annual means of deseasonalized monthly anomalies.",
+  "value_file": "trend_lst_day_values.png",
+  "value_offset": -3.305277777777787,
+  "value_scale": 0.00010087215118191432,
+  "significance_file": "trend_lst_day_significant.png",
   "source": "MOD11A2.061"
 }

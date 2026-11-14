@@ -366,7 +366,11 @@
       "source": {
         "name": "MODIS Terra land surface temperature (MOD11A2 v061), via AppEEARS",
         "url": "https://lpdaac.usgs.gov/products/mod11a2v061/"
-      }
+      },
+      "value_offset": -3.305277777777787,
+      "value_scale": 0.00010087215118191432,
+      "value_file": "trend_lst_day_values.png",
+      "significance_file": "trend_lst_day_significant.png"
     },
     {
       "id": "year_lst_day",
@@ -427,6 +431,9 @@
         "name": "MODIS Terra land surface temperature (MOD11A2 v061), via AppEEARS",
         "url": "https://lpdaac.usgs.gov/products/mod11a2v061/"
       },
+      "value_offset": -5.274595959595964,
+      "value_scale": 0.00016097280677498593,
+      "value_pattern": "value_lst_day_{YYYY}.png",
       "baseline": "2003-2024 average for each calendar month"
     }
   ],

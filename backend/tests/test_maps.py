@@ -136,3 +136,18 @@ def test_water_masks_show_the_lake_shrinking(tmp_path):
     monthly = water.fetch_water_area(bundle)
     assert monthly.notna().sum() > 200 and (bundle / water.CACHE_CSV).exists()
     assert water.fetch_water_area(bundle).equals(monthly)  # served from the CSV cache
+
+
+def test_value_grid_round_trips(tmp_path):
+    import numpy as np
+    from PIL import Image
+
+    from app.assets.maps import save_values_png, value_encoding
+
+    vals = np.array([[-1.5, 0.0], [np.nan, 0.75]])
+    off, scale = value_encoding(vals)
+    path = save_values_png(vals, (2, 2), off, scale, tmp_path / "v.png")
+    code = np.asarray(Image.open(path)).astype(float)
+    assert code[1, 0] == 0
+    back = off + scale * code
+    assert np.allclose(back[[0, 0, 1], [0, 1, 1]], [-1.5, 0.0, 0.75], atol=scale)
