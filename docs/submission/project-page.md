@@ -53,7 +53,7 @@ Source code (Apache-2.0): `[REPO_URL]`
 
 Most climate tools show you a line. This one tells you what the line means, and what it does not mean.
 
-**Solved cases.** Three places, 2003–2024, each a 3D block of real terrain (NASADEM) under a cloud-free satellite picture. Each case walks through the same three questions and the user scrubs a shared timeline; every map layer names its NASA source and says when it has no data for a year.
+**Solved cases.** Three places, 2003–2024, each a 3D block of real terrain (NASADEM) under a cloud-free satellite picture. Each case walks through the same three questions and the user scrubs a shared timeline. All three have yearly MODIS maps of ground temperature and vegetation from NASA GIBS (`sites/*/layers.json`); only Lake Mead also has the pipeline's own yearly and per-pixel trend maps; every map layer names its source and says when it has no data for a year.
 
 - **Lake Mead (USA).** Total water stored is going down for real: −6.5 cm per decade (interval −9.6 to −3.6). Local rainfall shows no clear trend, while rain and snow upstream fall. Between 54% and 84% of the water loss is not explained by climate, depending on whether the upstream basin's climate is included.
 - **Aletsch Glacier (Switzerland).** Air temperature rises 1.0 °C per decade and total water stored falls 6.9 cm per decade, both real. Here the tool deliberately gives no climate split: GRACE sees a region about 300 km wide dominated by snow and ice, and our climate model has no snow term, so a split would mislead. It says so on screen.
@@ -84,7 +84,7 @@ Every verdict is shown as icon plus words, never colour alone:
 
 **Frontend.** Two modes: a documentary mode that tells a case in three chapters, and an instrument mode (a case's free mode, the investigator and explore) with layers, Identify and the full evidence. Next.js 16, React 19, three.js with react-three-fiber for the relief and the drone view, MapLibre GL for the investigator and explore maps.
 
-**Backend.** FastAPI: `/health`, `/variables`, `/sweep` (POWER sweep at a point), `/sites`, `/sites/{id}/sweep`, `/route`, `/narrative`, `/investigate` (server-sent events, one per step) and `/layers/suggest`. The solved cases are precomputed into `sites/<id>/`, so the demo does not depend on a live download. 345 backend tests.
+**Backend.** FastAPI: `/health`, `/variables`, `/sweep` (POWER sweep at a point), `/sites`, `/sites/{id}/sweep`, `/explain/route`, `/explain/narrative`, `/investigate` (server-sent events, one per step) and `/layers/suggest`. The solved cases are precomputed into `sites/<id>/`, so the demo does not depend on a live download. 345 backend tests.
 
 ### Built / Simulated / Next
 
@@ -168,7 +168,7 @@ Not NASA, used for validation or close-ups and credited on screen: U.S. Bureau o
 
 ### Use of AI
 
-See `AI.md` in the repository. Claude (Anthropic) was used as a coding assistant; commits made with its help carry a `Co-Authored-By: Claude` line. Inside the product, a language model plans investigations from a fixed menu, routes questions to variables and writes explanations. It never computes, decides significance or names a cause; every figure it writes is checked against the data, and model-written text is labelled on screen.
+See `AI.md` in the repository. Claude (Anthropic) was used as a coding assistant; commits made with its help carry a `Co-Authored-By: Claude` line. Inside the product, a language model plans investigations from a fixed menu, routes questions to variables and writes explanations. It never computes, decides significance or names a cause; every figure it writes is checked against the data, and model-written text is labelled on screen ("Written by an AI narrator from this case’s numbers.").
 
 ---
 
