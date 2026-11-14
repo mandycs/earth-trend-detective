@@ -46,6 +46,28 @@ export function pct(value: number): string {
   return `${Math.round(value)}%`
 }
 
+/** The leftover share as words: "54–84%" when the climate models disagree, else "62%". */
+export function residualText(v: Pick<SiteVariable, 'residual_pct_non_climate' | 'residual_pct_range'>): string | null {
+  const range = v.residual_pct_range
+  if (range && range.length === 2) {
+    const lo = Math.round(Math.min(range[0], range[1]))
+    const hi = Math.round(Math.max(range[0], range[1]))
+    return lo === hi ? `${lo}%` : `${lo}–${hi}%`
+  }
+  return v.residual_pct_non_climate == null ? null : pct(v.residual_pct_non_climate)
+}
+
+/** [low, high] in whole percent; equal when there is a single value. */
+export function residualBounds(v: Pick<SiteVariable, 'residual_pct_non_climate' | 'residual_pct_range'>): [number, number] | null {
+  const range = v.residual_pct_range
+  if (range && range.length === 2) {
+    return [Math.round(Math.min(range[0], range[1])), Math.round(Math.max(range[0], range[1]))]
+  }
+  if (v.residual_pct_non_climate == null) return null
+  const one = Math.round(v.residual_pct_non_climate)
+  return [one, one]
+}
+
 export function slopeText(v: SiteVariable): string | null {
   if (v.sen_slope_per_decade == null) return null
   return `${fmt(v.sen_slope_per_decade, true)} ${v.unit}`

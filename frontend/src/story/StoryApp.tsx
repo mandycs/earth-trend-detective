@@ -104,7 +104,12 @@ export default function StoryApp({ caseId }: { caseId: string }) {
             </Link>
           ))}
         </nav>
-        <Link href="/explore" className="st-explore">
+        <Link href={`/investigate?site=${caseId}`} className="st-explore st-ask">
+          <span>
+            Ask<span className="st-hide-sm"> the detective</span>
+          </span>
+        </Link>
+        <Link href="/explore" className="st-explore st-explore-last">
           <span>
             Explore<span className="st-hide-sm"> any point</span>
           </span>
@@ -145,13 +150,9 @@ export default function StoryApp({ caseId }: { caseId: string }) {
 
             {site ? (
               <div className="st-relief">
-                <span>Heights ×{vx}</span>
-                <button type="button" onClick={() => setExaggeration(Math.max(1, vx - 1))} aria-label="Flatten the relief" disabled={vx <= 1}>
-                  −
-                </button>
-                <button type="button" onClick={() => setExaggeration(Math.min(12, vx + 1))} aria-label="Raise the relief" disabled={vx >= 12}>
-                  +
-                </button>
+                <span title="Mountains and valleys are drawn this many times taller than they really are, so the shape reads at this size.">
+                  {vx === 1 ? 'Relief at true scale' : `Relief exaggerated ×${vx}`}
+                </span>
               </div>
             ) : null}
           </div>

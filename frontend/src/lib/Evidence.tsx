@@ -1,5 +1,5 @@
 import type { SiteVariable } from '../story/types'
-import { fmt, pct } from './cases'
+import { fmt, residualBounds } from './cases'
 
 /**
  * The 95% range of the trend on a line that always shows zero. If the range
@@ -39,26 +39,40 @@ export function RangeBar({ variable }: { variable: SiteVariable }) {
   )
 }
 
-/** Share of the change the climate drivers leave unexplained, as one bar. */
-export function SplitBar({ value }: { value: number }) {
-  const rounded = Math.round(value)
+/**
+ * Share of the change the climate drivers leave unexplained. When the climate
+ * models disagree it is a range: solid up to the low end, lighter up to the high end.
+ */
+export function SplitBar({ variable }: { variable: Pick<SiteVariable, 'residual_pct_non_climate' | 'residual_pct_range'> }) {
+  const bounds = residualBounds(variable)
+  if (!bounds) return null
+  const [lo, hi] = bounds
+  const isRange = hi > lo
+  const left = isRange ? `${lo}–${hi}%` : `${lo}%`
+  const right = isRange ? `${100 - hi}–${100 - lo}%` : `${100 - lo}%`
   return (
     <figure className="ev-split">
-      <p className="ev-split-number narrow">{pct(value)}</p>
+      <p className="ev-split-number narrow">{left}</p>
       <div
         className="ev-split-bar"
         role="img"
-        aria-label={`${rounded}% not explained by rain, heat or sunlight; ${100 - rounded}% consistent with them`}
+        aria-label={`${left} not explained by rain, heat or sunlight${isRange ? ', depending on the climate model' : ''}; ${right} consistent with them`}
       >
-        <span className="ev-split-left" style={{ width: `${rounded}%` }} />
+        <span className="ev-split-left" style={{ width: `${lo}%` }} />
+        {isRange ? <span className="ev-split-maybe" style={{ width: `${hi - lo}%` }} /> : null}
         <span className="ev-split-right" />
       </div>
       <figcaption className="ev-split-legend">
         <span>
-          <span className="ev-key ev-key-left" aria-hidden="true" /> {rounded}% the climate does not explain
+          <span className="ev-key ev-key-left" aria-hidden="true" /> {left} the climate does not explain
         </span>
+        {isRange ? (
+          <span>
+            <span className="ev-key ev-key-maybe" aria-hidden="true" /> depends on the climate model
+          </span>
+        ) : null}
         <span>
-          <span className="ev-key ev-key-right" aria-hidden="true" /> {100 - rounded}% matches rain, heat and sunlight
+          <span className="ev-key ev-key-right" aria-hidden="true" /> {right} matches rain, heat and sunlight
         </span>
       </figcaption>
     </figure>

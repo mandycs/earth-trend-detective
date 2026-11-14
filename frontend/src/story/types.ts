@@ -19,6 +19,8 @@ export interface SiteVariable {
   years_needed: number | null
   /** Share of the trend the climate drivers do not explain, 0-100. */
   residual_pct_non_climate: number | null
+  /** [min, max] share across the climate models tried, or null when only one applies. */
+  residual_pct_range?: [number, number] | null
   ci_low?: number | null
   ci_high?: number | null
   q_value?: number | null

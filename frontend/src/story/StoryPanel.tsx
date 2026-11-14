@@ -6,7 +6,7 @@ import type { Site, SiteVariable } from './types'
 import { Stamp } from '../lib/Stamp'
 import { SeriesLine } from '../lib/SeriesLine'
 import { RangeBar, SplitBar } from '../lib/Evidence'
-import { fmt, leadVariable, pct, shortName, slopeText, stampFor } from '../lib/cases'
+import { fmt, leadVariable, residualText, shortName, slopeText, stampFor } from '../lib/cases'
 import { API_URL } from '../features/explore/api'
 
 export interface StoryPanelProps {
@@ -242,10 +242,12 @@ function Climate({ site, variable, onSelectVariable }: { site: Site; variable: S
           <p className="sp-lede">
             How much of the change in {variable.label.toLowerCase()} rain, heat and sunlight do not explain.
           </p>
-          <SplitBar value={variable.residual_pct_non_climate} />
+          <SplitBar variable={variable} />
           <p>
-            About {pct(variable.residual_pct_non_climate)} is left over once the climate is accounted for. That is a
-            lead worth following, not proof of a cause.
+            {variable.residual_pct_range
+              ? `Between ${residualText(variable)} is left over once the climate is accounted for, depending on the climate model: local climate at the site, or adding the climate of the upstream basin.`
+              : `About ${residualText(variable)} is left over once the climate is accounted for.`}{' '}
+            That is a clue worth following, not an attribution.
           </p>
         </>
       ) : withSplit ? (

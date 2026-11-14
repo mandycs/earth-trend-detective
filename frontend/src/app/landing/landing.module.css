@@ -34,7 +34,8 @@
   gap: 28px;
 }
 
-.nav > a:not(:global(.btn)) {
+.nav > a:not(:global(.btn)),
+.nav > :global(a:not(.btn)) {
   min-height: 44px;
   display: inline-flex;
   align-items: center;

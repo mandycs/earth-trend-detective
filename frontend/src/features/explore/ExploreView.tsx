@@ -103,9 +103,14 @@ export default function ExploreView() {
         <Link href="/" className={styles.homeLink}>
           <span aria-hidden="true">←</span> Earth Trend Detective
         </Link>
-        <Link href="/story/lake_mead" className={styles.topbarHint}>
-          Solved cases <span aria-hidden="true">→</span>
-        </Link>
+        <nav className={styles.topbarNav} aria-label="Main">
+          <Link href="/investigate" className={styles.topbarHint}>
+            Ask the detective
+          </Link>
+          <Link href="/story/lake_mead" className={styles.topbarHint}>
+            Solved cases <span aria-hidden="true">→</span>
+          </Link>
+        </nav>
       </header>
       <div className={styles.layout}>
         <MapView place={place} onPick={analyze} />

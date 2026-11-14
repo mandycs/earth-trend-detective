@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { readCases, readLayersFile, readLegend } from '../lib/readSites'
 import { BeforeAfter } from '../lib/BeforeAfter'
 import { pairFromLayers } from '../lib/beforeAfterPair'
-import { leadVariable, pct, shortName, slopeText } from '../lib/cases'
+import { leadVariable, residualText, shortName, slopeText } from '../lib/cases'
 import { Stamp } from '../lib/Stamp'
 import { SeriesLine } from '../lib/SeriesLine'
 import { HeroScan } from './landing/HeroScan'
@@ -79,7 +79,7 @@ function CaseFinding({ site, lead }: { site: Site; lead: SiteVariable }) {
       ) : null}
       {lead.residual_pct_non_climate != null ? (
         <span className={styles.caseResidual}>
-          <strong className="narrow">{pct(lead.residual_pct_non_climate)}</strong> of it the climate does not explain
+          <strong className="narrow">{residualText(lead)}</strong> of it the climate does not explain
         </span>
       ) : null}
     </span>
@@ -104,6 +104,7 @@ export default function HomePage() {
         <nav className={styles.nav} aria-label="Main">
           <a href="#cases">Solved cases</a>
           <a href="#method">How it works</a>
+          <Link href="/investigate">Ask the detective</Link>
           <Link href="/explore" className="btn btn-primary">
             <span>
               Explore<span className={styles.hideSm}> any point</span>
@@ -139,7 +140,11 @@ export default function HomePage() {
                   <strong>{lead.label}</strong> at {shortName(hero.name)}
                   {slopeText(lead) ? <>, {slopeText(lead)} per decade</> : null}.
                   {lead.residual_pct_non_climate != null ? (
-                    <> About {pct(lead.residual_pct_non_climate)} of that change is not explained by the climate.</>
+                    lead.residual_pct_range ? (
+                      <> Between {residualText(lead)} of that change is not explained by the climate, depending on the climate model.</>
+                    ) : (
+                      <> About {residualText(lead)} of that change is not explained by the climate.</>
+                    )
                   ) : null}
                 </p>
               </div>
@@ -217,7 +222,7 @@ export default function HomePage() {
                     </p>
                   </div>
                   <div className={styles.moveVisual}>
-                    <SplitBar value={lead.residual_pct_non_climate} />
+                    <SplitBar variable={lead} />
                   </div>
                 </li>
               ) : null}

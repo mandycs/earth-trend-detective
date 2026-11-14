@@ -72,6 +72,10 @@
   white-space: nowrap;
 }
 
+.st-ask + .st-explore-last {
+  margin-left: 20px;
+}
+
 .st-explore:hover {
   color: var(--ink);
 }
@@ -235,7 +239,10 @@
 }
 
 .st-relief span {
-  margin-right: 10px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding-right: 14px;
 }
 
 .st-relief button {
