@@ -29,3 +29,11 @@ def test_model_override(monkeypatch):
     monkeypatch.setenv("LLM_API_KEY", "x")
     monkeypatch.setenv("DETECTIVE_MODEL", "claude-other")
     assert make_chat_model().model == "claude-other"
+
+
+def test_anthropic_wins_when_both_keys_exist(monkeypatch, tmp_path):
+    f = tmp_path / "key"
+    f.write_text("x")
+    monkeypatch.setenv("OPENROUTER_KEY_FILE", str(f))
+    monkeypatch.setenv("LLM_API_KEY", "x")
+    assert isinstance(make_chat_model(), ChatAnthropic)
