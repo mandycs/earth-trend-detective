@@ -74,6 +74,8 @@ export interface Site {
   /** The pipeline writes a one-line headline when the prose is not generated yet. */
   narrative: string | null
   headline?: string | null
+  /** Hand-written framing from copy.json; not validated, never shown as a finding. */
+  editorial?: string | null
   sources?: SiteSource[]
   caveats?: string[]
   /** Variables the pipeline could not fetch, with a reason. */

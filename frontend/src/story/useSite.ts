@@ -54,9 +54,13 @@ type CopyOverlay = Partial<Pick<Site, 'steps' | 'narrative' | 'caveats'>>
 
 /**
  * The prose is authored by hand and the pipeline owns site.json, so they are
- * separate files. Steps and narrative from copy.json replace the pipeline's;
- * caveats are added to the pipeline's, never replacing them, because those
- * explain the method (GRACE footprint, no climate split at snow sites).
+ * separate files. Pipeline caveats always come first and are never dropped
+ * (they explain the method: GRACE footprint, no climate split at snow sites);
+ * copy.json caveats are added after them, without duplicates.
+ *
+ * The hand-written narrative is kept apart as `editorial` and is NOT the
+ * case's answer: it has not passed the figure validator. The answer stays the
+ * validated narrator text.
  */
 function withCopy(data: Site, copy: CopyOverlay | null): Site {
   if (!copy) return data
@@ -65,7 +69,7 @@ function withCopy(data: Site, copy: CopyOverlay | null): Site {
   return {
     ...data,
     ...(copy.steps ? { steps: copy.steps } : {}),
-    ...(copy.narrative ? { narrative: copy.narrative } : {}),
+    editorial: copy.narrative ?? null,
     caveats,
   }
 }
