@@ -57,6 +57,11 @@ def _climate(row: Mapping) -> str:
     pct = row.get("residual_pct_non_climate")
     if pct is None:
         return "We can't yet tell how much of this change comes from the climate."
+    pct_range = row.get("residual_pct_range")
+    if pct_range and round(float(pct_range[0])) != round(float(pct_range[1])):
+        lo, hi = (round(float(x)) for x in pct_range)
+        share = f"Between {lo}% and {hi}%, depending on the climate model,"
+        return f"{share} of the change in {row['label'].lower()} is not explained by climate, which is a lead, not proof."
     return (
         f"About {round(float(pct))}% of the change in {row['label'].lower()} is not explained "
         "by climate, which is a lead, not proof."

@@ -148,6 +148,19 @@ def test_template_passes_own_validator(site_id):
 def test_template_lake_mead_wording(report):
     text = template_narrative(report)
     assert text.startswith("Total water stored is going down (−6.5 cm per decade).")
-    assert "About 84% of the change in total water stored is not explained by climate" in text
+    assert "Between 54% and 84%, depending on the climate model, of the change in total water stored is not explained by climate" in text
     assert "a lead, not proof" in text
     assert text.index("This change is real") < text.index("air temperature")
+
+
+def test_range_bounds_are_allowed_and_template_uses_range():
+    from app.explain.template import template_narrative
+    from app.explain.validator import validate_narrative
+    from tests.explain_fakes import lake_mead_report
+
+    report = lake_mead_report()
+    row = next(r for r in report["variables"] if r["id"] == "grace_tws")
+    assert row["residual_pct_range"] == [53.6, 83.7]
+    text = template_narrative(report)
+    assert "Between 54% and 84%" in text
+    assert validate_narrative(text, report).ok
