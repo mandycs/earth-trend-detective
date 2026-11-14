@@ -23,6 +23,7 @@ import pandas as pd
 
 from app.catalog import Variable, load_catalog
 from app.gather import gather_site_series
+from app.layers import write_layers
 from app.site_report import GatherFn, report_from_gathered
 from app.site_story import badge, headline, round_floats
 from app.sites import Site, load_sites
@@ -56,7 +57,22 @@ VARIABLE_FIELDS = (
     "direction",
     "years_needed",
     "residual_pct_non_climate",
+    "residual_pct_range",  # [min, max] across candidate driver models, or null
 )
+OPTIONAL_ASSETS: Mapping[str, str] = {
+    "heightmap_rgb": "heightmap_rgb.png",
+    "hillshade": "hillshade.png",
+    "base_hq": "base_hq.jpg",
+}
+# Ground area each source averages over (approximate width, plain words for the UI).
+FOOTPRINTS: Mapping[str, dict] = {
+    "grace": {"km": 300, "label": "a region about 300 km wide (GRACE satellites)"},
+    "power": {"km": 50, "label": "a climate-model cell about 50 km wide (NASA POWER)"},
+    "gldas": {"km": 25, "label": "a land-model cell about 25 km wide (GLDAS)"},
+    "appeears": {"km": 1, "label": "the site's 1 km MODIS pixels, averaged"},
+    "appeears_water": {"km": 0.5, "label": "the site's 500 m MODIS pixels"},
+}
+UPSTREAM_FOOTPRINT = {"km": 50, "label": "two climate cells far upstream, in the river's mountain headwaters (NASA POWER)"}
 _TREND_RE = re.compile(r"^trend_(?P<var>.+)\.png$")
 _YEAR_RE = re.compile(r"^year_(?P<var>.+)_(?P<year>\d{4})\.png$")
 
@@ -82,6 +98,9 @@ def find_assets(site_dir: Path) -> dict:
         "heightmap": "heightmap.png" if "heightmap.png" in names else None,
         "heightmap_range_m": range_m,  # PNG 0 -> min_m, 65535 -> max_m
         "base": "base.jpg" if "base.jpg" in names else None,
+        # Optional extras for the 3D view: terrain-RGB heights (0.1 m), relief shading,
+        # cloud-free 30 m median base. Absent files are left out, never guessed.
+        **{key: name for key, name in OPTIONAL_ASSETS.items() if name in names},
         "trend": trend,
         "yearly": yearly,
     }
@@ -151,6 +170,11 @@ def build_site_json(
     gathered = gather(site, catalog, start, end)
     report = report_from_gathered(site, catalog, start, end, gathered)
     rows = variable_rows(report["variables"], gathered.series)
+    source_of = {v.id: v.source for v in catalog}
+    for row in rows:
+        fp = UPSTREAM_FOOTPRINT if row["id"].endswith("_upstream") else FOOTPRINTS.get(source_of.get(row["id"], ""))
+        if fp is not None:
+            row["footprint"] = dict(fp)
     impacts = frozenset(v.id for v in catalog if v.role == "impact")
     sources = [{"title": s["title"], "url": s["url"]} for s in report["sources"]]
 
@@ -211,6 +235,7 @@ def export_site(site_id: str, sites_dir: Path = SITES_DIR) -> dict:
     site_dir = sites_dir / site.id
     doc = build_site_json(site, load_catalog(), start, end, site_dir)
     path = write_site_json(doc, site_dir)
+    write_layers(site.id, site_dir)
     logger.info("wrote %s", path)
     return doc
 

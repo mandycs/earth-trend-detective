@@ -57,6 +57,8 @@ def report_from_gathered(
             source = sources_by_var.get(r.id)
             withheld = residual_withheld_reason(source, site.tags)
             row["residual_pct_non_climate"] = res.pct_non_climate if withheld is None else None
+            pct_range = res.pct_range if withheld is None else None
+            row["residual_pct_range"] = [round(x, 1) for x in pct_range] if pct_range is not None else None
             row["residual"] = res.to_dict() | {
                 "observed": source in OBSERVED_SOURCES,
                 "withheld_reason": withheld,

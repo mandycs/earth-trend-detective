@@ -7,9 +7,8 @@
 
 | Slot | Where | What to do |
 |---|---|---|
-| `[DEMO_URL]` | §3 | Public link to the 30-second video (YouTube unlisted is fine: public, no login, no permission request). |
-| `[LIVE_URL]` / `[REPO_URL]` | §4 | Deployed app and public GitHub repository. Test both in a private window. |
-| `[CASE 3 SITE]` | §5, twice | Third story-mode case (working candidate: Doñana wetlands, Spain). Confirm with the data before naming it. |
+| `[DEMO_URL]` | §3 | Public link to the 30-second video (YouTube unlisted is fine: public, no login, no permission request). The 7-slide deck already exists at `<LIVE_URL>/deck.html` and can be linked instead. |
+| `[LIVE_URL]` / `[REPO_URL]` | §4 | Deployed app and public GitHub repository. Test both in a private window. **The explore mode calls `NEXT_PUBLIC_API_URL` (default `http://localhost:8000`), so the deployment must set it to the public API.** |
 | Case figures | §5 "Built / Simulated / Next" | Insert the final Sen slopes and p-values from the last pipeline run. Do not estimate them. |
 | Dependency licences | §5 "References & licenses" | Re-generate from `package-lock.json` / backend lockfile at freeze time; the list below is current as of the draft. |
 | Team names | §6 | Team name and member names, as registered on the Space Apps site. |
@@ -57,7 +56,7 @@ Most climate tools show you a line. This one tells you what the line means, and 
 
 The app has two ways in.
 
-**Story mode** walks through three solved cases, each rendered as a 3D block of real terrain built from an elevation model. Lake Mead: total water storage falls, while rainfall over the same basin shows no trend. Aletsch Glacier: snow cover retreats and land surface temperature rises together, so here the climate signal is the story. `[CASE 3 SITE]`: a place where the non-climate signal dominates. Each case is a short investigation with the same four steps, and the user scrubs a 2003–2024 timeline to watch the anomaly build up year by year. A trend layer can be switched on, painted per pixel from Sen's slope and dimmed where the trend is not significant.
+**Story mode** walks through three solved cases, each rendered as a 3D block of real terrain built from an elevation model. Lake Mead: total water storage falls 6.5 cm per decade, while rainfall over the same basin shows no trend. Aletsch Glacier: the ice loses mass and the growing season lengthens, so here the climate signal is the story. Doñana: the wetland's water trend is 62% unexplained by its climate drivers, and it is two hours from the venue. Each case is a short investigation with the same four steps, and the user scrubs a 2003–2024 timeline to watch the anomaly build up year by year. A trend layer can be switched on, painted per pixel from Sen's slope and dimmed where the trend is not significant — today that raster exists for Lake Mead's surface temperature.
 
 **Explore mode** lets the user click anywhere on the map. The app profiles the location — land cover, climate zone, whether it is coastal, whether it has snow — decides which of its catalogued variables actually apply, fetches those series, and runs the same pipeline. If the record is too short, if the point is over open ocean, or if the data has a gap, it says so. It does not fill the hole with a guess.
 
@@ -73,14 +72,14 @@ Then the part that we think matters most. For each impact variable (water storag
 
 **Pipeline.** Four stages, each one testable on its own.
 
-1. **Profile.** A closed catalogue of variables (`variables.yaml`) stores, for each variable, its dataset, band, units, temporal resolution and where it applies. The region profile filters the catalogue down to the variables that make sense for that place, so a snow-cover variable is never offered for a mangrove.
+1. **Profile.** A closed catalogue of variables (`backend/app/catalog.py`) stores, for each variable, its dataset, band, units, temporal resolution and where it applies. The region profile filters the catalogue down to the variables that make sense for that place, so a snow-cover variable is never offered for a mangrove.
 2. **Sweep.** Monthly series are fetched, converted to anomalies by removing the mean seasonal cycle, and tested. We use the Mann–Kendall test with the Hamed–Rao variance correction for autocorrelation, Sen's slope for the rate, and Benjamini–Hochberg to control the false discovery rate across all the variables tested at once — because testing twenty variables at p < 0.05 will hand you one "significant" trend by chance. Variables are ranked by change normalised to standard deviations per decade, so a shrinking reservoir and a warming surface can be compared on the same axis.
 3. **Residual.** A generalised RESTREND approach (Evans & Geerken 2004; Wessels et al. 2012): regress the impact variable on its climate drivers, then trend-test what is left. We report the share of the trend the drivers do not explain, with the honest caveat that omitted drivers end up in the residual too.
 4. **Explain.** The language model receives a JSON object of computed values and returns prose. It never computes, never decides significance and never assigns a cause. A validator checks every number in the output against the JSON; on any mismatch the prose is discarded and a deterministic template is shown instead.
 
 **Frontend.** React 19 with react-three-fiber for the terrain scenes, MapLibre for the 2D explore map. Terrain comes from a heightmap with a satellite base texture; the trend layer is a texture generated from the per-pixel Sen slope on a diverging scale, alpha-damped where the pixel's trend is not significant. The timeline swaps annual anomaly textures, so scrubbing is a texture swap rather than a re-render of the geometry.
 
-**Backend.** FastAPI. Endpoints: `/profile`, `/sweep`, `/residual`, `/years`, `/explain`, `/sites/{id}`. Expensive work is precomputed for the story cases and cached for explore-mode points, so the demo does not depend on a live download during judging.
+**Backend.** FastAPI. Endpoints: `/health`, `/variables`, `/sweep`, `/sites`, `/sites/{id}/sweep`. Expensive work is precomputed for the story cases and cached for explore-mode points, so the demo does not depend on a live download during judging.
 
 **Deployment.** Static frontend plus a small API service, both public. No login, no key required from the user; Earthdata credentials stay server-side in environment variables.
 
@@ -93,13 +92,14 @@ We are explicit about this because a demo that blurs the line is worse than a sm
 - The statistics engine: anomaly decomposition, Mann–Kendall with Hamed–Rao correction, Sen's slope, Benjamini–Hochberg control, verdict thresholds.
 - The residual model and the "% not explained by climate" figure.
 - Story-mode 3D viewer: terrain, trend layer, timeline, verdict panels, all driven by the `site.json` contract.
-- Explore mode: click → profile → sweep → verdict, on NASA POWER variables (temperature, precipitation, radiation, humidity), which need no authentication.
+- Explore mode: click → profile → sweep → verdict, served by the API over NASA POWER variables (temperature, precipitation, radiation, humidity), which need no authentication.
 - The narrator with its number validator and template fallback.
 
 **Simulated or narrowed for the demo**
 
+- Explore mode needs the API service reachable (`NEXT_PUBLIC_API_URL`); the public deployment must point at it.
+- Per-pixel trend maps exist for one variable at one site today (Lake Mead, surface temperature). The other two cases show regional series and say so on screen.
 - Explore-mode points are limited to the variables available from NASA POWER; water storage and snow are only computed for precomputed case sites. The UI says which variables were checked and which were not.
-- Per-pixel trend maps are computed at reduced resolution for browser performance, not at native 1 km.
 - The RAG corpus behind the follow-up questions is a curated set of dataset sheets and method papers, not an open web search.
 - Vertical exaggeration in the 3D scenes is a visual choice, labelled on screen; it is not a measurement.
 
@@ -116,10 +116,9 @@ We are explicit about this because a demo that blurs the line is worse than a sm
 | Resource | Link | Role in the solution |
 |---|---|---|
 | **NASA POWER** (Prediction Of Worldwide Energy Resources) | https://power.larc.nasa.gov/ | Meteorology for any clicked point — temperature, precipitation, radiation, humidity — with no authentication. Drives explore mode and supplies the climate-driver side of the residual model. |
-| **MODIS MOD13Q1** vegetation indices (16-day, 250 m), via AppEEARS | https://appeears.earthdatacloud.nasa.gov/ · https://doi.org/10.5067/MODIS/MOD13Q1.061 | NDVI/EVI series for case areas. Primary impact variable for the vegetation case and an input to the residual regression. |
-| **MODIS MOD11A2** land surface temperature (8-day, 1 km), via AppEEARS | https://doi.org/10.5067/MODIS/MOD11A2.061 | Land surface temperature trend, and the climate driver in the glacier case. |
-| **MODIS MOD16A2** evapotranspiration (8-day, 500 m), via AppEEARS | https://doi.org/10.5067/MODIS/MOD16A2.061 | Water-flux variable: an impact variable in its own right and a driver when explaining vegetation change. |
-| **MODIS MOD10A2** snow cover (8-day, 500 m), via AppEEARS | https://doi.org/10.5067/MODIS/MOD10A2.061 | Snow persistence for the Aletsch case; the variable that makes the seasonal cycle removal visible. |
+| **MODIS MOD11A2** land surface temperature (8-day, 1 km), via AppEEARS | https://doi.org/10.5067/MODIS/MOD11A2.061 | Daytime land surface temperature: the per-pixel trend layer on the terrain, and a climate driver in the glacier case. |
+| **MODIS MOD09A1** surface reflectance (8-day, 500 m), via AppEEARS | https://doi.org/10.5067/MODIS/MOD09A1.061 | Open-water area of Lake Mead, from an NDWI threshold applied to cloud-free pixels. This is the series that shows the reservoir shrinking. |
+| **MODIS MOD10A1** snow cover (daily, 500 m), via AppEEARS | https://doi.org/10.5067/MODIS/MOD10A1.061 | Snow persistence for the Aletsch case; the variable that makes the seasonal cycle removal visible. |
 | **GRACE / GRACE-FO JPL mascon RL06.3 v04** (equivalent water height, CRI filtered), via PO.DAAC | https://podaac.jpl.nasa.gov/dataset/TELLUS_GRAC-GRFO_MASCON_CRI_GRID_RL06.3_V4 | Total water storage anomaly. The primary variable for the Lake Mead case and the reason the app can talk about groundwater loss at all. |
 | **GLDAS** land surface fields, via GES DISC Hydrology Time Series ("data rods") | https://disc.gsfc.nasa.gov/information/tools?title=Hydrology%20Data%20Rods | Model-consistent soil moisture, evapotranspiration and runoff, used where GRACE resolution is too coarse to separate the components of storage change. |
 | **NASADEM** merged DEM, 1 arc-second | https://lpdaac.usgs.gov/products/nasadem_hgtv001 | Elevation for the 3D terrain in story mode. Relief is real; the vertical exaggeration is labelled. |
@@ -156,12 +155,14 @@ All NASA datasets above are open and free of charge through NASA Earthdata; each
 
 | Component | Licence |
 |---|---|
-| React 19.3.1 | MIT |
+| Next.js 16.4.6 | MIT |
+| React 19.3.0 | MIT |
 | three.js 0.187.0 | MIT |
 | @react-three/fiber 9.8.2 | MIT |
 | @react-three/drei 10.7.9 | MIT |
-| Vite 8.3.8 | MIT |
-| TypeScript 7.0.2 | Apache-2.0 |
+| MapLibre GL JS 5.24.1 | BSD-3-Clause |
+| zod 3.25.76 | MIT |
+| TypeScript 5.x | Apache-2.0 |
 | FastAPI, pandas, numpy, pymannkendall | to be confirmed from the backend lockfile before submission |
 
 **Our project** is released under the **Apache License 2.0** (`LICENSE` in the repository), which is also the licence NASA applies by default when a team does not specify one.
@@ -188,7 +189,7 @@ No image, audio or video in this project is AI-generated. The demo is screen cap
 Short version for the dedicated form field:
 
 - NASA POWER — https://power.larc.nasa.gov/ — meteorology, explore mode and climate drivers.
-- NASA AppEEARS / LP DAAC — https://appeears.earthdatacloud.nasa.gov/ — MODIS subsets (MOD13Q1, MOD11A2, MOD16A2, MOD10A2).
+- NASA AppEEARS / LP DAAC — https://appeears.earthdatacloud.nasa.gov/ — MODIS subsets (MOD11A2, MOD09A1, MOD10A1).
 - NASA PO.DAAC — https://podaac.jpl.nasa.gov/ — GRACE/GRACE-FO mascon total water storage.
 - NASA GES DISC — https://disc.gsfc.nasa.gov/ — GLDAS land surface fields via the Hydrology Time Series service.
 - NASA LP DAAC — https://lpdaac.usgs.gov/products/nasadem_hgtv001 — NASADEM elevation.

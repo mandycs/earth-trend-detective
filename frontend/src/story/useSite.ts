@@ -49,6 +49,27 @@ function normaliseSite(raw: Site): Site {
   }
 }
 
+/** Optional prose file that lives next to site.json (see sites/<id>/copy.json). */
+type CopyOverlay = Partial<Pick<Site, 'steps' | 'narrative' | 'caveats'>>
+
+/**
+ * The prose is authored by hand and the pipeline owns site.json, so they are
+ * separate files. Steps and narrative from copy.json replace the pipeline's;
+ * caveats are added to the pipeline's, never replacing them, because those
+ * explain the method (GRACE footprint, no climate split at snow sites).
+ */
+function withCopy(data: Site, copy: CopyOverlay | null): Site {
+  if (!copy) return data
+  const caveats = [...(data.caveats ?? [])]
+  for (const c of copy.caveats ?? []) if (!caveats.includes(c)) caveats.push(c)
+  return {
+    ...data,
+    ...(copy.steps ? { steps: copy.steps } : {}),
+    ...(copy.narrative ? { narrative: copy.narrative } : {}),
+    caveats,
+  }
+}
+
 /** The sharper of base_hq and base: base_hq is only worth it when it is wider. */
 async function pickBase(site: Site, get: (url: string, srgb: boolean) => Promise<THREE.Texture>): Promise<THREE.Texture> {
   const base = siteAssetBase(site.id)
@@ -73,13 +94,18 @@ export function useSite(siteId: string) {
 
   useEffect(() => {
     let alive = true
-    fetch(`${siteAssetBase(siteId)}site.json`)
-      .then((response) => {
+    const base = siteAssetBase(siteId)
+    Promise.all([
+      fetch(`${base}site.json`).then((response) => {
         if (!response.ok) throw new Error(`site.json returned ${response.status}`)
         return response.json() as Promise<Site>
-      })
-      .then((data) => {
-        if (alive) setState({ id: siteId, site: normaliseSite(data), error: null })
+      }),
+      fetch(`${base}copy.json`)
+        .then((response) => (response.ok ? (response.json() as Promise<CopyOverlay>) : null))
+        .catch(() => null),
+    ])
+      .then(([data, copy]) => {
+        if (alive) setState({ id: siteId, site: normaliseSite(withCopy(data, copy)), error: null })
       })
       .catch((cause: unknown) => {
         if (alive)

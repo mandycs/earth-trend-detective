@@ -11,6 +11,7 @@ from dataclasses import dataclass
 
 from app.explain.llm import LLM
 from app.explain.prompts import NARRATIVE_SYSTEM, narrative_user
+from app.explain.route import route_question
 from app.explain.template import template_narrative
 from app.explain.validator import Rejection, ValidationResult, validate_narrative
 
@@ -43,7 +44,17 @@ def _template(report: Mapping, attempts: tuple[ValidationResult, ...]) -> Narrat
     return NarrativeResult(text, "template", validation, attempts)
 
 
-def explain_report(report: Mapping, llm: LLM | None) -> NarrativeResult:
+def focus_on_question(report: Mapping, question: str, llm: LLM | None) -> dict:
+    """Copy of `report` with the question and the ids of the variables it is about."""
+    choices = {r["id"]: r.get("label", r["id"]) for r in report.get("variables") or () if "id" in r}
+    ids = [i for i in route_question(question, choices, llm).ids if i in choices]
+    return {**report, "question": question, "focus_ids": ids}
+
+
+def explain_report(report: Mapping, llm: LLM | None, question: str | None = None) -> NarrativeResult:
+    """Narrative of `report`; with a `question`, it opens by answering that question."""
+    if question:
+        report = focus_on_question(report, question, llm)
     if llm is None:
         return _template(report, ())
     previous: str | None = None

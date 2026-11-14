@@ -136,11 +136,15 @@ def to_png16(elev: np.ndarray, path: Path, width: int) -> Heightmap:
     return Heightmap(path=path, width=img.width, height=img.height, min_m=lo, max_m=hi)
 
 
-def build_heightmap(bbox: Sequence[float], out_path: Path, width: int = 1024,
-                    cache_dir: Path = DEFAULT_CACHE_DIR) -> Heightmap:
+def load_elevation(bbox: Sequence[float], cache_dir: Path = DEFAULT_CACHE_DIR) -> np.ndarray:
+    """NASADEM elevation (m) cropped to bbox, rows north to south, 1 arc-second grid."""
     tiles = {t: load_tile(*t, cache_dir=cache_dir) for t in tiles_for_bbox(bbox)}
     grid, west, north = mosaic(tiles)
     # Sea/estuary pixels carry spurious negative heights in NASADEM; none of our sites
     # is below sea level, so clamp to 0 m (keeps the 3D coastline flat).
-    elev = np.maximum(crop(grid, west, north, bbox), MIN_ELEVATION_M)
-    return to_png16(elev, out_path, width)
+    return np.maximum(crop(grid, west, north, bbox), MIN_ELEVATION_M)
+
+
+def build_heightmap(bbox: Sequence[float], out_path: Path, width: int = 1024,
+                    cache_dir: Path = DEFAULT_CACHE_DIR) -> Heightmap:
+    return to_png16(load_elevation(bbox, cache_dir), out_path, width)

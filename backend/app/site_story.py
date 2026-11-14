@@ -70,9 +70,10 @@ def headline(rows: Sequence[Mapping], impact_ids: frozenset[str]) -> str | None:
             or slope is None
         ):
             continue
-        return (
-            f"{row['label']} is going {row['direction']} for real "
-            f"({format_number(slope)} {row['unit']} per decade). "
-            f"About {round(pct)}% of that change is not explained by climate."
-        )
+        lead = f"{row['label']} is going {row['direction']} for real ({format_number(slope)} {row['unit']} per decade). "
+        pct_range = row.get("residual_pct_range")
+        if pct_range and round(pct_range[0]) != round(pct_range[1]):
+            lo, hi = (round(x) for x in pct_range)
+            return lead + f"Between {lo}% and {hi}% of that change is not explained by climate, depending on the climate model."
+        return lead + f"About {round(pct)}% of that change is not explained by climate."
     return None

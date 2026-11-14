@@ -166,3 +166,31 @@ def test_rounding_helpers():
     assert round_sig(float("nan")) is None and round_sig(5) == 5 and round_sig(True) is True
     assert format_number(-6.4949) == "−6.5" and format_number(0.04213) == "0.042" and format_number(123.4) == "120"
     assert not math.isnan(round_sig(1e-12))
+
+
+def test_find_assets_lists_optional_relief_files_only_when_present(tmp_path):
+    from app.site_export import find_assets
+
+    (tmp_path / "base.jpg").write_bytes(b"x")
+    (tmp_path / "hillshade.png").write_bytes(b"x")
+    assets = find_assets(tmp_path)
+    assert assets["hillshade"] == "hillshade.png"
+    assert "heightmap_rgb" not in assets and "base_hq" not in assets
+
+
+def test_headline_uses_the_range_when_driver_models_disagree():
+    rows = [
+        {"id": "grace_tws", "label": "Total water stored", "unit": "cm", "verdict": "real", "direction": "down",
+         "sen_slope_per_decade": -6.47, "residual_pct_non_climate": 83.7, "residual_pct_range": [53.6, 83.7]},
+    ]
+    assert headline(rows, frozenset({"grace_tws"})) == (
+        "Total water stored is going down for real (−6.5 cm per decade). "
+        "Between 54% and 84% of that change is not explained by climate, depending on the climate model."
+    )
+
+
+def test_rows_carry_their_footprint():
+    from app.site_export import FOOTPRINTS
+
+    assert FOOTPRINTS["grace"]["km"] == 300
+    assert set(FOOTPRINTS) >= {"grace", "power", "gldas", "appeears"}
