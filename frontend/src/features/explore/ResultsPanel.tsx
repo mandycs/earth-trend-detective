@@ -157,7 +157,7 @@ function IsItClimate({ result }: { result: SweepResponse }) {
         is left over.
       </p>
       <p>That deeper check is ready for three real cases, including Lake Mead, where the water is going down.</p>
-      <Link href="/story" className={styles.secondaryLink}>
+      <Link href="/story/lake_mead" className={styles.secondaryLink}>
         See the solved cases in story mode <span aria-hidden="true">→</span>
       </Link>
     </>

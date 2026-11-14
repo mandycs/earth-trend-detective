@@ -6,8 +6,68 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import type { Place } from "./types";
 import styles from "./explore.module.css";
 
-// Free vector style, no API key (https://openfreemap.org).
-const STYLE_URL = "https://tiles.openfreemap.org/styles/positron";
+import type { StyleSpecification } from "maplibre-gl";
+
+/**
+ * NASA Blue Marble (via GIBS, public domain, no key) as the ground, with
+ * country borders and place names from OpenFreeMap vector tiles on top.
+ */
+const STYLE: StyleSpecification = {
+  version: 8,
+  glyphs: "https://tiles.openfreemap.org/fonts/{fontstack}/{range}.pbf",
+  sources: {
+    earth: {
+      type: "raster",
+      tiles: [
+        "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/BlueMarble_ShadedRelief_Bathymetry/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpeg",
+      ],
+      tileSize: 256,
+      maxzoom: 8,
+      attribution: "Blue Marble: NASA Earth Observatory via GIBS",
+    },
+    names: { type: "vector", url: "https://tiles.openfreemap.org/planet" },
+  },
+  layers: [
+    { id: "earth", type: "raster", source: "earth", paint: { "raster-brightness-max": 0.92, "raster-fade-duration": 200 } },
+    {
+      id: "borders",
+      type: "line",
+      source: "names",
+      "source-layer": "boundary",
+      filter: ["all", ["==", ["get", "admin_level"], 2], ["!=", ["get", "maritime"], 1]],
+      paint: { "line-color": "rgba(238,240,234,0.45)", "line-width": 1 },
+    },
+    {
+      id: "countries",
+      type: "symbol",
+      source: "names",
+      "source-layer": "place",
+      maxzoom: 6,
+      filter: ["==", ["get", "class"], "country"],
+      layout: {
+        "text-field": ["coalesce", ["get", "name:en"], ["get", "name:latin"], ["get", "name"]],
+        "text-font": ["Noto Sans Regular"],
+        "text-size": 14,
+        "text-max-width": 8,
+      },
+      paint: { "text-color": "#eef0ea", "text-halo-color": "rgba(0,0,0,0.75)", "text-halo-width": 1.5 },
+    },
+    {
+      id: "cities",
+      type: "symbol",
+      source: "names",
+      "source-layer": "place",
+      minzoom: 4,
+      filter: ["in", ["get", "class"], ["literal", ["city", "town"]]],
+      layout: {
+        "text-field": ["coalesce", ["get", "name:en"], ["get", "name:latin"], ["get", "name"]],
+        "text-font": ["Noto Sans Regular"],
+        "text-size": 13,
+      },
+      paint: { "text-color": "#ffffff", "text-halo-color": "rgba(0,0,0,0.8)", "text-halo-width": 1.5 },
+    },
+  ],
+};
 
 interface Props {
   place: Place | null;
@@ -33,9 +93,10 @@ export default function MapView({ place, onPick }: Props) {
       if (cancelled || !container.current) return;
       const m = new maplibregl.Map({
         container: container.current,
-        style: STYLE_URL,
-        center: [-30, 30],
-        zoom: 1.4,
+        style: STYLE,
+        center: [-20, 28],
+        zoom: 1.6,
+        maxZoom: 10,
         attributionControl: { compact: true },
         cooperativeGestures: false,
       });
@@ -46,7 +107,7 @@ export default function MapView({ place, onPick }: Props) {
         // Only a failed style means no map at all; a missing tile is harmless.
         if (!m.isStyleLoaded() && String(e.error?.message ?? "").toLowerCase().includes("style")) setFailed(true);
       });
-      marker.current = new maplibregl.Marker({ color: "#0b5560" });
+      marker.current = new maplibregl.Marker({ color: "#ffd23f" });
       map.current = m;
       setReady(true);
     })().catch(() => setFailed(true));
@@ -79,6 +140,7 @@ export default function MapView({ place, onPick }: Props) {
         role="application"
         aria-label="World map. Click a place to investigate it, or use the example buttons in the panel."
       />
+      {!place && !failed && <p className={styles.mapHint}>Click anywhere on Earth to investigate it</p>}
       {failed && (
         <p className={styles.mapError} role="alert">
           The map could not load. Check your connection and reload the page. You can still try the example places in
