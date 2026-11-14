@@ -164,3 +164,96 @@ def test_registry_lists_the_data_tools():
         assert spec.description, name
         assert "session" not in spec.args_schema.model_fields, name
     assert set(TOOLS["get_series"].args_schema.model_fields) == {"var_id", "start", "end"}
+
+
+def test_cached_trend_test_reflects_tests_logged_since(power_calls, monkeypatch):
+    from app.detective.ledger import TestRecord
+    from app.stats.trend import TrendResult
+
+    # a strong test alone (p=0.01 -> q=0.01, real) that cannot survive 20 tests (q=0.2)
+    strong = TrendResult(264, 22.0, False, 0.5, 0.2, 0.8, 1.0, 0.5, 0.01, 1.0)
+    monkeypatch.setattr(tools, "mk_trend_test", lambda anomalies: strong)
+    s = _session()
+    sid = tools.get_series(s, var_id="t2m")["series_id"]
+    first = tools.trend_test(s, series_id=sid)
+    assert first["verdict"] == "real" and first["n_tests_so_far"] == 1
+    for i in range(19):
+        s.ledger.add_test(TestRecord(f"x{i}", f"v{i}", "v", "trend", 0.5, 0.1, False, None))
+    again = tools.trend_test(s, series_id=sid)
+    assert again["evidence_id"] == first["evidence_id"]
+    assert s.ledger.n_tests == 20  # the repeated call logged nothing
+    assert again["verdict"] != "real"
+    assert again["q_session"] == pytest.approx(0.2)
+    assert again["n_tests_so_far"] == 20
+
+
+def test_transient_failure_is_not_cached(monkeypatch):
+    state = {"calls": 0}
+
+    def flaky(site, variables, catalog, start, end):
+        state["calls"] += 1
+        if state["calls"] == 1:
+            raise RuntimeError("timeout")
+        return {v.id: _synthetic(start, end) for v in variables}
+
+    monkeypatch.setattr(gather, "FETCHERS", {**gather.FETCHERS, "power": flaky})
+    s = _session()
+    assert tools.get_series(s, var_id="t2m")["status"] == "not_available"
+    got = tools.get_series(s, var_id="t2m")
+    assert got["status"] == "ok"
+    assert got["evidence_id"] == "e1"
+
+
+def test_fetcher_returning_a_non_dict_is_not_available(monkeypatch):
+    monkeypatch.setattr(gather, "FETCHERS", {**gather.FETCHERS, "power": lambda *a: None})
+    got = tools.get_series(_session(), var_id="t2m")
+    assert got["status"] == "not_available" and got["reason"]
+
+
+def test_fetcher_returning_garbage_series_is_not_available(monkeypatch):
+    monkeypatch.setattr(gather, "FETCHERS", {**gather.FETCHERS, "power": lambda *a: {"t2m": "bad"}})
+    got = tools.get_series(_session(), var_id="t2m")
+    assert got["status"] == "not_available"
+
+
+def test_unknown_case_never_raises():
+    s = _session(site_id="nope")
+    assert tools.list_variables(s)["status"] == "not_available"
+    assert tools.get_series(s, var_id="t2m")["status"] == "not_available"
+
+
+def test_solved_case_gets_appeears_variables(monkeypatch):
+    calls = []
+
+    def fake_appeears(site, variables, catalog, start, end):
+        calls.append(site.id)
+        return {"ndvi": _synthetic(start, end)}
+
+    monkeypatch.setattr(gather, "FETCHERS", {**gather.FETCHERS, "appeears": fake_appeears})
+    s = _session(tags=("wetland", "vegetated", "agriculture"), site_id="donana")
+    rows = {r["id"]: r for r in tools.list_variables(s)["variables"]}
+    assert rows["ndvi"]["available"] is True
+    assert rows["ndvi"]["resolution"] == "~1 km"
+    got = tools.get_series(s, var_id="ndvi")
+    assert got["status"] == "ok"
+    assert calls == ["donana"]
+
+
+def test_opt_in_driver_off_case_is_not_available(power_calls):
+    s = _session()
+    rows = {r["id"]: r for r in tools.list_variables(s)["variables"]}
+    assert rows["degree_days"]["available"] is False
+    got = tools.get_series(s, var_id="degree_days")
+    assert got["status"] == "not_available"
+    assert got["reason"] == tools.EXTRA_DRIVER_REASON
+    assert power_calls == []
+
+
+def test_resolution_comes_from_the_dataset():
+    rows = {r["id"]: r for r in tools.list_variables(_session(tags=("vegetated", "snow")))["variables"]}
+    assert rows["t2m"]["resolution"] == "~50 km"
+    assert rows["grace_tws"]["resolution"] == "~300 km"
+    assert rows["soil_moisture"]["resolution"] == "~25 km"
+    assert rows["lst_day"]["resolution"] == "~1 km"
+    assert rows["snow_cover"]["resolution"] == "~500 m"
+    assert rows["et"]["resolution"] == "dataset native resolution"
