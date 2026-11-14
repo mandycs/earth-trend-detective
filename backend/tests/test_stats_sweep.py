@@ -31,7 +31,11 @@ def test_sweep_ranks_real_first_and_flags_noise(catalog):
     assert by_id["t2m"].unit == "°C"
     for r in results:
         assert r.q_value >= r.p_value
-        assert r.years_needed is None and r.residual_pct_non_climate is None
+        assert r.residual_pct_non_climate is None
+        if r.verdict == "real":
+            assert r.years_needed is None
+        else:
+            assert r.years_needed is None or r.years_needed >= 1
 
 
 def test_sweep_result_is_frozen_and_input_untouched(catalog):

@@ -14,6 +14,7 @@ from app.stats.deseason import monthly_anomalies
 from app.stats.fdr import benjamini_hochberg
 from app.stats.trend import TrendResult, trend_test
 from app.stats.verdict import Verdict, classify
+from app.stats.years import years_needed
 
 logger = logging.getLogger(__name__)
 
@@ -48,8 +49,11 @@ def _clean(value: float) -> float | None:
     return None if value is None or not math.isfinite(value) else float(value)
 
 
-def _build(var: Variable, trend: TrendResult, q_value: float) -> VariableResult:
+def _build(var: Variable, trend: TrendResult, q_value: float, anomalies: pd.Series) -> VariableResult:
     verdict, direction = classify(q_value, trend.p_value, trend.sen_slope_per_decade)
+    needed = None if verdict == Verdict.REAL else years_needed(anomalies, _clean(trend.sen_slope_per_decade))
+    if needed is not None:
+        needed = max(1, needed)  # not real yet means at least one more year, whatever the formula says
     return VariableResult(
         id=var.id,
         label=var.label,
@@ -65,6 +69,7 @@ def _build(var: Variable, trend: TrendResult, q_value: float) -> VariableResult:
         n_months=trend.n_months,
         years_span=round(trend.years_span, 2),
         too_short=trend.too_short,
+        years_needed=needed,
     )
 
 
@@ -89,8 +94,9 @@ def run_sweep(series: Mapping[str, pd.Series], catalog: Sequence[Variable]) -> l
     if missing:
         raise KeyError(f"variables not in catalog: {sorted(missing)}")
 
-    trends = {var_id: trend_test(monthly_anomalies(s)) for var_id, s in series.items()}
+    anomalies = {var_id: monthly_anomalies(s) for var_id, s in series.items()}
+    trends = {var_id: trend_test(a) for var_id, a in anomalies.items()}
     q_values = benjamini_hochberg({k: t.p_value for k, t in trends.items()})
-    results = [_build(by_id[k], t, q_values[k]) for k, t in trends.items()]
+    results = [_build(by_id[k], t, q_values[k], anomalies[k]) for k, t in trends.items()]
     logger.info("sweep: %d variables, %d real", len(results), sum(r.verdict == "real" for r in results))
     return sorted(results, key=_rank_key)
