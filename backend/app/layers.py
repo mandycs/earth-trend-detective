@@ -252,6 +252,47 @@ def _analysed_layers(site_dir: Path, names: set[str]) -> list[dict]:
     return layers
 
 
+# Observed (GIBS-decoded) layers and the site.json record they show.
+OBSERVED_RECORD = {"ndvi_gibs": "ndvi", "lst_gibs": "lst_day"}
+
+
+def _observed_layers(site_dir: Path) -> list[dict]:
+    """Yearly measured layers in layers/<id>/ (values decoded from NASA GIBS, not trend-tested)."""
+    root = site_dir / "layers"
+    if not root.is_dir():
+        return []
+    layers: list[dict] = []
+    for meta_path in sorted(root.glob("*/meta.json")):
+        meta = _read_json(meta_path)
+        if meta is None:
+            continue
+        lid = meta["id"]
+        years = [
+            y for y in meta.get("years", [])
+            if (site_dir / meta["file_pattern"].replace("{YYYY}", str(y))).is_file()
+        ]
+        if not years:
+            continue
+        layers.append({
+            "id": lid,
+            "kind": "yearly",
+            "var": OBSERVED_RECORD.get(lid, lid),
+            "title": meta["title"],
+            "file_pattern": meta["file_pattern"],
+            "value_pattern": meta["value_pattern"],
+            "value_scale": meta["value_scale"],
+            "value_offset": meta["value_offset"],
+            "pixel_m": meta.get("pixel_m"),
+            "status": "observed",
+            "years": years,
+            "months": meta.get("months"),
+            "legend": _legend({**meta, "vmin": meta["range"][0], "vmax": meta["range"][1]}),
+            "method": meta.get("method"),
+            "source": dict(meta["source"]),
+        })
+    return layers
+
+
 def _layer_years(layer: dict) -> dict:
     """How one layer behaves on the shared timeline."""
     kind = layer["kind"]
@@ -286,7 +327,11 @@ def build_timeline(layers: list[dict], site_dir: Path) -> dict:
         v["id"]: [p["year"] for p in v.get("series", []) if p.get("value") is not None]
         for v in (site_json or {}).get("variables", [])
     }
-    maps_for = {layer["var"]: layer["id"] for layer in layers if layer["kind"] == "yearly" and "var" in layer}
+    # A record's map: its trend-tested yearly map if there is one, else an observed one.
+    maps_for: dict[str, str] = {}
+    for layer in sorted(layers, key=lambda la: la.get("status") == "analysed"):
+        if layer["kind"] == "yearly" and "var" in layer:
+            maps_for[layer["var"]] = layer["id"]
     return {
         "years": years,
         "layers": {layer["id"]: _layer_years(layer) for layer in layers},
@@ -304,6 +349,7 @@ def build_layers(site_id: str, site_dir: Path) -> dict:
         *_relief_layers(site_dir, names),
         *_before_after(site_dir, names),
         *_detail(site_dir),
+        *_observed_layers(site_dir),
         *_analysed_layers(site_dir, names),
     ]
     return {

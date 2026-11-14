@@ -188,3 +188,23 @@ def test_timeline_detail_photos_and_water(tmp_path: Path) -> None:
     })
     tl = build_layers("s", site)["timeline"]["layers"]["detail"]
     assert tl == {"mode": "yearly", "years": [2003, 2004], "new_photo_years": [2003], "water_years": [2003]}
+
+
+def test_observed_layer_listed_and_preferred_below_analysed(tmp_path: Path) -> None:
+    site = tmp_path / "s"
+    _touch(site / "layers" / "lst_gibs" / "meta.json", {
+        "id": "lst_gibs", "title": "Daytime ground temperature", "unit": "°C", "range": [10, 50],
+        "stops": ["#000000"], "legend": {}, "years": [2003, 2004],
+        "file_pattern": "layers/lst_gibs/{YYYY}.png", "value_pattern": "layers/lst_gibs/{YYYY}_values.png",
+        "value_scale": 0.01, "value_offset": -100.0, "source": {"name": "MODIS", "url": None},
+    })
+    _touch(site / "layers" / "lst_gibs" / "2003.png")
+    _touch(site / "site.json", {"years": [2003, 2004], "variables": [{"id": "lst_day", "series": []}]})
+    doc = build_layers("s", site)
+    obs = {la["id"]: la for la in doc["layers"]}["lst_gibs"]
+    assert obs["status"] == "observed" and obs["years"] == [2003]
+    assert obs["legend"]["range"] == [10, 50]
+    assert doc["timeline"]["record_map"]["lst_day"] == "lst_gibs"
+    _touch(site / "year_lst_day.json", YEARLY)
+    _touch(site / "year_lst_day_2003.png")
+    assert build_layers("s", site)["timeline"]["record_map"]["lst_day"] == "year_lst_day"

@@ -175,3 +175,8 @@ app.include_router(explain_router)
 from app.investigate.router import router as investigate_router  # noqa: E402
 
 app.include_router(investigate_router)
+
+# /layers/suggest: LLM-picked map layer stack for a question (app/layer_suggest.py).
+from app.layer_suggest import router as layers_router  # noqa: E402
+
+app.include_router(layers_router)
