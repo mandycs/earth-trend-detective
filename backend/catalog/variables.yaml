@@ -12,6 +12,7 @@ variables:
   # --- Climate drivers (NASA POWER, no auth) ---
   - id: t2m
     label: Air temperature
+    definition: "How warm the air near the ground is, averaged over each month, estimated by a NASA global weather model."
     role: driver
     source: power
     dataset: NASA POWER (MERRA-2)
@@ -26,6 +27,7 @@ variables:
 
   - id: precip
     label: Rainfall
+    definition: "How much water falls from the sky each day, as rain or snow, averaged over each month, from NASA satellites and weather models."
     role: driver
     source: power
     dataset: NASA POWER (MERRA-2 + IMERG corrected)
@@ -40,6 +42,7 @@ variables:
 
   - id: solar
     label: Sunlight at the surface
+    definition: "How much sunlight reaches the ground each day, averaged over each month, estimated from NASA satellite measurements."
     role: driver
     source: power
     dataset: NASA POWER (CERES SYN1deg)
@@ -55,6 +58,7 @@ variables:
   # --- Impact variables (MODIS via AppEEARS, Earthdata Login) ---
   - id: ndvi
     label: Plant greenness
+    definition: "How green and leafy the land looks from space, read from the colors a satellite sees; higher means healthier plant growth."
     role: impact
     source: appeears
     dataset: MOD13A3.061
@@ -69,6 +73,7 @@ variables:
 
   - id: lst_day
     label: Daytime ground temperature
+    definition: "How hot the ground surface itself is in the daytime, seen from space by a NASA satellite. It is not the air temperature."
     role: impact
     source: appeears
     dataset: MOD11A2.061
@@ -83,6 +88,7 @@ variables:
 
   - id: et
     label: Water evaporated by land and plants
+    definition: "How much water rises from the soil and from plant leaves back into the air, estimated from satellite data every few days."
     role: impact
     source: appeears
     dataset: MOD16A2GF.061
@@ -97,6 +103,7 @@ variables:
 
   - id: snow_cover
     label: Snow cover
+    definition: "The share of an area covered by snow, averaged over each month and seen from space by a NASA satellite."
     role: impact
     source: appeears
     dataset: MOD10A1.061
@@ -116,6 +123,7 @@ variables:
   # Hydrology Data Rods and on-prem GES DISC OPeNDAP are retired (HTTP 410).
   - id: soil_moisture
     label: Topsoil moisture
+    definition: "How much water is held in the top layer of soil, estimated by a NASA land model and averaged over each month."
     role: impact
     source: gldas
     dataset: GLDAS_NOAH025_M.2.1
@@ -130,6 +138,7 @@ variables:
 
   - id: runoff
     label: Surface runoff
+    definition: "How much rain or melted snow flows over the land into rivers and lakes instead of soaking into the ground, from a NASA land model."
     role: impact
     source: gldas
     dataset: GLDAS_NOAH025_M.2.1
@@ -145,6 +154,7 @@ variables:
   # --- Impact variables (GRACE/GRACE-FO mascons, Earthdata Login) ---
   - id: grace_tws
     label: Total water stored
+    definition: "All the water stored in a region — underground, in the soil, in snow and in lakes — weighed from space by the GRACE satellites."
     role: impact
     source: grace
     dataset: TELLUS_GRAC-GRFO_MASCON_CRI_GRID_RL06.3_V4
@@ -161,6 +171,7 @@ variables:
   # Own AppEEARS task per site (`<site>_water` in tasks.json); see app/extractors/water.py.
   - id: water_area
     label: Open-water area
+    definition: "How much of a lake or reservoir's surface is open water, seen from space every few days when the sky is clear."
     role: impact
     source: appeears_water
     dataset: MOD09A1.061
@@ -179,6 +190,7 @@ variables:
   # They are trend-tested and listed like the other drivers in the sweep.
   - id: t2m_upstream
     label: Air temperature upstream
+    definition: "Air temperature averaged over several points upstream of the site, where the water that reaches it comes from."
     role: driver
     source: power
     dataset: NASA POWER (MERRA-2), mean of the site's upstream_climate points
@@ -193,6 +205,7 @@ variables:
 
   - id: precip_upstream
     label: Rainfall and snowfall upstream
+    definition: "Rain and snow averaged over several points upstream of the site, where the water that reaches it comes from."
     role: driver
     source: power
     dataset: NASA POWER (MERRA-2 + IMERG corrected), mean of the site's upstream_climate points
@@ -207,6 +220,7 @@ variables:
 
   - id: degree_days
     label: Melt warmth (degree-days)
+    definition: "A warmth-for-melting score: the month's average air temperature, counted only when it is above freezing, times the days in the month."
     role: driver
     source: power
     dataset: NASA POWER (MERRA-2), derived from monthly T2M as max(T2M, 0) x days in month
@@ -221,6 +235,7 @@ variables:
 
   - id: winter_precip
     label: Winter snowfall and rain so far
+    definition: "The total of rain and snow that has fallen since the winter season began, the months when snow builds up in mountains."
     role: driver
     source: power
     dataset: NASA POWER (MERRA-2 + IMERG corrected), derived from monthly PRECTOTCORR as Oct-Apr water-year total

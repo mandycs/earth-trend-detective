@@ -29,6 +29,7 @@ class Variable:
     tags: tuple[str, ...]
     applies_to: tuple[str, ...]
     drivers: tuple[str, ...]
+    definition: str = ""
 
 
 def _parse_variable(raw: dict) -> Variable:
@@ -50,6 +51,7 @@ def _parse_variable(raw: dict) -> Variable:
         tags=tuple(raw.get("tags") or ()),
         applies_to=tuple(raw.get("applies_to") or ()),
         drivers=tuple(raw.get("drivers") or ()),
+        definition=str(raw.get("definition", "")),
     )
 
 

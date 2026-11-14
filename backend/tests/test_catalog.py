@@ -39,3 +39,10 @@ def test_invalid_role_is_rejected(tmp_path):
     )
     with pytest.raises(ValueError, match="role"):
         load_catalog(bad)
+
+
+def test_every_variable_has_a_plain_definition():
+    for var in load_catalog():
+        assert var.definition, var.id
+        assert len(var.definition) <= 160, var.id
+        assert "Mann" not in var.definition and "anomal" not in var.definition.lower()
