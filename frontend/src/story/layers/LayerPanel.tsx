@@ -20,6 +20,8 @@ export interface LayerPanelProps {
   cropKm?: number
   compareId: string | null
   onCompare: (id: string | null) => void
+  /** Short note shown even when folded, e.g. "No map for this record". */
+  notice?: string | null
 }
 
 function km(metres: number): string {
@@ -97,6 +99,7 @@ export function LayerPanel({
   cropKm,
   compareId,
   onCompare,
+  notice,
 }: LayerPanelProps) {
   const [open, setOpen] = useState<string | null>(null)
   const [question, setQuestion] = useState('')
@@ -118,7 +121,10 @@ export function LayerPanel({
   return (
     <section className={folded ? 'lp lp-folded' : 'lp'} aria-label="Map layers">
       <button type="button" className="lp-fold" aria-expanded={!folded} onClick={() => setFolded((f) => !f)}>
-        <span>Layers{onCount ? ` · ${onCount} on` : ''}</span>
+        <span>
+          Layers{onCount ? ` · ${onCount} on` : ''}
+          {notice ? <span className="lp-notice"> · {notice}</span> : null}
+        </span>
         <span aria-hidden="true">{folded ? '+' : '−'}</span>
       </button>
       {folded ? null : (

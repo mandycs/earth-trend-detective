@@ -1735,3 +1735,110 @@
   color: var(--ink);
   font-size: 1rem;
 }
+
+/* ---------------------------------------------- instrument (free) mode */
+
+.curtain-still .curtain-line {
+  /* Stop above the documentary subtitle block. */
+  bottom: 300px;
+  mask-image: linear-gradient(180deg, #000 80%, transparent);
+}
+
+.lp-notice {
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+.sp-tabs {
+  background: transparent;
+  gap: 12px;
+}
+
+.sp-tab,
+.sp-tab:hover {
+  min-height: 52px;
+  background: transparent;
+  box-shadow: inset 0 2px 0 var(--line); /* taste-skill-ignore: stepper track, not a shadow */
+  color: var(--ink-3);
+  font-size: 0.95rem;
+  text-align: left;
+  padding: 10px 0 6px;
+}
+
+.sp-tab:hover {
+  color: var(--ink);
+}
+
+.sp-tab-on,
+.sp-tab-on:hover {
+  background: transparent;
+  color: var(--ink);
+  box-shadow: inset 0 2px 0 var(--ink); /* taste-skill-ignore: stepper track, not a shadow */
+}
+
+.ev-range-value strong,
+.sp-check-r,
+.tl-value {
+  font-family: var(--font-ui);
+  font-stretch: 100%;
+  font-weight: 300;
+}
+
+@media (min-width: 1101px) {
+  .st:not(.st-documentary) .st-stage {
+    position: relative;
+    display: block;
+  }
+
+  .st:not(.st-documentary) .st-viewer {
+    height: 100%;
+  }
+
+  /* Left scrim: the reading side of the map. */
+  .st:not(.st-documentary) .st-canvas::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(90deg, rgba(14, 16, 18, 0.94) 0%, rgba(14, 16, 18, 0.8) 30%, rgba(14, 16, 18, 0.45) 40%, rgba(14, 16, 18, 0) 60%);
+    pointer-events: none;
+  }
+
+  .st:not(.st-documentary) .sp {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 126px;
+    z-index: 3;
+    width: 38%;
+    min-width: 420px;
+    max-width: 600px;
+    background: transparent;
+  }
+
+  .st:not(.st-documentary) .sp-tabs,
+  .st:not(.st-documentary) .sp-foot {
+    background: transparent;
+  }
+
+  .st:not(.st-documentary) .sp-head {
+    padding-top: 28px;
+  }
+
+  .st:not(.st-documentary) .lp {
+    left: auto;
+    right: 16px;
+  }
+
+  .st:not(.st-documentary) .st-identify-card {
+    top: auto;
+    bottom: calc(16px);
+    right: 16px;
+  }
+}
+
+@media (min-width: 1101px) {
+  .st:not(.st-documentary) .sp-foot {
+    position: static;
+  }
+}

@@ -88,6 +88,15 @@ export default function StoryApp({ caseId }: { caseId: string }) {
   const [identify, setIdentify] = useState(false)
   const [compareId, setCompareId] = useState<string | null>(null)
   const [split, setSplit] = useState(0.5)
+  // Instrument layout puts a reading column over the left of the map on wide screens.
+  const [wide, setWide] = useState(false)
+  useEffect(() => {
+    const q = window.matchMedia('(min-width: 1101px)')
+    const on = () => setWide(q.matches)
+    on()
+    q.addEventListener('change', on)
+    return () => q.removeEventListener('change', on)
+  }, [])
   const [pair, setPair] = useState<{ id: string; value: BeforeAfterPair | null; textures: [Overlay, Overlay] | null }>({ id: '', value: null, textures: null })
   const [picked, setPicked] = useState<IdentifyResult | null>(null)
   const [noMapFor, setNoMapFor] = useState<string | null>(null)
@@ -539,6 +548,7 @@ export default function StoryApp({ caseId }: { caseId: string }) {
                 overlays={mode === 'doc' ? (docCurtain?.textures ?? []) : overlays}
                 split={mode === 'doc' ? docSplit : split}
                 hideWater={Boolean(docCurtain)}
+                shiftX={mode === 'free' && wide ? 0.16 : 0}
                 onPick={identify && mode === 'free' ? onPick : undefined}
                 exaggeration={vx}
                 shot={mode === 'doc' ? chapter : null}
@@ -599,9 +609,8 @@ export default function StoryApp({ caseId }: { caseId: string }) {
               </div>
             ) : null}
 
-            {site && variable ? (
+            {site && variable && drone ? (
               <div className="st-yearcard" aria-live="polite">
-                <span className="st-yearnote-year narrow">{shownYear}</span>
                 <ul>
                   {drone ? (
                     <li>
@@ -725,6 +734,7 @@ export default function StoryApp({ caseId }: { caseId: string }) {
               cropKm={drone ? cropKm : undefined}
               compareId={compareId}
               onCompare={setCompareId}
+              notice={variable && noMapFor === variable.id ? 'no map for this record' : null}
             />
           ) : null}
 

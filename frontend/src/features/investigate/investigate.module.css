@@ -784,3 +784,69 @@
     padding: 12px 16px;
   }
 }
+
+/* ------------------------------------------------- instrument layout */
+
+.answerFigure strong {
+  font-family: var(--font-ui);
+  font-stretch: 100%;
+  font-weight: 300;
+  color: var(--ink);
+}
+
+@media (min-width: 1000px) {
+  .layout {
+    position: relative;
+    display: block;
+  }
+
+  .mapCol {
+    position: absolute;
+    inset: 0;
+  }
+
+  .mapWrap {
+    height: 100%;
+  }
+
+  .mapCol::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(90deg, rgba(14, 16, 18, 0.94) 0%, rgba(14, 16, 18, 0.82) 32%, rgba(14, 16, 18, 0.45) 42%, rgba(14, 16, 18, 0) 62%);
+    pointer-events: none;
+  }
+
+  .panel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 2;
+    width: 38%;
+    min-width: 440px;
+    max-width: 620px;
+    overflow-y: auto;
+    background: transparent;
+  }
+
+  .case,
+  .askedBar {
+    background: transparent;
+  }
+
+  .step {
+    background: rgba(14, 16, 18, 0.6);
+  }
+
+  .stack {
+    left: auto;
+    right: 16px;
+    z-index: 3;
+  }
+
+  .mapHint {
+    left: calc(40% + 16px);
+  }
+}

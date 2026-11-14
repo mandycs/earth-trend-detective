@@ -650,3 +650,81 @@
     display: none;
   }
 }
+
+/* ------------------------------------------------- instrument layout */
+
+@media (min-width: 900px) {
+  .layout {
+    position: relative;
+    display: block;
+  }
+
+  .layout > :first-child {
+    position: absolute;
+    inset: 0;
+  }
+
+  .layout > :first-child::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(90deg, rgba(14, 16, 18, 0.94) 0%, rgba(14, 16, 18, 0.82) 32%, rgba(14, 16, 18, 0.45) 42%, rgba(14, 16, 18, 0) 62%);
+    pointer-events: none;
+  }
+
+  .panel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 2;
+    width: 38%;
+    min-width: 440px;
+    max-width: 620px;
+    background: transparent;
+  }
+
+  .placeBar {
+    background: transparent;
+  }
+
+  .card {
+    background: rgba(21, 24, 27, 0.75);
+  }
+
+  .slopeValue {
+    font-family: var(--font-ui);
+    font-stretch: 100%;
+    font-weight: 300;
+  }
+
+  .mapHint {
+    left: calc(40% + 16px);
+  }
+}
+
+/* Quiet stepper (Instrument): a track line per step, ink when current. */
+.steps {
+  gap: 12px;
+}
+
+.step,
+.step:hover {
+  justify-content: flex-start;
+  text-align: left;
+  background: transparent;
+  box-shadow: inset 0 2px 0 var(--line); /* taste-skill-ignore: stepper track, not a shadow */
+  color: var(--ink-3);
+  padding: 10px 0 6px;
+}
+
+.step:hover {
+  color: var(--ink);
+}
+
+.step[aria-current="step"] {
+  background: transparent;
+  color: var(--ink);
+  box-shadow: inset 0 2px 0 var(--ink); /* taste-skill-ignore: stepper track, not a shadow */
+}

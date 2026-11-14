@@ -17,6 +17,8 @@ export interface StorySceneProps {
   exaggeration: number
   split?: number
   hideWater?: boolean
+  /** Move the subject right by this share of the width (Instrument mode). */
+  shiftX?: number
   /** Documentary chapter shot (0-2); null hands the camera to the visitor. */
   shot?: number | null
 }
@@ -42,6 +44,18 @@ function shotView(shot: number, aspect: number, peak: number): THREE.Vector3 {
   if (shot === 1) return new THREE.Vector3(0.62 * d, 0.16 * d + peak * 0.9, 0.5 * d)
   if (shot === 2) return new THREE.Vector3(-0.08 * d, 0.95 * d + peak, 0.55 * d)
   return restingView(aspect, peak)
+}
+
+/** Shifts the picture sideways (share of the width) so the subject clears a reading column. */
+function ViewShift({ shift }: { shift: number }) {
+  const { camera, size } = useThree()
+  useEffect(() => {
+    const cam = camera as THREE.PerspectiveCamera
+    if (shift) cam.setViewOffset(size.width, size.height, -size.width * shift, 0, size.width, size.height)
+    else cam.clearViewOffset()
+    cam.updateProjectionMatrix()
+  }, [camera, size, shift])
+  return null
 }
 
 function easeOutCubic(t: number) {
@@ -152,7 +166,7 @@ function Sun() {
   )
 }
 
-export function StoryScene({ site, assets, overlays, onPick, exaggeration, shot = null, split = 0.5, hideWater = false }: StorySceneProps) {
+export function StoryScene({ site, assets, overlays, onPick, exaggeration, shot = null, split = 0.5, hideWater = false, shiftX = 0 }: StorySceneProps) {
   const [west, south, east, north] = site.bbox
   const midLat = ((south + north) / 2) * (Math.PI / 180)
   const widthMetres = Math.abs(east - west) * 111_320 * Math.cos(midLat)
@@ -189,6 +203,7 @@ export function StoryScene({ site, assets, overlays, onPick, exaggeration, shot 
         />
       </group>
       <CameraRig siteId={site.id} aspect={aspect} peak={peak} shot={shot} />
+      <ViewShift shift={shiftX} />
     </Canvas>
   )
 }
