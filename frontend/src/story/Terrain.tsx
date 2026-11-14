@@ -19,6 +19,10 @@ export interface TerrainProps {
   exaggeration: number
   /** depth / width of the plane. */
   aspect: number
+  /** Draw a water surface where the elevation model is flat (default on). */
+  autoWater?: boolean
+  /** Mesh resolution along the width. */
+  segments?: number
 }
 
 /** Depth of the slab under the terrain, as a fraction of the plane width. */
@@ -182,9 +186,9 @@ interface Uniforms {
  * shadows and silhouettes come from real metres, then cuts it out as a slab
  * with earth-coloured sides, like a museum relief model.
  */
-function buildGeometry(grid: HeightGrid, aspect: number, scale: number, water: number | null) {
+function buildGeometry(grid: HeightGrid, aspect: number, scale: number, water: number | null, segments = 512) {
   const mask = water == null ? null : waterMask(grid, water)
-  const segX = Math.min(grid.width - 1, 512)
+  const segX = Math.min(grid.width - 1, segments)
   const segZ = Math.max(8, Math.min(grid.height - 1, Math.round(segX * aspect)))
   const top = new THREE.PlaneGeometry(1, aspect, segX, segZ)
   top.rotateX(-Math.PI / 2)
@@ -251,12 +255,14 @@ export function Terrain({
   widthMetres,
   exaggeration,
   aspect,
+  autoWater = true,
+  segments = 512,
 }: TerrainProps) {
   const uniforms = useRef<Uniforms | null>(null)
   const scale = exaggeration / Math.max(widthMetres, 1)
 
-  const water = useMemo(() => waterLevel(grid), [grid])
-  const { top, sides } = useMemo(() => buildGeometry(grid, aspect, scale, water), [grid, aspect, scale, water])
+  const water = useMemo(() => (autoWater ? waterLevel(grid) : null), [grid, autoWater])
+  const { top, sides } = useMemo(() => buildGeometry(grid, aspect, scale, water, segments), [grid, aspect, scale, water, segments])
 
   const material = useMemo(() => {
     const created = new THREE.MeshStandardMaterial({ map: base, roughness: 0.96, metalness: 0, dithering: true })

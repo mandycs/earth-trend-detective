@@ -107,6 +107,88 @@
       }
     },
     {
+      "id": "detail",
+      "kind": "detail",
+      "title": "Close-up: real ground and aerial photo",
+      "status": "visual_only",
+      "bbox": [
+        -114.845,
+        36.075,
+        -114.775,
+        36.13
+      ],
+      "files": {
+        "heightmap_rgb": "detail/heightmap_rgb.png",
+        "base": "detail/base.jpg",
+        "hillshade": "detail/hillshade.png"
+      },
+      "encoding": "terrain-rgb",
+      "resolution_m": {
+        "heightmap": 3.07,
+        "base": 2.1
+      },
+      "height_range_m": [
+        317.7,
+        598.2
+      ],
+      "water_level_m_by_year": {
+        "2003": 348.39,
+        "2004": 344.14,
+        "2005": 346.81,
+        "2006": 344.09,
+        "2007": 339.81,
+        "2008": 337.45,
+        "2009": 334.28,
+        "2010": 331.87,
+        "2011": 337.01,
+        "2012": 341.11,
+        "2013": 337.78,
+        "2014": 331.54,
+        "2015": 328.62,
+        "2016": 327.63,
+        "2017": 329.45,
+        "2018": 328.93,
+        "2019": 330.26,
+        "2020": 331.09,
+        "2021": 326.46,
+        "2022": 319.46,
+        "2023": 321.64,
+        "2024": 324.41
+      },
+      "drawable_years": [
+        2003,
+        2004,
+        2005,
+        2006,
+        2007,
+        2008,
+        2009,
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2019,
+        2020
+      ],
+      "lidar_water_surface_m": 329.6,
+      "note": "Ground and photo are present-day pictures, not measurements of change. Water levels are USBR yearly means moved onto the lidar heights; years below the lidar water surface cannot be drawn.",
+      "sources": [
+        {
+          "name": "USGS 3D Elevation Program (3DEP) lidar, 1 m",
+          "url": "https://www.usgs.gov/3d-elevation-program"
+        },
+        {
+          "name": "USDA NAIP aerial photography, via USGS The National Map",
+          "url": "https://naip-usdaonline.hub.arcgis.com/"
+        },
+        {
+          "name": "Lake Mead elevation, US Bureau of Reclamation",
+          "url": "https://www.usbr.gov/lc/region/g4000/hourly/mead-elv.html"
+        }
+      ]
+    },
+    {
       "id": "trend_lst_day",
       "kind": "trend",
       "var": "lst_day",

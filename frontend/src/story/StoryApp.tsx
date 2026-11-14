@@ -5,6 +5,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { mapLayers, useLegend, useSite, useStoryAssets } from './useSite'
 import type { MapLayer } from './useSite'
 import { StoryScene } from './StoryScene'
+import { DroneScene } from './drone/DroneScene'
+import { useDetailAssets, useDetailInfo } from './drone/useDetail'
 import { StoryPanel } from './StoryPanel'
 import { Timeline } from './Timeline'
 import type { SiteVariable } from './types'
@@ -30,6 +32,10 @@ function layerName(layer: MapLayer, label: string | undefined, single: boolean):
 
 export default function StoryApp({ caseId }: { caseId: string }) {
   const { site, error } = useSite(caseId)
+  const detailInfo = useDetailInfo(caseId)
+  const [drone, setDrone] = useState(false)
+  const detail = useDetailAssets(caseId, detailInfo, drone)
+  const [altitude, setAltitude] = useState<number | null>(null)
   const [variableId, setVariableId] = useState<string | null>(null)
   const [layerKey, setLayerKey] = useState<string>('none')
   const [step, setStep] = useState(0)
@@ -61,6 +67,7 @@ export default function StoryApp({ caseId }: { caseId: string }) {
     // True colours first; the data layers are one tap away.
     setLayerKey('none')
     setExaggeration(null)
+    setDrone(false)
     yearRef.current = site.years[0]
     clockRef.current = 0
     setDisplayYear(site.years[0])
@@ -105,7 +112,30 @@ export default function StoryApp({ caseId }: { caseId: string }) {
   const showYears = layer?.kind === 'year' && assets.years.length > 1
   // The chart follows the map: with a data layer on, it shows that record.
   const layerVariable = layer ? site?.variables.find((v) => v.id === layer.variable) ?? null : null
-  const timelineVariable = layerVariable ?? variable
+  // In the drone, the record under the timeline is the lake level the water is drawn at.
+  const levels = detailInfo?.water_level_m_by_year ?? null
+  const lakeLevel: SiteVariable | null =
+    drone && levels
+      ? {
+          id: 'lake_level',
+          label: 'Lake level',
+          unit: 'm',
+          sen_slope_per_decade: null,
+          p_value: null,
+          verdict: 'unknown',
+          direction: 'flat',
+          years_needed: null,
+          residual_pct_non_climate: null,
+          series: Object.entries(levels)
+            .map(([y, value]) => ({ year: Number(y), value }))
+            .sort((a, b) => a.year - b.year),
+        }
+      : null
+  const timelineVariable = lakeLevel ?? layerVariable ?? variable
+  const shownYear = displayYear || firstYear
+  const yearLevel = levels?.[String(shownYear)] ?? null
+  const drawable = Boolean(detailInfo?.drawable_years?.includes(shownYear))
+  const droneLevel = drawable ? yearLevel : null
   const mapKm = site ? bboxWidthMeters(site.bbox) / 1000 : 80
   const frameRead = showYears ? assets.reads[(displayYear || firstYear) - firstYear] ?? null : null
   const frameWords = frameRead
@@ -151,8 +181,52 @@ export default function StoryApp({ caseId }: { caseId: string }) {
       <main className="st-stage">
         <section className="st-viewer" aria-label="3D terrain">
           <div className="st-canvas">
-            {site && !error ? (
+            {site && !error && !drone ? (
               <StoryScene site={site} assets={assets} yearProgress={yearProgress} showYears={showYears} exaggeration={vx} />
+            ) : null}
+
+            {drone && detail.assets ? (
+              <DroneScene detail={detail.assets} level={droneLevel} exaggeration={1} onAltitude={setAltitude} />
+            ) : null}
+
+            {drone && !detail.assets && !detail.error ? (
+              <div className="st-message" role="status">
+                <span className="spinner" aria-hidden="true" /> Loading the close-up: lidar ground and aerial photo…
+              </div>
+            ) : null}
+
+            {drone && detail.error ? (
+              <div className="st-message" role="alert">
+                <p>
+                  <strong>The close-up could not load.</strong>
+                </p>
+                <button type="button" className="btn" onClick={() => setDrone(false)}>
+                  Back to the overview
+                </button>
+              </div>
+            ) : null}
+
+            {drone && detail.assets ? (
+              <div className="st-drone-hud">
+                <div className="st-drone-level">
+                  <span className="st-yearnote-year narrow">{shownYear}</span>
+                  <span>
+                    {yearLevel == null
+                      ? 'No lake level for this year.'
+                      : drawable
+                        ? `Lake surface at ${Math.round(yearLevel)} m above sea level (USBR yearly mean).`
+                        : `Lake at ${Math.round(yearLevel)} m: lower than this survey can show, so no water is drawn.`}
+                  </span>
+                </div>
+                <p className="st-drone-help">
+                  {altitude != null ? <strong>{altitude} m above ground · </strong> : null}
+                  W A S D or arrows to fly · drag to look · scroll or Q / E for height · on touch: drag to fly, pinch for height
+                </p>
+                <p className="st-drone-note">
+                  Ground: USGS lidar (2018). Photo: NAIP aerial. Both are present-day pictures, not measurements. Only the
+                  water level changes with the year.
+                </p>
+              </div>
             ) : null}
 
             {!site && !error ? (
@@ -179,7 +253,7 @@ export default function StoryApp({ caseId }: { caseId: string }) {
               </div>
             ) : null}
 
-            {frameWords && legend ? (
+            {!drone && frameWords && legend ? (
               <div className="st-yearnote" aria-live="polite">
                 <span className="st-yearnote-year narrow">{displayYear || firstYear}</span>
                 <span>
@@ -188,7 +262,13 @@ export default function StoryApp({ caseId }: { caseId: string }) {
               </div>
             ) : null}
 
-            {site ? (
+            {site && detailInfo ? (
+              <button type="button" className={drone ? 'st-drone-toggle st-drone-on' : 'st-drone-toggle'} onClick={() => setDrone((d) => !d)}>
+                {drone ? '← Back to the overview' : 'Fly the shore (drone view)'}
+              </button>
+            ) : null}
+
+            {site && !drone ? (
               <div className="st-relief">
                 <span title="Mountains and valleys are drawn this many times taller than they really are, so the shape reads at this size.">
                   {vx === 1 ? 'Relief at true scale' : `Relief exaggerated ×${vx}`}
@@ -197,7 +277,7 @@ export default function StoryApp({ caseId }: { caseId: string }) {
             ) : null}
           </div>
 
-          {site ? (
+          {site && !drone ? (
             <div className="st-layers">
               <div className="st-layer-pick" role="radiogroup" aria-label="What the map shows">
                 <button
@@ -259,7 +339,7 @@ export default function StoryApp({ caseId }: { caseId: string }) {
             year={displayYear || firstYear}
             playing={playing}
             variable={timelineVariable}
-            mapFollows={showYears}
+            mapFollows={showYears || (drone && Boolean(detail.assets))}
             mapKm={mapKm}
             onScrub={handleScrub}
             onToggle={() => setPlaying((value) => !value)}
