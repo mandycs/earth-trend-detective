@@ -22,6 +22,8 @@ interface TerrainUniforms {
   uHeight: THREE.IUniform<THREE.Texture | null>
   uBase: THREE.IUniform<THREE.Texture | null>
   uTrend: THREE.IUniform<THREE.Texture | null>
+  uTrendB: THREE.IUniform<THREE.Texture | null>
+  uTrendMix: THREE.IUniform<number>
   uYearA: THREE.IUniform<THREE.Texture | null>
   uYearB: THREE.IUniform<THREE.Texture | null>
   uYearMix: THREE.IUniform<number>
@@ -70,6 +72,8 @@ export function Terrain({
         uHeight: { value: height },
         uBase: { value: base },
         uTrend: { value: trend },
+        uTrendB: { value: trend },
+        uTrendMix: { value: 0 },
         uYearA: { value: years[0] ?? null },
         uYearB: { value: years[1] ?? null },
         uYearMix: { value: 0 },
@@ -117,6 +121,8 @@ export function Terrain({
           `#include <common>
            uniform sampler2D uBase;
            uniform sampler2D uTrend;
+           uniform sampler2D uTrendB;
+           uniform float uTrendMix;
            uniform sampler2D uYearA;
            uniform sampler2D uYearB;
            uniform float uYearMix;
@@ -130,7 +136,9 @@ export function Terrain({
           `vec3 layer = texture2D( uBase, vMapUv ).rgb;
 
            if ( uHasTrend > 0.5 ) {
-             vec4 trendSample = texture2D( uTrend, vMapUv );
+             vec4 trendA = texture2D( uTrend, vMapUv );
+             vec4 trendB = texture2D( uTrendB, vMapUv );
+             vec4 trendSample = mix( trendA, trendB, uTrendMix );
              layer = mix( layer, trendSample.rgb, trendSample.a * uTrendStrength );
            }
 
@@ -148,12 +156,30 @@ export function Terrain({
     return created
   }, [base, height])
 
+  // Trend layers crossfade: switching variable snaps a new raster onto the same
+  // geometry, and a hard cut reads as a glitch. A→B over 400 ms, then B becomes A.
+  const trendA = useRef<THREE.Texture | null>(trend)
+  const trendB = useRef<THREE.Texture | null>(trend)
+  const transitionStart = useRef(0)
+  const transitioning = useRef(false)
+
   useEffect(() => {
-    const own = uniforms.current
-    if (own) {
-      own.uTrend.value = trend
-      own.uHasTrend.value = trend ? 1 : 0
+    if (!trend) {
+      trendA.current = null
+      trendB.current = null
+      transitioning.current = false
+      return
     }
+    if (trend === trendA.current && !transitioning.current) return
+    if (trendA.current === null) {
+      trendA.current = trend
+      trendB.current = trend
+      transitioning.current = false
+      return
+    }
+    trendB.current = trend
+    transitionStart.current = performance.now()
+    transitioning.current = true
   }, [trend])
 
   useEffect(() => {
@@ -173,6 +199,21 @@ export function Terrain({
     if (!own) return
     own.uTrendStrength.value = trendStrength
     own.uYearStrength.value = yearStrength
+
+    if (transitioning.current) {
+      const mix = Math.min((performance.now() - transitionStart.current) / 400, 1)
+      if (mix >= 1) {
+        trendA.current = trendB.current
+        transitioning.current = false
+        own.uTrendMix.value = 0
+      } else {
+        own.uTrendMix.value = mix
+      }
+    }
+    own.uTrend.value = trendA.current
+    own.uTrendB.value = trendB.current ?? trendA.current
+    own.uHasTrend.value = trendA.current ? 1 : 0
+
     if (years.length > 0) {
       const progress = Math.min(Math.max(yearProgress(), 0), years.length - 1)
       const lower = Math.floor(progress)
