@@ -48,6 +48,10 @@
       "direction": "down",
       "years_needed": null,
       "residual_pct_non_climate": 83.7,
+      "residual_pct_range": [
+        53.6,
+        83.7
+      ],
       "badge": "↓ Real",
       "series": [
         {
@@ -145,6 +149,7 @@
       "direction": "up",
       "years_needed": null,
       "residual_pct_non_climate": null,
+      "residual_pct_range": null,
       "badge": "↑ Real",
       "series": [
         {
@@ -250,6 +255,7 @@
       "direction": "down",
       "years_needed": null,
       "residual_pct_non_climate": null,
+      "residual_pct_range": null,
       "badge": "↓ Real",
       "series": [
         {
@@ -355,6 +361,7 @@
       "direction": "up",
       "years_needed": 1,
       "residual_pct_non_climate": null,
+      "residual_pct_range": null,
       "badge": "↑ Likely",
       "series": [
         {
@@ -460,6 +467,7 @@
       "direction": "flat",
       "years_needed": 9,
       "residual_pct_non_climate": null,
+      "residual_pct_range": null,
       "badge": "? Can't tell yet",
       "series": [
         {
@@ -565,6 +573,7 @@
       "direction": "flat",
       "years_needed": 14,
       "residual_pct_non_climate": null,
+      "residual_pct_range": null,
       "badge": "? Can't tell yet",
       "series": [
         {
@@ -671,6 +680,7 @@
       "direction": "flat",
       "years_needed": 18,
       "residual_pct_non_climate": null,
+      "residual_pct_range": null,
       "badge": "? Can't tell yet",
       "series": [
         {
@@ -776,6 +786,7 @@
       "direction": "flat",
       "years_needed": null,
       "residual_pct_non_climate": null,
+      "residual_pct_range": null,
       "badge": "? Can't tell yet",
       "series": [
         {
@@ -882,6 +893,7 @@
       "direction": "flat",
       "years_needed": null,
       "residual_pct_non_climate": null,
+      "residual_pct_range": null,
       "badge": "? Can't tell yet",
       "series": [
         {
@@ -983,7 +995,7 @@
     "Is it real, or is it chance?",
     "Is it the climate?"
   ],
-  "headline": "Total water stored is going down for real (−6.5 cm per decade). About 84% of that change is not explained by climate.",
+  "headline": "Total water stored is going down for real (−6.5 cm per decade). Between 54% and 84% of that change is not explained by climate, depending on the climate model.",
   "narrative": null,
   "validation": {
     "source": "U.S. Bureau of Reclamation (not NASA, validation only)",

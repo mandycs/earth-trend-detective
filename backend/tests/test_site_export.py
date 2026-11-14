@@ -176,3 +176,14 @@ def test_find_assets_lists_optional_relief_files_only_when_present(tmp_path):
     assets = find_assets(tmp_path)
     assert assets["hillshade"] == "hillshade.png"
     assert "heightmap_rgb" not in assets and "base_hq" not in assets
+
+
+def test_headline_uses_the_range_when_driver_models_disagree():
+    rows = [
+        {"id": "grace_tws", "label": "Total water stored", "unit": "cm", "verdict": "real", "direction": "down",
+         "sen_slope_per_decade": -6.47, "residual_pct_non_climate": 83.7, "residual_pct_range": [53.6, 83.7]},
+    ]
+    assert headline(rows, frozenset({"grace_tws"})) == (
+        "Total water stored is going down for real (−6.5 cm per decade). "
+        "Between 54% and 84% of that change is not explained by climate, depending on the climate model."
+    )

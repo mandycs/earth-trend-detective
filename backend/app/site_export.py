@@ -57,6 +57,7 @@ VARIABLE_FIELDS = (
     "direction",
     "years_needed",
     "residual_pct_non_climate",
+    "residual_pct_range",  # [min, max] across candidate driver models, or null
 )
 OPTIONAL_ASSETS: Mapping[str, str] = {
     "heightmap_rgb": "heightmap_rgb.png",

@@ -60,7 +60,8 @@ nuevo y actualizar `.env` a mano (el hook impide a Claude escribir `.env`).
 
 ## 4. Decisiones pendientes de Mandy
 
-1. Mostrar en Lake Mead el rango **54–84 %** (recomendado) o solo 84 %.
+1. ~~Rango o solo 84 %~~ → **rango 54–84 % decidido** (sáb 14). `site.json` trae `residual_pct_range` por
+   variable y el `headline` lo usa. Revisar más adelante cómo se cuenta en el pitch.
 2. Qué se hace con el modo historia de Ale (la revisión la tiene Mandy; **no** está en el repo y no debe subirse).
 3. Deploy público: dónde (Dokploy recomendado). De momento, local por Tailscale.
 4. Render cinematográfico (Blender/PyVista) de los 3 casos para pitch/vídeo de 30 s.
@@ -121,3 +122,11 @@ capa de cada paso; narrativa validada; plan por defecto si falla el LLM.
 - `next dev` no hidrata desde otra IP (`allowedDevOrigins`): usar build + `next start -H <ip>`.
 - Hooks: `freno-peligro` bloquea escribir `.env` y `git push` a `main`.
 - Tests aislados de claves reales de LLM (`backend/tests/conftest.py`).
+
+## 9. Apuntado para revisar más adelante (sáb 14, tras el rediseño de `front`)
+
+- En el caso, el mapa (temperatura del suelo) y la cifra bajo la gráfica (agua almacenada) son variables distintas.
+- Lake Mead con `base_hq` sale verdoso bajo la capa año a año.
+- Doñana se ve plana (relieve real plano; ×8 se queda).
+- Portada en móvil: imagen por debajo del pliegue; falta prueba en móvil real.
+- Idea de Mandy: vista 3D «dentro» del sitio (primera persona, moverse por el terreno, ver el cambio en el tiempo).

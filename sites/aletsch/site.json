@@ -44,6 +44,7 @@
       "direction": "down",
       "years_needed": null,
       "residual_pct_non_climate": null,
+      "residual_pct_range": null,
       "badge": "↓ Real",
       "series": [
         {
@@ -142,6 +143,7 @@
       "direction": "up",
       "years_needed": null,
       "residual_pct_non_climate": null,
+      "residual_pct_range": null,
       "badge": "↑ Real",
       "series": [
         {
@@ -243,6 +245,7 @@
       "direction": "up",
       "years_needed": null,
       "residual_pct_non_climate": null,
+      "residual_pct_range": null,
       "badge": "↑ Real",
       "series": [
         {
@@ -348,6 +351,7 @@
       "direction": "up",
       "years_needed": null,
       "residual_pct_non_climate": null,
+      "residual_pct_range": null,
       "badge": "↑ Real",
       "series": [
         {
@@ -453,6 +457,7 @@
       "direction": "up",
       "years_needed": null,
       "residual_pct_non_climate": null,
+      "residual_pct_range": null,
       "badge": "↑ Real",
       "series": [
         {
@@ -558,6 +563,7 @@
       "direction": "up",
       "years_needed": null,
       "residual_pct_non_climate": null,
+      "residual_pct_range": null,
       "badge": "↑ Real",
       "series": [
         {
@@ -664,6 +670,7 @@
       "direction": "flat",
       "years_needed": 26,
       "residual_pct_non_climate": null,
+      "residual_pct_range": null,
       "badge": "? Can't tell yet",
       "series": [
         {
@@ -770,6 +777,7 @@
       "direction": "flat",
       "years_needed": 29,
       "residual_pct_non_climate": null,
+      "residual_pct_range": null,
       "badge": "? Can't tell yet",
       "series": [
         {
