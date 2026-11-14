@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import datetime as dt
 import logging
 import math
@@ -30,7 +31,8 @@ app = FastAPI(title="Earth Trend Detective API", version="0.1.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    # Comma-separated list, e.g. "http://localhost:3000,https://earth-trend-detective.example".
+    allow_origins=[o.strip() for o in os.environ.get("CORS_ORIGINS", "http://localhost:3000").split(",") if o.strip()],
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )

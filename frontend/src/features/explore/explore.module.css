@@ -1,0 +1,631 @@
+/* ---------- shell ---------- */
+.shell {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 16px;
+  min-height: 56px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.homeLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 4px;
+  font-family: var(--font-serif), Georgia, serif;
+  font-size: 1.375rem;
+  text-decoration: none;
+}
+
+.homeLink:hover {
+  text-decoration: underline;
+}
+
+.topbarHint {
+  color: var(--muted);
+}
+
+.layout {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 900px) {
+  .shell {
+    height: 100dvh;
+  }
+  .layout {
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr) 480px;
+    grid-template-rows: minmax(0, 1fr);
+    }
+  .panel {
+    overflow-y: auto;
+    border-left: 1px solid var(--line);
+  }
+}
+
+/* ---------- map ---------- */
+.mapWrap {
+  position: relative;
+  height: 50dvh;
+  min-height: 300px;
+}
+
+@media (min-width: 900px) {
+  .mapWrap {
+    height: 100%;
+  }
+}
+
+.map,
+.mapLoading {
+  position: absolute !important; /* maplibre sets .maplibregl-map { position: relative } */
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.mapLoading {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  background: #e7e3d9;
+}
+
+.mapError {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  margin: 0;
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 1px solid var(--up);
+  border-radius: var(--radius);
+}
+
+/* MapLibre zoom buttons: 44px targets */
+.mapWrap :global(.maplibregl-ctrl-group button) {
+  width: 44px;
+  height: 44px;
+}
+
+/* ---------- panel ---------- */
+.panel {
+  background: var(--surface);
+  scroll-margin-top: 0;
+}
+
+.placeBar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px 12px 24px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+
+.placeName {
+  margin: 0;
+  font-weight: 600;
+  font-size: 1.125rem;
+}
+
+.placeCoords {
+  margin: 0;
+  color: var(--muted);
+  font-family: var(--font-mono), monospace;
+  font-size: 1rem;
+}
+
+.iconButton {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 1.125rem;
+}
+
+.iconButton:hover {
+  background: var(--neutral-bg);
+}
+
+/* ---------- states ---------- */
+.state {
+  padding: 32px 24px;
+}
+
+.state p {
+  margin: 0 0 12px;
+}
+
+.stateTitle {
+  margin: 0 0 12px;
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 400;
+  font-size: 2rem;
+  line-height: 1.15;
+}
+
+.note {
+  color: var(--muted);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.chip {
+  min-height: 44px;
+  padding: 8px 16px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--accent);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.chip:hover {
+  background: #e3eeee;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  margin-bottom: 16px;
+  border: 3px solid var(--line);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- buttons ---------- */
+.primary,
+.ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 10px 20px;
+  border-radius: var(--radius);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.primary {
+  border: 0;
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.primary:hover {
+  background: var(--accent-hover);
+}
+
+.ghost {
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+}
+
+.ghost:hover {
+  background: var(--neutral-bg);
+}
+
+.secondaryLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.stepNav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.stepNav .primary {
+  margin-left: auto;
+}
+
+/* ---------- steps ---------- */
+.results {
+  padding-bottom: 32px;
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  margin: 0;
+  padding: 12px 16px;
+  list-style: none;
+  border-bottom: 1px solid var(--line);
+}
+
+.step {
+  width: 100%;
+  min-height: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 4px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.step[aria-current="step"] {
+  color: var(--ink);
+  font-weight: 600;
+  border-bottom-color: var(--accent);
+}
+
+.stepNum {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid currentColor;
+  font-family: var(--font-mono), monospace;
+  font-size: 1rem;
+}
+
+.step[aria-current="step"] .stepNum {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+.stepTitle {
+  font-size: 1rem;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.stepBody {
+  padding: 20px 24px 0;
+}
+
+.stepBody p {
+  margin: 0 0 12px;
+}
+
+.stepHeading {
+  margin: 0 0 12px;
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 400;
+  font-size: 2rem;
+  line-height: 1.1;
+}
+
+.stepKicker {
+  display: block;
+  margin-bottom: 4px;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: 1rem;
+  color: var(--muted);
+}
+
+.lead {
+  font-size: 1.125rem;
+  font-weight: 500;
+}
+
+/* ---------- cards ---------- */
+.cards {
+  display: grid;
+  gap: 16px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+}
+
+.card p:last-child {
+  margin-bottom: 0;
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.slope {
+  color: var(--muted);
+}
+
+.slopeValue {
+  font-family: var(--font-mono), monospace;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.more {
+  font-weight: 600;
+}
+
+/* ---------- badge ---------- */
+.badge {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: 2px solid currentColor;
+  font-size: 1rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.badgeIcon {
+  font-size: 1.125rem;
+  line-height: 1;
+}
+
+.tone_up {
+  color: var(--up);
+  background: var(--up-bg);
+}
+
+.tone_down {
+  color: var(--down);
+  background: var(--down-bg);
+}
+
+.tone_neutral {
+  color: var(--neutral);
+  background: var(--neutral-bg);
+}
+
+/* "Likely" is visibly weaker than "Real" by shape too, not only colour */
+.strength_likely {
+  border-style: dashed;
+  background: #fff;
+}
+
+.strength_unknown {
+  border-width: 1px;
+}
+
+.legend {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ---------- chart ---------- */
+.chart {
+  margin: 8px 0 0;
+}
+
+.chartCaption {
+  color: var(--muted);
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+.chartSvg {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #faf8f3;
+  border-radius: 6px;
+}
+
+.zeroLine {
+  stroke: #b9b2a3;
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.rawLine {
+  fill: none;
+  stroke: #c9c3b6;
+  stroke-width: 1;
+}
+
+.smoothLine {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.8;
+}
+
+.trendLine {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-dasharray: 7 4;
+}
+
+.trendUp {
+  stroke: var(--up);
+  border-color: var(--up);
+}
+
+.trendDown {
+  stroke: var(--down);
+  border-color: var(--down);
+}
+
+.chartAxis {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 1rem;
+  font-family: var(--font-mono), monospace;
+}
+
+.chartLegend {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  text-align: center;
+}
+
+.keySmooth,
+.keyTrend {
+  display: inline-block;
+  width: 18px;
+  height: 0;
+  border-top: 2px solid var(--ink);
+}
+
+.keyTrend {
+  margin-left: 8px;
+  border-top-style: dashed;
+  border-top-width: 3px;
+}
+
+/* ---------- How we know ---------- */
+.details {
+  margin-top: 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #fff;
+}
+
+.details summary {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 16px;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+
+.details summary::-webkit-details-marker {
+  display: none;
+}
+
+.details summary::after {
+  content: "+";
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.details[open] summary::after {
+  content: "−";
+}
+
+.detailsBody {
+  padding: 0 16px 16px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1rem;
+}
+
+.table th,
+.table td {
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+
+.table td {
+  font-family: var(--font-mono), monospace;
+}
+
+@media (max-width: 420px) {
+  .stepHeading,
+  .stateTitle {
+    font-size: 1.75rem;
+  }
+  .topbarHint {
+    display: none;
+  }
+}
+
+.keyTrend.trendUp {
+  border-top-color: var(--up);
+}
+
+.keyTrend.trendDown {
+  border-top-color: var(--down);
+}
