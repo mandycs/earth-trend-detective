@@ -15,7 +15,7 @@ node_modules/
 dist/
 
 # Data caches
-data/cache/
+**/data/cache/
 *.nc
 *.h5
 *.hdf

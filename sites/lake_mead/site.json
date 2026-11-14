@@ -1,6 +1,7 @@
 {
   "id": "lake_mead",
   "name": "Lake Mead (USA)",
+  "country": "United States",
   "bbox": [
     -114.9,
     35.9,
@@ -8,6 +9,10 @@
     36.6
   ],
   "vertical_exaggeration": 3,
+  "elevation_m": [
+    165.0,
+    2373.0
+  ],
   "years": [
     2003,
     2024
@@ -19,8 +24,12 @@
       2373.0
     ],
     "base": "base.jpg",
-    "trend": {},
-    "yearly": {}
+    "trend": {
+      "lst_day": "trend_lst_day.png"
+    },
+    "yearly": {
+      "lst_day": "year_lst_day_{YYYY}.png"
+    }
   },
   "variables": [
     {
@@ -31,12 +40,94 @@
       "ci_low": -9.59,
       "ci_high": -3.62,
       "p_value": 0.000212,
-      "q_value": 0.000636,
+      "q_value": 0.000955,
       "verdict": "real",
       "direction": "down",
       "years_needed": null,
       "residual_pct_non_climate": 83.7,
-      "badge": "↓ Real"
+      "badge": "↓ Real",
+      "series": [
+        {
+          "year": 2003,
+          "value": -3.7
+        },
+        {
+          "year": 2004,
+          "value": -4.33
+        },
+        {
+          "year": 2005,
+          "value": 6.19
+        },
+        {
+          "year": 2006,
+          "value": 1.84
+        },
+        {
+          "year": 2007,
+          "value": -2.03
+        },
+        {
+          "year": 2008,
+          "value": 0.364
+        },
+        {
+          "year": 2009,
+          "value": -2.03
+        },
+        {
+          "year": 2010,
+          "value": 0.872
+        },
+        {
+          "year": 2011,
+          "value": 3.63
+        },
+        {
+          "year": 2012,
+          "value": -0.459
+        },
+        {
+          "year": 2013,
+          "value": -3.59
+        },
+        {
+          "year": 2014,
+          "value": -6.83
+        },
+        {
+          "year": 2015,
+          "value": -7.97
+        },
+        {
+          "year": 2016,
+          "value": -10.5
+        },
+        {
+          "year": 2019,
+          "value": -7.85
+        },
+        {
+          "year": 2020,
+          "value": -9.66
+        },
+        {
+          "year": 2021,
+          "value": -15.0
+        },
+        {
+          "year": 2022,
+          "value": -15.1
+        },
+        {
+          "year": 2023,
+          "value": -6.38
+        },
+        {
+          "year": 2024,
+          "value": -6.99
+        }
+      ]
     },
     {
       "id": "t2m",
@@ -46,12 +137,417 @@
       "ci_low": 0.307,
       "ci_high": 0.907,
       "p_value": 0.000109,
-      "q_value": 0.000636,
+      "q_value": 0.000955,
       "verdict": "real",
       "direction": "up",
       "years_needed": null,
       "residual_pct_non_climate": null,
-      "badge": "↑ Real"
+      "badge": "↑ Real",
+      "series": [
+        {
+          "year": 2003,
+          "value": 20.1
+        },
+        {
+          "year": 2004,
+          "value": 19.3
+        },
+        {
+          "year": 2005,
+          "value": 19.2
+        },
+        {
+          "year": 2006,
+          "value": 19.3
+        },
+        {
+          "year": 2007,
+          "value": 19.6
+        },
+        {
+          "year": 2008,
+          "value": 19.2
+        },
+        {
+          "year": 2009,
+          "value": 19.2
+        },
+        {
+          "year": 2010,
+          "value": 18.9
+        },
+        {
+          "year": 2011,
+          "value": 18.6
+        },
+        {
+          "year": 2012,
+          "value": 20.1
+        },
+        {
+          "year": 2013,
+          "value": 19.0
+        },
+        {
+          "year": 2014,
+          "value": 20.3
+        },
+        {
+          "year": 2015,
+          "value": 20.2
+        },
+        {
+          "year": 2016,
+          "value": 20.2
+        },
+        {
+          "year": 2017,
+          "value": 20.4
+        },
+        {
+          "year": 2018,
+          "value": 20.3
+        },
+        {
+          "year": 2019,
+          "value": 19.0
+        },
+        {
+          "year": 2020,
+          "value": 20.4
+        },
+        {
+          "year": 2021,
+          "value": 20.6
+        },
+        {
+          "year": 2022,
+          "value": 20.0
+        },
+        {
+          "year": 2023,
+          "value": 19.6
+        },
+        {
+          "year": 2024,
+          "value": 21.2
+        }
+      ]
+    },
+    {
+      "id": "precip_upstream",
+      "label": "Rainfall and snowfall upstream",
+      "unit": "mm/day",
+      "sen_slope_per_decade": -0.133,
+      "ci_low": -0.209,
+      "ci_high": -0.0617,
+      "p_value": 0.000367,
+      "q_value": 0.0011,
+      "verdict": "real",
+      "direction": "down",
+      "years_needed": null,
+      "residual_pct_non_climate": null,
+      "badge": "↓ Real",
+      "series": [
+        {
+          "year": 2003,
+          "value": 1.45
+        },
+        {
+          "year": 2004,
+          "value": 1.69
+        },
+        {
+          "year": 2005,
+          "value": 1.74
+        },
+        {
+          "year": 2006,
+          "value": 1.5
+        },
+        {
+          "year": 2007,
+          "value": 1.51
+        },
+        {
+          "year": 2008,
+          "value": 1.64
+        },
+        {
+          "year": 2009,
+          "value": 1.62
+        },
+        {
+          "year": 2010,
+          "value": 1.74
+        },
+        {
+          "year": 2011,
+          "value": 1.82
+        },
+        {
+          "year": 2012,
+          "value": 1.25
+        },
+        {
+          "year": 2013,
+          "value": 1.58
+        },
+        {
+          "year": 2014,
+          "value": 1.99
+        },
+        {
+          "year": 2015,
+          "value": 1.49
+        },
+        {
+          "year": 2016,
+          "value": 1.57
+        },
+        {
+          "year": 2017,
+          "value": 1.7
+        },
+        {
+          "year": 2018,
+          "value": 1.44
+        },
+        {
+          "year": 2019,
+          "value": 1.54
+        },
+        {
+          "year": 2020,
+          "value": 1.25
+        },
+        {
+          "year": 2021,
+          "value": 1.29
+        },
+        {
+          "year": 2022,
+          "value": 1.31
+        },
+        {
+          "year": 2023,
+          "value": 1.45
+        },
+        {
+          "year": 2024,
+          "value": 1.39
+        }
+      ]
+    },
+    {
+      "id": "t2m_upstream",
+      "label": "Air temperature upstream",
+      "unit": "°C",
+      "sen_slope_per_decade": 0.366,
+      "ci_low": -0.0682,
+      "ci_high": 0.815,
+      "p_value": 0.0979,
+      "q_value": 0.188,
+      "verdict": "likely",
+      "direction": "up",
+      "years_needed": 1,
+      "residual_pct_non_climate": null,
+      "badge": "↑ Likely",
+      "series": [
+        {
+          "year": 2003,
+          "value": 0.586
+        },
+        {
+          "year": 2004,
+          "value": -0.00292
+        },
+        {
+          "year": 2005,
+          "value": 0.0958
+        },
+        {
+          "year": 2006,
+          "value": -0.183
+        },
+        {
+          "year": 2007,
+          "value": 0.745
+        },
+        {
+          "year": 2008,
+          "value": -1.05
+        },
+        {
+          "year": 2009,
+          "value": -0.72
+        },
+        {
+          "year": 2010,
+          "value": -0.396
+        },
+        {
+          "year": 2011,
+          "value": -1.19
+        },
+        {
+          "year": 2012,
+          "value": 1.14
+        },
+        {
+          "year": 2013,
+          "value": -0.65
+        },
+        {
+          "year": 2014,
+          "value": -0.438
+        },
+        {
+          "year": 2015,
+          "value": 0.922
+        },
+        {
+          "year": 2016,
+          "value": 0.585
+        },
+        {
+          "year": 2017,
+          "value": 0.805
+        },
+        {
+          "year": 2018,
+          "value": 0.309
+        },
+        {
+          "year": 2019,
+          "value": -0.572
+        },
+        {
+          "year": 2020,
+          "value": 0.429
+        },
+        {
+          "year": 2021,
+          "value": 1.18
+        },
+        {
+          "year": 2022,
+          "value": 0.192
+        },
+        {
+          "year": 2023,
+          "value": 0.117
+        },
+        {
+          "year": 2024,
+          "value": 1.21
+        }
+      ]
+    },
+    {
+      "id": "lst_day",
+      "label": "Daytime ground temperature",
+      "unit": "°C",
+      "sen_slope_per_decade": 0.291,
+      "ci_low": -0.139,
+      "ci_high": 0.692,
+      "p_value": 0.189,
+      "q_value": 0.283,
+      "verdict": "unknown",
+      "direction": "flat",
+      "years_needed": 9,
+      "residual_pct_non_climate": null,
+      "badge": "? Can't tell yet",
+      "series": [
+        {
+          "year": 2003,
+          "value": 31.2
+        },
+        {
+          "year": 2004,
+          "value": 31.1
+        },
+        {
+          "year": 2005,
+          "value": 30.4
+        },
+        {
+          "year": 2006,
+          "value": 31.6
+        },
+        {
+          "year": 2007,
+          "value": 32.2
+        },
+        {
+          "year": 2008,
+          "value": 32.0
+        },
+        {
+          "year": 2009,
+          "value": 32.4
+        },
+        {
+          "year": 2010,
+          "value": 31.2
+        },
+        {
+          "year": 2011,
+          "value": 31.3
+        },
+        {
+          "year": 2012,
+          "value": 32.6
+        },
+        {
+          "year": 2013,
+          "value": 32.0
+        },
+        {
+          "year": 2014,
+          "value": 32.9
+        },
+        {
+          "year": 2015,
+          "value": 32.0
+        },
+        {
+          "year": 2016,
+          "value": 31.9
+        },
+        {
+          "year": 2017,
+          "value": 32.8
+        },
+        {
+          "year": 2018,
+          "value": 32.3
+        },
+        {
+          "year": 2019,
+          "value": 30.9
+        },
+        {
+          "year": 2020,
+          "value": 32.9
+        },
+        {
+          "year": 2021,
+          "value": 33.0
+        },
+        {
+          "year": 2022,
+          "value": 31.9
+        },
+        {
+          "year": 2023,
+          "value": 30.5
+        },
+        {
+          "year": 2024,
+          "value": 30.5
+        }
+      ]
     },
     {
       "id": "soil_moisture",
@@ -61,12 +557,103 @@
       "ci_low": -0.8,
       "ci_high": 0.07,
       "p_value": 0.104,
-      "q_value": 0.209,
+      "q_value": 0.188,
       "verdict": "unknown",
       "direction": "flat",
       "years_needed": 14,
       "residual_pct_non_climate": null,
-      "badge": "? Can't tell yet"
+      "badge": "? Can't tell yet",
+      "series": [
+        {
+          "year": 2003,
+          "value": 14.4
+        },
+        {
+          "year": 2004,
+          "value": 16.1
+        },
+        {
+          "year": 2005,
+          "value": 17.1
+        },
+        {
+          "year": 2006,
+          "value": 13.9
+        },
+        {
+          "year": 2007,
+          "value": 13.0
+        },
+        {
+          "year": 2008,
+          "value": 14.2
+        },
+        {
+          "year": 2009,
+          "value": 13.1
+        },
+        {
+          "year": 2010,
+          "value": 15.4
+        },
+        {
+          "year": 2011,
+          "value": 15.9
+        },
+        {
+          "year": 2012,
+          "value": 14.4
+        },
+        {
+          "year": 2013,
+          "value": 14.9
+        },
+        {
+          "year": 2014,
+          "value": 13.6
+        },
+        {
+          "year": 2015,
+          "value": 14.5
+        },
+        {
+          "year": 2016,
+          "value": 15.1
+        },
+        {
+          "year": 2017,
+          "value": 13.9
+        },
+        {
+          "year": 2018,
+          "value": 14.1
+        },
+        {
+          "year": 2019,
+          "value": 14.7
+        },
+        {
+          "year": 2020,
+          "value": 12.4
+        },
+        {
+          "year": 2021,
+          "value": 15.1
+        },
+        {
+          "year": 2022,
+          "value": 14.4
+        },
+        {
+          "year": 2023,
+          "value": 15.1
+        },
+        {
+          "year": 2024,
+          "value": 13.3
+        }
+      ],
+      "note": "This comes from a computer model of the land that does not include human water use, so it cannot show a human signal."
     },
     {
       "id": "precip",
@@ -76,12 +663,102 @@
       "ci_low": -0.154,
       "ci_high": 0.05,
       "p_value": 0.345,
-      "q_value": 0.42,
+      "q_value": 0.394,
       "verdict": "unknown",
       "direction": "flat",
       "years_needed": 18,
       "residual_pct_non_climate": null,
-      "badge": "? Can't tell yet"
+      "badge": "? Can't tell yet",
+      "series": [
+        {
+          "year": 2003,
+          "value": 0.519
+        },
+        {
+          "year": 2004,
+          "value": 0.755
+        },
+        {
+          "year": 2005,
+          "value": 0.755
+        },
+        {
+          "year": 2006,
+          "value": 0.372
+        },
+        {
+          "year": 2007,
+          "value": 0.407
+        },
+        {
+          "year": 2008,
+          "value": 0.478
+        },
+        {
+          "year": 2009,
+          "value": 0.306
+        },
+        {
+          "year": 2010,
+          "value": 0.782
+        },
+        {
+          "year": 2011,
+          "value": 0.438
+        },
+        {
+          "year": 2012,
+          "value": 0.488
+        },
+        {
+          "year": 2013,
+          "value": 0.438
+        },
+        {
+          "year": 2014,
+          "value": 0.395
+        },
+        {
+          "year": 2015,
+          "value": 0.49
+        },
+        {
+          "year": 2016,
+          "value": 0.612
+        },
+        {
+          "year": 2017,
+          "value": 0.497
+        },
+        {
+          "year": 2018,
+          "value": 0.492
+        },
+        {
+          "year": 2019,
+          "value": 0.868
+        },
+        {
+          "year": 2020,
+          "value": 0.258
+        },
+        {
+          "year": 2021,
+          "value": 0.43
+        },
+        {
+          "year": 2022,
+          "value": 0.426
+        },
+        {
+          "year": 2023,
+          "value": 0.566
+        },
+        {
+          "year": 2024,
+          "value": 0.314
+        }
+      ]
     },
     {
       "id": "runoff",
@@ -91,12 +768,103 @@
       "ci_low": -0.00149,
       "ci_high": 0.000468,
       "p_value": 0.35,
-      "q_value": 0.42,
+      "q_value": 0.394,
       "verdict": "unknown",
       "direction": "flat",
       "years_needed": null,
       "residual_pct_non_climate": null,
-      "badge": "? Can't tell yet"
+      "badge": "? Can't tell yet",
+      "series": [
+        {
+          "year": 2003,
+          "value": 0.00237
+        },
+        {
+          "year": 2004,
+          "value": 0.0147
+        },
+        {
+          "year": 2005,
+          "value": 0.019
+        },
+        {
+          "year": 2006,
+          "value": 0.00241
+        },
+        {
+          "year": 2007,
+          "value": 0.00306
+        },
+        {
+          "year": 2008,
+          "value": 0.00438
+        },
+        {
+          "year": 2009,
+          "value": 0.00165
+        },
+        {
+          "year": 2010,
+          "value": 0.00631
+        },
+        {
+          "year": 2011,
+          "value": 0.0097
+        },
+        {
+          "year": 2012,
+          "value": 0.00371
+        },
+        {
+          "year": 2013,
+          "value": 0.00572
+        },
+        {
+          "year": 2014,
+          "value": 0.00721
+        },
+        {
+          "year": 2015,
+          "value": 0.00242
+        },
+        {
+          "year": 2016,
+          "value": 0.00251
+        },
+        {
+          "year": 2017,
+          "value": 0.00625
+        },
+        {
+          "year": 2018,
+          "value": 0.00334
+        },
+        {
+          "year": 2019,
+          "value": 0.0104
+        },
+        {
+          "year": 2020,
+          "value": 0.00174
+        },
+        {
+          "year": 2021,
+          "value": 0.00283
+        },
+        {
+          "year": 2022,
+          "value": 0.00401
+        },
+        {
+          "year": 2023,
+          "value": 0.00791
+        },
+        {
+          "year": 2024,
+          "value": 0.0017
+        }
+      ],
+      "note": "This comes from a computer model of the land that does not include human water use, so it cannot show a human signal."
     },
     {
       "id": "solar",
@@ -111,15 +879,105 @@
       "direction": "flat",
       "years_needed": null,
       "residual_pct_non_climate": null,
-      "badge": "? Can't tell yet"
+      "badge": "? Can't tell yet",
+      "series": [
+        {
+          "year": 2003,
+          "value": 20.2
+        },
+        {
+          "year": 2004,
+          "value": 20.4
+        },
+        {
+          "year": 2005,
+          "value": 19.9
+        },
+        {
+          "year": 2006,
+          "value": 20.1
+        },
+        {
+          "year": 2007,
+          "value": 20.6
+        },
+        {
+          "year": 2008,
+          "value": 20.6
+        },
+        {
+          "year": 2009,
+          "value": 20.1
+        },
+        {
+          "year": 2010,
+          "value": 20.2
+        },
+        {
+          "year": 2011,
+          "value": 20.3
+        },
+        {
+          "year": 2012,
+          "value": 20.4
+        },
+        {
+          "year": 2013,
+          "value": 20.3
+        },
+        {
+          "year": 2014,
+          "value": 20.2
+        },
+        {
+          "year": 2015,
+          "value": 20.0
+        },
+        {
+          "year": 2016,
+          "value": 20.1
+        },
+        {
+          "year": 2017,
+          "value": 20.2
+        },
+        {
+          "year": 2018,
+          "value": 20.5
+        },
+        {
+          "year": 2019,
+          "value": 20.0
+        },
+        {
+          "year": 2020,
+          "value": 20.7
+        },
+        {
+          "year": 2021,
+          "value": 20.0
+        },
+        {
+          "year": 2022,
+          "value": 20.4
+        },
+        {
+          "year": 2023,
+          "value": 19.8
+        },
+        {
+          "year": 2024,
+          "value": 20.3
+        }
+      ]
     }
   ],
   "missing": {
-    "lst_day": "Satellite data still being processed by NASA AppEEARS. Check back later."
+    "water_area": "Satellite data still being processed by NASA AppEEARS. Check back later."
   },
   "steps": [
     "What is changing here?",
-    "Is it real or chance?",
+    "Is it real, or is it chance?",
     "Is it the climate?"
   ],
   "headline": "Total water stored is going down for real (−6.5 cm per decade). About 84% of that change is not explained by climate.",
@@ -138,6 +996,10 @@
       "url": "https://power.larc.nasa.gov"
     },
     {
+      "title": "MODIS land products via NASA AppEEARS",
+      "url": "https://appeears.earthdatacloud.nasa.gov"
+    },
+    {
       "title": "GLDAS Noah 0.25° monthly v2.1 (NASA GES DISC)",
       "url": "https://disc.gsfc.nasa.gov/datasets/GLDAS_NOAH025_M_2.1/summary"
     },
@@ -150,6 +1012,11 @@
       "url": "https://www.usbr.gov/lc/region/g4000/hourly/mead-elv.html",
       "validation": true
     }
+  ],
+  "caveats": [
+    "The leftover share is a clue, not an attribution.",
+    "Total water stored comes from the GRACE satellites, which see a region about 300 km wide, not only this place.",
+    "This comes from a computer model of the land that does not include human water use, so it cannot show a human signal."
   ],
   "generated_at": "2026-11-14",
   "pipeline_version": "0.1"
