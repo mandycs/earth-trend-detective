@@ -70,7 +70,9 @@ def _through_ledger(
         return on_hit(hit) if on_hit else hit
     result = compute()
     if result.pop(_TRANSIENT, False):
-        return result  # a source failure: shown, never cached, so a retry can succeed
+        # A source failure: shown, never cached, so a retry can succeed. The public flag lets
+        # tools built on top (residual, compare) also skip caching their own result.
+        return {**result, "transient": True}
     eid = session.ledger.remember(key, result)
     return {**result, "evidence_id": eid}
 

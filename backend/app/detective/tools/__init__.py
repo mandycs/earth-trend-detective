@@ -126,7 +126,8 @@ TOOLS: dict[str, ToolSpec] = {
         "Checks whether two fetched series move together from year to year: Pearson r and p of "
         "year-on-year changes at lags 0..max_lag years (lag k: series_b k years earlier), each with "
         "its corrected q-value and verdict. Each lag counts as one test, so keep max_lag small. "
-        "Moving together is a clue, not proof that one drives the other.",
+        "Only the exact same call is reused: swapping series_a and series_b or raising max_lag "
+        "runs again and adds new tests to the correction. Moving together is a clue, not proof that one drives the other.",
         CorrelateArgs,
     ),
     "compare": ToolSpec(

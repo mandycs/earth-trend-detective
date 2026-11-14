@@ -13,6 +13,7 @@ logged tests lists their `test_ids` so later code can refresh them again.
 
 from __future__ import annotations
 
+import logging
 import math
 from collections.abc import Mapping
 from dataclasses import replace
@@ -29,10 +30,12 @@ from app.detective.tools import data
 from app.investigate.landcover import box_around
 from app.site_report import residual_withheld_reason
 from app.stats.deseason import monthly_anomalies
-from app.stats.lineup import MIN_PAIRS, annualize, year_changes
+from app.stats.lineup import MIN_PAIRS, _pairs, annualize, year_changes
 from app.stats.residual import CANDIDATE_MODELS, residual_for
 from app.stats.trend import trend_test as mk_trend_test
 from app.stats.years import years_needed
+
+logger = logging.getLogger(__name__)
 
 WORDING = "not explained by the climate we measured — a clue, not proof"
 CORRELATION_NOTE = "Moving together is a clue, not proof that one drives the other."
@@ -77,11 +80,12 @@ def climate_residual(session: Session, var_id: str) -> dict:
     return _cached_or_run(session, "climate_residual", {"var_id": var_id}, lambda: _residual(session, var_id))
 
 
-def _fetched(session: Session, var_id: str) -> pd.Series | None:
+def _fetched(session: Session, var_id: str) -> tuple[pd.Series | None, bool]:
+    """(series or None, whether the failure was a passing one that a retry may fix)."""
     got = data.get_series(session, var_id=var_id)
     if got.get("status") != "ok":
-        return None
-    return session.series[got["series_id"]]
+        return None, bool(got.get("transient"))
+    return session.series[got["series_id"]], False
 
 
 def _extra_driver_ids(session: Session, var_id: str) -> list[str]:
@@ -107,25 +111,30 @@ def _residual(session: Session, var_id: str) -> dict:
         # No figure and no test: a split we would not show must not count as evidence.
         return {"var_id": var_id, "label": var.label, "drivers": drivers, "withheld": withheld, "wording": WORDING}
 
-    impact = _fetched(session, var_id)
+    impact, transient = _fetched(session, var_id)
     if impact is None:
-        return _not_available(f"no data for {var.label} here", var_id=var_id, wording=WORDING)
-    driver_series = {d: _fetched(session, d) for d in drivers}
-    missing = [d for d, s in driver_series.items() if s is None]
+        return _not_available(f"no data for {var.label} here", transient, var_id=var_id, wording=WORDING)
+    fetched = {d: _fetched(session, d) for d in drivers}
+    missing = [d for d, (series, _) in fetched.items() if series is None]
     if missing:
         return _not_available(
             f"climate driver(s) {', '.join(missing)} not available here, so the split would count "
             "their effect as not explained",
+            any(t for _, t in fetched.values()),
             var_id=var_id,
             wording=WORDING,
         )
-    for d in _extra_driver_ids(session, var_id):
-        series = _fetched(session, d)
-        if series is not None:
-            driver_series[d] = series
-    driver_anoms = {d: monthly_anomalies(s) for d, s in driver_series.items()}
-
-    res = residual_for(var, impact, driver_anoms)
+    driver_series = {d: series for d, (series, _) in fetched.items()}
+    try:
+        for d in _extra_driver_ids(session, var_id):
+            series, _ = _fetched(session, d)
+            if series is not None:
+                driver_series[d] = series
+        driver_anoms = {d: monthly_anomalies(s) for d, s in driver_series.items()}
+        res = residual_for(var, impact, driver_anoms)
+    except Exception as exc:  # noqa: BLE001 - never a stack trace to the model
+        logger.warning("climate_residual %s failed: %s: %s", var_id, type(exc).__name__, exc)
+        return _not_available("the climate split could not run here", True, var_id=var_id, wording=WORDING)
     p = res.residual_p_value
     slope = res.residual_slope_per_decade
     test_id = _log(
@@ -183,12 +192,11 @@ def _label(session: Session, series_id: str, series: pd.Series) -> tuple[str, st
 
 def _pearson(a: pd.Series, b: pd.Series, lag: int) -> tuple[float, float, int]:
     """Pearson r, p of a(t) against b(t - lag); NaN when too few pairs."""
-    shifted = pd.Series(b.to_numpy(), index=b.index + lag)
-    pairs = pd.concat([a.rename("a"), shifted.rename("b")], axis=1).dropna()
+    pairs = _pairs(a, b, lag)  # same lag convention as the lineup: y = a(t), x = b(t - lag)
     n = len(pairs)
-    if n < MIN_PAIRS or pairs["a"].nunique() < 2 or pairs["b"].nunique() < 2:
+    if n < MIN_PAIRS or pairs["x"].nunique() < 2 or pairs["y"].nunique() < 2:
         return math.nan, math.nan, n
-    r, p = stats.pearsonr(pairs["a"], pairs["b"])
+    r, p = stats.pearsonr(pairs["y"], pairs["x"])
     return float(r), float(p), n
 
 
@@ -300,7 +308,9 @@ def _compare(session: Session, var_id: str, side_a: dict, side_b: dict) -> dict:
     sides = [_side_trend(session, var_id, s) for s in (side_a, side_b)]
     for s in sides:
         if "_record" not in s:
-            return s
+            # Re-mark a passing source failure so the outer ledger does not cache it either.
+            reason = s.get("reason", "this side could not be tested")
+            return _not_available(reason, bool(s.get("transient")), var_id=var_id)
     out_sides = []
     for s in sides:
         record = s["_record"]
