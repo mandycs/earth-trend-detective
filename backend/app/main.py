@@ -170,3 +170,8 @@ def site_sweep(site_id: str, start: int | None = None, end: int | None = None) -
 from app.explain.router import router as explain_router  # noqa: E402
 
 app.include_router(explain_router)
+
+# /investigate: LLM-planned investigation streamed as Server-Sent Events (app/investigate/).
+from app.investigate.router import router as investigate_router  # noqa: E402
+
+app.include_router(investigate_router)
