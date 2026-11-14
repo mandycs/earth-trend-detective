@@ -1,6 +1,7 @@
 # Ale — 3D, historia, copy, demo y pitch
 
 Plan general: [`PLAN.md`](../../PLAN.md) · Compañera: [`MANDY.md`](MANDY.md)
+**Plan detallado con horarios, puertas y recortes: [`ALE-PLAN.md`](ALE-PLAN.md)** ← empieza por ahí.
 
 **Recibo de Mandy:** `sites/<id>/` con PNGs reales + `site.json`. Mientras tanto, trabaja con [`sites/_example/`](../../sites/_example/site.json).
 **Entrego a Mandy:** guion y textos en inglés de cada caso (campos `narrative`, `label`, `steps` de `site.json`).
