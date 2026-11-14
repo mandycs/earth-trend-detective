@@ -70,6 +70,11 @@ signals, not to chart one variable.
 - **Model**: `claude-sonnet-5-5` for the agent loop. Via `langchain-anthropic` when `LLM_API_KEY` is set,
   else `langchain-openai` `ChatOpenAI` against OpenRouter (`~/.secrets/openkey`, `anthropic/claude-sonnet-5.5`).
   Same key rules as `app/explain/llm.py`; keys never logged or sent to the browser.
+- **Persistence (Mandy, decided)**: the conversation must be iterable — follow-ups after a restart, step
+  history, fork from any step. LangGraph `SqliteSaver` checkpointer + `SqliteStore` (`DETECTIVE_DB`). The case
+  (place, ledger, board, map) lives in graph state so every checkpoint holds the case as it was; series live
+  in the Store (`("detective", thread_id, "series")`). Endpoints: `checkpoint_id` on `POST /detective` to fork,
+  `GET /detective/{thread_id}/history`, `GET /detective/{thread_id}`.
 - **Endpoint**: `POST /detective` (SSE), body `{question, lat, lon | bbox | site_id, thread_id?}`.
   Keep `/investigate` working until the front switches.
 

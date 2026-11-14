@@ -210,6 +210,29 @@ def test_every_map_layer_has_legend_source_and_dates(): ...
 - [ ] **Step 2–4:** FAIL → implement → PASS.
 - [ ] **Step 5: Commit** — `feat: map instructions and a case board the code keeps honest`.
 
+### Task 7b: Persistent conversation — the case lives in the checkpoint (added 2026-11-15, Mandy)
+
+Why: the user must be able to iterate over an investigation — ask follow-ups after a server restart, see
+its history step by step, and fork from any step ("check the rain instead"). So the conversation and the
+case state persist with a LangGraph checkpointer, and large data lives in a LangGraph Store.
+
+**Files:**
+- Modify: `backend/pyproject.toml`, `backend/uv.lock` (`uv add langgraph-checkpoint-sqlite`)
+- Modify: `backend/app/detective/ledger.py`, `backend/app/detective/session.py` (serialisation only)
+- Create: `backend/app/detective/persistence.py`
+- Modify: `.gitignore` (`backend/data/detective/`)
+- Test: `backend/tests/detective/test_persistence.py`
+
+**Interfaces:**
+- Produces:
+  - `Ledger.to_state() -> dict` / `Ledger.from_state(d: dict) -> Ledger` (JSON-safe: records without `TrendResult` objects — keep the fields the verdict needs; results by evidence id; call-key index; counter).
+  - `Session.to_state() -> dict` (place, ledger, board, map, start, end, series ids) and `Session.from_state(d, catalog, store, thread_id) -> Session`; series are NOT in the state.
+  - `save_series(store: BaseStore, thread_id: str, series_id: str, s: pd.Series) -> None` / `load_series(...) -> pd.Series | None` — namespace `("detective", thread_id, "series")`, value `{"index": [iso dates], "values": [...], "attrs": {...}}`.
+  - `open_persistence(path: Path | None = None) -> tuple[BaseCheckpointSaver, BaseStore]` — `SqliteSaver` + `SqliteStore` on `DETECTIVE_DB` (default `backend/data/detective/detective.sqlite`, parent created); `":memory:"` for tests.
+
+- [ ] **Step 1: Failing tests:** `test_ledger_round_trip_keeps_corrected_verdicts` (to_state → JSON dumps/loads → from_state → `corrected()` equal); `test_session_round_trip_without_series`; `test_series_round_trip_through_store` (index, values and `attrs` equal); `test_persistence_survives_reopen` (tmp file: put, close, reopen, get).
+- [ ] **Step 2–4:** FAIL → implement → PASS. **Step 5: Commit** — `feat: the detective's case persists, so a conversation can be resumed and replayed`.
+
 ### Task 8: Conclude node and the graph
 
 **Files:**
@@ -221,7 +244,7 @@ def test_every_map_layer_has_legend_source_and_dates(): ...
 - Produces:
   - `ledger_report(session: Session) -> dict` — `{"variables": [rows with id,label,verdict,direction,sen_slope_per_decade,ci_low,ci_high,years_needed,residual_pct_non_climate,residual_pct_range using session-corrected verdicts], "start": int, "end": int, "figures": ledger.figures()}` — the shape `validate_narrative` already reads.
   - `SYSTEM_PROMPT: str` in `prompt.py` — rules: investigate like a detective (profile → list variables → test the relevant ones → open suspects → test them → compare regions when useful → conclude); one short `thinking` sentence before every tool call (plain English, no figures); never compute figures; state data-cell size when the place is smaller; use the wording rule for residuals; put layers on the map for each piece of evidence; stop when the board explains the question or nothing more can be tested.
-  - `build_graph(model: BaseChatModel, session_for: Callable[[str], Session], max_tool_calls: int, max_seconds: float | None) -> CompiledGraph` — nodes `agent` (model with `bind_tools` from `TOOLS`), `tools` (executes registry functions with the session, dedupes via `Ledger`, strips `chart` before returning `ToolMessage` content), `conclude` (model writes ≤ 3 sentences from `ledger_report`; `validate_narrative`; one retry with the rejections; else `app/explain/template.py` text); conditional edge `agent → tools` while tool calls and budget remain, else `→ conclude`; checkpointer `MemorySaver()`.
+  - `build_graph(model: BaseChatModel, session_for: Callable[[str], Session], max_tool_calls: int, max_seconds: float | None) -> CompiledGraph` — nodes `agent` (model with `bind_tools` from `TOOLS`), `tools` (executes registry functions with the session, dedupes via `Ledger`, strips `chart` before returning `ToolMessage` content), `conclude` (model writes ≤ 3 sentences from `ledger_report`; `validate_narrative`; one retry with the rejections; else `app/explain/template.py` text); conditional edge `agent → tools` while tool calls and budget remain, else `→ conclude`. **Amended by Task 7b:** graph state = `{"messages": Annotated[list, add_messages], "case": dict, "tool_calls": int, "answer": dict | None}`; the `tools` node rebuilds the `Session` from `state["case"]` (+ series from the store), runs the calls, and returns the new `case` snapshot, so every checkpoint carries the case as it was at that step. `build_graph(..., checkpointer, store)` compiles with both (tests pass `MemorySaver()` + `InMemoryStore()`).
 - Testing a fake model: subclass `langchain_core.language_models.fake_chat_models.GenericFakeChatModel` with `bind_tools(self, tools, **kw): return self`, fed `AIMessage(content="Checking rain.", tool_calls=[{"name":"get_series","args":{"var_id":"precip"},"id":"c1"}])` etc.
 
 - [ ] **Step 1: Failing tests:** `test_graph_runs_tools_and_concludes` (fake model: profile_place → get_series → trend_test → final text; asserts the 3 tools ran in order and the answer validated); `test_graph_stops_at_tool_budget` (fake model always calls a tool; `max_tool_calls=3` → exactly 3 tool runs, then conclude); `test_conclude_rejects_invented_figure` (fake answer with "42 %" not in ledger → retry, then template; `checked is True` only for the validated text); `test_allowed_numbers_reads_figures` in `test_numbers.py`.
@@ -241,7 +264,9 @@ def test_every_map_layer_has_legend_source_and_dates(): ...
   - `class DetectiveRequest(BaseModel): question: str (1..500 chars); lat: float | None; lon: float | None; bbox: list[float] | None (4); site_id: str | None; thread_id: str | None` — validator: at least one location, else 422 "Pick a point or draw a box on the map first."
   - Event stream (spec §5.4), each `{"event": kind, "data": {...}}`: `place` · `thinking {text}` · `tool_start {id, tool, args}` · `tool_done {id, tool, summary, result, evidence_id}` (result keeps `chart`) · `tool_failed {id, tool, reason}` · `map {op, ...}` · `board {suspects, n_tests}` · `answer {text, checked, figures}` · `done {thread_id, n_tests, n_tool_calls}` · `error {message}`.
   - `stream_investigation(req, model) -> Iterator[dict]` using `graph.stream(..., stream_mode="updates")`; exceptions inside a tool become `tool_failed`; exceptions outside become one `error` event with a plain message (no trace).
-  - `POST /detective` → `StreamingResponse(sse(...), media_type="text/event-stream")`, reusing `investigate/router.sse`. A follow-up with an existing `thread_id` keeps the ledger (FDR family) and board.
+  - `POST /detective` → `StreamingResponse(sse(...), media_type="text/event-stream")`, reusing `investigate/router.sse`. A follow-up with an existing `thread_id` keeps the ledger (FDR family) and board — **read from the persistent checkpoint (Task 7b), so it survives a restart**.
+  - **Iterate (added with Task 7b):** `DetectiveRequest.checkpoint_id: str | None` — run from that checkpoint (LangGraph fork: `config["configurable"]["checkpoint_id"]`); `GET /detective/{thread_id}/history` → `[{"checkpoint_id", "step", "tool"?, "summary"?, "n_tests", "created_at"}]` newest first from `graph.get_state_history`; `GET /detective/{thread_id}` → current case (board, map ops, answer) to re-open a past investigation.
+  - Extra tests: `test_follow_up_after_restart` (new graph instance on the same sqlite file keeps `n_tests`); `test_fork_from_checkpoint_drops_later_tests` (fork from the checkpoint after the first `trend_test` → the forked run's `done.n_tests` counts only tests up to that step plus its own); `test_history_lists_steps`.
 
 - [ ] **Step 1: Failing tests** (FastAPI `TestClient`, fake model injected via dependency override, fetchers monkeypatched): `test_requires_location`; `test_no_model_streams_error`; `test_event_order` (first `place`, then per tool `thinking`→`tool_start`→`tool_done`, then `board`, `answer`, `done` last); `test_stream_tool_failure_becomes_event` (fetcher raises `TimeoutError` → `tool_failed` and run reaches `done`); `test_follow_up_keeps_the_fdr_family` (second request with same `thread_id` → `done.n_tests` includes the first run's tests).
 - [ ] **Step 2–4:** FAIL → implement → PASS; full suite `python -m pytest -q` green.
