@@ -78,7 +78,8 @@ def _answer_parts(
         return parts + ([unknown] if unknown else [])
     change = _change(focus)
     parts.append(f"What we can see: {change[0].lower()}{change[1:]}" if opening else change)
-    parts.append(_reality(focus))
+    if not opening:  # a question paragraph holds 3 sentences; the climate one must stay
+        parts.append(_reality(focus))
     if focus.get("residual_pct_non_climate") is not None:
         parts.append(_climate(focus))
         return parts
@@ -88,9 +89,7 @@ def _answer_parts(
         None,
     )
     if impact is not None:
-        other = _change(impact)
-        parts.append(f"Over the same years, {other[0].lower()}{other[1:]}")
-        parts.append(_climate(impact))
+        parts.append(_climate(impact))  # names the impact variable itself
     return parts
 
 
@@ -114,7 +113,7 @@ def template_narrative(report: Mapping) -> str:
     focus = focus or _focus(rows)
     unknown = _unknown_sentence(rows)
     if asked:
-        return " ".join(_answer_parts(rows, opening, focus, unknown)[:5])
+        return " ".join(_answer_parts(rows, opening, focus, unknown)[:3])
     if focus is None:
         parts = ["Nothing here is changing in a clear way yet."]
         parts.append(unknown or "The changes we see are still too small to tell apart from chance.")
