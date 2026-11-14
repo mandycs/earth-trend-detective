@@ -171,7 +171,7 @@ variables:
   # Own AppEEARS task per site (`<site>_water` in tasks.json); see app/extractors/water.py.
   - id: water_area
     label: Open-water area
-    definition: "How much of a lake or reservoir's surface is open water, seen from space every few days when the sky is clear."
+    definition: "The area of a lake or reservoir covered by open water, in square kilometres, seen from space every few days when the sky is clear."
     role: impact
     source: appeears_water
     dataset: MOD09A1.061
@@ -190,7 +190,7 @@ variables:
   # They are trend-tested and listed like the other drivers in the sweep.
   - id: t2m_upstream
     label: Air temperature upstream
-    definition: "Air temperature averaged over several points upstream of the site, where the water that reaches it comes from."
+    definition: "Air temperature from a NASA weather model, averaged over several points upstream of the site, where the water that reaches it comes from."
     role: driver
     source: power
     dataset: NASA POWER (MERRA-2), mean of the site's upstream_climate points
@@ -205,7 +205,7 @@ variables:
 
   - id: precip_upstream
     label: Rainfall and snowfall upstream
-    definition: "Rain and snow averaged over several points upstream of the site, where the water that reaches it comes from."
+    definition: "Rain and snow from a NASA weather model, averaged over several points upstream of the site, where the water that reaches it comes from."
     role: driver
     source: power
     dataset: NASA POWER (MERRA-2 + IMERG corrected), mean of the site's upstream_climate points
@@ -235,7 +235,7 @@ variables:
 
   - id: winter_precip
     label: Winter snowfall and rain so far
-    definition: "The total of rain and snow that has fallen since the winter season began, the months when snow builds up in mountains."
+    definition: "Rain and snow added up through the October-to-April season, when snow builds up in mountains; the total restarts each October."
     role: driver
     source: power
     dataset: NASA POWER (MERRA-2 + IMERG corrected), derived from monthly PRECTOTCORR as Oct-Apr water-year total
