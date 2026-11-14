@@ -6,8 +6,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import type { Place } from "./types";
 import styles from "./explore.module.css";
 
-// Free vector style, no API key (https://openfreemap.org).
-const STYLE_URL = "https://tiles.openfreemap.org/styles/positron";
+import { STYLE } from "./mapStyle";
 
 interface Props {
   place: Place | null;
@@ -33,9 +32,10 @@ export default function MapView({ place, onPick }: Props) {
       if (cancelled || !container.current) return;
       const m = new maplibregl.Map({
         container: container.current,
-        style: STYLE_URL,
-        center: [-30, 30],
-        zoom: 1.4,
+        style: STYLE,
+        center: [-20, 28],
+        zoom: 1.6,
+        maxZoom: 10,
         attributionControl: { compact: true },
         cooperativeGestures: false,
       });
@@ -46,7 +46,7 @@ export default function MapView({ place, onPick }: Props) {
         // Only a failed style means no map at all; a missing tile is harmless.
         if (!m.isStyleLoaded() && String(e.error?.message ?? "").toLowerCase().includes("style")) setFailed(true);
       });
-      marker.current = new maplibregl.Marker({ color: "#0b5560" });
+      marker.current = new maplibregl.Marker({ color: "#ffd23f" });
       map.current = m;
       setReady(true);
     })().catch(() => setFailed(true));
@@ -79,6 +79,7 @@ export default function MapView({ place, onPick }: Props) {
         role="application"
         aria-label="World map. Click a place to investigate it, or use the example buttons in the panel."
       />
+      {!place && !failed && <p className={styles.mapHint}>Click anywhere on Earth to investigate it</p>}
       {failed && (
         <p className={styles.mapError} role="alert">
           The map could not load. Check your connection and reload the page. You can still try the example places in

@@ -1,0 +1,821 @@
+{
+  "site": "lake_mead",
+  "version": 1,
+  "layers": [
+    {
+      "id": "base",
+      "kind": "image",
+      "title": "Satellite picture",
+      "file": "base.jpg",
+      "status": "visual_only",
+      "source": {
+        "name": "MODIS Terra corrected reflectance true colour, via GIBS",
+        "url": "https://nasa-gibs.github.io/gibs-api-docs/"
+      },
+      "dates": [
+        "2024-06-20"
+      ]
+    },
+    {
+      "id": "base_hq",
+      "kind": "image",
+      "title": "Cloud-free satellite picture (30 m)",
+      "file": "base_hq.jpg",
+      "status": "visual_only",
+      "source": {
+        "name": "NASA Harmonized Landsat Sentinel-2 (HLS) 30 m, via GIBS",
+        "url": "https://www.earthdata.nasa.gov/data/projects/hls"
+      },
+      "dates": [
+        "2024-06-13",
+        "2024-06-14",
+        "2024-06-28",
+        "2024-06-30",
+        "2024-07-03",
+        "2024-07-08",
+        "2024-07-28",
+        "2024-08-09",
+        "2024-08-25",
+        "2024-09-02",
+        "2024-09-10",
+        "2024-09-11"
+      ],
+      "method": "per-pixel median of NASA HLS 30 m scenes (GIBS)"
+    },
+    {
+      "id": "relief",
+      "kind": "heightmap",
+      "title": "Terrain height",
+      "file": "heightmap_rgb.png",
+      "encoding": "terrain-rgb",
+      "range_m": [
+        165.0,
+        2373.0
+      ],
+      "status": "visual_only",
+      "source": {
+        "name": "NASADEM elevation (NASA JPL / LP DAAC)",
+        "url": "https://lpdaac.usgs.gov/products/nasadem_hgtv001/"
+      }
+    },
+    {
+      "id": "hillshade",
+      "kind": "shading",
+      "title": "Relief shading",
+      "file": "hillshade.png",
+      "status": "visual_only",
+      "source": {
+        "name": "NASADEM elevation (NASA JPL / LP DAAC)",
+        "url": "https://lpdaac.usgs.gov/products/nasadem_hgtv001/"
+      }
+    },
+    {
+      "id": "before_after",
+      "kind": "before_after",
+      "title": "Then and now (2003 vs 2024)",
+      "status": "visual_only",
+      "source": {
+        "name": "MODIS Terra corrected reflectance true colour, via GIBS",
+        "url": "https://nasa-gibs.github.io/gibs-api-docs/"
+      },
+      "season": [
+        "06-01",
+        "08-31"
+      ],
+      "note": "Two pictures of the same season, not a measured trend.",
+      "before": {
+        "file": "before.jpg",
+        "year": 2003,
+        "dates": [
+          "2003-06-01",
+          "2003-06-02",
+          "2003-06-03",
+          "2003-06-04",
+          "2003-06-06"
+        ]
+      },
+      "after": {
+        "file": "after.jpg",
+        "year": 2024,
+        "dates": [
+          "2024-06-02",
+          "2024-06-04",
+          "2024-06-07",
+          "2024-06-12",
+          "2024-06-13"
+        ]
+      }
+    },
+    {
+      "id": "detail",
+      "kind": "detail",
+      "title": "Close-up: real ground and aerial photo",
+      "status": "visual_only",
+      "bbox": [
+        -114.845,
+        36.075,
+        -114.775,
+        36.13
+      ],
+      "files": {
+        "heightmap_rgb": "detail/heightmap_rgb.png",
+        "base": "detail/base.jpg",
+        "hillshade": "detail/hillshade.png"
+      },
+      "encoding": "terrain-rgb",
+      "resolution_m": {
+        "heightmap": 3.07,
+        "base": 2.1
+      },
+      "height_range_m": [
+        317.7,
+        598.2
+      ],
+      "water_level_m_by_year": {
+        "2003": 348.39,
+        "2004": 344.14,
+        "2005": 346.81,
+        "2006": 344.09,
+        "2007": 339.81,
+        "2008": 337.45,
+        "2009": 334.28,
+        "2010": 331.87,
+        "2011": 337.01,
+        "2012": 341.11,
+        "2013": 337.78,
+        "2014": 331.54,
+        "2015": 328.62,
+        "2016": 327.63,
+        "2017": 329.45,
+        "2018": 328.93,
+        "2019": 330.26,
+        "2020": 331.09,
+        "2021": 326.46,
+        "2022": 319.46,
+        "2023": 321.64,
+        "2024": 324.41
+      },
+      "drawable_years": [
+        2003,
+        2004,
+        2005,
+        2006,
+        2007,
+        2008,
+        2009,
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2019,
+        2020
+      ],
+      "photos_by_year": null,
+      "photo_note": null,
+      "lidar_water_surface_m": 329.6,
+      "note": "Ground and photo are present-day pictures, not measurements of change. Water levels are USBR yearly means moved onto the lidar heights; years below the lidar water surface cannot be drawn.",
+      "sources": [
+        {
+          "name": "USGS 3D Elevation Program (3DEP) lidar, 1 m",
+          "url": "https://www.usgs.gov/3d-elevation-program"
+        },
+        {
+          "name": "USDA NAIP aerial photography, via USGS The National Map",
+          "url": "https://naip-usdaonline.hub.arcgis.com/"
+        },
+        {
+          "name": "Lake Mead elevation, US Bureau of Reclamation",
+          "url": "https://www.usbr.gov/lc/region/g4000/hourly/mead-elv.html"
+        }
+      ]
+    },
+    {
+      "id": "lst_gibs",
+      "kind": "yearly",
+      "var": "lst_day",
+      "title": "Daytime ground temperature",
+      "file_pattern": "layers/lst_gibs/{YYYY}.png",
+      "value_pattern": "layers/lst_gibs/{YYYY}_values.png",
+      "value_scale": 0.01,
+      "value_offset": -100.0,
+      "pixel_m": 5600.0,
+      "status": "observed",
+      "years": [
+        2003,
+        2004,
+        2005,
+        2006,
+        2007,
+        2008,
+        2009,
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024
+      ],
+      "months": [
+        6,
+        7,
+        8
+      ],
+      "legend": {
+        "unit": "°C",
+        "labels": {
+          "more": "Hotter ground",
+          "less": "Cooler ground",
+          "transparent": "Transparent = no clear view that season"
+        },
+        "stops": [
+          "#000004",
+          "#210c4a",
+          "#57106e",
+          "#8a226a",
+          "#bc3754",
+          "#e45a31",
+          "#f98e09",
+          "#f9cb35",
+          "#fcffa4"
+        ],
+        "range": [
+          38.35,
+          53.35
+        ]
+      },
+      "method": "Mean of months 6, 7, 8 of each year; values read back from the NASA GIBS colormap (interval midpoints).",
+      "source": {
+        "name": "MODIS Terra monthly land surface temperature (MOD11C3), via NASA GIBS",
+        "url": "https://lpdaac.usgs.gov/products/mod11c3v061/"
+      }
+    },
+    {
+      "id": "ndvi_gibs",
+      "kind": "yearly",
+      "var": "ndvi",
+      "title": "Green vegetation (NDVI)",
+      "file_pattern": "layers/ndvi_gibs/{YYYY}.png",
+      "value_pattern": "layers/ndvi_gibs/{YYYY}_values.png",
+      "value_scale": 0.0001,
+      "value_offset": -1.0,
+      "pixel_m": 1000.0,
+      "status": "observed",
+      "years": [
+        2003,
+        2004,
+        2005,
+        2006,
+        2007,
+        2008,
+        2009,
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024
+      ],
+      "months": [
+        3,
+        4
+      ],
+      "legend": {
+        "unit": "NDVI (0 = bare, 1 = dense green)",
+        "labels": {
+          "more": "Greener",
+          "less": "Barer",
+          "transparent": "Transparent = no clear view that season"
+        },
+        "stops": [
+          "#ffffe5",
+          "#f7fcb9",
+          "#d9f0a3",
+          "#acdd8e",
+          "#77c679",
+          "#40aa5c",
+          "#228343",
+          "#006737",
+          "#004529"
+        ],
+        "range": [
+          0.088,
+          0.294
+        ]
+      },
+      "method": "Mean of months 3, 4 of each year; values read back from the NASA GIBS colormap (interval midpoints).",
+      "source": {
+        "name": "MODIS Terra monthly NDVI (MOD13A3), via NASA GIBS",
+        "url": "https://lpdaac.usgs.gov/products/mod13a3v061/"
+      }
+    },
+    {
+      "id": "trend_lst_day",
+      "kind": "trend",
+      "var": "lst_day",
+      "title": "Daytime ground temperature: trend",
+      "file": "trend_lst_day.png",
+      "status": "analysed",
+      "years": [
+        2003,
+        2024
+      ],
+      "legend": {
+        "unit": "°C per decade",
+        "labels": {
+          "more": "↑ more heat (warmer ground)",
+          "less": "↓ less heat (cooler ground)",
+          "faded": "Faded = not statistically significant (Mann-Kendall p ≥ 0.05)",
+          "transparent": "Transparent = not enough data"
+        },
+        "stops": [
+          "#053061",
+          "#2a71b2",
+          "#6bacd1",
+          "#c2ddec",
+          "#f7f6f6",
+          "#fbccb4",
+          "#e48066",
+          "#ba2832",
+          "#67001f"
+        ],
+        "range": [
+          -1.634,
+          1.634
+        ]
+      },
+      "method": "Per pixel: Sen slope and Mann-Kendall S on annual means of deseasonalized monthly anomalies.",
+      "source": {
+        "name": "MODIS Terra land surface temperature (MOD11A2 v061), via AppEEARS",
+        "url": "https://lpdaac.usgs.gov/products/mod11a2v061/"
+      },
+      "value_offset": -3.305277777777787,
+      "value_scale": 0.00010087215118191432,
+      "value_file": "trend_lst_day_values.png",
+      "significance_file": "trend_lst_day_significant.png"
+    },
+    {
+      "id": "year_lst_day",
+      "kind": "yearly",
+      "var": "lst_day",
+      "title": "Daytime ground temperature: year by year",
+      "file_pattern": "year_lst_day_{YYYY}.png",
+      "status": "analysed",
+      "years": [
+        2003,
+        2004,
+        2005,
+        2006,
+        2007,
+        2008,
+        2009,
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024
+      ],
+      "legend": {
+        "unit": "°C",
+        "labels": {
+          "more": "↑ more heat (warmer ground) than usual",
+          "less": "↓ less heat (cooler ground) than usual",
+          "transparent": "Transparent = not enough data that year"
+        },
+        "stops": [
+          "#053061",
+          "#2a71b2",
+          "#6bacd1",
+          "#c2ddec",
+          "#f7f6f6",
+          "#fbccb4",
+          "#e48066",
+          "#ba2832",
+          "#67001f"
+        ],
+        "range": [
+          -1.898,
+          1.898
+        ]
+      },
+      "method": null,
+      "source": {
+        "name": "MODIS Terra land surface temperature (MOD11A2 v061), via AppEEARS",
+        "url": "https://lpdaac.usgs.gov/products/mod11a2v061/"
+      },
+      "value_offset": -5.274595959595964,
+      "value_scale": 0.00016097280677498593,
+      "value_pattern": "value_lst_day_{YYYY}.png",
+      "baseline": "2003-2024 average for each calendar month"
+    }
+  ],
+  "timeline": {
+    "years": [
+      2003,
+      2004,
+      2005,
+      2006,
+      2007,
+      2008,
+      2009,
+      2010,
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024
+    ],
+    "layers": {
+      "base": {
+        "mode": "static"
+      },
+      "base_hq": {
+        "mode": "static"
+      },
+      "relief": {
+        "mode": "static"
+      },
+      "hillshade": {
+        "mode": "static"
+      },
+      "before_after": {
+        "mode": "pair",
+        "years": [
+          2003,
+          2024
+        ]
+      },
+      "detail": {
+        "mode": "static",
+        "water_years": [
+          2003,
+          2004,
+          2005,
+          2006,
+          2007,
+          2008,
+          2009,
+          2010,
+          2011,
+          2012,
+          2013,
+          2014,
+          2019,
+          2020
+        ]
+      },
+      "lst_gibs": {
+        "mode": "yearly",
+        "years": [
+          2003,
+          2004,
+          2005,
+          2006,
+          2007,
+          2008,
+          2009,
+          2010,
+          2011,
+          2012,
+          2013,
+          2014,
+          2015,
+          2016,
+          2017,
+          2018,
+          2019,
+          2020,
+          2021,
+          2022,
+          2023,
+          2024
+        ]
+      },
+      "ndvi_gibs": {
+        "mode": "yearly",
+        "years": [
+          2003,
+          2004,
+          2005,
+          2006,
+          2007,
+          2008,
+          2009,
+          2010,
+          2011,
+          2012,
+          2013,
+          2014,
+          2015,
+          2016,
+          2017,
+          2018,
+          2019,
+          2020,
+          2021,
+          2022,
+          2023,
+          2024
+        ]
+      },
+      "trend_lst_day": {
+        "mode": "span",
+        "years": [
+          2003,
+          2024
+        ]
+      },
+      "year_lst_day": {
+        "mode": "yearly",
+        "years": [
+          2003,
+          2004,
+          2005,
+          2006,
+          2007,
+          2008,
+          2009,
+          2010,
+          2011,
+          2012,
+          2013,
+          2014,
+          2015,
+          2016,
+          2017,
+          2018,
+          2019,
+          2020,
+          2021,
+          2022,
+          2023,
+          2024
+        ]
+      }
+    },
+    "records": {
+      "grace_tws": [
+        2003,
+        2004,
+        2005,
+        2006,
+        2007,
+        2008,
+        2009,
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2015,
+        2016,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024
+      ],
+      "t2m": [
+        2003,
+        2004,
+        2005,
+        2006,
+        2007,
+        2008,
+        2009,
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024
+      ],
+      "precip_upstream": [
+        2003,
+        2004,
+        2005,
+        2006,
+        2007,
+        2008,
+        2009,
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024
+      ],
+      "t2m_upstream": [
+        2003,
+        2004,
+        2005,
+        2006,
+        2007,
+        2008,
+        2009,
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024
+      ],
+      "lst_day": [
+        2003,
+        2004,
+        2005,
+        2006,
+        2007,
+        2008,
+        2009,
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024
+      ],
+      "soil_moisture": [
+        2003,
+        2004,
+        2005,
+        2006,
+        2007,
+        2008,
+        2009,
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024
+      ],
+      "precip": [
+        2003,
+        2004,
+        2005,
+        2006,
+        2007,
+        2008,
+        2009,
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024
+      ],
+      "runoff": [
+        2003,
+        2004,
+        2005,
+        2006,
+        2007,
+        2008,
+        2009,
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024
+      ],
+      "solar": [
+        2003,
+        2004,
+        2005,
+        2006,
+        2007,
+        2008,
+        2009,
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024
+      ]
+    },
+    "record_map": {
+      "grace_tws": null,
+      "t2m": null,
+      "precip_upstream": null,
+      "t2m_upstream": null,
+      "lst_day": "year_lst_day",
+      "soil_moisture": null,
+      "precip": null,
+      "runoff": null,
+      "solar": null
+    }
+  }
+}

@@ -142,6 +142,8 @@ def allowed_numbers(report: Mapping) -> tuple[AllowedNumber, ...]:
         if pct is not None:
             add(pct, True, f"{vid}.residual_pct_non_climate")
             add(100.0 - pct, True, f"{vid}.climate_share")
+        for i, bound in enumerate(row.get("residual_pct_range") or ()):
+            add(bound, True, f"{vid}.residual_pct_range[{i}]")
     years = _report_years(report)
     if years is not None:
         start, end = years

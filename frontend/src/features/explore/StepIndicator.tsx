@@ -20,7 +20,7 @@ export default function StepIndicator({ current, onSelect }: Props) {
               onClick={() => onSelect(i)}
             >
               <span className={styles.stepNum} aria-hidden="true">
-                {i < current ? "✓" : i + 1}
+                {i + 1}
               </span>
               <span className={styles.stepTitle}>
                 <span className={styles.srOnly}>Step {i + 1}: </span>

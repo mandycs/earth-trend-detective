@@ -1,0 +1,55 @@
+{
+  "width": 4096,
+  "height": 3186,
+  "scenes": [
+    [
+      "2024-09-11",
+      "HLS_S30_Nadir_BRDF_Adjusted_Reflectance"
+    ],
+    [
+      "2024-09-10",
+      "HLS_L30_Nadir_BRDF_Adjusted_Reflectance"
+    ],
+    [
+      "2024-06-30",
+      "HLS_L30_Nadir_BRDF_Adjusted_Reflectance"
+    ],
+    [
+      "2024-08-25",
+      "HLS_L30_Nadir_BRDF_Adjusted_Reflectance"
+    ],
+    [
+      "2024-08-09",
+      "HLS_L30_Nadir_BRDF_Adjusted_Reflectance"
+    ],
+    [
+      "2024-07-08",
+      "HLS_L30_Nadir_BRDF_Adjusted_Reflectance"
+    ],
+    [
+      "2024-06-13",
+      "HLS_S30_Nadir_BRDF_Adjusted_Reflectance"
+    ],
+    [
+      "2024-06-28",
+      "HLS_S30_Nadir_BRDF_Adjusted_Reflectance"
+    ],
+    [
+      "2024-07-03",
+      "HLS_S30_Nadir_BRDF_Adjusted_Reflectance"
+    ],
+    [
+      "2024-06-14",
+      "HLS_L30_Nadir_BRDF_Adjusted_Reflectance"
+    ],
+    [
+      "2024-07-28",
+      "HLS_S30_Nadir_BRDF_Adjusted_Reflectance"
+    ],
+    [
+      "2024-09-02",
+      "HLS_L30_Nadir_BRDF_Adjusted_Reflectance"
+    ]
+  ],
+  "method": "per-pixel median of NASA HLS 30 m scenes (GIBS)"
+}

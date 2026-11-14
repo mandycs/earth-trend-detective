@@ -63,7 +63,8 @@ def test_to_dict_lists_candidates_json_safe(catalog):
     d = compute_residuals({"precip": precip, "runoff": runoff}, catalog)["runoff"].to_dict()
     assert d["model_id"] == "M0"
     assert isinstance(d["candidates"], list)
-    assert set(d["candidates"][0]) == {"id", "label", "cv_r2", "drivers", "n_months"}
+    assert set(d["candidates"][0]) == {"id", "label", "cv_r2", "drivers", "n_months", "pct_non_climate"}
+    assert d["pct_range"] is None  # one candidate only: no range
     json.dumps(d, allow_nan=False)
 
 
@@ -225,3 +226,17 @@ def test_blocked_cv_r2_too_short_is_none():
     idx = monthly_index(months=30)
     x = pd.DataFrame({"x": np.arange(30.0)}, index=idx)
     assert blocked_cv_r2(pd.Series(np.arange(30.0), index=idx), x) is None
+
+
+def test_every_candidate_gets_its_own_share_and_the_range_spans_them(catalog):
+    # Upstream drought explains part of the decline: the local-only model (M0) leaves it in
+    # the residual, the upstream model (M1) does not, so the two shares differ.
+    r = compute_residuals(_mead_case(seed=40, upstream_gain=10.0, upstream_trend=-1.5), catalog)["grace_tws"]
+    shares = {c.id: c.pct_non_climate for c in r.candidates}
+    assert set(shares) == {"M0", "M1"}
+    assert all(v is not None for v in shares.values())
+    chosen = next(c for c in r.candidates if c.id == r.model_id)
+    assert chosen.pct_non_climate == pytest.approx(r.pct_non_climate)
+    lo, hi = r.pct_range
+    assert lo == min(shares.values()) and hi == max(shares.values())
+    assert r.to_dict()["pct_range"] == [lo, hi]

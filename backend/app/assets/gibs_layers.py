@@ -1,0 +1,227 @@
+"""Yearly vegetation and ground-temperature layers for each site, read from NASA GIBS.
+
+GIBS serves MODIS monthly products as coloured PNGs with a published colormap that maps
+every colour to a value interval. We request the site box at about the product's own
+resolution, turn colours back into values (interval midpoints: NDVI to 0.01, LST to about
+0.6 K), average the season's months for each year and write:
+
+- layers/<id>/<YYYY>.png         coloured on one fixed range for all years (comparable)
+- layers/<id>/<YYYY>_values.png  16-bit values: value = offset + scale * pixel, 0 = no data
+- layers/<id>/meta.json          legend, unit, range, months, scale/offset, source
+
+These are measured values (status "observed") but not trend-tested. Pixels stay at their
+real size: no smoothing into detail that is not there.
+
+Usage (from backend/, venv active):
+    python -m app.assets.gibs_layers [site_id ...]
+"""
+
+from __future__ import annotations
+
+import io
+import json
+import logging
+import re
+import sys
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
+from pathlib import Path
+
+import httpx
+import matplotlib
+import numpy as np
+from PIL import Image
+
+from app.assets.composite import native_width
+from app.assets.gibs import GIBS_WMS_URL
+from app.assets.relief import pixel_size_m
+from app.sites import load_sites
+
+logger = logging.getLogger(__name__)
+
+SITES_DIR = Path(__file__).resolve().parents[3] / "sites"
+COLORMAP_URL = "https://gibs.earthdata.nasa.gov/colormaps/v1.3/{name}.xml"
+YEARS = range(2003, 2025)
+TIMEOUT_S = 60.0
+MIN_PX = 64
+_ENTRY_RE = re.compile(r"<ColorMapEntry\s+([^>]*)/>")
+_ATTR_RE = re.compile(r'(\w+)="([^"]*)"')
+
+
+@dataclass(frozen=True)
+class GibsLayer:
+    id: str
+    title: str
+    gibs_layer: str
+    colormap: str
+    native_m: float
+    unit: str
+    to_unit: float  # value in colormap units + to_unit -> display unit (K -> °C: -273.15)
+    offset: float  # 16-bit encoding
+    scale: float
+    palette: str
+    legend: Mapping[str, str]
+    source: Mapping[str, str]
+    seasons: Mapping[str, tuple[int, ...]]  # site id -> months averaged each year
+
+
+LAYERS: tuple[GibsLayer, ...] = (
+    GibsLayer(
+        id="ndvi_gibs",
+        title="Green vegetation (NDVI)",
+        gibs_layer="MODIS_Terra_L3_NDVI_Monthly",
+        colormap="MODIS_L3_NDVI",
+        native_m=1000.0,
+        unit="NDVI (0 = bare, 1 = dense green)",
+        to_unit=0.0,
+        offset=-1.0,
+        scale=0.0001,
+        palette="YlGn",
+        legend={"more": "Greener", "less": "Barer", "transparent": "Transparent = no clear view that season"},
+        source={"name": "MODIS Terra monthly NDVI (MOD13A3), via NASA GIBS", "url": "https://lpdaac.usgs.gov/products/mod13a3v061/"},
+        seasons={"lake_mead": (3, 4), "aletsch": (7, 8), "donana": (3, 4)},
+    ),
+    GibsLayer(
+        id="lst_gibs",
+        title="Daytime ground temperature",
+        gibs_layer="MODIS_Terra_L3_Land_Surface_Temp_Monthly_Day",
+        colormap="MODIS_Land_Surface_Temp",
+        native_m=5600.0,  # monthly LST on GIBS is the 0.05° climate-modelling grid
+        unit="°C",
+        to_unit=-273.15,
+        offset=-100.0,
+        scale=0.01,
+        palette="inferno",
+        legend={"more": "Hotter ground", "less": "Cooler ground", "transparent": "Transparent = no clear view that season"},
+        source={"name": "MODIS Terra monthly land surface temperature (MOD11C3), via NASA GIBS", "url": "https://lpdaac.usgs.gov/products/mod11c3v061/"},
+        seasons={"lake_mead": (6, 7, 8), "aletsch": (7, 8), "donana": (6, 7, 8)},
+    ),
+)
+
+
+def parse_colormap(xml: str) -> dict[tuple[int, int, int], float]:
+    """rgb -> value (midpoint of the entry's interval); transparent / no-data entries left out."""
+    table: dict[tuple[int, int, int], float] = {}
+    for raw in _ENTRY_RE.findall(xml):
+        attrs = dict(_ATTR_RE.findall(raw))
+        if attrs.get("transparent") == "true" or attrs.get("nodata") == "true" or "value" not in attrs:
+            continue
+        nums = [float(x) for x in re.findall(r"-?\d+(?:\.\d+)?(?:e-?\d+)?", attrs["value"])]
+        if not nums:
+            continue
+        mid = (nums[0] + nums[-1]) / 2 if len(nums) > 1 else nums[0]
+        rgb = tuple(int(c) for c in attrs["rgb"].split(","))
+        table[rgb] = mid  # type: ignore[index]
+    return table
+
+
+def decode(rgba: np.ndarray, table: Mapping[tuple[int, int, int], float]) -> np.ndarray:
+    """Values per pixel; NaN where transparent or the colour is not in the table."""
+    flat = rgba.reshape(-1, rgba.shape[-1]).astype(np.int64)
+    keys = (flat[:, 0] << 16) | (flat[:, 1] << 8) | flat[:, 2]
+    lut = {(r << 16) | (g << 8) | b: v for (r, g, b), v in table.items()}
+    out = np.array([lut.get(int(k), np.nan) for k in keys], dtype=np.float64)
+    if rgba.shape[-1] == 4:
+        out[flat[:, 3] == 0] = np.nan
+    return out.reshape(rgba.shape[:2])
+
+
+def season_mean(months: Sequence[np.ndarray]) -> np.ndarray:
+    stack = np.stack(months)
+    with np.errstate(all="ignore"):
+        return np.nanmean(stack, axis=0) if np.isfinite(stack).any() else stack[0]
+
+
+def encode_values(values: np.ndarray, offset: float, scale: float) -> np.ndarray:
+    code = np.round((values - offset) / scale)
+    code = np.where(np.isfinite(code), np.clip(code, 1, 65535), 0)
+    return code.astype(np.uint16)
+
+
+def colorize(values: np.ndarray, vmin: float, vmax: float, palette: str) -> np.ndarray:
+    norm = np.clip((values - vmin) / (vmax - vmin), 0, 1)
+    rgba = (matplotlib.colormaps[palette](np.nan_to_num(norm)) * 255).astype(np.uint8)
+    rgba[..., 3] = np.where(np.isfinite(values), 230, 0)
+    return rgba
+
+
+def _fetch(client: httpx.Client, layer: GibsLayer, bbox: Sequence[float], date: str, size: tuple[int, int]) -> np.ndarray | None:
+    w, s, e, n = bbox
+    r = client.get(GIBS_WMS_URL, params={
+        "SERVICE": "WMS", "REQUEST": "GetMap", "VERSION": "1.3.0", "LAYERS": layer.gibs_layer,
+        "CRS": "EPSG:4326", "BBOX": f"{s},{w},{n},{e}", "WIDTH": str(size[0]), "HEIGHT": str(size[1]),
+        "FORMAT": "image/png", "TIME": date,
+    })
+    if r.status_code != 200 or not r.headers.get("content-type", "").startswith("image/"):
+        return None
+    return np.asarray(Image.open(io.BytesIO(r.content)).convert("RGBA"))
+
+
+def build_layer(site_id: str, layer: GibsLayer, sites_dir: Path = SITES_DIR) -> dict | None:
+    site = load_sites().get(site_id)
+    months = layer.seasons.get(site_id)
+    if site is None or months is None:
+        return None
+    out = sites_dir / site_id / "layers" / layer.id
+    out.mkdir(parents=True, exist_ok=True)
+    width = max(MIN_PX, native_width(site.bbox, layer.native_m))
+    dx, dy = pixel_size_m(site.bbox, (1, 1))  # metric aspect, like the other overlays
+    height = max(1, round(width * dy / dx))
+    with httpx.Client(timeout=TIMEOUT_S) as client:
+        table = parse_colormap(client.get(COLORMAP_URL.format(name=layer.colormap)).text)
+        yearly: dict[int, np.ndarray] = {}
+        for year in YEARS:
+            grids = []
+            for m in months:
+                rgba = _fetch(client, layer, site.bbox, f"{year}-{m:02d}-01", (width, height))
+                if rgba is not None:
+                    grids.append(decode(rgba, table) + layer.to_unit)
+            if grids:
+                vals = season_mean(grids)
+                if np.isfinite(vals).mean() >= 0.2:
+                    yearly[year] = vals
+    if not yearly:
+        logger.warning("%s/%s: no usable months", site_id, layer.id)
+        return None
+    every = np.concatenate([v[np.isfinite(v)] for v in yearly.values()])
+    vmin, vmax = (round(float(x), 3) for x in np.percentile(every, [2, 98]))
+    for year, vals in yearly.items():
+        Image.fromarray(colorize(vals, vmin, vmax, layer.palette)).save(out / f"{year}.png")
+        Image.fromarray(encode_values(vals, layer.offset, layer.scale)).save(out / f"{year}_values.png")
+    stops = [matplotlib.colors.to_hex(matplotlib.colormaps[layer.palette](t)) for t in np.linspace(0, 1, 9)]
+    meta = {
+        "id": layer.id,
+        "title": layer.title,
+        "unit": layer.unit,
+        "range": [vmin, vmax],
+        "stops": stops,
+        "legend": dict(layer.legend),
+        "months": list(months),
+        "years": sorted(yearly),
+        "size_px": [width, height],
+        "pixel_m": layer.native_m,
+        "value_scale": layer.scale,
+        "value_offset": layer.offset,
+        "file_pattern": f"layers/{layer.id}/{{YYYY}}.png",
+        "value_pattern": f"layers/{layer.id}/{{YYYY}}_values.png",
+        "method": (
+            f"Mean of months {', '.join(str(m) for m in months)} of each year; values read back from the "
+            "NASA GIBS colormap (interval midpoints)."
+        ),
+        "source": dict(layer.source),
+    }
+    (out / "meta.json").write_text(json.dumps(meta, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    logger.info("%s/%s: %d years, %dx%d px, range %s %s", site_id, layer.id, len(yearly), width, height, meta["range"], layer.unit)
+    return meta
+
+
+def main(argv: Sequence[str]) -> None:
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    for site_id in argv or [s.id for s in load_sites().sites]:
+        for layer in LAYERS:
+            build_layer(site_id, layer)
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

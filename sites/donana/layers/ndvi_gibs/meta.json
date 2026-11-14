@@ -1,0 +1,67 @@
+{
+  "id": "ndvi_gibs",
+  "title": "Green vegetation (NDVI)",
+  "unit": "NDVI (0 = bare, 1 = dense green)",
+  "range": [
+    0.113,
+    0.7
+  ],
+  "stops": [
+    "#ffffe5",
+    "#f7fcb9",
+    "#d9f0a3",
+    "#acdd8e",
+    "#77c679",
+    "#40aa5c",
+    "#228343",
+    "#006737",
+    "#004529"
+  ],
+  "legend": {
+    "more": "Greener",
+    "less": "Barer",
+    "transparent": "Transparent = no clear view that season"
+  },
+  "months": [
+    3,
+    4
+  ],
+  "years": [
+    2003,
+    2004,
+    2005,
+    2006,
+    2007,
+    2008,
+    2009,
+    2010,
+    2011,
+    2012,
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024
+  ],
+  "size_px": [
+    71,
+    78
+  ],
+  "pixel_m": 1000.0,
+  "value_scale": 0.0001,
+  "value_offset": -1.0,
+  "file_pattern": "layers/ndvi_gibs/{YYYY}.png",
+  "value_pattern": "layers/ndvi_gibs/{YYYY}_values.png",
+  "method": "Mean of months 3, 4 of each year; values read back from the NASA GIBS colormap (interval midpoints).",
+  "source": {
+    "name": "MODIS Terra monthly NDVI (MOD13A3), via NASA GIBS",
+    "url": "https://lpdaac.usgs.gov/products/mod13a3v061/"
+  }
+}

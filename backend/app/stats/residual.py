@@ -139,6 +139,7 @@ class CandidateScore:
     drivers: tuple[str, ...]
     n_months: int  # months shared by all candidates, on which every CV score is computed
     cv_r2: float | None
+    pct_non_climate: float | None = None  # this candidate's split, fitted on its own
 
     def to_dict(self) -> dict:
         return {
@@ -147,6 +148,7 @@ class CandidateScore:
             "drivers": list(self.drivers),
             "n_months": self.n_months,
             "cv_r2": _clean(self.cv_r2),
+            "pct_non_climate": _clean(self.pct_non_climate),
         }
 
 
@@ -168,10 +170,22 @@ class ResidualResult:
     cv_r2: float | None = None
     candidates: tuple[CandidateScore, ...] = ()
 
+    @property
+    def pct_range(self) -> tuple[float, float] | None:
+        """(min, max) non-climate share across the candidate driver models that give one.
+
+        None unless at least two candidates give a share: with one model there is no range.
+        """
+        values = [c.pct_non_climate for c in self.candidates if c.pct_non_climate is not None]
+        if len(values) < 2:
+            return None
+        return (min(values), max(values))
+
     def to_dict(self) -> dict:
         return {k: _clean(v) for k, v in asdict(self).items()} | {
             "drivers_used": list(self.drivers_used),
             "candidates": [c.to_dict() for c in self.candidates],
+            "pct_range": list(self.pct_range) if self.pct_range is not None else None,
         }
 
 
@@ -397,8 +411,14 @@ def residual_for(var: Variable, impact: pd.Series, driver_anoms: Mapping[str, pd
         "residual %s: model %s chosen; cv_r2 %s",
         var.id, spec.id, {s.id: None if s.cv_r2 is None else round(s.cv_r2, 3) for s in scores},
     )
+    # Every candidate's own split, so the UI can show how much the answer depends on the
+    # choice of drivers (a range), next to the chosen model's figure.
+    fits = [(_fit_split(var, impact, design) if i != chosen else None) for i, (_, design) in enumerate(designs)]
+    chosen_fit = _fit_split(var, impact, regressors)
+    fits[chosen] = chosen_fit
+    scores = tuple(replace(sc, pct_non_climate=f.pct_non_climate) for sc, f in zip(scores, fits))
     return replace(
-        _fit_split(var, impact, regressors),
+        chosen_fit,
         model_id=spec.id,
         model_label=spec.label,
         cv_r2=scores[chosen].cv_r2,
