@@ -47,6 +47,9 @@ function normaliseSite(raw: Site): Site {
   }
 }
 
+/** Optional prose file that lives next to site.json (see sites/<id>/copy.json). */
+type CopyOverlay = Partial<Pick<Site, 'steps' | 'narrative' | 'caveats'>>
+
 export function useSite(siteId: string) {
   const [site, setSite] = useState<Site | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -55,13 +58,20 @@ export function useSite(siteId: string) {
     let alive = true
     setSite(null)
     setError(null)
-    fetch(`${siteAssetBase(siteId)}site.json`)
-      .then((response) => {
+    const base = siteAssetBase(siteId)
+    Promise.all([
+      fetch(`${base}site.json`).then((response) => {
         if (!response.ok) throw new Error(`site.json returned ${response.status}`)
         return response.json() as Promise<Site>
-      })
-      .then((data) => {
-        if (alive) setSite(normaliseSite(data))
+      }),
+      // The prose is authored by hand and the pipeline owns site.json, so the two
+      // are separate files: regenerating the data can never wipe the copy.
+      fetch(`${base}copy.json`)
+        .then((response) => (response.ok ? (response.json() as Promise<CopyOverlay>) : null))
+        .catch(() => null),
+    ])
+      .then(([data, copy]) => {
+        if (alive) setSite(normaliseSite({ ...data, ...(copy ?? {}) }))
       })
       .catch((cause: unknown) => {
         if (alive) setError(cause instanceof Error ? cause.message : 'Unknown error loading site')

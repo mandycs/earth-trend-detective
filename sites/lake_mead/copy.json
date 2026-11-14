@@ -1,0 +1,22 @@
+{
+  "_note": "Prose for the story mode. Kept out of site.json so the pipeline can regenerate that file without destroying it. Merged at load time.",
+  "steps": [
+    {
+      "title": "What is changing here?",
+      "body": "Every NASA variable that applies to this basin is tested. The one that moved most is already selected: total water stored."
+    },
+    {
+      "title": "Is it real, or is it chance?",
+      "body": "The drop is far bigger than the year-to-year wobble. It is not a straight line either: a wet winter put water back in 2023."
+    },
+    {
+      "title": "Is it the climate?",
+      "body": "Rainfall here shows no clear trend. Most of the loss comes from what we take out, not from what the sky fails to send."
+    }
+  ],
+  "narrative": "Seven states hold rights to more water than the river carries. A warmer atmosphere takes its share of the flow. The rest of the gap is us.",
+  "caveats": [
+    "One wet year does not undo a two-decade decline.",
+    "The leftover share is a clue, not proof of who is responsible."
+  ]
+}
