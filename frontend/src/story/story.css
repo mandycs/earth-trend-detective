@@ -1894,3 +1894,86 @@
     box-shadow: inset 0 -2px 0 var(--ink); /* taste-skill-ignore: underline marker, not a shadow */
   }
 }
+
+/* ------------------------------------------------ drone: a clean view */
+/* In the drone the ground is the subject: the story panel and its scrim step aside,
+   the flying help leaves after a few seconds and the picture note folds away. */
+.st-in-drone .sp {
+  display: none;
+}
+
+.st-in-drone .st-drone-hud {
+  /* sits above the folded Layers button, which owns the bottom-right corner */
+  inset: auto 16px 72px auto;
+  width: auto;
+  max-width: min(440px, calc(100% - 32px));
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.st-in-drone .st-drone-help {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 10px;
+  padding: 6px 12px;
+  font-size: 0.95rem;
+}
+
+.st-drone-keys {
+  min-height: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink-2);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.st-drone-keys:hover {
+  color: var(--ink);
+}
+
+.st-in-drone .st-drone-note {
+  order: -1;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  pointer-events: auto;
+}
+
+.st-in-drone .st-drone-note summary {
+  display: inline-block;
+  padding: 6px 12px;
+  background: var(--ground);
+  color: var(--ink-2);
+  font-size: 0.95rem;
+  cursor: pointer;
+  float: right;
+}
+
+.st-in-drone .st-drone-note[open] summary {
+  color: var(--ink);
+}
+
+.st-in-drone .st-drone-note p {
+  clear: both;
+  margin: 0;
+  padding: 10px 14px;
+  background: var(--ground);
+  color: var(--ink-2);
+  line-height: 1.35;
+}
+
+@media (min-width: 1101px) {
+  .st.st-in-drone .st-canvas::after {
+    display: none;
+  }
+
+  .st.st-in-drone .st-yearcard {
+    top: 76px;
+    max-width: min(520px, calc(100% - 340px));
+  }
+}

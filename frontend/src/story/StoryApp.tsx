@@ -79,6 +79,14 @@ export default function StoryApp({ caseId }: { caseId: string }) {
   const detailInfo = useDetailInfo(caseId)
   const [drone, setDrone] = useState(false)
   const detail = useDetailAssets(caseId, detailInfo, drone)
+  // The flying help shows for a few seconds on entering the drone, then leaves the view clean.
+  const [droneHelp, setDroneHelp] = useState(false)
+  useEffect(() => {
+    if (!drone || !detail.assets) return
+    setDroneHelp(true)
+    const t = window.setTimeout(() => setDroneHelp(false), 6000)
+    return () => window.clearTimeout(t)
+  }, [drone, detail.assets])
   const { timeline, layers } = useCaseLayers(caseId)
   const [stack, setStack] = useState<StackEntry[]>([])
   const [whys, setWhys] = useState<Record<string, string>>({})
@@ -441,7 +449,7 @@ export default function StoryApp({ caseId }: { caseId: string }) {
     : { title: 'Satellite picture', note: 'one date, not per year', status: 'visual_only' as const }
 
   return (
-    <div className={mode === 'doc' ? 'st st-documentary' : 'st'}>
+    <div className={mode === 'doc' ? 'st st-documentary' : drone ? 'st st-in-drone' : 'st'}>
       <header className="st-bar">
         <Link href="/" className="st-wordmark wide">
           Earth Trend Detective
@@ -694,14 +702,26 @@ export default function StoryApp({ caseId }: { caseId: string }) {
             {drone && detail.assets ? (
               <div className="st-drone-hud">
                 <p className="st-drone-help">
-                  {altitude != null ? <strong>{altitude} m above ground · </strong> : null}
-                  W A S D or arrows to fly · drag to look · scroll or Q / E for height · on touch: drag to fly, pinch for height
+                  {altitude != null ? <strong>{altitude} m above ground</strong> : null}
+                  {droneHelp ? (
+                    <span>
+                      {altitude != null ? ' · ' : null}W A S D or arrows to fly · drag to look · scroll or Q / E for height · on touch: drag to fly, pinch for
+                      height
+                    </span>
+                  ) : (
+                    <button type="button" className="st-drone-keys" onClick={() => setDroneHelp(true)}>
+                      Controls
+                    </button>
+                  )}
                 </p>
-                <p className="st-drone-note">
-                  {detailInfo?.photos_by_year
-                    ? `${detailInfo.photo_note ?? ''} ${detailInfo.note ?? ''}`
-                    : 'Ground: USGS lidar (2018). Photo: NAIP aerial. Both are present-day pictures, not measurements. Only the water level changes with the year.'}
-                </p>
+                <details className="st-drone-note">
+                  <summary>About these pictures</summary>
+                  <p>
+                    {detailInfo?.photos_by_year
+                      ? `${detailInfo.photo_note ?? ''} ${detailInfo.note ?? ''}`
+                      : 'Ground: USGS lidar (2018). Photo: NAIP aerial. Both are present-day pictures, not measurements. Only the water level changes with the year.'}
+                  </p>
+                </details>
               </div>
             ) : null}
 
