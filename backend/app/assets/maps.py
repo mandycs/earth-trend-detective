@@ -200,6 +200,22 @@ def save_png(rgba: np.ndarray, size: tuple[int, int], path: Path) -> Path:
     return path
 
 
+def value_encoding(values: np.ndarray) -> tuple[float, float]:
+    """(offset, scale) so every finite value fits pixels 1..65535 (0 = no data)."""
+    finite = values[np.isfinite(values)]
+    limit = float(np.abs(finite).max()) if finite.size else 1.0
+    limit = limit or 1.0
+    return -limit, 2 * limit / 65534
+
+
+def save_values_png(values: np.ndarray, size: tuple[int, int], offset: float, scale: float, path: Path) -> Path:
+    """16-bit value grid for the identify tool: value = offset + scale * pixel, 0 = no data."""
+    code = np.round((values - offset) / scale)
+    code = np.where(np.isfinite(code), np.clip(code, 1, 65535), 0).astype(np.uint16)
+    Image.fromarray(code).resize(size, Image.Resampling.NEAREST).save(path, optimize=True)
+    return path
+
+
 def _write_json(doc: Mapping, path: Path) -> Path:
     path.write_text(json.dumps(doc, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     return path
@@ -248,6 +264,10 @@ def write_variable_maps(
     significant = np.isfinite(pval) & (pval < SIG_LEVEL)
     alpha = np.where(significant, ALPHA_SIGNIFICANT, ALPHA_FADED).astype(np.uint8)
     written.append(save_png(colorize(slope, vmax, style.colormap, alpha), size, site_dir / f"trend_{var.id}.png"))
+    t_off, t_scale = value_encoding(slope)
+    written.append(save_values_png(slope, size, t_off, t_scale, site_dir / f"trend_{var.id}_values.png"))
+    sig_code = np.where(np.isfinite(pval), np.where(significant, 2, 1), 0).astype(np.uint8)
+    Image.fromarray(sig_code).resize(size, Image.Resampling.NEAREST).save(site_dir / f"trend_{var.id}_significant.png")
     finite = np.isfinite(slope)
     written.append(_write_json({
         "var": var.id,
@@ -270,16 +290,22 @@ def write_variable_maps(
         "share_significant": _round(float(significant[finite].mean())) if finite.any() else None,
         "share_up": _round(float((slope[finite] > 0).mean())) if finite.any() else None,
         "method": "Per pixel: Sen slope and Mann-Kendall S on annual means of deseasonalized monthly anomalies.",
+        "value_file": f"trend_{var.id}_values.png",
+        "value_offset": t_off,
+        "value_scale": t_scale,
+        "significance_file": f"trend_{var.id}_significant.png",  # 0 no data, 1 not significant, 2 significant
         "source": var.dataset,
     }, site_dir / f"trend_{var.id}.json"))
 
     ymax = symmetric_limit(annual)
+    y_off, y_scale = value_encoding(annual)
     have = []
     for k, y in enumerate(years):
         if not np.isfinite(annual[k]).any():
             continue
         have.append(y)
         written.append(save_png(colorize(annual[k], ymax, style.colormap, ALPHA_YEAR), size, site_dir / f"year_{var.id}_{y}.png"))
+        written.append(save_values_png(annual[k], size, y_off, y_scale, site_dir / f"value_{var.id}_{y}.png"))
     written.append(_write_json({
         "var": var.id,
         "label": var.label,
@@ -297,6 +323,9 @@ def write_variable_maps(
         "baseline": f"{start}-{end} average for each calendar month",
         "years": have,
         "file_pattern": f"year_{var.id}_{{YYYY}}.png",
+        "value_pattern": f"value_{var.id}_{{YYYY}}.png",
+        "value_offset": y_off,
+        "value_scale": y_scale,
         "source": var.dataset,
     }, site_dir / f"year_{var.id}.json"))
     logger.info("%s: trend + %d yearly maps (scale ±%.3g, ±%.3g)", var.id, len(have), vmax, ymax)

@@ -201,6 +201,15 @@ def _detail(site_dir: Path) -> list[dict]:
     return [layer]
 
 
+def _value_fields(meta: Mapping, names: set[str], file_keys: Sequence[str]) -> dict:
+    """Identify-tool fields from a map sidecar: files only when present on disk."""
+    out = {k: meta[k] for k in ("value_offset", "value_scale") if k in meta}
+    for key in file_keys:
+        if meta.get(key) in names:
+            out[key] = meta[key]
+    return out if ("value_offset" in out) else {}
+
+
 def _analysed_layers(site_dir: Path, names: set[str]) -> list[dict]:
     layers: list[dict] = []
     for name in sorted(names):
@@ -222,6 +231,7 @@ def _analysed_layers(site_dir: Path, names: set[str]) -> list[dict]:
                 "legend": _legend(meta),
                 "method": meta.get("method"),
                 "source": _dataset_source(meta.get("source")),
+                **_value_fields(meta, names, ("value_file", "significance_file")),
             })
         elif m := _YEAR_JSON_RE.match(name):
             var = m["var"]
@@ -244,6 +254,9 @@ def _analysed_layers(site_dir: Path, names: set[str]) -> list[dict]:
                 "method": meta.get("method"),
                 "source": _dataset_source(meta.get("source")),
             }
+            layer.update(_value_fields(meta, names, ()))
+            if "value_pattern" in meta:
+                layer["value_pattern"] = meta["value_pattern"]
             if "baseline" in meta:
                 layer["baseline"] = meta["baseline"]
             if "area_km2" in meta:
