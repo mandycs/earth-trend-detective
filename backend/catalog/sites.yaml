@@ -1,0 +1,25 @@
+# Story-mode case studies. bbox = [min_lon, min_lat, max_lon, max_lat] (WGS84).
+# point = representative [lon, lat] for point-based sources (POWER, GLDAS).
+# tags drive which catalog variables apply (see variables.yaml applies_to).
+# donana is a CANDIDATE for site 3 (Ale decides between Doñana / Rondônia / Málaga).
+
+study_period: [2003, 2024]
+
+sites:
+  - id: lake_mead
+    name: Lake Mead (USA)
+    bbox: [-114.9, 35.9, -114.0, 36.6]
+    point: [-114.5, 36.2]
+    tags: [water_body, desert]
+
+  - id: aletsch
+    name: Aletsch Glacier (Swiss Alps)
+    bbox: [7.95, 46.38, 8.15, 46.56]
+    point: [8.03, 46.47]
+    tags: [snow, glacier, mountain]
+
+  - id: donana
+    name: Doñana wetlands (Spain)
+    bbox: [-6.6, 36.8, -6.2, 37.15]
+    point: [-6.4, 36.98]
+    tags: [wetland, vegetated, agriculture]

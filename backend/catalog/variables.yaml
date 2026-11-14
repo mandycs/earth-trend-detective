@@ -1,0 +1,154 @@
+# Variable catalog for the sweep.
+#
+# role:
+#   driver  -> climate variable; used as a regressor in the residual analysis
+#   impact  -> land/water variable; tested for trend and for its non-climate residual
+# applies_to: site tags where the variable makes sense (a site gets every variable
+#   whose applies_to intersects its tags; "any" matches every site)
+# drivers: for impact variables, the climate drivers used in the residual regression
+# scale/offset: raw_value * scale + offset = value in `units`
+
+variables:
+  # --- Climate drivers (NASA POWER, no auth) ---
+  - id: t2m
+    label: Air temperature
+    role: driver
+    source: power
+    dataset: NASA POWER (MERRA-2)
+    band: T2M
+    units: "°C"
+    scale: 1.0
+    offset: 0.0
+    temporal: monthly
+    tags: [climate, temperature]
+    applies_to: [any]
+    drivers: []
+
+  - id: precip
+    label: Rainfall
+    role: driver
+    source: power
+    dataset: NASA POWER (MERRA-2 + IMERG corrected)
+    band: PRECTOTCORR
+    units: "mm/day"
+    scale: 1.0
+    offset: 0.0
+    temporal: monthly
+    tags: [climate, water]
+    applies_to: [any]
+    drivers: []
+
+  - id: solar
+    label: Sunlight at the surface
+    role: driver
+    source: power
+    dataset: NASA POWER (CERES SYN1deg)
+    band: ALLSKY_SFC_SW_DWN
+    units: "MJ/m²/day"
+    scale: 1.0
+    offset: 0.0
+    temporal: monthly
+    tags: [climate, energy]
+    applies_to: [any]
+    drivers: []
+
+  # --- Impact variables (MODIS via AppEEARS, Earthdata Login) ---
+  - id: ndvi
+    label: Plant greenness
+    role: impact
+    source: appeears
+    dataset: MOD13A3.061
+    band: _1_km_monthly_NDVI
+    units: "NDVI"
+    scale: 0.0001
+    offset: 0.0
+    temporal: monthly
+    tags: [vegetation, land]
+    applies_to: [vegetated, wetland, forest, agriculture]
+    drivers: [precip, t2m, solar]
+
+  - id: lst_day
+    label: Daytime ground temperature
+    role: impact
+    source: appeears
+    dataset: MOD11A2.061
+    band: LST_Day_1km
+    units: "°C"
+    scale: 0.02
+    offset: -273.15
+    temporal: 8-day
+    tags: [temperature, land]
+    applies_to: [any]
+    drivers: [t2m, solar]
+
+  - id: et
+    label: Water evaporated by land and plants
+    role: impact
+    source: appeears
+    dataset: MOD16A2GF.061
+    band: ET_500m
+    units: "kg/m²/8day"
+    scale: 0.1
+    offset: 0.0
+    temporal: 8-day
+    tags: [water, vegetation]
+    applies_to: [vegetated, wetland, forest, agriculture]
+    drivers: [precip, t2m, solar]
+
+  - id: snow_cover
+    label: Snow cover
+    role: impact
+    source: appeears
+    dataset: MOD10A1.061
+    band: NDSI_Snow_Cover
+    units: "%"
+    scale: 1.0
+    offset: 0.0
+    temporal: daily
+    tags: [snow, ice]
+    applies_to: [snow, glacier, mountain]
+    drivers: [t2m, precip]
+
+  # --- Impact variables (GLDAS via Hydrology data rods, Earthdata Login) ---
+  - id: soil_moisture
+    label: Topsoil moisture
+    role: impact
+    source: datarods
+    dataset: GLDAS_NOAH025_3H_v2.1
+    band: SoilMoi0_10cm_inst
+    units: "kg/m²"
+    scale: 1.0
+    offset: 0.0
+    temporal: 3-hourly
+    tags: [water, soil]
+    applies_to: [any]
+    drivers: [precip, t2m]
+
+  - id: runoff
+    label: Surface runoff
+    role: impact
+    source: datarods
+    dataset: GLDAS_NOAH025_3H_v2.1
+    band: Qs_acc
+    units: "kg/m²/3h"
+    scale: 1.0
+    offset: 0.0
+    temporal: 3-hourly
+    tags: [water]
+    applies_to: [any]
+    drivers: [precip]
+
+  # --- Impact variables (GRACE/GRACE-FO mascons, Earthdata Login) ---
+  - id: grace_tws
+    label: Total water stored
+    role: impact
+    source: grace
+    dataset: TELLUS_GRAC-GRFO_MASCON_CRI_GRID_RL06.3_V4
+    band: lwe_thickness
+    units: "cm"
+    scale: 1.0
+    offset: 0.0
+    temporal: monthly
+    tags: [water, groundwater]
+    applies_to: [any]
+    drivers: [precip, t2m]
