@@ -1,0 +1,70 @@
+{
+  "site": "aletsch",
+  "version": 1,
+  "layers": [
+    {
+      "id": "base",
+      "kind": "image",
+      "title": "Satellite picture",
+      "file": "base.jpg",
+      "status": "visual_only",
+      "source": {
+        "name": "NASA Harmonized Landsat Sentinel-2 (HLS) 30 m, via GIBS",
+        "url": "https://www.earthdata.nasa.gov/data/projects/hls"
+      },
+      "dates": [
+        "2024-08-31"
+      ]
+    },
+    {
+      "id": "base_hq",
+      "kind": "image",
+      "title": "Cloud-free satellite picture (30 m)",
+      "file": "base_hq.jpg",
+      "status": "visual_only",
+      "source": {
+        "name": "NASA Harmonized Landsat Sentinel-2 (HLS) 30 m, via GIBS",
+        "url": "https://www.earthdata.nasa.gov/data/projects/hls"
+      },
+      "dates": [
+        "2024-07-29",
+        "2024-07-30",
+        "2024-08-06",
+        "2024-08-11",
+        "2024-08-15",
+        "2024-08-22",
+        "2024-08-23",
+        "2024-08-30",
+        "2024-08-31"
+      ],
+      "method": "per-pixel median of NASA HLS 30 m scenes (GIBS)"
+    },
+    {
+      "id": "relief",
+      "kind": "heightmap",
+      "title": "Terrain height",
+      "file": "heightmap_rgb.png",
+      "encoding": "terrain-rgb",
+      "range_m": [
+        910.0,
+        4172.0
+      ],
+      "status": "visual_only",
+      "source": {
+        "name": "NASADEM elevation (NASA JPL / LP DAAC)",
+        "url": "https://lpdaac.usgs.gov/products/nasadem_hgtv001/"
+      }
+    },
+    {
+      "id": "hillshade",
+      "kind": "shading",
+      "title": "Relief shading",
+      "file": "hillshade.png",
+      "status": "visual_only",
+      "source": {
+        "name": "NASADEM elevation (NASA JPL / LP DAAC)",
+        "url": "https://lpdaac.usgs.gov/products/nasadem_hgtv001/"
+      }
+    }
+  ]
+}

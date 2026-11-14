@@ -130,7 +130,7 @@
 
 .scanFrame {
   mix-blend-mode: multiply;
-  opacity: 0.9;
+  opacity: 0.7;
   animation: drift 40s var(--ease) infinite alternate;
 }
 
@@ -152,7 +152,7 @@
   line-height: 1;
   letter-spacing: -0.03em;
   color: #fff;
-  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.55);
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.55); /* taste-skill-ignore: scrim under a number on a photo */
 }
 
 .scanBar {

@@ -55,31 +55,34 @@ purpose — an honest incomplete case beats a broken complete one.
 }
 ```
 
+## Routes
+
+- `/` cover page (server component, reads `public/sites/*/site.json` and `layers.json` at build time)
+- `/story/<id>` story mode for `lake_mead`, `aletsch`, `donana` (`/story` redirects to Lake Mead)
+- `/explore` click any point, calls the API's `/sweep`
+
 ## Code map
 
 ```
-src/app/layout.tsx       metadata, <html lang="en">
-src/app/page.tsx         server component that mounts the story app
-src/app/globals.css      the whole stylesheet
-src/story/StoryApp.tsx   'use client' boundary: layout, cases, year playback
-src/story/Terrain.tsx    displaced plane + 3-layer shader (base, trend, yearly)
-src/story/StoryScene.tsx canvas, lights, camera, orbit controls
-src/story/StoryPanel.tsx the three investigation steps
-src/story/Timeline.tsx   play / scrub / crossfade
-src/story/useSite.ts     site.json + texture loading, with a per-URL cache
-src/story/types.ts       the data contract
-scripts/sync-sites.mjs   sites/ -> public/sites
+src/app/layout.tsx          metadata, Archivo font, <html lang="en">
+src/app/globals.css         design tokens and shared pieces (stamp, buttons, evidence, before/after)
+src/app/page.tsx            cover page
+src/app/landing/            cover styles and the hero year scrubber
+src/app/story/[id]/page.tsx static story routes
+src/lib/                    shared: cases + number formatting, Stamp, SeriesLine, Evidence, BeforeAfter
+src/story/StoryApp.tsx      'use client' boundary: bar, layer picker, year playback
+src/story/heights.ts        16-bit PNG / terrain-RGB decoder (full-precision metres)
+src/story/Terrain.tsx       CPU relief mesh + slab sides; shader for hillshade, trend and yearly layers
+src/story/StoryScene.tsx    canvas, raking sun with shadows, fog, fly-in camera
+src/story/StoryPanel.tsx    the case file: verdict, three questions, narrator
+src/story/Timeline.tsx      the year scrubber, drawn as the selected record's chart
+src/story/useSite.ts        site.json, legends, textures (picks base_hq when sharper)
+src/story/story.css         story-mode styles
+src/features/explore/       explore mode (MapLibre over NASA Blue Marble)
+scripts/sync-sites.mjs      sites/ -> public/sites
 ```
 
-Only `StoryApp.tsx` needs `'use client'`; everything it imports joins that client
-bundle automatically. `page.tsx` stays a server component so the route can export
-metadata.
-
-## Where the explore mode goes
-
-`src/app/page.tsx` is currently the story mode, so the public link lands on
-something complete. When the 2D explore mode arrives, move this route to
-`src/app/story/page.tsx` and let `/` become the landing page.
+The visual system is described in `DESIGN.md` at the repo root.
 
 ## Placeholder assets
 
@@ -89,4 +92,4 @@ something complete. When the 2D explore mode arrives, move this route to
 uv run --python 3.11 --with pillow --with numpy python ../sites/_example/make_fake_assets.py
 ```
 
-The UI shows a "Preview case" flag whenever the site id starts with `_`.
+The preview case is no longer listed in the UI: only real cases appear.

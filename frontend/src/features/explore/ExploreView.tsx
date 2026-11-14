@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { FriendlyError, fetchSites, fetchSweep } from "./api";
 import { fmtPlace } from "./format";
 import ResultsPanel from "./ResultsPanel";
+import { CloseIcon } from "../../lib/Icons";
 import type { Place, Site, SweepResponse } from "./types";
 import styles from "./explore.module.css";
 
@@ -102,7 +103,9 @@ export default function ExploreView() {
         <Link href="/" className={styles.homeLink}>
           <span aria-hidden="true">←</span> Earth Trend Detective
         </Link>
-        <span className={styles.topbarHint}>Explore any place</span>
+        <Link href="/story/lake_mead" className={styles.topbarHint}>
+          Solved cases <span aria-hidden="true">→</span>
+        </Link>
       </header>
       <div className={styles.layout}>
         <MapView place={place} onPick={analyze} />
@@ -114,7 +117,7 @@ export default function ExploreView() {
                 <p className={styles.placeCoords}>{fmtPlace(place.lat, place.lon)}</p>
               </div>
               <button type="button" className={styles.iconButton} onClick={clear} aria-label="Clear this place">
-                <span aria-hidden="true">✕</span>
+                <CloseIcon />
               </button>
             </div>
           )}
@@ -151,7 +154,7 @@ export default function ExploreView() {
           {status.kind === "error" && (
             <div className={styles.state} role="alert">
               <h2 className={styles.stateTitle}>
-                <span aria-hidden="true">⚠ </span>We couldn&apos;t analyse this place
+                We couldn&apos;t analyse this place
               </h2>
               <p>{status.message}</p>
               <div className={styles.stepNav}>

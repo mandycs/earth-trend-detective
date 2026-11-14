@@ -48,6 +48,8 @@ export interface SiteAssets {
   heightmap_rgb?: string
   /** Greyscale multidirectional hillshade, same extent as `base`. */
   hillshade?: string
+  /** Higher-resolution cloud-free picture; used when it is sharper than `base`. */
+  base_hq?: string
   trend?: Record<string, string>
   yearly?: Record<string, string>
 }

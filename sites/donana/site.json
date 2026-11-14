@@ -24,6 +24,9 @@
       79.0
     ],
     "base": "base.jpg",
+    "heightmap_rgb": "heightmap_rgb.png",
+    "hillshade": "hillshade.png",
+    "base_hq": "base_hq.jpg",
     "trend": {},
     "yearly": {}
   },

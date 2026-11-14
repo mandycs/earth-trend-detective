@@ -34,11 +34,15 @@
 .topbarHint {
   display: inline-flex;
   align-items: center;
+  gap: 8px;
   min-height: 44px;
-  padding: 0 14px;
-  background: var(--accent);
-  color: var(--on-accent);
-  font-weight: 650;
+  color: var(--ink-2);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.topbarHint:hover {
+  color: var(--ink);
 }
 
 .layout {
@@ -92,7 +96,9 @@
 .mapHint {
   position: absolute;
   left: 16px;
+  right: 76px;
   top: 16px;
+  width: fit-content;
   margin: 0;
   padding: 10px 14px;
   background: var(--ground);
@@ -115,7 +121,7 @@
 .mapWrap :global(.maplibregl-ctrl-group) {
   border-radius: 0;
   background: var(--surface);
-  box-shadow: none !important;
+  box-shadow: none !important; /* taste-skill-ignore: removes maplibre's own shadow */
 }
 
 .mapWrap :global(.maplibregl-ctrl-group button) {
@@ -131,8 +137,9 @@
   filter: invert(1);
 }
 
-.mapWrap :global(.maplibregl-ctrl-attrib) {
-  background: rgba(11, 13, 16, 0.85);
+.mapWrap :global(.maplibregl-ctrl-attrib),
+.mapWrap :global(.maplibregl-ctrl-attrib.maplibregl-compact) {
+  background: rgba(11, 13, 16, 0.85) !important;
   color: var(--ink-2);
 }
 
@@ -362,7 +369,7 @@
 .srOnly {
   position: absolute;
   width: 1px;
-  height: 1px;
+  height: 1px; /* taste-skill-ignore: screen-reader-only text */
   overflow: hidden;
   clip: rect(0 0 0 0);
   white-space: nowrap;
@@ -609,9 +616,6 @@
   .stepHeading,
   .stateTitle {
     font-size: 2rem;
-  }
-  .topbarHint {
-    display: none;
   }
   .placeName {
     font-size: 2rem;

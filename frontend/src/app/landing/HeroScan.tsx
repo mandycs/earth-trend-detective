@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import styles from './landing.module.css'
+import { PlayPauseIcon } from '../../lib/Icons'
 
 export interface HeroScanProps {
   base: string
@@ -82,7 +83,7 @@ export function HeroScan({ base, framePattern, years, layerLabel, stops, more, l
             aria-pressed={playing}
             aria-label={playing ? 'Pause the years' : 'Play the years'}
           >
-            <span aria-hidden="true">{playing ? '❚❚' : '▶'}</span>
+            <PlayPauseIcon playing={playing} />
           </button>
           <label className={styles.scanTrack}>
             <span className="sr-only">Year</span>

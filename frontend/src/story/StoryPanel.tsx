@@ -1,4 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { BeforeAfter } from '../lib/BeforeAfter'
+import { pairFromLayers } from '../lib/beforeAfterPair'
+import type { BeforeAfterPair } from '../lib/beforeAfterPair'
 import type { Site, SiteVariable } from './types'
 import { Stamp } from '../lib/Stamp'
 import { SeriesLine } from '../lib/SeriesLine'
@@ -32,9 +35,26 @@ function leadSentence(site: Site, lead: SiteVariable): string {
       : `${lead.label} is ${lead.direction === 'down' ? 'going down' : 'going up'}${lead.verdict === 'real' ? ' for real' : ', probably'}${slope ? ` (${slope} per decade)` : ''}.`
 }
 
+function usePair(siteId: string): BeforeAfterPair | null {
+  const [pair, setPair] = useState<{ id: string; value: BeforeAfterPair | null }>({ id: '', value: null })
+  useEffect(() => {
+    let alive = true
+    fetch(`/sites/${siteId}/layers.json`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((file) => alive && setPair({ id: siteId, value: pairFromLayers(siteId, file) }))
+      .catch(() => alive && setPair({ id: siteId, value: null }))
+    return () => {
+      alive = false
+    }
+  }, [siteId])
+  return pair.id === siteId ? pair.value : null
+}
+
 function Changing({ site, variable, onSelectVariable }: { site: Site; variable: SiteVariable; onSelectVariable: (id: string) => void }) {
+  const pair = usePair(site.id)
   return (
     <>
+      {pair ? <BeforeAfter pair={pair} alt={`Satellite picture of ${shortName(site.name)}`} /> : null}
       <p className="sp-lede">
         Every NASA record we could get for this place, {site.years[0]} to {site.years[1]}. Pick one to put it on the
         timeline.

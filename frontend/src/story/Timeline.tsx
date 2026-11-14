@@ -1,5 +1,6 @@
 import type { SiteVariable } from './types'
 import { fmt } from '../lib/cases'
+import { PlayPauseIcon } from '../lib/Icons'
 
 export interface TimelineProps {
   first: number
@@ -61,7 +62,7 @@ export function Timeline({ first, last, year, playing, variable, mapFollows, onS
         aria-pressed={playing}
         aria-label={playing ? 'Pause the years' : 'Play the years'}
       >
-        <span aria-hidden="true">{playing ? '❚❚' : '▶'}</span>
+        <PlayPauseIcon playing={playing} />
       </button>
 
       <output className="tl-year narrow" aria-live="off">

@@ -1,5 +1,7 @@
 import Link from 'next/link'
-import { readCases, readLegend } from '../lib/readSites'
+import { readCases, readLayersFile, readLegend } from '../lib/readSites'
+import { BeforeAfter } from '../lib/BeforeAfter'
+import { pairFromLayers } from '../lib/beforeAfterPair'
 import { leadVariable, pct, shortName, slopeText } from '../lib/cases'
 import { Stamp } from '../lib/Stamp'
 import { SeriesLine } from '../lib/SeriesLine'
@@ -88,6 +90,7 @@ export default function HomePage() {
   const cases = readCases()
   const hero = cases.find((s) => s.id === 'lake_mead') ?? cases[0]
   const lead = hero ? leadVariable(hero) : null
+  const pair = hero ? pairFromLayers(hero.id, readLayersFile(hero.id) as Parameters<typeof pairFromLayers>[1]) : null
   const sources = Array.from(
     new Map(cases.flatMap((s) => s.sources ?? []).map((src) => [src.url, src])).values(),
   )
@@ -175,6 +178,7 @@ export default function HomePage() {
                   </p>
                 </div>
                 <div className={styles.moveVisual}>
+                  {pair ? <BeforeAfter pair={pair} alt={`Satellite picture of ${shortName(hero.name)}`} /> : null}
                   {lead.series ? (
                     <SeriesLine
                       series={lead.series}

@@ -49,6 +49,21 @@ function normaliseSite(raw: Site): Site {
   }
 }
 
+/** The sharper of base_hq and base: base_hq is only worth it when it is wider. */
+async function pickBase(site: Site, get: (url: string, srgb: boolean) => Promise<THREE.Texture>): Promise<THREE.Texture> {
+  const base = siteAssetBase(site.id)
+  if (site.assets.base_hq) {
+    try {
+      const hq = await get(base + site.assets.base_hq, true)
+      const width = (hq.image as { width?: number } | undefined)?.width ?? 0
+      if (width >= 2400) return hq
+    } catch {
+      /* fall back to base */
+    }
+  }
+  return get(base + site.assets.base, true)
+}
+
 export function useSite(siteId: string) {
   const [state, setState] = useState<{ id: string; site: Site | null; error: string | null }>({
     id: siteId,
@@ -177,7 +192,7 @@ export function useStoryAssets(site: Site | null, layer: MapLayer | null): Story
         { rgb: site.assets.heightmap_rgb ? base + site.assets.heightmap_rgb : undefined, grey: base + site.assets.heightmap },
         site.assets.heightmap_range_m ?? site.elevation_m,
       ),
-      get(base + site.assets.base, true),
+      pickBase(site, get),
       site.assets.hillshade ? get(base + site.assets.hillshade, false).catch(() => null) : Promise.resolve(null),
     ])
       .then(([grid, map, shade]) => {

@@ -22,6 +22,14 @@ export function readCases(): Site[] {
   return sites
 }
 
+export function readLayersFile(siteId: string): unknown {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(process.cwd(), 'public', 'sites', siteId, 'layers.json'), 'utf8'))
+  } catch {
+    return null
+  }
+}
+
 export interface LayerLegend {
   label: string
   kind: 'trend' | 'anomaly'
