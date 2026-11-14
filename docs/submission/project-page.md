@@ -82,9 +82,9 @@ Every verdict is shown as icon plus words, never colour alone:
 
 **Maps and relief.** Per-pixel Sen slope of MODIS daytime ground temperature at Lake Mead, faded where not significant. Yearly maps of ground temperature (MOD11C3) and vegetation (MOD13A3) decoded from NASA GIBS colour maps into value grids. Relief from NASADEM heights, cloud-free 30 m HLS base imagery, and close-up relief and aerial photos for the drone view.
 
-**Frontend.** Next.js 16, React 19, three.js with react-three-fiber for the relief and the drone view, MapLibre GL for the investigator and explore maps.
+**Frontend.** Two modes: a documentary mode that tells a case in three chapters, and an instrument mode (a case's free mode, the investigator and explore) with layers, Identify and the full evidence. Next.js 16, React 19, three.js with react-three-fiber for the relief and the drone view, MapLibre GL for the investigator and explore maps.
 
-**Backend.** FastAPI: `/health`, `/variables`, `/sweep` (POWER sweep at a point), `/sites`, `/sites/{id}/sweep`, `/route`, `/narrative`, `/investigate` (server-sent events, one per step) and `/layers/suggest`. The solved cases are precomputed into `sites/<id>/`, so the demo does not depend on a live download. 344 backend tests.
+**Backend.** FastAPI: `/health`, `/variables`, `/sweep` (POWER sweep at a point), `/sites`, `/sites/{id}/sweep`, `/route`, `/narrative`, `/investigate` (server-sent events, one per step) and `/layers/suggest`. The solved cases are precomputed into `sites/<id>/`, so the demo does not depend on a live download. 345 backend tests.
 
 ### Built / Simulated / Next
 

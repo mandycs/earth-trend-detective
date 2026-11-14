@@ -12,7 +12,9 @@ NASA Space Apps Challenge 2026 · Challenge: [Be An Earth System Trend Detective
 
 - **Solved cases** (`/story/<id>`): Lake Mead, the Aletsch Glacier and the Doñana wetlands, 2003–2024, over a 3D
   relief built from NASADEM. Each case walks through three questions: *What is changing? Is it real? Is it the
-  climate?* Yearly maps, a drone view over real aerial photographs, and every layer names its source.
+  climate?* The case opens as a short documentary; after chapter 3 (or at any time) it switches to an
+  instrument mode with layers, Identify and the full evidence. Yearly maps, a drone view over real aerial
+  photographs, and every layer names its source.
 - **Ask the detective** (`/investigate`): pick a point and ask a question. A language model plans the checks
   from a fixed menu of NASA data; the code runs them and the answer comes first, with every figure checked.
 - **Explore** (`/explore`): click anywhere for a quick trend sweep of NASA POWER climate records at that point.
