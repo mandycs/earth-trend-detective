@@ -100,3 +100,16 @@ def test_explain_report_attaches_the_answer_only_for_a_question():
     assert with_question["answer"]["headline"]
     without = explain_report(report(HEAT, WATER), None).to_dict()
     assert "answer" not in without
+
+
+def test_a_question_paragraph_is_held_to_three_sentences():
+    from app.explain.validator import validate_narrative
+
+    four = (
+        "Total water stored is going down. It is real. Rainfall: we can't tell yet. "
+        "Air temperature is going up."
+    )
+    base = report(HEAT, WATER, RAIN)
+    assert not [r for r in validate_narrative(four, base).rejected if r.kind == "length"]
+    asked = {**base, "question": "Is the water going down?"}
+    assert [r for r in validate_narrative(four, asked).rejected if r.kind == "length"]
