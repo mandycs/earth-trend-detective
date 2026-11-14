@@ -109,9 +109,12 @@ class AnthropicLLM:
         return self._create(self.narrative_model, system, user, max_tokens=4096, output_config={"effort": "low"})
 
 
-def make_llm() -> AnthropicLLM | None:
-    """A Claude client if LLM_API_KEY is set, else None (template mode)."""
+def make_llm() -> LLM | None:
+    """Claude via LLM_API_KEY (Anthropic), else via OpenRouter if its key is available,
+    else None (template mode)."""
     key = get_api_key()
-    if key is None:
-        return None
-    return AnthropicLLM(anthropic.Anthropic(api_key=key, timeout=REQUEST_TIMEOUT_S, max_retries=1))
+    if key is not None:
+        return AnthropicLLM(anthropic.Anthropic(api_key=key, timeout=REQUEST_TIMEOUT_S, max_retries=1))
+    from app.explain.openrouter import make_openrouter_llm  # local import: optional provider
+
+    return make_openrouter_llm()
