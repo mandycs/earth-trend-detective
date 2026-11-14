@@ -40,13 +40,17 @@ export default function MapView({ place, onPick }: Props) {
         cooperativeGestures: false,
       });
       m.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
+      // Instrument layout: a reading column covers the left of the map on wide screens.
+      const pad = () => m.setPadding({ left: window.innerWidth >= 900 ? Math.round(window.innerWidth * 0.4) : 0, top: 0, right: 0, bottom: 0 });
+      pad();
+      window.addEventListener("resize", pad);
       m.getCanvas().style.cursor = "crosshair";
       m.on("click", (e) => onPickRef.current(e.lngLat.lat, e.lngLat.lng));
       m.on("error", (e) => {
         // Only a failed style means no map at all; a missing tile is harmless.
         if (!m.isStyleLoaded() && String(e.error?.message ?? "").toLowerCase().includes("style")) setFailed(true);
       });
-      marker.current = new maplibregl.Marker({ color: "#ffd23f" });
+      marker.current = new maplibregl.Marker({ color: "#e9ecee" });
       map.current = m;
       setReady(true);
     })().catch(() => setFailed(true));

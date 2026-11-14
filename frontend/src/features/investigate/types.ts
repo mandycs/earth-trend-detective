@@ -72,7 +72,18 @@ export interface ThenNowResult {
   after: PictureSide | null
 }
 
+/** Built in code from the data by the backend (no LLM): render as-is. */
+export interface Answer {
+  headline: string
+  verdict: 'real' | 'likely' | 'unknown'
+  direction: 'up' | 'down' | null
+  figure: string | null
+  figure_label: string | null
+  note: string | null
+}
+
 export interface ExplainResult {
+  answer?: Answer | null
   text: string | null
   note?: string
   source?: string

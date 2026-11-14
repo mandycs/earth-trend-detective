@@ -18,6 +18,10 @@ export interface LayerPanelProps {
   onIdentify: (on: boolean) => void
   /** Drone: coarse layers are drawn as blocks over a small crop. */
   cropKm?: number
+  compareId: string | null
+  onCompare: (id: string | null) => void
+  /** Short note shown even when folded, e.g. "No map for this record". */
+  notice?: string | null
 }
 
 function km(metres: number): string {
@@ -51,8 +55,8 @@ function Legend({ def, cropKm }: { def: LayerDef; cropKm?: number }) {
       {g?.unit && !(g.less || g.more) ? <span>Unit: {g.unit}</span> : null}
       {def.pixelM && def.pixelM >= 200 ? (
         <span>
-          Each square = {km(def.pixelM)} measurement
-          {cropKm && def.pixelM / 1000 > cropKm / 3 ? ': coarser than this close-up, drawn as blocks, not smoothed' : ''}
+          {km(def.pixelM)} pixels, smoothed for display
+          {cropKm && def.pixelM / 1000 > cropKm / 3 ? ': coarser than this close-up' : ''}
         </span>
       ) : null}
       {g?.notes.map((n) => (
@@ -93,11 +97,14 @@ export function LayerPanel({
   identify,
   onIdentify,
   cropKm,
+  compareId,
+  onCompare,
+  notice,
 }: LayerPanelProps) {
   const [open, setOpen] = useState<string | null>(null)
   const [question, setQuestion] = useState('')
   const [dragging, setDragging] = useState<string | null>(null)
-  const [folded, setFolded] = useState(false)
+  const [folded, setFolded] = useState(true)
   const onCount = stack.filter((s) => s.on).length
 
   const update = (id: string, patch: Partial<StackEntry>) =>
@@ -114,7 +121,10 @@ export function LayerPanel({
   return (
     <section className={folded ? 'lp lp-folded' : 'lp'} aria-label="Map layers">
       <button type="button" className="lp-fold" aria-expanded={!folded} onClick={() => setFolded((f) => !f)}>
-        <span>Layers{onCount ? ` · ${onCount} on` : ''}</span>
+        <span>
+          Layers{onCount ? ` · ${onCount} on` : ''}
+          {notice ? <span className="lp-notice"> · {notice}</span> : null}
+        </span>
         <span aria-hidden="true">{folded ? '+' : '−'}</span>
       </button>
       {folded ? null : (
@@ -231,6 +241,27 @@ export function LayerPanel({
           {whys.__base ? <p className="lp-why">{whys.__base}</p> : null}
         </li>
       </ol>
+
+      {(() => {
+        const coloured = layers.filter((l) => l.role === 'overlay' && l.blend !== 'multiply')
+        const main = stack.find((s) => s.on && coloured.some((c) => c.id === s.id))
+        if (!main || coloured.length < 2) return null
+        return (
+          <label className="lp-compare">
+            <span>Compare through a curtain</span>
+            <select value={compareId ?? ''} onChange={(e) => onCompare(e.target.value || null)}>
+              <option value="">No comparison</option>
+              {coloured
+                .filter((c) => c.id !== main.id)
+                .map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.title}
+                  </option>
+                ))}
+            </select>
+          </label>
+        )
+      })()}
 
       <button type="button" className={identify ? 'lp-identify lp-identify-on' : 'lp-identify'} aria-pressed={identify} onClick={() => onIdentify(!identify)}>
         {identify ? 'Identify is on: click the ground' : 'Identify: read values at a point'}

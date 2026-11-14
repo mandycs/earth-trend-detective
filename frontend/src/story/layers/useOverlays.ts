@@ -5,14 +5,22 @@ import { MAX_OVERLAYS } from '../Terrain'
 import type { LayerDef, StackEntry } from './model'
 import { fileFor } from './model'
 import { layerTexture } from './assets'
+import { smoothTexture } from './smooth'
 
-/** Coarser than this is drawn as visible blocks. */
-const BLOCK_METRES = 200
+interface Wanted {
+  def: LayerDef
+  opacity: number
+  side: -1 | 0 | 1
+  url: string
+  key: string
+}
 
 /**
  * Textures for the visible overlays, bottom first, for the cursor year.
- * A layer with nothing for that year is left out (the panel says so).
- * Each year's picture stays on screen until the next one has loaded.
+ * Value-backed layers are rebuilt at their native resolution and smoothed;
+ * the rest load as pictures. A layer with nothing for that year is left out
+ * (the panel says so). With a curtain, the main layer draws left of it and
+ * the compared layer right of it.
  */
 export function useOverlays(
   siteId: string,
@@ -20,47 +28,54 @@ export function useOverlays(
   stack: StackEntry[],
   year: number,
   rect?: [number, number, number, number],
+  compareId?: string | null,
 ): Overlay[] {
   const [loaded, setLoaded] = useState<Record<string, THREE.Texture>>({})
 
-  const wanted = stack
-    .filter((s) => s.on)
-    .map((s) => {
-      const def = layers.find((l) => l.id === s.id)
-      const file = def ? fileFor(def, year) : null
-      return def && file ? { def, entry: s, url: `/sites/${siteId}/${file}` } : null
-    })
-    .filter((x): x is { def: LayerDef; entry: StackEntry; url: string } => x !== null)
-    .slice(0, MAX_OVERLAYS)
-
-  const key = wanted.map((w) => w.url).join('|')
+  const wanted: Wanted[] = []
+  for (const s of stack) {
+    if (!s.on) continue
+    const def = layers.find((l) => l.id === s.id)
+    const file = def ? fileFor(def, year) : null
+    if (!def || !file) continue
+    const side: -1 | 0 | 1 = compareId && def.blend !== 'multiply' ? -1 : 0
+    wanted.push({ def, opacity: s.opacity, side, url: `/sites/${siteId}/${file}`, key: `${def.id}@${year}` })
+  }
+  if (compareId) {
+    const def = layers.find((l) => l.id === compareId)
+    const file = def ? fileFor(def, year) : null
+    const entry = stack.find((s) => s.id === compareId)
+    if (def && file) wanted.unshift({ def, opacity: entry?.opacity ?? 0.85, side: 1, url: `/sites/${siteId}/${file}`, key: `${def.id}@${year}` })
+  }
+  const list = wanted.slice(0, MAX_OVERLAYS)
+  const signature = list.map((w) => w.key).join('|')
 
   useEffect(() => {
     let alive = true
-    for (const w of wanted) {
-      const blocks = (w.def.pixelM ?? 0) >= BLOCK_METRES
-      layerTexture(w.url, blocks, w.def.blend !== 'multiply')
-        .then((t) => alive && setLoaded((prev) => (prev[w.url] === t ? prev : { ...prev, [w.url]: t })))
+    for (const w of list) {
+      const store = (t: THREE.Texture) => alive && setLoaded((prev) => (prev[w.key] === t ? prev : { ...prev, [w.key]: t }))
+      smoothTexture(siteId, w.def, year)
+        .then((smooth) => {
+          if (smooth) store(smooth.texture)
+          else return layerTexture(w.url, false, w.def.blend !== 'multiply').then(store)
+        })
         .catch(() => undefined)
       // Warm the neighbouring years so playback does not stall.
-      for (const near of [year + 1, year - 1]) {
-        const f = fileFor(w.def, near)
-        if (f) layerTexture(`/sites/${siteId}/${f}`, blocks, w.def.blend !== 'multiply').catch(() => undefined)
-      }
+      for (const near of [year + 1, year - 1]) smoothTexture(siteId, w.def, near).catch(() => undefined)
     }
     return () => {
       alive = false
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, siteId, year])
+  }, [signature, siteId, year])
 
   // Stack is top first; the shader wants bottom first.
-  return wanted
+  return list
     .slice()
     .reverse()
     .map((w) => {
-      const texture = loaded[w.url]
-      const overlay: Overlay | null = texture ? { texture, opacity: w.entry.opacity, blend: w.def.blend, rect } : null
+      const texture = loaded[w.key]
+      const overlay: Overlay | null = texture ? { texture, opacity: w.opacity, blend: w.def.blend, rect, side: w.side } : null
       return overlay
     })
     .filter((o): o is Overlay => o !== null)

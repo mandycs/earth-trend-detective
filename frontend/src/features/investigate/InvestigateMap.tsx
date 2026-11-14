@@ -95,10 +95,14 @@ export default function InvestigateMap({ place, layers, onPick, focusBbox }: Pro
       m.getCanvas().style.cursor = 'crosshair'
       m.on('click', (e) => onPickRef.current(e.lngLat.lat, e.lngLat.lng))
       m.on('load', () => !cancelled && setReady(true))
+      // Instrument layout: a reading column covers the left of the map on wide screens.
+      const pad = () => m.setPadding({ left: window.innerWidth >= 1000 ? Math.round(window.innerWidth * 0.4) : 0, top: 0, right: 0, bottom: 0 })
+      pad()
+      window.addEventListener('resize', pad)
       m.on('error', (e) => {
         if (!m.isStyleLoaded() && String(e.error?.message ?? '').toLowerCase().includes('style')) setFailed(true)
       })
-      marker.current = new maplibregl.Marker({ color: '#ffd23f' })
+      marker.current = new maplibregl.Marker({ color: '#e9ecee' })
       map.current = m
     })().catch(() => setFailed(true))
     const registry = added.current
@@ -156,9 +160,9 @@ export default function InvestigateMap({ place, layers, onPick, focusBbox }: Pro
         drop(m, prefix)
         if (spec.kind === 'footprint') {
           m.addSource(prefix, { type: 'geojson', data: circle(spec.center, spec.widthKm / 2) })
-          m.addLayer({ id: `${prefix}-fill`, type: 'fill', source: prefix, paint: { 'fill-color': '#ffd23f', 'fill-opacity': 0.14 } }, anchor)
+          m.addLayer({ id: `${prefix}-fill`, type: 'fill', source: prefix, paint: { 'fill-color': '#e9ecee', 'fill-opacity': 0.1 } }, anchor)
           m.addLayer(
-            { id: `${prefix}-edge`, type: 'line', source: prefix, paint: { 'line-color': '#ffd23f', 'line-width': 3, 'line-dasharray': [2, 1.5] } },
+            { id: `${prefix}-edge`, type: 'line', source: prefix, paint: { 'line-color': '#e9ecee', 'line-width': 3, 'line-dasharray': [2, 1.5] } },
             anchor,
           )
         } else if (spec.kind === 'wms') {

@@ -11,7 +11,14 @@ import { CloseIcon } from '../../lib/Icons'
 import { investigate } from './stream'
 import type { InvEvent, InvPlace, Plan, StepLayer, StepState, ThenNowResult } from './types'
 import type { MapLayerSpec } from './InvestigateMap'
-import { StepResult } from './StepResult'
+import { AnswerBlock, StepResult, stepSummary } from './StepResult'
+import type { ExplainResult } from './types'
+import { Stamp } from '../../lib/Stamp'
+
+function StepAnswer({ result }: { result: unknown }) {
+  if (!result || typeof result !== 'object') return null
+  return <AnswerBlock result={result as ExplainResult} />
+}
 import styles from './investigate.module.css'
 
 const InvestigateMap = dynamic(() => import('./InvestigateMap'), {
@@ -30,6 +37,7 @@ interface Run {
   plan: Plan | null
   steps: StepState[]
   results: Record<string, unknown>
+  question: string
   error: string | null
   done: boolean
 }
@@ -70,6 +78,9 @@ export default function InvestigateView({ initialSite }: { initialSite?: string 
   const [controls, setControls] = useState<Record<string, LayerControl>>({})
   const [clock, setClock] = useState(0)
   const controller = useRef<AbortController | null>(null)
+  const [askOpen, setAskOpen] = useState(true)
+  const [layersOpen, setLayersOpen] = useState(false)
+  const [openStep, setOpenStep] = useState<string | null>(null)
   const caseRef = useRef<HTMLElement>(null)
   const hasPlan = Boolean(run?.plan)
 
@@ -133,7 +144,9 @@ export default function InvestigateView({ initialSite }: { initialSite?: string 
     const c = new AbortController()
     controller.current = c
     setControls({})
-    setRun({ place: null, plan: null, steps: [], results: {}, error: null, done: false })
+    setRun({ place: null, plan: null, steps: [], results: {}, question: question.trim(), error: null, done: false })
+    setAskOpen(false)
+    setOpenStep(null)
     const body =
       target.kind === 'site'
         ? { question: question.trim(), site_id: target.id }
@@ -237,7 +250,11 @@ export default function InvestigateView({ initialSite }: { initialSite?: string 
           <InvestigateMap place={markerPlace} layers={stack.map((s) => s.spec)} onPick={pickPoint} focusBbox={focusBbox} />
           {stack.length > 0 ? (
             <section className={styles.stack} aria-label="Map layers">
-              {stack.map((entry) => (
+              <button type="button" className={styles.layersToggle} aria-expanded={layersOpen} onClick={() => setLayersOpen((o) => !o)}>
+                <span>Layers ({stack.filter((e) => e.spec.visible).length} on)</span>
+                <span aria-hidden="true">{layersOpen ? '−' : '+'}</span>
+              </button>
+              {layersOpen && stack.map((entry) => (
                 <div key={entry.spec.id} className={styles.layerRow}>
                   <label className={styles.layerToggle}>
                     <input
@@ -295,6 +312,17 @@ export default function InvestigateView({ initialSite }: { initialSite?: string 
         </div>
 
         <aside className={styles.panel} aria-label="Investigation">
+          {run && !askOpen ? (
+            <div className={styles.askedBar}>
+              <p>
+                <strong>{run.place ? (run.place.id === 'point' ? fmtPlace(run.place.lat, run.place.lon) : shortName(run.place.name)) : target?.kind === 'site' ? shortName(target.name) : 'This place'}</strong>
+                <span> · “{run.question}”</span>
+              </p>
+              <button type="button" className="btn" onClick={() => setAskOpen(true)}>
+                Ask another
+              </button>
+            </div>
+          ) : (
           <div className={styles.ask}>
             <h1 className={`${styles.title} narrow`}>Ask the detective</h1>
             <p className={styles.lede}>
@@ -372,63 +400,85 @@ export default function InvestigateView({ initialSite }: { initialSite?: string 
               {!target ? <p className={styles.note}>Pick a place first: click the map or a solved case.</p> : null}
             </form>
           </div>
+          )}
 
           {run ? (
-            <section ref={caseRef} className={styles.case} aria-live="polite" aria-label="Investigation progress">
-              {run.place ? (
-                <h2 className={`${styles.caseTitle} narrow`}>{run.place.id === 'point' ? fmtPlace(run.place.lat, run.place.lon) : shortName(run.place.name)}</h2>
-              ) : null}
-              {!run.plan && !run.error ? (
-                <p className={styles.thinking}>
-                  <span className="spinner" aria-hidden="true" /> Planning the investigation…
-                </p>
-              ) : null}
-              {run.plan ? (
-                <>
-                  <p className={styles.note}>
-                    {run.plan.source === 'llm'
-                      ? 'Plan chosen by an AI from a fixed menu of NASA checks.'
-                      : 'Standard plan for this kind of place.'}
-                  </p>
-                  <ol className={styles.steps}>
-                    {run.plan.steps.map((step, index) => {
-                      const state = run.steps[index] ?? { status: 'pending' }
-                      const elapsed =
-                        state.status === 'running' ? Math.max(0, Math.round(((clock || performance.now()) - state.startedAt) / 1000)) : null
-                      return (
-                        <li key={`${step.id}-${index}`} className={`${styles.step} ${styles[`step_${state.status}`] ?? ''}`}>
-                          <div className={styles.stepHead}>
-                            <span className={styles.stepMark} aria-hidden="true">
-                              {state.status === 'running' ? <span className="spinner" /> : null}
-                            </span>
-                            <div>
-                              <h3>{step.title}</h3>
-                              <p className={styles.why}>{step.why}</p>
-                            </div>
-                            <span className={styles.stepTime}>
-                              {state.status === 'done'
-                                ? `${state.seconds < 1 ? '<1' : Math.round(state.seconds)} s`
-                                : state.status === 'running'
-                                  ? `${elapsed} s / ~${step.seconds} s`
-                                  : state.status === 'failed'
-                                    ? 'failed'
-                                    : `~${step.seconds} s`}
-                            </span>
-                          </div>
-                          {state.status === 'done' ? (
-                            <StepResult id={step.id} result={state.result} years={years} name={run.place?.name ?? 'this place'} />
-                          ) : null}
-                          {state.status === 'failed' ? (
-                            <p className={styles.failed} role="alert">
-                              {state.message} The other checks still count.
-                            </p>
-                          ) : null}
-                        </li>
-                      )
-                    })}
-                  </ol>
-                </>
-              ) : null}
+            <section ref={caseRef} className={styles.case} aria-live="polite" aria-label="Investigation">
+              {(() => {
+                const steps = run.plan?.steps ?? []
+                const answerIndex = steps.findIndex((st) => st.id === 'explain')
+                const answerState = answerIndex >= 0 ? run.steps[answerIndex] : undefined
+                return (
+                  <>
+                    {answerState?.status === 'done' ? (
+                      <StepAnswer result={answerState.result} />
+                    ) : answerState?.status === 'failed' ? (
+                      <p className={styles.failed} role="alert">
+                        {answerState.message} The checks below still stand.
+                      </p>
+                    ) : !run.error ? (
+                      <p className={styles.thinking}>
+                        <span className="spinner" aria-hidden="true" /> {run.plan ? 'Working out the answer…' : 'Planning the investigation…'}
+                      </p>
+                    ) : null}
+
+                    {run.plan ? (
+                      <div className={styles.howWeKnow}>
+                        <h2 className={styles.howTitle}>How we know</h2>
+                        <p className={styles.note}>
+                          {run.plan.source === 'llm'
+                            ? 'Checks chosen by an AI from a fixed menu of NASA data. Open one to see it.'
+                            : 'Standard checks for this kind of place. Open one to see it.'}
+                        </p>
+                        <ol className={styles.steps}>
+                          {steps.map((step, index) => {
+                            if (step.id === 'explain') return null
+                            const state = run.steps[index] ?? { status: 'pending' }
+                            const key = `${step.id}-${index}`
+                            const open = openStep === key
+                            const summary = state.status === 'done' ? stepSummary(step.id, state.result) : null
+                            const elapsed =
+                              state.status === 'running' ? Math.max(0, Math.round(((clock || performance.now()) - state.startedAt) / 1000)) : null
+                            return (
+                              <li key={key} className={`${styles.step} ${styles[`step_${state.status}`] ?? ''}`}>
+                                <button
+                                  type="button"
+                                  className={styles.stepToggle}
+                                  aria-expanded={open}
+                                  disabled={state.status !== 'done'}
+                                  onClick={() => setOpenStep(open ? null : key)}
+                                >
+                                  <span className={styles.stepMark} aria-hidden="true">
+                                    {state.status === 'running' ? <span className="spinner" /> : state.status === 'done' ? (open ? '−' : '+') : null}
+                                  </span>
+                                  <span className={styles.stepLine}>
+                                    <span className={styles.stepName}>{step.title}</span>
+                                    <span className={styles.stepFigure}>
+                                      {summary?.verdict && summary.direction ? <Stamp verdict={summary.verdict} direction={summary.direction} className={styles.stepPill} /> : null}
+                                      {open ? null : summary?.figure ?? (state.status === 'running' ? `running · ${elapsed} s of ~${step.seconds} s` : state.status === 'failed' ? 'failed' : state.status === 'pending' ? 'waiting' : '')}
+                                    </span>
+                                  </span>
+                                </button>
+                                {open && state.status === 'done' ? (
+                                  <div className={styles.stepBody}>
+                                    <p className={styles.why}>{step.why}</p>
+                                    <StepResult id={step.id} result={state.result} years={years} name={run.place?.name ?? 'this place'} />
+                                  </div>
+                                ) : null}
+                                {state.status === 'failed' ? (
+                                  <p className={styles.failed} role="alert">
+                                    {state.message} The other checks still count.
+                                  </p>
+                                ) : null}
+                              </li>
+                            )
+                          })}
+                        </ol>
+                      </div>
+                    ) : null}
+                  </>
+                )
+              })()}
               {run.error ? (
                 <div className={styles.errorBox} role="alert">
                   <p>{run.error}</p>
@@ -436,11 +486,6 @@ export default function InvestigateView({ initialSite }: { initialSite?: string 
                     Try again
                   </button>
                 </div>
-              ) : null}
-              {run.done && !run.error ? (
-                <p className={styles.note}>
-                  Investigation complete. The share the climate leaves unexplained is a clue, not an attribution.
-                </p>
               ) : null}
             </section>
           ) : null}

@@ -8,7 +8,8 @@ Rules (each failure is one `Rejection`):
 - causal:    unhedged cause claims ("is caused by").
 - jargon:    statistics words (Mann-Kendall, FDR, p-value, ...).
 - lead:      if the report has a non-climate share, the text must say "a lead, not proof".
-- length:    empty text or more than MAX_SENTENCES sentences.
+- length:    empty text or more than MAX_SENTENCES sentences (MAX_QUESTION_SENTENCES when
+             the report carries a question).
 """
 
 from __future__ import annotations
@@ -32,6 +33,7 @@ from app.explain.vocab import (
 )
 
 MAX_SENTENCES = 5
+MAX_QUESTION_SENTENCES = 3  # the investigator's answer block already carries the headline
 _SENTENCE_SPLIT = re.compile(r"(?<=[.!?])\s+(?=[A-Z\"'(])")
 _CLAUSE_SPLIT = re.compile(r"[;:,()—]|\s–\s|\b(?:while|but|whereas|although|though|and|yet)\b", re.IGNORECASE)
 _PRONOUN_START = re.compile(r"^\s*(?:it|this|that|the change|the drop|the rise|its)\b", re.IGNORECASE)
@@ -163,8 +165,9 @@ def validate_narrative(text: str, report: Mapping) -> ValidationResult:
     rejected += _check_trends(text, report)
     rejected += _check_language(text, report)
     sentences = [s for s in _SENTENCE_SPLIT.split(text.strip()) if s.strip()]
-    if len(sentences) > MAX_SENTENCES:
-        rejected.append(Rejection("length", f"{len(sentences)} sentences, keep it to 3-5"))
+    limit = MAX_QUESTION_SENTENCES if report.get("question") else MAX_SENTENCES
+    if len(sentences) > limit:
+        rejected.append(Rejection("length", f"{len(sentences)} sentences, keep it to {limit} at most"))
     return ValidationResult(tuple(checked), tuple(rejected))
 
 

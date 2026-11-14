@@ -15,12 +15,21 @@ import type { SiteVariable } from './types'
 import { bboxWidthMeters } from './types'
 import { CASE_IDS, fmt, leadVariable, shortName } from '../lib/cases'
 import { LayerPanel } from './layers/LayerPanel'
+import { Curtain } from './layers/Curtain'
+import { layerTexture } from './layers/assets'
+import type { Overlay } from './Terrain'
+import { pairFromLayers } from '../lib/beforeAfterPair'
+import type { BeforeAfterPair } from '../lib/beforeAfterPair'
 import type { StackEntry } from './layers/model'
 import { defaultStack, fileFor, yearStatus } from './layers/model'
 import { useOverlays } from './layers/useOverlays'
 import { valueAt } from './layers/assets'
 import { sampleHeight } from './heights'
 import { API_URL } from '../features/explore/api'
+import { CHAPTER_NAMES, chaptersFor } from '../lib/chapters'
+
+/** Seconds each documentary chapter stays on screen when playing. */
+const CHAPTER_SECONDS = 9
 
 const CASE_LABELS: Record<string, string> = {
   lake_mead: 'Lake Mead',
@@ -70,6 +79,14 @@ export default function StoryApp({ caseId }: { caseId: string }) {
   const detailInfo = useDetailInfo(caseId)
   const [drone, setDrone] = useState(false)
   const detail = useDetailAssets(caseId, detailInfo, drone)
+  // The flying help shows for a few seconds on entering the drone, then leaves the view clean.
+  const [droneHelp, setDroneHelp] = useState(false)
+  useEffect(() => {
+    if (!drone || !detail.assets) return
+    setDroneHelp(true)
+    const t = window.setTimeout(() => setDroneHelp(false), 6000)
+    return () => window.clearTimeout(t)
+  }, [drone, detail.assets])
   const { timeline, layers } = useCaseLayers(caseId)
   const [stack, setStack] = useState<StackEntry[]>([])
   const [whys, setWhys] = useState<Record<string, string>>({})
@@ -77,6 +94,18 @@ export default function StoryApp({ caseId }: { caseId: string }) {
   const [asking, setAsking] = useState(false)
   const [askError, setAskError] = useState<string | null>(null)
   const [identify, setIdentify] = useState(false)
+  const [compareId, setCompareId] = useState<string | null>(null)
+  const [split, setSplit] = useState(0.5)
+  // Instrument layout puts a reading column over the left of the map on wide screens.
+  const [wide, setWide] = useState(false)
+  useEffect(() => {
+    const q = window.matchMedia('(min-width: 1101px)')
+    const on = () => setWide(q.matches)
+    on()
+    q.addEventListener('change', on)
+    return () => q.removeEventListener('change', on)
+  }, [])
+  const [pair, setPair] = useState<{ id: string; value: BeforeAfterPair | null; textures: [Overlay, Overlay] | null }>({ id: '', value: null, textures: null })
   const [picked, setPicked] = useState<IdentifyResult | null>(null)
   const [noMapFor, setNoMapFor] = useState<string | null>(null)
   const [altitude, setAltitude] = useState<number | null>(null)
@@ -84,6 +113,11 @@ export default function StoryApp({ caseId }: { caseId: string }) {
   const [step, setStep] = useState(0)
   const [playing, setPlaying] = useState(false)
   const [displayYear, setDisplayYear] = useState(0)
+  // Documentary first (DESIGN.md): three chapters, then free exploring.
+  const [mode, setMode] = useState<'doc' | 'free'>('doc')
+  const [chapter, setChapter] = useState(0)
+  const [chapterT, setChapterT] = useState(0)
+  const [docPlaying, setDocPlaying] = useState(true)
 
   const assets = useStoryAssets(site, null)
 
@@ -108,8 +142,61 @@ export default function StoryApp({ caseId }: { caseId: string }) {
     clockRef.current = 0
     setDisplayYear(site.years[0])
     setStep(0)
-    setPlaying(!window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    setPlaying(false)
+    setMode('doc')
+    setChapter(0)
+    setChapterT(0)
+    setDocPlaying(!reduced)
   }, [site])
+
+  // Documentary clock: chapter 1 runs the years, then each chapter holds its subtitle.
+  useEffect(() => {
+    if (mode !== 'doc' || !docPlaying || !site) return
+    let frame = 0
+    let previous = performance.now()
+    const tick = (now: number) => {
+      const delta = Math.min((now - previous) / 1000, 0.1)
+      previous = now
+      setChapterT((t) => {
+        const next = t + delta / CHAPTER_SECONDS
+        if (next >= 1) {
+          setChapter((c) => {
+            if (c >= CHAPTER_NAMES.length - 1) {
+              setDocPlaying(false)
+              return c
+            }
+            return c + 1
+          })
+          return chapter >= CHAPTER_NAMES.length - 1 ? 1 : 0
+        }
+        return next
+      })
+      frame = requestAnimationFrame(tick)
+    }
+    frame = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(frame)
+  }, [mode, docPlaying, site, chapter])
+
+  // In chapter 1 the year sweeps the record; later chapters talk about the whole period.
+  useEffect(() => {
+    if (mode !== 'doc' || !site) return
+    const [a, b] = site.years
+    setDisplayYear(chapter === 0 ? Math.min(b, a + Math.floor(chapterT * (b - a + 1))) : b)
+  }, [mode, chapter, chapterT, site])
+
+  const enterFree = () => {
+    setMode('free')
+    setDocPlaying(false)
+  }
+  const nextChapter = () => {
+    if (chapter >= CHAPTER_NAMES.length - 1) {
+      enterFree()
+      return
+    }
+    setChapter((c) => c + 1)
+    setChapterT(0)
+  }
 
   useEffect(() => {
     setStack(defaultStack(layers))
@@ -157,8 +244,16 @@ export default function StoryApp({ caseId }: { caseId: string }) {
   }
 
   /** Turning a layer on puts its record on the timeline. */
-  const changeStack = (next: StackEntry[]) => {
-    const newlyOn = next.find((s) => s.on && !stack.find((p) => p.id === s.id)?.on)
+  const changeStack = (incoming: StackEntry[]) => {
+    const newlyOn = incoming.find((s) => s.on && !stack.find((p) => p.id === s.id)?.on)
+    const isColoured = (id: string) => layers.find((l) => l.id === id)?.blend === 'normal'
+    // One coloured layer at a time; a second one is seen through the curtain.
+    const next =
+      newlyOn && isColoured(newlyOn.id)
+        ? incoming.map((s) => (s.id !== newlyOn.id && s.on && isColoured(s.id) ? { ...s, on: false } : s))
+        : incoming
+    if (newlyOn && newlyOn.id === compareId) setCompareId(null)
+    if (!next.some((s) => s.on && isColoured(s.id))) setCompareId(null)
     setStack(next)
     if (newlyOn) {
       const def = layers.find((l) => l.id === newlyOn.id)
@@ -218,8 +313,40 @@ export default function StoryApp({ caseId }: { caseId: string }) {
     return [(w - W) / (E - W), (s - S) / (N - S), (e - w) / (E - W), (n - s) / (N - S)]
   }, [site, detailInfo])
 
-  const overlays = useOverlays(caseId, layers, stack, shownYear)
-  const droneOverlays = useOverlays(caseId, layers, stack, shownYear, detailRect)
+  const overlays = useOverlays(caseId, layers, stack, shownYear, undefined, compareId)
+  const droneOverlays = useOverlays(caseId, layers, stack, shownYear, detailRect, compareId)
+
+  // Then-and-now pair (2003 | 2024) for the documentary's first chapter.
+  useEffect(() => {
+    let alive = true
+    fetch(`/sites/${caseId}/layers.json`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then(async (file) => {
+        const value = pairFromLayers(caseId, file)
+        if (!value) {
+          if (alive) setPair({ id: caseId, value: null, textures: null })
+          return
+        }
+        const [a, b] = await Promise.all([layerTexture(value.before.src, false), layerTexture(value.after.src, false)])
+        if (alive)
+          setPair({
+            id: caseId,
+            value,
+            textures: [
+              { texture: a, opacity: 1, blend: 'normal', side: -1 },
+              { texture: b, opacity: 1, blend: 'normal', side: 1 },
+            ],
+          })
+      })
+      .catch(() => alive && setPair({ id: caseId, value: null, textures: null }))
+    return () => {
+      alive = false
+    }
+  }, [caseId])
+  const docPair = pair.id === caseId ? pair : null
+  const docCurtain = mode === 'doc' && chapter === 0 && docPair?.textures ? docPair : null
+  // In chapter 1 the curtain sweeps from the first picture to the last.
+  const docSplit = 0.85 - 0.7 * Math.min(1, chapterT * 1.15)
 
   // Words for the trend-tested yearly anomaly layer, read back from its colours.
   const anomalyLayer = stack.find((s) => s.on && layers.find((l) => l.id === s.id)?.id.startsWith('year_'))
@@ -322,7 +449,7 @@ export default function StoryApp({ caseId }: { caseId: string }) {
     : { title: 'Satellite picture', note: 'one date, not per year', status: 'visual_only' as const }
 
   return (
-    <div className="st">
+    <div className={mode === 'doc' ? 'st st-documentary' : drone ? 'st st-in-drone' : 'st'}>
       <header className="st-bar">
         <Link href="/" className="st-wordmark wide">
           Earth Trend Detective
@@ -350,8 +477,90 @@ export default function StoryApp({ caseId }: { caseId: string }) {
       <main className="st-stage">
         <section className="st-viewer" aria-label="3D terrain">
           <div className={identify ? 'st-canvas st-identify' : 'st-canvas'}>
+            {site && mode === 'doc' ? (
+              <div className="doc">
+                <div className="doc-top">
+                  <Link href="/" className="doc-wordmark wide">
+                    Earth Trend Detective
+                  </Link>
+                  <ol className="doc-chapters" aria-label="Chapters">
+                    {CHAPTER_NAMES.map((name, i) => (
+                      <li key={name}>
+                        <button
+                          type="button"
+                          className={i === chapter ? 'doc-chapter doc-chapter-on' : 'doc-chapter'}
+                          aria-current={i === chapter ? 'step' : undefined}
+                          onClick={() => {
+                            setChapter(i)
+                            setChapterT(0)
+                          }}
+                        >
+                          {name}
+                        </button>
+                      </li>
+                    ))}
+                  </ol>
+                  <span className="doc-year narrow" aria-live="off">
+                    {`${firstYear}–${lastYear}`}
+                  </span>
+                </div>
+                {docCurtain?.value ? (
+                  <Curtain
+                    split={docSplit}
+                    onSplit={() => undefined}
+                    left={String(docCurtain.value.before.year)}
+                    right={String(docCurtain.value.after.year)}
+                    interactive={false}
+                  />
+                ) : null}
+                {(() => {
+                  const c = chaptersFor(site)[chapter]
+                  return (
+                    <div className="doc-sub" key={`${site.id}-${chapter}`} aria-live="polite">
+                      <p className="doc-place">{shortName(site.name)}</p>
+                      <p className="doc-headline narrow">{c.headline}</p>
+                      {c.line ? <p className="doc-line">{c.line}</p> : null}
+                    </div>
+                  )
+                })()}
+                <div className="doc-bottom">
+                  <div
+                    className="doc-progress"
+                    role="progressbar"
+                    aria-label="Story progress"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={Math.round(((chapter + chapterT) / CHAPTER_NAMES.length) * 100)}
+                  >
+                    <i style={{ width: `${((chapter + chapterT) / CHAPTER_NAMES.length) * 100}%` }} />
+                  </div>
+                  <div className="doc-controls">
+                    <button type="button" className="doc-quiet" onClick={enterFree}>
+                      Explore
+                    </button>
+                    <button type="button" className="doc-quiet" onClick={() => setDocPlaying((p) => !p)} aria-pressed={!docPlaying}>
+                      {docPlaying ? 'Pause' : 'Play'}
+                    </button>
+                    <button type="button" className="btn btn-primary" onClick={nextChapter}>
+                      {chapter >= CHAPTER_NAMES.length - 1 ? 'Explore freely →' : `Next: ${CHAPTER_NAMES[chapter + 1].replace(/\?$/, '').toLowerCase()} →`}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
             {site && !error && !drone ? (
-              <StoryScene site={site} assets={assets} overlays={overlays} onPick={identify ? onPick : undefined} exaggeration={vx} />
+              <StoryScene
+                site={site}
+                assets={assets}
+                overlays={mode === 'doc' ? (docCurtain?.textures ?? []) : overlays}
+                split={mode === 'doc' ? docSplit : split}
+                hideWater={Boolean(docCurtain)}
+                shiftX={mode === 'free' && wide ? 0.16 : 0}
+                onPick={identify && mode === 'free' ? onPick : undefined}
+                exaggeration={vx}
+                shot={mode === 'doc' ? chapter : null}
+              />
             ) : null}
 
             {drone && detail.assets ? (
@@ -359,6 +568,7 @@ export default function StoryApp({ caseId }: { caseId: string }) {
                 detail={detail.assets}
                 photo={photoTexture}
                 overlays={droneOverlays}
+                split={split}
                 onPick={identify ? onPick : undefined}
                 level={droneLevel}
                 exaggeration={1}
@@ -407,9 +617,8 @@ export default function StoryApp({ caseId }: { caseId: string }) {
               </div>
             ) : null}
 
-            {site && variable ? (
+            {site && variable && drone ? (
               <div className="st-yearcard" aria-live="polite">
-                <span className="st-yearnote-year narrow">{shownYear}</span>
                 <ul>
                   {drone ? (
                     <li>
@@ -456,6 +665,15 @@ export default function StoryApp({ caseId }: { caseId: string }) {
               </button>
             ) : null}
 
+            {mode === 'free' && compareId ? (
+              <Curtain
+                split={split}
+                onSplit={setSplit}
+                left={layers.find((l) => stack.some((s) => s.on && s.id === l.id) && l.blend === 'normal')?.title ?? 'Layer'}
+                right={layers.find((l) => l.id === compareId)?.title ?? 'Compared layer'}
+              />
+            ) : null}
+
             {picked ? (
               <div className="st-identify-card" role="status">
                 <div className="st-identify-head">
@@ -484,14 +702,26 @@ export default function StoryApp({ caseId }: { caseId: string }) {
             {drone && detail.assets ? (
               <div className="st-drone-hud">
                 <p className="st-drone-help">
-                  {altitude != null ? <strong>{altitude} m above ground · </strong> : null}
-                  W A S D or arrows to fly · drag to look · scroll or Q / E for height · on touch: drag to fly, pinch for height
+                  {altitude != null ? <strong>{altitude} m above ground</strong> : null}
+                  {droneHelp ? (
+                    <span>
+                      {altitude != null ? ' · ' : null}W A S D or arrows to fly · drag to look · scroll or Q / E for height · on touch: drag to fly, pinch for
+                      height
+                    </span>
+                  ) : (
+                    <button type="button" className="st-drone-keys" onClick={() => setDroneHelp(true)}>
+                      Controls
+                    </button>
+                  )}
                 </p>
-                <p className="st-drone-note">
-                  {detailInfo?.photos_by_year
-                    ? `${detailInfo.photo_note ?? ''} ${detailInfo.note ?? ''}`
-                    : 'Ground: USGS lidar (2018). Photo: NAIP aerial. Both are present-day pictures, not measurements. Only the water level changes with the year.'}
-                </p>
+                <details className="st-drone-note">
+                  <summary>About these pictures</summary>
+                  <p>
+                    {detailInfo?.photos_by_year
+                      ? `${detailInfo.photo_note ?? ''} ${detailInfo.note ?? ''}`
+                      : 'Ground: USGS lidar (2018). Photo: NAIP aerial. Both are present-day pictures, not measurements. Only the water level changes with the year.'}
+                  </p>
+                </details>
               </div>
             ) : null}
 
@@ -522,6 +752,9 @@ export default function StoryApp({ caseId }: { caseId: string }) {
                 if (!on) setPicked(null)
               }}
               cropKm={drone ? cropKm : undefined}
+              compareId={compareId}
+              onCompare={setCompareId}
+              notice={variable && noMapFor === variable.id ? 'no map for this record' : null}
             />
           ) : null}
 

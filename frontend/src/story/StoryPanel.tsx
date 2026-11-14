@@ -6,7 +6,7 @@ import type { Site, SiteVariable } from './types'
 import { Stamp } from '../lib/Stamp'
 import { SeriesLine } from '../lib/SeriesLine'
 import { RangeBar, SplitBar } from '../lib/Evidence'
-import { fmt, leadVariable, residualText, shortName, slopeText, stampFor } from '../lib/cases'
+import { fmt, leadVariable, shortName, slopeText, stampFor } from '../lib/cases'
 import { API_URL } from '../features/explore/api'
 import { FootprintGlyph, footprintOf, footprintVsMap } from '../lib/footprint'
 
@@ -253,9 +253,9 @@ function Climate({ site, variable, onSelectVariable }: { site: Site; variable: S
           <SplitBar variable={variable} />
           <p>
             {variable.residual_pct_range
-              ? `Between ${residualText(variable)} is left over once the climate is accounted for, depending on the climate model: local climate at the site, or adding the climate of the upstream basin.`
-              : `About ${residualText(variable)} is left over once the climate is accounted for.`}{' '}
-            That is a clue worth following, not an attribution.
+              ? 'The range comes from two climate models: local climate at the site, or adding the climate of the upstream basin.'
+              : 'This is what is left once rain, heat and sunlight are accounted for.'}{' '}
+            A clue worth following, not an attribution.
           </p>
         </>
       ) : withSplit ? (
@@ -303,7 +303,7 @@ export function StoryPanel({ site, variable, step, mapKm, onSelectVariable, onSt
         {lead ? (
           <div className="sp-lead">
             <Stamp verdict={lead.verdict} direction={lead.direction} big />
-            <p>{leadSentence(site, lead)}</p>
+            {step === 0 ? <p>{leadSentence(site, lead)}</p> : null}
             {/* The pipeline writes a headline when it can summarise the case; when it
                 cannot, the sentence above is only a slope, and the hand-written line
                 is what gives the case its point. */}

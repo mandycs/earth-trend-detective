@@ -5,6 +5,7 @@ import { SplitBar } from '../../lib/Evidence'
 import { BeforeAfter } from '../../lib/BeforeAfter'
 import { residualText, slopeText } from '../../lib/cases'
 import type { ExplainResult, LandCoverResult, ThenNowResult, VariablesResult } from './types'
+export type { ExplainResult }
 import styles from './investigate.module.css'
 
 function Variables({ result, years }: { result: VariablesResult; years: [number, number] }) {
@@ -28,10 +29,9 @@ function Variables({ result, years }: { result: VariablesResult; years: [number,
       </ul>
       {split && split.residual_pct_non_climate != null ? (
         <div className={styles.split}>
-          <p>
-            Of the change in {split.label.toLowerCase()}, the climate leaves {split.residual_pct_range ? 'between ' : 'about '}
-            {residualText(split)} unexplained{split.residual_pct_range ? ', depending on the climate model' : ''}. A clue, not
-            an attribution.
+          <p className={styles.note}>
+            Share of the change in {split.label.toLowerCase()} the climate does not explain
+            {split.residual_pct_range ? ', depending on the climate model' : ''}. A clue, not an attribution.
           </p>
           <SplitBar variable={split} />
         </div>
@@ -173,4 +173,72 @@ export function StepResult({ id, result, years, name }: { id: string; result: un
   if (id === 'explain') return <Explain result={result as ExplainResult} />
   if ('variables' in result) return <Variables result={result as VariablesResult} years={years} />
   return null
+}
+
+/** One line per step for the collapsed "How we know" list: a pill and a main figure. */
+export function stepSummary(id: string, result: unknown): { verdict?: SiteVariable['verdict']; direction?: SiteVariable['direction']; figure: string | null } {
+  if (!result || typeof result !== 'object') return { figure: null }
+  if (id === 'land_cover') {
+    const r = result as LandCoverResult
+    if (r.before && r.after) return { figure: `${r.before.dominant} → ${r.after.dominant}` }
+    return { figure: null }
+  }
+  if (id === 'then_and_now') {
+    const r = result as ThenNowResult
+    const years = [r.before?.year, r.after?.year].filter((y) => y != null)
+    return { figure: years.length === 2 ? `${years[0]} vs ${years[1]} pictures` : years.length === 1 ? `one picture (${years[0]})` : null }
+  }
+  if ('variables' in result) {
+    const vars = (result as VariablesResult).variables ?? []
+    const lead = vars.find((v) => v.residual_pct_non_climate != null) ?? vars.find((v) => v.verdict === 'real') ?? vars[0]
+    if (!lead) return { figure: null }
+    const residual = residualText(lead)
+    const slope = slopeText(lead)
+    return {
+      verdict: lead.verdict,
+      direction: lead.direction,
+      figure: residual
+        ? `${lead.label}: ${residual} not explained by climate`
+        : slope
+          ? `${lead.label}: ${slope} per decade`
+          : lead.label,
+    }
+  }
+  return { figure: null }
+}
+
+/** The answer, shown first: headline, one figure, the clue-not-proof note, then the AI paragraph. */
+export function AnswerBlock({ result }: { result: ExplainResult }) {
+  const a = result.answer
+  return (
+    <div className={styles.answer}>
+      {a ? (
+        <>
+          <div className={styles.answerTop}>
+            {a.direction ? <Stamp verdict={a.verdict} direction={a.direction} /> : <Stamp verdict="unknown" direction="flat" />}
+          </div>
+          <p className={`${styles.answerHeadline} narrow`}>{a.headline}</p>
+          {a.figure ? (
+            <p className={styles.answerFigure}>
+              <strong className="narrow">{a.figure}</strong>
+              {a.figure_label ? <span> {a.figure_label}</span> : null}
+            </p>
+          ) : null}
+          {a.note ? <p className={styles.answerNote}>{a.note}</p> : null}
+        </>
+      ) : null}
+      {result.text ? (
+        <figure className={styles.narrative}>
+          <blockquote>{result.text}</blockquote>
+          <figcaption>
+            {result.source === 'llm' ? 'Written by an AI narrator from the numbers below.' : 'Written from the numbers below.'}
+            {result.validation?.ok ? ' Every figure was checked against the data before showing it.' : ''}
+          </figcaption>
+        </figure>
+      ) : (
+        <p className={styles.note}>{result.note ?? 'No summary could be written for this place.'}</p>
+      )}
+      {!a ? <p className={styles.answerNote}>The share the climate leaves unexplained is a clue, not proof.</p> : null}
+    </div>
+  )
 }
