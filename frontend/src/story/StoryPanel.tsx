@@ -114,7 +114,7 @@ function Real({ site, variable }: { site: Site; variable: SiteVariable }) {
   return (
     <>
       <div className="sp-verdict">
-        <Stamp verdict={variable.verdict} direction={variable.direction} big />
+        <Stamp verdict={variable.verdict} direction={variable.direction} />
         <p>
           <strong>{variable.label}.</strong> {s.meaning}
         </p>
