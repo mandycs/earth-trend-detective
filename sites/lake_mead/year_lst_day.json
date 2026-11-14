@@ -48,5 +48,8 @@
     2024
   ],
   "file_pattern": "year_lst_day_{YYYY}.png",
+  "value_pattern": "value_lst_day_{YYYY}.png",
+  "value_offset": -5.274595959595964,
+  "value_scale": 0.00016097280677498593,
   "source": "MOD11A2.061"
 }

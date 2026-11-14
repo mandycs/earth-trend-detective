@@ -33,6 +33,10 @@ export interface LayerDef {
   valuePattern?: string
   valueScale?: number
   valueOffset?: number
+  /** Single value grid for span layers (a trend). */
+  valueFile?: string
+  /** 0 = no data, 1 = not significant, 2 = significant. */
+  significanceFile?: string
   /** Ground size of one pixel, metres; drawn as blocks when coarse. */
   pixelM?: number
   blend: 'normal' | 'multiply'
@@ -51,6 +55,8 @@ interface RawLayer {
   value_pattern?: string
   value_scale?: number
   value_offset?: number
+  value_file?: string
+  significance_file?: string
   pixel_m?: number
   years?: number[]
   var?: string
@@ -106,7 +112,19 @@ export function parseLayers(file: { layers?: RawLayer[] } | null): LayerDef[] {
       out.push({ ...common, role: 'overlay', years: null, span: null, file: raw.file, blend: 'multiply' })
     } else if (raw.kind === 'trend' && raw.file) {
       const span = raw.years && raw.years.length === 2 ? ([raw.years[0], raw.years[1]] as [number, number]) : null
-      out.push({ ...common, role: 'overlay', years: null, span, file: raw.file, pixelM: raw.pixel_m ?? 1000, blend: 'normal' })
+      out.push({
+        ...common,
+        role: 'overlay',
+        years: null,
+        span,
+        file: raw.file,
+        pixelM: raw.pixel_m ?? 1000,
+        blend: 'normal',
+        valueFile: raw.value_file,
+        significanceFile: raw.significance_file,
+        valueScale: raw.value_scale,
+        valueOffset: raw.value_offset,
+      })
     } else if (raw.kind === 'yearly' && raw.file_pattern) {
       out.push({
         ...common,

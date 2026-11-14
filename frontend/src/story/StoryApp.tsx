@@ -241,8 +241,21 @@ export default function StoryApp({ caseId }: { caseId: string }) {
       for (const entry of stack.filter((s) => s.on)) {
         const def = layers.find((l) => l.id === entry.id)
         if (!def) continue
+        if (def.valueFile && def.valueScale != null && def.valueOffset != null) {
+          const value = await valueAt(`/sites/${caseId}/${def.valueFile}`, u, v, def.valueScale, def.valueOffset)
+          let tested = ''
+          if (value != null && def.significanceFile) {
+            const flag = await valueAt(`/sites/${caseId}/${def.significanceFile}`, u, v, 1, 0)
+            tested = flag === 2 ? ', a real trend here' : flag === 1 ? ', too small to call here' : ''
+          }
+          rows.push({
+            title: def.title,
+            text: value == null ? 'no data here' : `${fmt(value, true)} ${def.legend?.unit ?? ''}${tested}`.trim(),
+          })
+          continue
+        }
         if (!def.valuePattern || def.valueScale == null || def.valueOffset == null) {
-          rows.push({ title: def.title, text: def.span ? 'a trend picture: open the case panel for its numbers' : 'a picture, no values to read' })
+          rows.push({ title: def.title, text: 'a picture, no values to read' })
           continue
         }
         if (def.years && !def.years.includes(shownYear)) {
@@ -253,7 +266,12 @@ export default function StoryApp({ caseId }: { caseId: string }) {
         const value = await valueAt(`/sites/${caseId}/${file}`, u, v, def.valueScale, def.valueOffset)
         rows.push({
           title: def.title,
-          text: value == null ? `no clear view here in ${shownYear}` : `${fmt(value)} ${def.legend?.unit ?? ''}`.trim(),
+          text:
+            value == null
+              ? `no clear view here in ${shownYear}`
+              : /usual/.test(def.legend?.more ?? '')
+                ? `${fmt(value, true)} ${def.legend?.unit ?? ''} against its usual`.replace(/\s+/g, ' ')
+                : `${fmt(value)} ${def.legend?.unit ?? ''}`.trim(),
         })
       }
       if (variable && variable.series) {
