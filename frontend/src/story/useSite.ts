@@ -155,7 +155,7 @@ export interface FrameRead {
  * Reads one anomaly frame back from its colours (red side vs blue side of
  * the pipeline's diverging map). Pale and transparent pixels count as neither.
  */
-function readFrame(texture: THREE.Texture): FrameRead | null {
+export function readFrame(texture: THREE.Texture): FrameRead | null {
   const image = texture.image as CanvasImageSource | undefined
   if (!image || typeof document === 'undefined') return null
   try {
