@@ -189,7 +189,7 @@ export function DroneScene({ detail, photo, overlays, onPick, level, exaggeratio
       shadows="soft"
       dpr={[1, 2]}
       camera={{ position: [0, 0.1, aspect * 0.42], fov: 55, near: 0.0008, far: 60 }}
-      gl={{ antialias: true, alpha: false, powerPreference: 'high-performance', toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 0.9 }}
+      gl={{ antialias: true, alpha: false, preserveDrawingBuffer: true, powerPreference: 'high-performance', toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 0.9 }}
     >
       <Sky distance={30} sunPosition={SUN} turbidity={6} rayleigh={1.4} mieCoefficient={0.006} mieDirectionalG={0.8} />
       <fog attach="fog" args={[HAZE, 0.5, 4.5]} />

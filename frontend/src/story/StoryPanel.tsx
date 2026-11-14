@@ -304,6 +304,12 @@ export function StoryPanel({ site, variable, step, mapKm, onSelectVariable, onSt
           <div className="sp-lead">
             <Stamp verdict={lead.verdict} direction={lead.direction} big />
             <p>{leadSentence(site, lead)}</p>
+            {/* The pipeline writes a headline when it can summarise the case; when it
+                cannot, the sentence above is only a slope, and the hand-written line
+                is what gives the case its point. */}
+            {!site.headline && site.editorial ? (
+              <p className="sp-editorial">{site.editorial}</p>
+            ) : null}
           </div>
         ) : null}
       </header>

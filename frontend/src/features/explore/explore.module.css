@@ -635,3 +635,18 @@
     padding-left: 16px;
   }
 }
+
+/* The top bar was the one thing overflowing at 390px (432px wide): the hint link
+   repeats a destination that is already in the nav, so it goes first. */
+@media (max-width: 560px) {
+  .topbar {
+    gap: 10px;
+  }
+  .topbarNav {
+    gap: 12px;
+    font-size: 0.9rem;
+  }
+  .topbarHint {
+    display: none;
+  }
+}

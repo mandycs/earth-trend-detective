@@ -141,7 +141,7 @@ export function StoryScene({ site, assets, overlays, onPick, exaggeration }: Sto
       shadows="soft"
       dpr={[1, 2]}
       camera={{ position: [0, 2.6, 0.02], fov: 42, near: 0.003, far: 80 }}
-      gl={{ antialias: true, alpha: false, powerPreference: 'high-performance', toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 0.9 }}
+      gl={{ antialias: true, alpha: false, preserveDrawingBuffer: true, powerPreference: 'high-performance', toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 0.9 }}
     >
       <Sky distance={30} sunPosition={SUN} turbidity={6} rayleigh={1.4} mieCoefficient={0.006} mieDirectionalG={0.8} />
       <fog attach="fog" args={[HAZE, 0.9, 7]} />
