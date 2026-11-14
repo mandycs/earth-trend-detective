@@ -6,9 +6,9 @@ const HEIGHT = 56
 /** Yearly series as an inline SVG line: no chart library, no extra latency. */
 export function Sparkline({ variable }: { variable: SiteVariable }) {
   const points: SeriesPoint[] = variable.series ?? []
-  if (points.length < 2) {
-    return <p className="sparkline-empty">No yearly series supplied for this variable yet.</p>
-  }
+  // The pipeline does not always ship a yearly series; a missing chart is absent
+  // data, not a user-facing state, so the panel simply shows the numbers instead.
+  if (points.length < 2) return null
   const values = points.map((point) => point.value)
   const min = Math.min(...values)
   const max = Math.max(...values)

@@ -106,6 +106,7 @@ code {
 .cases {
   display: flex;
   gap: 8px;
+  align-items: center;
 }
 
 .case {
@@ -139,6 +140,27 @@ code {
 .case-where {
   font-size: 0.78rem;
   color: var(--muted);
+}
+
+.mode-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-left: 8px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  color: var(--text);
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: border-color 160ms var(--ease), background 160ms var(--ease);
+}
+
+.mode-link:hover {
+  border-color: rgba(245, 181, 68, 0.55);
+  background: rgba(245, 181, 68, 0.08);
 }
 
 /* ----------------------------------------------------------------- stage */
@@ -752,6 +774,31 @@ code {
   padding: 0;
   list-style: none;
   font-size: 0.8rem;
+}
+
+/* Source links are the smallest tap targets in the app; on touch they must clear 44px. */
+.sources a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 2px 0;
+}
+
+@media (pointer: coarse) {
+  .sources a {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 640px) {
+  .sources a {
+    min-height: 44px;
+  }
+
+  /* The country line makes the case tabs two lines tall on a phone; the label is enough. */
+  .case-where {
+    display: none;
+  }
 }
 
 .panel-empty {

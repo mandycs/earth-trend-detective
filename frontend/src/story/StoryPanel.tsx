@@ -54,6 +54,10 @@ export function StoryPanel({ site, variable, step, hasTrendLayer, onSelectVariab
   const isPreview = site.id.startsWith('_')
   const sources = site.sources ?? []
   const narrative = site.narrative ?? site.headline ?? ''
+  const residualRounded =
+    variable.residual_pct_non_climate === null
+      ? null
+      : Math.round(variable.residual_pct_non_climate)
 
   return (
     <aside className="panel" aria-label={`Story: ${site.name}`}>
@@ -156,28 +160,27 @@ export function StoryPanel({ site, variable, step, hasTrendLayer, onSelectVariab
 
         {step === 2 ? (
           <div className="evidence">
-            {variable.residual_pct_non_climate !== null ? (
+            {residualRounded !== null ? (
               <>
                 <div
                   className="split"
                   role="img"
-                  aria-label={`${variable.residual_pct_non_climate}% of the trend is not explained by climate drivers, ${100 - variable.residual_pct_non_climate}% is`}
+                  aria-label={`${residualRounded}% of the trend is not explained by climate drivers, ${100 - residualRounded}% is`}
                 >
                   <span
                     className="split-nonclimate"
-                    style={{ width: `${variable.residual_pct_non_climate}%` }}
+                    style={{ width: `${residualRounded}%` }}
                   />
                   <span className="split-climate" />
                 </div>
                 <ul className="split-legend">
                   <li>
                     <span className="swatch swatch-nonclimate" aria-hidden="true" />
-                    {variable.residual_pct_non_climate}% not explained by rain, heat or sunlight
+                    {residualRounded}% not explained by rain, heat or sunlight
                   </li>
                   <li>
                     <span className="swatch swatch-climate" aria-hidden="true" />
-                    {100 - variable.residual_pct_non_climate}% consistent with the climate
-                    drivers we tested
+                    {100 - residualRounded}% consistent with the climate drivers we tested
                   </li>
                 </ul>
                 <p>{narrative}</p>

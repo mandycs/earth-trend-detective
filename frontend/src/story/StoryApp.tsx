@@ -45,12 +45,20 @@ export default function StoryApp() {
     return site.variables.find((entry) => entry.id === variableId) ?? site.variables[0]
   }, [site, variableId])
 
-  // Pick a sensible default variable when a site loads (biggest change first).
+  // Default variable: prefer one the viewer can actually paint (a trend raster exists),
+  // then a real verdict over a provisional one, then the biggest change. Selecting a
+  // variable with no raster would open the case on a dead timeline and a blank overlay.
   useEffect(() => {
     if (!site) return
+    const rank = (verdict: SiteVariable['verdict']) =>
+      verdict === 'real' ? 0 : verdict === 'likely' ? 1 : 2
+    const withLayer = site.variables.filter((entry) => site.assets.trend?.[entry.id])
+    const pool = withLayer.length > 0 ? withLayer : site.variables
     const preferred =
-      [...site.variables].sort(
-        (a, b) => Math.abs(b.sen_slope_per_decade ?? 0) - Math.abs(a.sen_slope_per_decade ?? 0),
+      [...pool].sort(
+        (a, b) =>
+          rank(a.verdict) - rank(b.verdict) ||
+          Math.abs(b.sen_slope_per_decade ?? 0) - Math.abs(a.sen_slope_per_decade ?? 0),
       )[0] ?? null
     setVariableId(preferred ? preferred.id : null)
     yearRef.current = site.years[0]
@@ -112,6 +120,9 @@ export default function StoryApp() {
               <span className="case-where">{entry.where}</span>
             </button>
           ))}
+          <a className="mode-link" href="/explore">
+            Explore any place →
+          </a>
         </nav>
       </header>
 
