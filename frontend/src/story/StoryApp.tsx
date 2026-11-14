@@ -6,7 +6,9 @@ import { mapLayers, useLegend, useSite, useStoryAssets } from './useSite'
 import type { MapLayer } from './useSite'
 import { StoryScene } from './StoryScene'
 import { DroneScene } from './drone/DroneScene'
-import { useDetailAssets, useDetailInfo } from './drone/useDetail'
+import { useDetailAssets, useDetailInfo, usePhoto } from './drone/useDetail'
+import type { DetailInfo } from './drone/useDetail'
+import { useTimeline } from './useTimeline'
 import { StoryPanel } from './StoryPanel'
 import { Timeline } from './Timeline'
 import type { SiteVariable } from './types'
@@ -24,6 +26,24 @@ const YEAR_SECONDS = 1.8
 /** Share of each year spent holding still before the fade starts. */
 const HOLD = 0.7
 
+/** Which aerial photo stands for a year, and how to say it honestly. */
+function photoFor(info: DetailInfo | null, year: number): { file: string; words: string } | null {
+  const photos = info?.photos_by_year
+  if (!photos) return null
+  const entry = photos[String(year)]
+  if (entry) {
+    return {
+      file: entry.file,
+      words: entry.same_as ? `No new flight in ${year}: newest photo available is ${entry.same_as}` : `Aerial photo from ${year}`,
+    }
+  }
+  const flown = Object.keys(photos).map(Number).sort((a, b) => a - b)
+  const before = flown.filter((y) => y < year).pop()
+  const pick = before ?? flown.find((y) => y > year)
+  if (pick == null) return null
+  return { file: photos[String(pick)].file, words: `No flight in ${year}: showing the ${pick} photo` }
+}
+
 function layerName(layer: MapLayer, label: string | undefined, single: boolean): string {
   const how = layer.kind === 'year' ? 'Year by year' : 'Trend'
   if (single) return how
@@ -35,6 +55,8 @@ export default function StoryApp({ caseId }: { caseId: string }) {
   const detailInfo = useDetailInfo(caseId)
   const [drone, setDrone] = useState(false)
   const detail = useDetailAssets(caseId, detailInfo, drone)
+  const timeline = useTimeline(caseId)
+  const [noMapFor, setNoMapFor] = useState<string | null>(null)
   const [altitude, setAltitude] = useState<number | null>(null)
   const [variableId, setVariableId] = useState<string | null>(null)
   const [layerKey, setLayerKey] = useState<string>('none')
@@ -68,6 +90,7 @@ export default function StoryApp({ caseId }: { caseId: string }) {
     setLayerKey('none')
     setExaggeration(null)
     setDrone(false)
+    setNoMapFor(null)
     yearRef.current = site.years[0]
     clockRef.current = 0
     setDisplayYear(site.years[0])
@@ -100,6 +123,28 @@ export default function StoryApp({ caseId }: { caseId: string }) {
     return () => cancelAnimationFrame(frame)
   }, [playing, firstYear, lastYear])
 
+  /** Picking a record moves the map to that record's yearly layer, or says there is none. */
+  const selectRecord = (id: string) => {
+    setVariableId(id)
+    const mapId = timeline?.record_map?.[id] ?? null
+    const match = mapId ? layers.find((l) => l.kind === 'year' && mapId === `year_${l.variable}`) : null
+    if (match) {
+      setLayerKey(match.key)
+      setNoMapFor(null)
+    } else {
+      setLayerKey('none')
+      setNoMapFor(id)
+    }
+  }
+
+  /** Picking a map layer puts its record on the timeline. */
+  const selectLayer = (key: string) => {
+    setLayerKey(key)
+    setNoMapFor(null)
+    const picked = layers.find((l) => l.key === key)
+    if (picked && site?.variables.some((v) => v.id === picked.variable)) setVariableId(picked.variable)
+  }
+
   const yearProgress = useCallback(() => Math.min(yearRef.current, lastYear) - firstYear, [firstYear, lastYear])
 
   const handleScrub = (year: number) => {
@@ -109,9 +154,10 @@ export default function StoryApp({ caseId }: { caseId: string }) {
     setDisplayYear(year)
   }
 
-  const showYears = layer?.kind === 'year' && assets.years.length > 1
-  // The chart follows the map: with a data layer on, it shows that record.
-  const layerVariable = layer ? site?.variables.find((v) => v.id === layer.variable) ?? null : null
+  const shownYear = displayYear || firstYear
+  const layerYears = layer ? timeline?.layers?.[`${layer.kind === 'year' ? 'year' : 'trend'}_${layer.variable}`]?.years : undefined
+  const layerHasYear = layer?.kind !== 'year' || !layerYears || layerYears.includes(shownYear)
+  const showYears = layer?.kind === 'year' && assets.years.length > 1 && layerHasYear
   // In the drone, the record under the timeline is the lake level the water is drawn at.
   const levels = detailInfo?.water_level_m_by_year ?? null
   const lakeLevel: SiteVariable | null =
@@ -131,8 +177,11 @@ export default function StoryApp({ caseId }: { caseId: string }) {
             .sort((a, b) => a.year - b.year),
         }
       : null
-  const timelineVariable = lakeLevel ?? layerVariable ?? variable
-  const shownYear = displayYear || firstYear
+  const timelineVariable = lakeLevel ?? variable
+  const photo = drone ? photoFor(detailInfo, shownYear) : null
+  const photoTexture = usePhoto(caseId, photo?.file ?? null)
+  const recordYears = variable ? timeline?.records?.[variable.id] : undefined
+  const recordHasYear = !recordYears || recordYears.includes(shownYear)
   const yearLevel = levels?.[String(shownYear)] ?? null
   const drawable = Boolean(detailInfo?.drawable_years?.includes(shownYear))
   const droneLevel = drawable ? yearLevel : null
@@ -186,7 +235,7 @@ export default function StoryApp({ caseId }: { caseId: string }) {
             ) : null}
 
             {drone && detail.assets ? (
-              <DroneScene detail={detail.assets} level={droneLevel} exaggeration={1} onAltitude={setAltitude} />
+              <DroneScene detail={detail.assets} photo={photoTexture} level={droneLevel} exaggeration={1} onAltitude={setAltitude} />
             ) : null}
 
             {drone && !detail.assets && !detail.error ? (
@@ -211,11 +260,15 @@ export default function StoryApp({ caseId }: { caseId: string }) {
                 <div className="st-drone-level">
                   <span className="st-yearnote-year narrow">{shownYear}</span>
                   <span>
-                    {yearLevel == null
-                      ? 'No lake level for this year.'
-                      : drawable
-                        ? `Lake surface at ${Math.round(yearLevel)} m above sea level (USBR yearly mean).`
-                        : `Lake at ${Math.round(yearLevel)} m: lower than this survey can show, so no water is drawn.`}
+                    {levels
+                      ? yearLevel == null
+                        ? 'No lake level for this year.'
+                        : drawable
+                          ? `Lake surface at ${Math.round(yearLevel)} m above sea level (USBR yearly mean).`
+                          : `Lake at ${Math.round(yearLevel)} m: lower than this survey can show, so no water is drawn.`
+                      : photo
+                        ? `${photo.words}.`
+                        : 'Present-day ground and photo.'}
                   </span>
                 </div>
                 <p className="st-drone-help">
@@ -223,8 +276,9 @@ export default function StoryApp({ caseId }: { caseId: string }) {
                   W A S D or arrows to fly · drag to look · scroll or Q / E for height · on touch: drag to fly, pinch for height
                 </p>
                 <p className="st-drone-note">
-                  Ground: USGS lidar (2018). Photo: NAIP aerial. Both are present-day pictures, not measurements. Only the
-                  water level changes with the year.
+                  {detailInfo?.photos_by_year
+                    ? `${detailInfo.photo_note ?? ''} ${detailInfo.note ?? ''}`
+                    : 'Ground: USGS lidar (2018). Photo: NAIP aerial. Both are present-day pictures, not measurements. Only the water level changes with the year.'}
                 </p>
               </div>
             ) : null}
@@ -253,18 +307,35 @@ export default function StoryApp({ caseId }: { caseId: string }) {
               </div>
             ) : null}
 
-            {!drone && frameWords && legend ? (
-              <div className="st-yearnote" aria-live="polite">
-                <span className="st-yearnote-year narrow">{displayYear || firstYear}</span>
-                <span>
-                  {legend.label}: {frameWords}
-                </span>
+            {site && !drone && variable ? (
+              <div className="st-yearcard" aria-live="polite">
+                <span className="st-yearnote-year narrow">{shownYear}</span>
+                <ul>
+                  <li>
+                    <strong>{variable.label}:</strong>{' '}
+                    {recordHasYear ? 'on the timeline below' : `no value for ${shownYear}`}
+                  </li>
+                  <li>
+                    <strong>Map:</strong>{' '}
+                    {!layer
+                      ? noMapFor === variable.id
+                        ? 'no map for this record, showing the satellite picture (one date, not per year)'
+                        : 'satellite picture (one date, not per year)'
+                      : layer.kind === 'trend'
+                        ? `${legend?.label ?? 'trend'}, change over the whole ${firstYear}–${lastYear} period`
+                        : !layerHasYear
+                          ? `no MODIS map for ${shownYear}`
+                          : frameWords && legend
+                            ? `${legend.label}: ${frameWords}`
+                            : `${legend?.label ?? 'yearly map'} for ${shownYear}`}
+                  </li>
+                </ul>
               </div>
             ) : null}
 
             {site && detailInfo ? (
               <button type="button" className={drone ? 'st-drone-toggle st-drone-on' : 'st-drone-toggle'} onClick={() => setDrone((d) => !d)}>
-                {drone ? '← Back to the overview' : 'Fly the shore (drone view)'}
+                {drone ? '← Back to the overview' : 'Drone view: fly low over the real ground'}
               </button>
             ) : null}
 
@@ -285,7 +356,7 @@ export default function StoryApp({ caseId }: { caseId: string }) {
                   role="radio"
                   aria-checked={layerKey === 'none'}
                   className={layerKey === 'none' ? 'st-chip st-chip-on' : 'st-chip'}
-                  onClick={() => setLayerKey('none')}
+                  onClick={() => selectLayer('none')}
                 >
                   Satellite
                 </button>
@@ -296,7 +367,7 @@ export default function StoryApp({ caseId }: { caseId: string }) {
                     role="radio"
                     aria-checked={layerKey === l.key}
                     className={layerKey === l.key ? 'st-chip st-chip-on' : 'st-chip'}
-                    onClick={() => setLayerKey(l.key)}
+                    onClick={() => selectLayer(l.key)}
                   >
                     {layerName(l, l.kind === 'year' ? yearLegend?.label : legend?.label ?? yearLegend?.label, singleVar)}
                   </button>
@@ -352,11 +423,7 @@ export default function StoryApp({ caseId }: { caseId: string }) {
             variable={variable}
             step={step}
             mapKm={mapKm}
-            onSelectVariable={(id) => {
-              setVariableId(id)
-              // Picking a record that has no map layer takes the map back to the picture.
-              if (layer && layer.variable !== id) setLayerKey('none')
-            }}
+            onSelectVariable={selectRecord}
             onStep={setStep}
           />
         ) : (

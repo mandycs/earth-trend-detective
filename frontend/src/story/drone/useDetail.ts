@@ -13,6 +13,10 @@ export interface DetailInfo {
   water_level_m_by_year?: Record<string, number>
   drawable_years?: number[]
   note?: string
+  label?: string
+  /** Aerial photo per year; `same_as` marks a year with no new flight. */
+  photos_by_year?: Record<string, { file: string; same_as?: number }>
+  photo_note?: string
   sources?: Array<{ name: string; url?: string }>
 }
 
@@ -81,4 +85,26 @@ export function useDetailAssets(siteId: string, info: DetailInfo | null, enabled
     }
   }, [key, info, siteId])
   return state.key === key ? state : { key, assets: null, error: null }
+}
+
+const photoCache = new Map<string, Promise<THREE.Texture>>()
+
+/** One aerial photo of the close-up, cached; keeps the last one until the next is ready. */
+export function usePhoto(siteId: string, file: string | null): THREE.Texture | null {
+  const [current, setCurrent] = useState<{ site: string; texture: THREE.Texture | null }>({ site: '', texture: null })
+  useEffect(() => {
+    if (!file) return
+    let alive = true
+    const url = `/sites/${siteId}/detail/${file}`
+    let pending = photoCache.get(url)
+    if (!pending) {
+      pending = texture(url, true)
+      photoCache.set(url, pending)
+    }
+    pending.then((t) => alive && setCurrent({ site: siteId, texture: t })).catch(() => undefined)
+    return () => {
+      alive = false
+    }
+  }, [siteId, file])
+  return file && current.site === siteId ? current.texture : null
 }

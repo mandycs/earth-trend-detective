@@ -24,6 +24,8 @@ export interface SiteVariable {
   ci_low?: number | null
   ci_high?: number | null
   q_value?: number | null
+  /** The area the record describes, from the pipeline. */
+  footprint?: { km: number | null; label: string } | null
   /** Ready-made label from the pipeline, e.g. "↓ Real". */
   badge?: string
   /** Yearly means, used for the sparkline. */

@@ -13,6 +13,8 @@ export interface DroneSceneProps {
   detail: DetailAssets
   /** Lake level for the current year in metres, or null when it cannot be drawn. */
   level: number | null
+  /** Aerial photo for the year, drawn instead of the base picture. */
+  photo?: THREE.Texture | null
   exaggeration: number
   onAltitude?: (metres: number) => void
 }
@@ -174,7 +176,7 @@ function Flight({ detail, scale, aspect, onAltitude }: { detail: DetailAssets; s
   return null
 }
 
-export function DroneScene({ detail, level, exaggeration, onAltitude }: DroneSceneProps) {
+export function DroneScene({ detail, photo, level, exaggeration, onAltitude }: DroneSceneProps) {
   const { width, depth } = widthOf(detail.info.bbox)
   const aspect = depth / width
   const scale = exaggeration / width
@@ -192,7 +194,7 @@ export function DroneScene({ detail, level, exaggeration, onAltitude }: DroneSce
       <directionalLight position={SUN} intensity={3} color="#fff3e2" />
       <Terrain
         grid={detail.grid}
-        base={detail.base}
+        base={photo ?? detail.base}
         hillshade={detail.hillshade}
         trend={null}
         years={[]}
@@ -204,7 +206,7 @@ export function DroneScene({ detail, level, exaggeration, onAltitude }: DroneSce
         autoWater={false}
         segments={900}
       />
-      <Water level={level} min={detail.grid.min} scale={scale} aspect={aspect} />
+      {detail.info.water_level_m_by_year ? <Water level={level} min={detail.grid.min} scale={scale} aspect={aspect} /> : null}
       <Flight detail={detail} scale={scale} aspect={aspect} onAltitude={onAltitude} />
     </Canvas>
   )

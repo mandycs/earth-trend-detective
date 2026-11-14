@@ -89,9 +89,9 @@ function Changing({ site, variable, mapKm, onSelectVariable }: { site: Site; var
                 )}
                 <Stamp verdict={entry.verdict} direction={entry.direction} className="sp-var-stamp" />
                 <span className="sp-var-area">
-                  <FootprintGlyph fp={footprintOf(entry.id)} mapKm={mapKm} className="sp-var-glyph" />
+                  <FootprintGlyph fp={footprintOf(entry.id, entry.footprint)} mapKm={mapKm} className="sp-var-glyph" />
                   <span>
-                    Over {footprintOf(entry.id).words}: {footprintVsMap(footprintOf(entry.id), mapKm)}
+                    Over {footprintOf(entry.id, entry.footprint).words}: {footprintVsMap(footprintOf(entry.id, entry.footprint), mapKm)}
                   </span>
                 </span>
               </button>

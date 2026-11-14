@@ -973,3 +973,41 @@
     display: none;
   }
 }
+
+/* what each layer shows for the cursor year */
+.st-yearcard {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  max-width: min(600px, calc(100% - 330px));
+  padding: 10px 16px 12px;
+  background: var(--ground);
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.st-yearcard ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--ink-2);
+}
+
+.st-yearcard strong {
+  color: var(--ink);
+}
+
+@media (max-width: 720px) {
+  .st-yearcard {
+    top: 64px;
+    left: 8px;
+    right: 8px;
+    max-width: none;
+  }
+}

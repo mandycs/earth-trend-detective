@@ -319,7 +319,14 @@ export function Terrain({
         )
     }
     return created
-  }, [base])
+    // The material is built once; later pictures only swap its map below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    material.map = base
+    material.needsUpdate = false
+  }, [material, base])
 
   const groundColour = useMemo(() => meanColour(base), [base])
   const waterY = water == null ? null : (water - grid.min + 0.05) * scale

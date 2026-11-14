@@ -127,7 +127,11 @@
           "year": 2024,
           "value": -14.5
         }
-      ]
+      ],
+      "footprint": {
+        "km": 300,
+        "label": "a region about 300 km wide (GRACE satellites)"
+      }
     },
     {
       "id": "t2m",
@@ -233,7 +237,11 @@
           "year": 2024,
           "value": 19.3
         }
-      ]
+      ],
+      "footprint": {
+        "km": 50,
+        "label": "a climate-model cell about 50 km wide (NASA POWER)"
+      }
     },
     {
       "id": "soil_moisture",
@@ -340,7 +348,11 @@
           "value": 26.1
         }
       ],
-      "note": "This comes from a computer model of the land that does not include human water use, so it cannot show a human signal."
+      "note": "This comes from a computer model of the land that does not include human water use, so it cannot show a human signal.",
+      "footprint": {
+        "km": 25,
+        "label": "a land-model cell about 25 km wide (GLDAS)"
+      }
     },
     {
       "id": "solar",
@@ -446,7 +458,11 @@
           "year": 2024,
           "value": 18.4
         }
-      ]
+      ],
+      "footprint": {
+        "km": 50,
+        "label": "a climate-model cell about 50 km wide (NASA POWER)"
+      }
     },
     {
       "id": "precip",
@@ -552,7 +568,11 @@
           "year": 2024,
           "value": 1.72
         }
-      ]
+      ],
+      "footprint": {
+        "km": 50,
+        "label": "a climate-model cell about 50 km wide (NASA POWER)"
+      }
     },
     {
       "id": "runoff",
@@ -659,7 +679,11 @@
           "value": 0.478
         }
       ],
-      "note": "This comes from a computer model of the land that does not include human water use, so it cannot show a human signal."
+      "note": "This comes from a computer model of the land that does not include human water use, so it cannot show a human signal.",
+      "footprint": {
+        "km": 25,
+        "label": "a land-model cell about 25 km wide (GLDAS)"
+      }
     }
   ],
   "missing": {

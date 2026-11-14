@@ -27,7 +27,7 @@ const PAD_Y = 14
  * keyboard, screen readers and thumbs all work.
  */
 export function Timeline({ first, last, year, playing, variable, mapFollows, mapKm, onScrub, onToggle }: TimelineProps) {
-  const fp = variable ? footprintOf(variable.id) : null
+  const fp = variable ? footprintOf(variable.id, variable.footprint) : null
   const series = variable?.series ?? []
   const values = series.map((p) => p.value)
   const min = values.length ? Math.min(...values) : 0

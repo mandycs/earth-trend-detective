@@ -1,0 +1,112 @@
+{
+  "bbox": [
+    8.0,
+    46.395,
+    8.08,
+    46.445
+  ],
+  "label": "Lower tongue of the Great Aletsch Glacier",
+  "size_px": {
+    "heightmap": [
+      2048,
+      1857
+    ],
+    "base": [
+      3000,
+      2720
+    ]
+  },
+  "resolution_m": {
+    "heightmap": 2.99,
+    "base": 2.04
+  },
+  "height_range_m": [
+    1512.4,
+    3738.9
+  ],
+  "encoding": "terrain-rgb: height_m = -10000 + (R*65536 + G*256 + B) * 0.1",
+  "photos_by_year": {
+    "2003": {
+      "file": "photos/2003.jpg"
+    },
+    "2004": {
+      "file": "photos/2003.jpg",
+      "same_as": 2003
+    },
+    "2005": {
+      "file": "photos/2005.jpg"
+    },
+    "2006": {
+      "file": "photos/2005.jpg",
+      "same_as": 2005
+    },
+    "2007": {
+      "file": "photos/2005.jpg",
+      "same_as": 2005
+    },
+    "2008": {
+      "file": "photos/2008.jpg"
+    },
+    "2009": {
+      "file": "photos/2009.jpg"
+    },
+    "2010": {
+      "file": "photos/2010.jpg"
+    },
+    "2011": {
+      "file": "photos/2011.jpg"
+    },
+    "2012": {
+      "file": "photos/2012.jpg"
+    },
+    "2013": {
+      "file": "photos/2013.jpg"
+    },
+    "2014": {
+      "file": "photos/2014.jpg"
+    },
+    "2015": {
+      "file": "photos/2015.jpg"
+    },
+    "2016": {
+      "file": "photos/2016.jpg"
+    },
+    "2017": {
+      "file": "photos/2017.jpg"
+    },
+    "2018": {
+      "file": "photos/2018.jpg"
+    },
+    "2019": {
+      "file": "photos/2019.jpg"
+    },
+    "2020": {
+      "file": "photos/2020.jpg"
+    },
+    "2021": {
+      "file": "photos/2021.jpg"
+    },
+    "2022": {
+      "file": "photos/2022.jpg"
+    },
+    "2023": {
+      "file": "photos/2023.jpg"
+    },
+    "2024": {
+      "file": "photos/2024.jpg"
+    }
+  },
+  "photo_note": "Each year shows the newest SWISSIMAGE photo available that year; 'same_as' marks years with no new flight. Flight dates and seasons differ, so snow cover differs too.",
+  "note": "Ground and photos are pictures, not measurements of change.",
+  "status": "visual_only",
+  "sources": [
+    {
+      "name": "swisstopo swissALTI3D elevation model, 2 m",
+      "url": "https://www.swisstopo.admin.ch/en/height-model-swissalti3d"
+    },
+    {
+      "name": "swisstopo SWISSIMAGE orthophotos (journey through time)",
+      "url": "https://www.swisstopo.admin.ch/en/orthoimage-swissimage-10"
+    }
+  ]
+}

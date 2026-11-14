@@ -18,7 +18,11 @@ export interface Footprint {
 const MODIS = new Set(['lst_day', 'ndvi', 'et', 'snow_cover', 'water_area'])
 const GLDAS = new Set(['soil_moisture', 'runoff'])
 
-export function footprintOf(variableId: string): Footprint {
+export function footprintOf(variableId: string, fromPipeline?: { km: number | null; label: string } | null): Footprint {
+  if (fromPipeline?.label) {
+    const perPixel = fromPipeline.km != null && fromPipeline.km <= 1
+    return { words: fromPipeline.label, km: fromPipeline.km ?? null, perPixel }
+  }
   if (variableId === 'lake_level') return { words: 'the whole lake (USBR gauge)', km: null, perPixel: false }
   if (variableId === 'grace_tws') return { words: 'a region about 300 km across', km: 300, perPixel: false }
   if (variableId.endsWith('_upstream')) return { words: 'the river basin upstream', km: null, perPixel: false }
