@@ -19,6 +19,15 @@ export interface SiteVariable {
   years_needed: number | null
   /** Share of the trend the climate drivers do not explain, 0-100. */
   residual_pct_non_climate: number | null
+  /** [min, max] share across the climate models tried, or null when only one applies. */
+  residual_pct_range?: [number, number] | null
+  ci_low?: number | null
+  ci_high?: number | null
+  q_value?: number | null
+  /** The area the record describes, from the pipeline. */
+  footprint?: { km: number | null; label: string } | null
+  /** Ready-made label from the pipeline, e.g. "↓ Real". */
+  badge?: string
   /** Yearly means, used for the sparkline. */
   series?: SeriesPoint[]
   note?: string
@@ -39,6 +48,12 @@ export interface SiteAssets {
   base: string
   /** [min, max] metres, as written by the pipeline. */
   heightmap_range_m?: [number, number]
+  /** Mapbox terrain-RGB encoding: height = -10000 + (R*65536 + G*256 + B) * 0.1 m. */
+  heightmap_rgb?: string
+  /** Greyscale multidirectional hillshade, same extent as `base`. */
+  hillshade?: string
+  /** Higher-resolution cloud-free picture; used when it is sharper than `base`. */
+  base_hq?: string
   trend?: Record<string, string>
   yearly?: Record<string, string>
 }
@@ -63,6 +78,16 @@ export interface Site {
   caveats?: string[]
   /** Variables the pipeline could not fetch, with a reason. */
   missing?: Record<string, string>
+  validation?: SiteValidation | null
+}
+
+export interface SiteValidation {
+  source: string
+  url?: string
+  metric?: string
+  r?: number
+  n_months?: number
+  elevation_trend_m_per_decade?: number
 }
 
 /** Metres of horizontal extent covered by the bbox (approximate, flat Earth). */

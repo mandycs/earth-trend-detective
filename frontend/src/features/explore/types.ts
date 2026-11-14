@@ -19,6 +19,7 @@ export interface VariableResult {
   too_short: boolean;
   years_needed: number | null;
   residual_pct_non_climate: number | null;
+  residual_pct_range: [number, number] | null;
 }
 
 export interface SeriesPoint {

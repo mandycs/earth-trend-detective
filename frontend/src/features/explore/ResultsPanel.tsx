@@ -6,6 +6,7 @@ import StepIndicator, { STEPS } from "./StepIndicator";
 import TrendChart from "./TrendChart";
 import { badgeFor, fmtNumber, fmtSlope, moreDataInWords, rangeInWords, summary } from "./format";
 import type { SweepResponse, VariableResult } from "./types";
+import { residualText } from "../../lib/cases";
 import styles from "./explore.module.css";
 
 interface Props {
@@ -139,8 +140,8 @@ function IsItClimate({ result }: { result: SweepResponse }) {
             <li key={v.id} className={styles.card}>
               <h3 className={styles.cardTitle}>{v.label}</h3>
               <p className={styles.slope}>
-                <span className={styles.slopeValue}>≈ {Math.round(v.residual_pct_non_climate ?? 0)}%</span> not
-                explained by climate
+                <span className={styles.slopeValue}>{residualText(v)}</span> not explained by climate
+                {v.residual_pct_range ? ', depending on the climate model' : ''}
               </p>
             </li>
           ))}
@@ -157,7 +158,7 @@ function IsItClimate({ result }: { result: SweepResponse }) {
         is left over.
       </p>
       <p>That deeper check is ready for three real cases, including Lake Mead, where the water is going down.</p>
-      <Link href="/story" className={styles.secondaryLink}>
+      <Link href="/story/lake_mead" className={styles.secondaryLink}>
         See the solved cases in story mode <span aria-hidden="true">→</span>
       </Link>
     </>

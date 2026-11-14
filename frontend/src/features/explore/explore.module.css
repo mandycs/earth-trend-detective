@@ -10,29 +10,44 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 0 16px;
+  padding: 6px var(--gutter);
   min-height: 56px;
-  border-bottom: 1px solid var(--line);
-  background: var(--surface);
+  background: var(--ground);
 }
 
 .homeLink {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   min-height: 44px;
-  padding: 0 4px;
-  font-family: var(--font-serif), Georgia, serif;
-  font-size: 1.375rem;
+  font-weight: 800;
+  font-stretch: 112%;
+  font-size: 1.05rem;
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .homeLink:hover {
-  text-decoration: underline;
+  color: var(--accent);
+}
+
+.topbarNav {
+  display: flex;
+  gap: 18px;
 }
 
 .topbarHint {
-  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  color: var(--ink-2);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.topbarHint:hover {
+  color: var(--ink);
 }
 
 .layout {
@@ -47,20 +62,20 @@
   }
   .layout {
     min-height: 0;
-    grid-template-columns: minmax(0, 1fr) 480px;
+    grid-template-columns: minmax(0, 1fr) 500px;
     grid-template-rows: minmax(0, 1fr);
-    }
+  }
   .panel {
     overflow-y: auto;
-    border-left: 1px solid var(--line);
   }
 }
 
 /* ---------- map ---------- */
 .mapWrap {
   position: relative;
-  height: 50dvh;
+  height: 52svh;
   min-height: 300px;
+  background: #050608;
 }
 
 @media (min-width: 900px) {
@@ -80,8 +95,21 @@
 .mapLoading {
   display: grid;
   place-items: center;
-  color: var(--muted);
-  background: #e7e3d9;
+  color: var(--ink-2);
+}
+
+.mapHint {
+  position: absolute;
+  left: 16px;
+  right: 76px;
+  top: 16px;
+  width: fit-content;
+  margin: 0;
+  padding: 10px 14px;
+  background: var(--ground);
+  color: var(--ink);
+  font-weight: 600;
+  pointer-events: none;
 }
 
 .mapError {
@@ -90,21 +118,43 @@
   right: 16px;
   bottom: 16px;
   margin: 0;
-  padding: 12px 16px;
+  padding: 14px 16px;
   background: var(--surface);
-  border: 1px solid var(--up);
-  border-radius: var(--radius);
+  border-left: 5px solid var(--warm);
 }
 
-/* MapLibre zoom buttons: 44px targets */
+.mapWrap :global(.maplibregl-ctrl-group) {
+  border-radius: 0;
+  background: var(--surface);
+  box-shadow: none !important; /* taste-skill-ignore: removes maplibre's own shadow */
+}
+
 .mapWrap :global(.maplibregl-ctrl-group button) {
   width: 44px;
   height: 44px;
 }
 
+.mapWrap :global(.maplibregl-ctrl-group button + button) {
+  border-top: 0;
+}
+
+.mapWrap :global(.maplibregl-ctrl-icon) {
+  filter: invert(1);
+}
+
+.mapWrap :global(.maplibregl-ctrl-attrib),
+.mapWrap :global(.maplibregl-ctrl-attrib.maplibregl-compact) {
+  background: rgba(11, 13, 16, 0.85) !important;
+  color: var(--ink-2);
+}
+
+.mapWrap :global(.maplibregl-ctrl-attrib a) {
+  color: var(--ink-2);
+}
+
 /* ---------- panel ---------- */
 .panel {
-  background: var(--surface);
+  background: var(--ground);
   scroll-margin-top: 0;
 }
 
@@ -116,21 +166,22 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px 16px 12px 24px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--line);
+  padding: 18px 16px 14px 28px;
+  background: var(--ground);
 }
 
 .placeName {
   margin: 0;
-  font-weight: 600;
-  font-size: 1.125rem;
+  font-weight: 850;
+  font-stretch: 75%;
+  font-size: 2.4rem;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
 }
 
 .placeCoords {
-  margin: 0;
-  color: var(--muted);
-  font-family: var(--font-mono), monospace;
+  margin: 6px 0 0;
+  color: var(--ink-2);
   font-size: 1rem;
 }
 
@@ -140,65 +191,73 @@
   flex: none;
   display: grid;
   place-items: center;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: var(--surface);
+  border: 0;
+  background: var(--surface-2);
   color: var(--ink);
-  cursor: pointer;
   font-size: 1.125rem;
 }
 
 .iconButton:hover {
-  background: var(--neutral-bg);
+  background: var(--surface-3);
 }
 
 /* ---------- states ---------- */
 .state {
-  padding: 32px 24px;
+  padding: 32px 28px;
 }
 
 .state p {
-  margin: 0 0 12px;
+  margin: 0 0 14px;
+  max-width: 44ch;
 }
 
 .stateTitle {
-  margin: 0 0 12px;
-  font-family: var(--font-serif), Georgia, serif;
-  font-weight: 400;
-  font-size: 2rem;
-  line-height: 1.15;
+  margin: 0 0 16px;
+  font-weight: 850;
+  font-stretch: 75%;
+  font-size: clamp(2.4rem, 3.4vw, 3.2rem);
+  line-height: 0.95;
+  letter-spacing: -0.025em;
 }
 
 .note {
-  color: var(--muted);
+  color: var(--ink-2);
 }
 
 .chips {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .chip {
-  min-height: 44px;
-  padding: 8px 16px;
-  border: 1px solid var(--accent);
-  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 52px;
+  padding: 8px 18px;
+  border: 0;
   background: var(--surface);
+  color: var(--ink);
+  font-weight: 650;
+  text-align: left;
+  transition: background 160ms var(--ease);
+}
+
+.chip::after {
+  content: "→";
   color: var(--accent);
-  font-weight: 600;
-  cursor: pointer;
 }
 
 .chip:hover {
-  background: #e3eeee;
+  background: var(--surface-2);
 }
 
 .spinner {
   width: 32px;
   height: 32px;
-  margin-bottom: 16px;
-  border: 3px solid var(--line);
+  margin-bottom: 18px;
+  border: 4px solid var(--surface-3);
   border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 0.9s linear infinite;
@@ -219,30 +278,28 @@
   gap: 8px;
   min-height: 48px;
   padding: 10px 20px;
-  border-radius: var(--radius);
-  font-weight: 600;
-  cursor: pointer;
+  border: 0;
+  font-weight: 650;
   text-decoration: none;
+  transition: background 160ms var(--ease);
 }
 
 .primary {
-  border: 0;
   background: var(--accent);
   color: var(--on-accent);
 }
 
 .primary:hover {
-  background: var(--accent-hover);
+  background: var(--accent-press);
 }
 
 .ghost {
-  border: 1px solid var(--line);
-  background: transparent;
+  background: var(--surface-2);
   color: var(--ink);
 }
 
 .ghost:hover {
-  background: var(--neutral-bg);
+  background: var(--surface-3);
 }
 
 .secondaryLink {
@@ -251,7 +308,7 @@
   gap: 6px;
   min-height: 44px;
   color: var(--accent);
-  font-weight: 600;
+  font-weight: 650;
 }
 
 .stepNav {
@@ -259,7 +316,7 @@
   flex-wrap: wrap;
   justify-content: space-between;
   gap: 12px;
-  margin-top: 24px;
+  margin-top: 28px;
 }
 
 .stepNav .primary {
@@ -274,51 +331,40 @@
 .steps {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 4px;
+  gap: 2px;
   margin: 0;
-  padding: 12px 16px;
+  padding: 6px 28px 0;
   list-style: none;
-  border-bottom: 1px solid var(--line);
 }
 
 .step {
   width: 100%;
-  min-height: 56px;
+  min-height: 52px;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 6px 4px;
+  justify-content: center;
+  padding: 6px 6px;
   border: 0;
-  border-bottom: 3px solid transparent;
-  background: transparent;
-  color: var(--muted);
-  cursor: pointer;
+  background: var(--surface);
+  color: var(--ink-2);
   text-align: center;
-  line-height: 1.2;
+  line-height: 1.15;
+  font-weight: 650;
+  transition: background 160ms var(--ease), color 160ms var(--ease);
+}
+
+.step:hover {
+  background: var(--surface-2);
+  color: var(--ink);
 }
 
 .step[aria-current="step"] {
-  color: var(--ink);
-  font-weight: 600;
-  border-bottom-color: var(--accent);
+  background: var(--ink);
+  color: var(--ground);
 }
 
 .stepNum {
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: 1.5px solid currentColor;
-  font-family: var(--font-mono), monospace;
-  font-size: 1rem;
-}
-
-.step[aria-current="step"] .stepNum {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--on-accent);
+  display: none;
 }
 
 .stepTitle {
@@ -328,14 +374,15 @@
 .srOnly {
   position: absolute;
   width: 1px;
-  height: 1px;
+  height: 1px; /* taste-skill-ignore: screen-reader-only text */
   overflow: hidden;
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
 
 .stepBody {
-  padding: 20px 24px 0;
+  padding: 26px 28px 0;
+  animation: rise 420ms var(--ease-out) both;
 }
 
 .stepBody p {
@@ -343,44 +390,43 @@
 }
 
 .stepHeading {
-  margin: 0 0 12px;
-  font-family: var(--font-serif), Georgia, serif;
-  font-weight: 400;
-  font-size: 2rem;
-  line-height: 1.1;
+  margin: 0 0 14px;
+  font-weight: 850;
+  font-stretch: 75%;
+  font-size: 2.3rem;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
 }
 
 .stepKicker {
-  display: block;
-  margin-bottom: 4px;
-  font-family: var(--font-sans), system-ui, sans-serif;
-  font-size: 1rem;
-  color: var(--muted);
+  display: none;
 }
 
 .lead {
-  font-size: 1.125rem;
-  font-weight: 500;
+  font-size: 1.2rem;
+  line-height: 1.4;
 }
 
-/* ---------- cards ---------- */
+/* ---------- records ---------- */
 .cards {
   display: grid;
-  gap: 16px;
-  margin: 16px 0 0;
+  gap: 2px;
+  margin: 18px 0 0;
   padding: 0;
   list-style: none;
 }
 
 .card {
-  padding: 16px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: #fff;
+  padding: 16px 18px;
+  background: var(--surface);
 }
 
 .card p:last-child {
   margin-bottom: 0;
+}
+
+.card p {
+  color: var(--ink-2);
 }
 
 .cardHead {
@@ -388,140 +434,96 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .cardTitle {
   margin: 0;
   font-size: 1.125rem;
-  font-weight: 600;
+  font-weight: 650;
 }
 
 .slope {
-  color: var(--muted);
+  color: var(--ink-2);
 }
 
 .slopeValue {
-  font-family: var(--font-mono), monospace;
-  font-size: 1.5rem;
-  font-weight: 600;
+  font-stretch: 75%;
+  font-size: 1.8rem;
+  font-weight: 800;
   color: var(--ink);
 }
 
 .more {
+  color: var(--ink) !important;
   font-weight: 600;
-}
-
-/* ---------- badge ---------- */
-.badge {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 12px;
-  border-radius: 999px;
-  border: 2px solid currentColor;
-  font-size: 1rem;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.badgeIcon {
-  font-size: 1.125rem;
-  line-height: 1;
-}
-
-.tone_up {
-  color: var(--up);
-  background: var(--up-bg);
-}
-
-.tone_down {
-  color: var(--down);
-  background: var(--down-bg);
-}
-
-.tone_neutral {
-  color: var(--neutral);
-  background: var(--neutral-bg);
-}
-
-/* "Likely" is visibly weaker than "Real" by shape too, not only colour */
-.strength_likely {
-  border-style: dashed;
-  background: #fff;
-}
-
-.strength_unknown {
-  border-width: 1px;
 }
 
 .legend {
   display: grid;
-  gap: 8px;
+  gap: 10px;
   margin: 0;
   padding: 0;
   list-style: none;
+  color: var(--ink-2);
 }
 
 .legend li {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
 /* ---------- chart ---------- */
 .chart {
-  margin: 8px 0 0;
+  margin: 10px 0 0;
 }
 
 .chartCaption {
-  color: var(--muted);
+  color: var(--ink-2);
   font-size: 1rem;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .chartSvg {
   display: block;
   width: 100%;
   height: auto;
-  background: #faf8f3;
-  border-radius: 6px;
+  background: var(--ground);
 }
 
 .zeroLine {
-  stroke: #b9b2a3;
-  stroke-width: 1;
-  stroke-dasharray: 3 3;
+  stroke: var(--surface-3);
+  stroke-width: 2;
 }
 
 .rawLine {
   fill: none;
-  stroke: #c9c3b6;
+  stroke: #4a525c;
   stroke-width: 1;
 }
 
 .smoothLine {
   fill: none;
   stroke: var(--ink);
-  stroke-width: 1.8;
+  stroke-width: 2;
 }
 
 .trendLine {
   fill: none;
-  stroke-width: 2.5;
-  stroke-dasharray: 7 4;
+  stroke-width: 3;
+  stroke-dasharray: 8 5;
 }
 
 .trendUp {
-  stroke: var(--up);
-  border-color: var(--up);
+  stroke: var(--warm);
+  border-color: var(--warm);
 }
 
 .trendDown {
-  stroke: var(--down);
-  border-color: var(--down);
+  stroke: var(--cool);
+  border-color: var(--cool);
 }
 
 .chartAxis {
@@ -529,17 +531,15 @@
   justify-content: space-between;
   align-items: center;
   gap: 8px;
-  margin-top: 4px;
-  color: var(--muted);
+  margin-top: 6px;
+  color: var(--ink-2);
   font-size: 1rem;
-  font-family: var(--font-mono), monospace;
 }
 
 .chartLegend {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-family: var(--font-sans), system-ui, sans-serif;
   text-align: center;
 }
 
@@ -557,22 +557,28 @@
   border-top-width: 3px;
 }
 
+.keyTrend.trendUp {
+  border-top-color: var(--warm);
+}
+
+.keyTrend.trendDown {
+  border-top-color: var(--cool);
+}
+
 /* ---------- How we know ---------- */
 .details {
   margin-top: 24px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: #fff;
+  background: var(--surface);
 }
 
 .details summary {
-  min-height: 48px;
+  min-height: 52px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 0 16px;
-  font-weight: 600;
+  padding: 0 18px;
+  font-weight: 650;
   cursor: pointer;
   list-style: none;
 }
@@ -585,6 +591,7 @@
   content: "+";
   font-size: 1.5rem;
   line-height: 1;
+  color: var(--accent);
 }
 
 .details[open] summary::after {
@@ -592,40 +599,39 @@
 }
 
 .detailsBody {
-  padding: 0 16px 16px;
+  padding: 0 18px 18px;
+  color: var(--ink-2);
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
   font-size: 1rem;
+  color: var(--ink);
 }
 
 .table th,
 .table td {
-  padding: 6px 4px;
-  border-bottom: 1px solid var(--line);
+  padding: 8px 4px;
+  border-bottom: 1px solid var(--surface-3);
   text-align: left;
-}
-
-.table td {
-  font-family: var(--font-mono), monospace;
 }
 
 @media (max-width: 420px) {
   .stepHeading,
   .stateTitle {
-    font-size: 1.75rem;
+    font-size: 2rem;
   }
-  .topbarHint {
-    display: none;
+  .placeName {
+    font-size: 2rem;
   }
-}
-
-.keyTrend.trendUp {
-  border-top-color: var(--up);
-}
-
-.keyTrend.trendDown {
-  border-top-color: var(--down);
+  .steps,
+  .stepBody,
+  .state {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .placeBar {
+    padding-left: 16px;
+  }
 }

@@ -19,6 +19,7 @@ export const variableSchema = z.object({
   too_short: z.boolean(),
   years_needed: num.optional().default(null),
   residual_pct_non_climate: num.optional().default(null),
+  residual_pct_range: z.tuple([z.number(), z.number()]).nullable().optional().default(null),
 });
 
 export const sweepSchema = z.object({

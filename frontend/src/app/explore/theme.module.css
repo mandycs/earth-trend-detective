@@ -1,37 +1,11 @@
-/* Explore-mode theme, scoped to /explore so it does not override the story mode's
-   global dark theme (frontend/src/app/globals.css belongs to the story mode). */
+/* Explore mode uses the same system as the cover and the story mode (globals.css).
+   These aliases keep the explore module's variable names working. */
 .theme {
-  color-scheme: light;
-  --bg: #f4f1ea;
-  --surface: #fffdf8;
-  --ink: #1a1c1e;
-  --muted: #4b5056;
-  --line: #d6d0c2;
-  --accent: #0b5560;
-  --accent-hover: #083f47;
-  --on-accent: #ffffff;
-  --up: #9a2f0c;
-  --up-bg: #fbe4d8;
-  --down: #144a86;
-  --down-bg: #dde9f6;
-  --neutral: #3f4347;
-  --neutral-bg: #e9e6df;
-  --focus: #0b5560;
-  --radius: 10px;
-
+  --muted: var(--ink-2);
+  --on-accent: #14120a;
+  --up: var(--warm);
+  --down: var(--cool);
   min-height: 100dvh;
-  background: var(--bg);
+  background: var(--ground);
   color: var(--ink);
-  font-family: var(--font-sans), system-ui, sans-serif;
-  font-size: 1rem;
-  line-height: 1.5;
-}
-
-.theme a {
-  color: inherit;
-}
-
-.theme :focus-visible {
-  outline: 3px solid var(--focus);
-  outline-offset: 2px;
 }
