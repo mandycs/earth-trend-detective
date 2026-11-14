@@ -168,6 +168,37 @@ def _before_after(site_dir: Path, names: set[str]) -> list[dict]:
     }]
 
 
+def _detail(site_dir: Path) -> list[dict]:
+    """High-detail crop for the drone view (detail/), listed only when complete."""
+    d = site_dir / "detail"
+    if not all((d / f).is_file() for f in ("detail.json", "heightmap_rgb.png", "base.jpg")):
+        return []
+    meta = _read_json(d / "detail.json")
+    if meta is None:
+        return []
+    layer = {
+        "id": "detail",
+        "kind": "detail",
+        "title": "Close-up: real ground and aerial photo",
+        "status": "visual_only",
+        "bbox": meta.get("bbox"),
+        "files": {
+            "heightmap_rgb": "detail/heightmap_rgb.png",
+            "base": "detail/base.jpg",
+            **({"hillshade": "detail/hillshade.png"} if (d / "hillshade.png").is_file() else {}),
+        },
+        "encoding": "terrain-rgb",
+        "resolution_m": meta.get("resolution_m"),
+        "height_range_m": meta.get("height_range_m"),
+        "water_level_m_by_year": meta.get("water_level_m_by_year"),
+        "drawable_years": meta.get("drawable_years"),
+        "lidar_water_surface_m": meta.get("lidar_water_surface_m"),
+        "note": meta.get("note"),
+        "sources": meta.get("sources", []),
+    }
+    return [layer]
+
+
 def _analysed_layers(site_dir: Path, names: set[str]) -> list[dict]:
     layers: list[dict] = []
     for name in sorted(names):
@@ -226,6 +257,7 @@ def build_layers(site_id: str, site_dir: Path) -> dict:
         *_base_layers(site_id, site_dir, names),
         *_relief_layers(site_dir, names),
         *_before_after(site_dir, names),
+        *_detail(site_dir),
         *_analysed_layers(site_dir, names),
     ]
     return {"site": site_id, "version": LAYERS_VERSION, "layers": layers}

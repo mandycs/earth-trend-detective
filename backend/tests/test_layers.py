@@ -143,3 +143,15 @@ def test_write_layers_round_trips(tmp_path: Path) -> None:
     path = write_layers("s", site)
     assert path == site / "layers.json"
     assert json.loads(path.read_text(encoding="utf-8"))["layers"][0]["id"] == "base"
+
+
+def test_detail_crop_listed_only_when_complete(tmp_path: Path) -> None:
+    site = tmp_path / "s"
+    _touch(site / "detail" / "heightmap_rgb.png")
+    _touch(site / "detail" / "detail.json", {"bbox": [0, 0, 1, 1], "drawable_years": [2003], "sources": []})
+    assert build_layers("s", site)["layers"] == []
+    _touch(site / "detail" / "base.jpg")
+    layer = build_layers("s", site)["layers"][0]
+    assert layer["id"] == "detail" and layer["status"] == "visual_only"
+    assert layer["files"]["base"] == "detail/base.jpg"
+    assert layer["drawable_years"] == [2003]
