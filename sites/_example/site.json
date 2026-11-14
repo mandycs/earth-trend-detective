@@ -1,15 +1,32 @@
 {
-  "_note": "FAKE DATA for development only. Replace with real output from the backend pipeline.",
+  "_note": "FAKE DATA for development only. No number here is a measurement. Replace with the pipeline output.",
   "id": "_example",
-  "name": "Example site",
-  "bbox": [-114.9, 35.9, -114.0, 36.6],
-  "vertical_exaggeration": 3,
-  "years": [2003, 2024],
+  "name": "Lake Mead (sample)",
+  "country": "United States",
+  "bbox": [
+    -114.9,
+    35.9,
+    -114.0,
+    36.6
+  ],
+  "vertical_exaggeration": 8,
+  "elevation_m": [
+    300,
+    1200
+  ],
+  "years": [
+    2003,
+    2024
+  ],
   "assets": {
     "heightmap": "heightmap.png",
     "base": "base.jpg",
-    "trend": { "grace_tws": "trend_grace_tws.png" },
-    "yearly": { "grace_tws": "year_grace_tws_{YYYY}.png" }
+    "trend": {
+      "grace_tws": "trend_grace_tws.png"
+    },
+    "yearly": {
+      "grace_tws": "year_grace_tws_{YYYY}.png"
+    }
   },
   "variables": [
     {
@@ -21,7 +38,97 @@
       "verdict": "real",
       "direction": "down",
       "years_needed": null,
-      "residual_pct_non_climate": 70
+      "residual_pct_non_climate": 70,
+      "series": [
+        {
+          "year": 2003,
+          "value": -0.61
+        },
+        {
+          "year": 2004,
+          "value": 0.27
+        },
+        {
+          "year": 2005,
+          "value": -2.46
+        },
+        {
+          "year": 2006,
+          "value": -3.64
+        },
+        {
+          "year": 2007,
+          "value": -6.07
+        },
+        {
+          "year": 2008,
+          "value": -5.31
+        },
+        {
+          "year": 2009,
+          "value": -3.09
+        },
+        {
+          "year": 2010,
+          "value": -5.7
+        },
+        {
+          "year": 2011,
+          "value": -5.19
+        },
+        {
+          "year": 2012,
+          "value": -8.04
+        },
+        {
+          "year": 2013,
+          "value": -8.65
+        },
+        {
+          "year": 2014,
+          "value": -10.12
+        },
+        {
+          "year": 2015,
+          "value": -15.52
+        },
+        {
+          "year": 2016,
+          "value": -10.43
+        },
+        {
+          "year": 2017,
+          "value": -12.22
+        },
+        {
+          "year": 2018,
+          "value": -13.2
+        },
+        {
+          "year": 2019,
+          "value": -19.42
+        },
+        {
+          "year": 2020,
+          "value": -20.51
+        },
+        {
+          "year": 2021,
+          "value": -19.42
+        },
+        {
+          "year": 2022,
+          "value": -19.36
+        },
+        {
+          "year": 2023,
+          "value": -18.47
+        },
+        {
+          "year": 2024,
+          "value": -20.27
+        }
+      ]
     },
     {
       "id": "precip",
@@ -32,14 +139,227 @@
       "verdict": "unknown",
       "direction": "flat",
       "years_needed": 15,
-      "residual_pct_non_climate": null
+      "residual_pct_non_climate": null,
+      "series": [
+        {
+          "year": 2003,
+          "value": 12.67
+        },
+        {
+          "year": 2004,
+          "value": 8.92
+        },
+        {
+          "year": 2005,
+          "value": 11.95
+        },
+        {
+          "year": 2006,
+          "value": 12.2
+        },
+        {
+          "year": 2007,
+          "value": 8.8
+        },
+        {
+          "year": 2008,
+          "value": 16.4
+        },
+        {
+          "year": 2009,
+          "value": 12.66
+        },
+        {
+          "year": 2010,
+          "value": 14.69
+        },
+        {
+          "year": 2011,
+          "value": 8.85
+        },
+        {
+          "year": 2012,
+          "value": 8.45
+        },
+        {
+          "year": 2013,
+          "value": 9.7
+        },
+        {
+          "year": 2014,
+          "value": 10.44
+        },
+        {
+          "year": 2015,
+          "value": 12.78
+        },
+        {
+          "year": 2016,
+          "value": 11.53
+        },
+        {
+          "year": 2017,
+          "value": 9.29
+        },
+        {
+          "year": 2018,
+          "value": 7.64
+        },
+        {
+          "year": 2019,
+          "value": 9.01
+        },
+        {
+          "year": 2020,
+          "value": 14.57
+        },
+        {
+          "year": 2021,
+          "value": 8.05
+        },
+        {
+          "year": 2022,
+          "value": 11.4
+        },
+        {
+          "year": 2023,
+          "value": 11.96
+        },
+        {
+          "year": 2024,
+          "value": 5.81
+        }
+      ]
+    },
+    {
+      "id": "lst",
+      "label": "Land surface temperature",
+      "unit": "°C",
+      "sen_slope_per_decade": 0.42,
+      "p_value": 0.02,
+      "verdict": "likely",
+      "direction": "up",
+      "years_needed": null,
+      "residual_pct_non_climate": 12,
+      "series": [
+        {
+          "year": 2003,
+          "value": 22.42
+        },
+        {
+          "year": 2004,
+          "value": 22.9
+        },
+        {
+          "year": 2005,
+          "value": 21.78
+        },
+        {
+          "year": 2006,
+          "value": 22.41
+        },
+        {
+          "year": 2007,
+          "value": 22.53
+        },
+        {
+          "year": 2008,
+          "value": 22.32
+        },
+        {
+          "year": 2009,
+          "value": 22.82
+        },
+        {
+          "year": 2010,
+          "value": 22.67
+        },
+        {
+          "year": 2011,
+          "value": 22.22
+        },
+        {
+          "year": 2012,
+          "value": 23.06
+        },
+        {
+          "year": 2013,
+          "value": 23.04
+        },
+        {
+          "year": 2014,
+          "value": 23.18
+        },
+        {
+          "year": 2015,
+          "value": 23.4
+        },
+        {
+          "year": 2016,
+          "value": 23.06
+        },
+        {
+          "year": 2017,
+          "value": 23.02
+        },
+        {
+          "year": 2018,
+          "value": 22.56
+        },
+        {
+          "year": 2019,
+          "value": 23.27
+        },
+        {
+          "year": 2020,
+          "value": 22.88
+        },
+        {
+          "year": 2021,
+          "value": 22.98
+        },
+        {
+          "year": 2022,
+          "value": 22.74
+        },
+        {
+          "year": 2023,
+          "value": 22.88
+        },
+        {
+          "year": 2024,
+          "value": 23.08
+        }
+      ]
     }
   ],
   "steps": [
-    "What is changing here?",
-    "Is it real or chance?",
-    "Is it the climate?"
+    {
+      "title": "What is changing here?",
+      "body": "Three NASA variables apply to this basin. Press play: the water in the reservoir does not look the same in 2024 as it did in 2003."
+    },
+    {
+      "title": "Is it real, or is it chance?",
+      "body": "A trend can appear out of noise. The test asks whether the change is bigger than the year-to-year wobble, and whether it survives the fact that several variables were tested at once."
+    },
+    {
+      "title": "Is it the climate?",
+      "body": "Rainfall shows no clear trend here, so the drying cannot be explained by rain alone. This is the kind of question the tool answers without hand-picking variables."
+    }
   ],
-  "narrative": "FAKE: Water is dropping for real, but rainfall shows no clear trend. Most of the drop is not explained by climate.",
-  "sources": [{ "title": "", "url": "" }]
+  "narrative": "Sample narrative: the reservoir has been losing water for two decades while rainfall stayed flat. That gap is what makes the case interesting, and it is exactly what the tool puts on screen for any place on Earth.",
+  "sources": [
+    {
+      "title": "NASA GRACE: groundwater and total water storage",
+      "url": "https://grace.jpl.nasa.gov/"
+    },
+    {
+      "title": "NASA POWER: meteorological data",
+      "url": "https://power.larc.nasa.gov/"
+    }
+  ],
+  "caveats": [
+    "Placeholder assets: this case is generated, not measured.",
+    "The leftover share is a clue, not an attribution."
+  ]
 }

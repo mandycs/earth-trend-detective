@@ -1,22 +1,16 @@
-import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
-import "./globals.css";
-
-const sans = Geist({ variable: "--font-sans", subsets: ["latin"] });
-const mono = Geist_Mono({ variable: "--font-mono", subsets: ["latin"] });
-const serif = Instrument_Serif({ variable: "--font-serif", subsets: ["latin"], weight: "400" });
+import type { Metadata } from 'next'
+import './globals.css'
 
 export const metadata: Metadata = {
-  title: "Earth Trend Detective",
-  description: "Is it the climate, or is it us? Investigate any place on Earth with NASA data.",
-};
+  title: 'Earth Trend Detective',
+  description:
+    'Pick a place, see what is changing there, whether the change is real, and how much of it the climate does not explain.',
+}
 
-export const viewport: Viewport = { width: "device-width", initialScale: 1, themeColor: "#f4f1ea" };
-
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${sans.variable} ${mono.variable} ${serif.variable}`}>{children}</body>
+      <body>{children}</body>
     </html>
-  );
+  )
 }
