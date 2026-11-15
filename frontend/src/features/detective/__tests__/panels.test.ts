@@ -31,8 +31,8 @@ test("tool labels are plain and fall back", () => {
 });
 
 test("ask blocker gives a visible reason", () => {
-  assert.equal(askBlocker(null, "q"), "Pick a place first");
-  assert.equal(askBlocker({ kind: "point", lat: 1, lon: 2 }, "   "), "Write a question");
+  assert.equal(askBlocker(null, "q"), "Pick a place on the globe first.");
+  assert.equal(askBlocker({ kind: "point", lat: 1, lon: 2 }, "   "), "Type a question first.");
   assert.equal(askBlocker({ kind: "point", lat: 1, lon: 2 }, "Hot?"), null);
 });
 
@@ -49,9 +49,9 @@ test("a missing test count is dropped, never printed as 0", () => {
 });
 
 test("replay and fork lines", () => {
-  assert.equal(recordedDate("2026-11-15T09:30:00Z"), "15 Nov 2026");
+  assert.equal(recordedDate("2026-11-15T09:30:00Z"), "Nov 15, 2026");
   assert.equal(recordedDate("garbage"), "garbage");
-  assert.equal(replayLine("2026-11-15T09:30:00Z"), "Replay of a recorded run · recorded 15 Nov 2026");
+  assert.equal(replayLine("2026-11-15T09:30:00Z"), "Replay of a recorded run · recorded Nov 15, 2026");
   assert.equal(replayLine(""), "Replay of a recorded run");
   assert.equal(forkLine(3, "trend of rain"), "Re-running from step 3: trend of rain");
   assert.equal(notMeasuredLine("Snow", "no data"), "Snow — no data");

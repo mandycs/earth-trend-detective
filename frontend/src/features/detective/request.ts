@@ -35,14 +35,14 @@ export function boxFromCorners(
   const lonA = cornerLon(a.lon);
   const lonB = cornerLon(b.lon);
   if (Math.abs(lonA - lonB) > 180) {
-    return { ok: false, message: "Boxes can't cross the 180° line yet. Draw it on one side." };
+    return { ok: false, message: "Boxes can't cross the 180° line yet. Draw the box on one side of it." };
   }
   const south = clampLat(Math.min(a.lat, b.lat));
   const north = clampLat(Math.max(a.lat, b.lat));
   const west = Math.min(lonA, lonB);
   const east = Math.max(lonA, lonB);
   if (north - south < MIN_SIDE || east - west < MIN_SIDE) {
-    return { ok: false, message: "That box is too small. Drag a little wider." };
+    return { ok: false, message: "That box is too small. Pick two corners farther apart." };
   }
   return { ok: true, bbox: [west, south, east, north] };
 }

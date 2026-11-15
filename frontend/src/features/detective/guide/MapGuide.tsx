@@ -137,7 +137,7 @@ export function MapGuide({ view, target, inv, events, variant = 'map' }: MapGuid
                     <p className={styles.muted}>{CLUE_LINE}</p>
                   </section>
                   <button type="button" className={styles.more} onClick={() => setTier('tech')}>
-                    Curious? See what is under the hood →
+                    Curious? See what is under the hood <span aria-hidden="true">→</span>
                   </button>
                 </>
               ) : tech ? (
@@ -256,7 +256,7 @@ function Item({ item }: { item: PlainItem }) {
           <div
             className={styles.ramp}
             role="img"
-            aria-label="Colour ramp"
+            aria-label="Color scale"
             style={{ background: `linear-gradient(to right, ${item.ramp.join(', ')})` }}
           />
         )}

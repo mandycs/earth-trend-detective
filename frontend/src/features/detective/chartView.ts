@@ -24,7 +24,7 @@ export function chartView(model: ChartModel, width = 560, height = 220, pad = 16
   let lo = Math.min(...ys);
   let hi = Math.max(...ys);
   if (!(hi - lo > 0)) {
-    // Zero y-range: centre the flat line with an arbitrary margin (geometry only, never printed).
+    // Zero y-range: center the flat line with an arbitrary margin (geometry only, never printed).
     const m = Math.abs(lo) > 0 ? Math.abs(lo) * 0.1 : 1;
     lo -= m;
     hi += m;

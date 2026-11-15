@@ -2115,3 +2115,309 @@
   text-underline-offset: 4px;
   cursor: pointer;
 }
+
+/* ---------------------------------------------------- hierarchy pass (15 Nov)
+   Labels look like labels, controls look like controls, and secondary detail folds. */
+
+/* Folding sections: one look for every <details> in the reading column. */
+.sp-fold {
+  border-top: 1px solid var(--line);
+}
+
+.sp-fold > summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  font-weight: 650;
+  list-style: none;
+}
+
+.sp-fold > summary::-webkit-details-marker {
+  display: none;
+}
+
+.sp-fold > summary::after {
+  content: '+';
+  flex: none;
+  width: 1.2em;
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: 400;
+  color: var(--ink-2);
+}
+
+.sp-fold[open] > summary::after {
+  content: '−';
+}
+
+.sp-fold > summary:hover {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.sp-fold > summary:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.sp-fold > ul:not(.sp-vars) {
+  margin: 0 0 14px;
+  padding-left: 1.1em;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--ink-2);
+}
+
+.sp-fold strong {
+  color: var(--ink);
+}
+
+/* The stamp inside a record row is a small label. */
+.sp-var-stamp {
+  font-size: 0.95rem;
+}
+
+/* Layer status: small key text with a marker, not a filled chip. */
+.lp-chip,
+.lp-chip-analysed,
+.lp-chip-observed,
+.lp-chip-visual_only {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  outline: 0;
+  color: var(--ink-2);
+  font-size: 0.8rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lp-chip-analysed {
+  color: var(--ink);
+}
+
+/* The relief note is a caption on the map, not a control. */
+.st-relief {
+  background: none;
+  padding-left: 0;
+  color: var(--ink);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.95), 0 1px 2px rgba(0, 0, 0, 0.95);
+}
+
+.st-relief span {
+  min-height: 0;
+  padding-right: 0;
+}
+
+/* The drone is a secondary action: outlined, never the filled primary. */
+.st-drone-toggle {
+  background: var(--ground);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--line); /* taste-skill-ignore: outline, not a shadow */
+}
+
+.st-drone-toggle:hover {
+  background: var(--surface-2);
+}
+
+/* The open Layers panel stops under the drone button instead of covering it. */
+@media (min-width: 1101px) {
+  .st:not(.st-documentary) .lp:not(.lp-folded) {
+    max-height: calc(100% - var(--tl-h) - 210px);
+  }
+}
+
+/* ------------------------------------------- folding the panel and the timeline */
+
+.st-panel-toggle {
+  display: none;
+}
+
+@media (min-width: 1101px) {
+  .st:not(.st-documentary) .st-panel-toggle {
+    position: absolute;
+    top: 72px;
+    left: calc(min(max(38%, 420px), 600px) + 8px);
+    z-index: 4;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 14px;
+    border: 0;
+    background: var(--ground);
+    color: var(--ink-2);
+    font-weight: 650;
+    box-shadow: inset 0 0 0 1px var(--line); /* taste-skill-ignore: outline, not a shadow */
+  }
+
+  .st:not(.st-documentary) .st-panel-toggle:hover {
+    color: var(--ink);
+    background: var(--surface-2);
+  }
+
+  .st.st-panel-closed:not(.st-documentary) .st-panel-toggle {
+    left: 16px;
+  }
+
+  .st.st-panel-closed:not(.st-documentary) .sp {
+    display: none;
+  }
+
+  .st.st-panel-closed:not(.st-documentary) .st-canvas::after {
+    display: none;
+  }
+
+  .st.st-tl-folded:not(.st-documentary) .sp {
+    bottom: 64px;
+  }
+}
+
+.st-tl-folded .st-viewer {
+  --tl-h: 64px;
+}
+
+.tl-fold {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--ink-2);
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.tl-fold:hover {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.tl-fold span {
+  font-size: 1.2rem;
+  font-weight: 400;
+}
+
+@media (min-width: 721px) {
+  .tl {
+    grid-template-columns: 56px auto minmax(0, 1fr) minmax(170px, 230px) auto;
+  }
+
+  .tl.tl-folded {
+    min-height: 64px;
+    grid-template-columns: 40px auto minmax(0, 1fr) auto;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+}
+
+@media (max-width: 720px) {
+  .tl-fold {
+    grid-column: 1 / -1;
+    justify-self: end;
+    min-height: 36px;
+  }
+}
+
+.tl-folded .tl-play {
+  width: 40px;
+  height: 40px;
+}
+
+.tl-folded .tl-year {
+  font-size: 1.6rem;
+}
+
+.tl-folded .tl-readout {
+  display: none;
+}
+
+/* Folded: the chart becomes a thin scrubber track. */
+.tl-folded .tl-chart {
+  height: 24px;
+}
+
+.tl-folded .tl-chart svg,
+.tl-folded .tl-threshold-label,
+.tl-folded .tl-ends {
+  display: none;
+}
+
+.tl-folded .tl-chart input {
+  inset: 0;
+  height: 100%;
+  opacity: 1;
+  accent-color: var(--ink);
+}
+
+/* Top and bottom values of the chart, in the left edge of the plot. */
+.tl-axis {
+  position: absolute;
+  inset: 0 0 22px;
+  pointer-events: none;
+}
+
+.tl-axis span {
+  position: absolute;
+  left: 0;
+  transform: translateY(-50%);
+  padding-right: 6px;
+  background: var(--surface);
+  color: var(--ink-3);
+  font-size: 0.8rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The axis values get their own gutter left of the plot. */
+.tl-chart:has(.tl-axis) svg,
+.tl-chart:has(.tl-axis) input {
+  left: 64px;
+  width: calc(100% - 64px);
+}
+
+.tl-chart.tl-chart-gutter:has(.tl-axis) svg,
+.tl-chart.tl-chart-gutter:has(.tl-axis) input {
+  width: calc(100% - 160px);
+}
+
+.tl-chart:has(.tl-axis) .tl-ends {
+  left: 64px;
+}
+
+.tl-axis span {
+  width: 60px;
+  text-align: right;
+  padding-right: 0;
+  background: none;
+}
+
+.sp-unsettled > .sp-vars {
+  margin-bottom: 14px;
+}
+
+/* Case nav bar over the map: the shared nav glass (DESIGN.md, nav chrome only).
+   Fallbacks match the tokens in globals.css so the bar holds before they land. */
+@media (min-width: 1101px) {
+  .st:not(.st-documentary) .st-bar {
+    background: var(--glass-bg, rgba(14, 16, 18, 0.72));
+    -webkit-backdrop-filter: var(--glass-blur, blur(14px) saturate(1.3));
+    backdrop-filter: var(--glass-blur, blur(14px) saturate(1.3));
+    border-bottom: 1px solid var(--glass-line, rgba(233, 236, 238, 0.12));
+    padding-bottom: 6px;
+  }
+}

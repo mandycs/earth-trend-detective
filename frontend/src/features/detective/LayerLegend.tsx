@@ -39,7 +39,7 @@ export function LayerLegend({ view, flat = false }: { view: MapView; flat?: bool
                 <div
                   className={styles.legendRamp}
                   role="img"
-                  aria-label={`Colour ramp${e.unit ? ` for ${e.unit}` : ''}`}
+                  aria-label={`Color scale${e.unit ? ` for ${e.unit}` : ''}`}
                   style={{ background: `linear-gradient(to right, ${e.ramp.join(', ')})` }}
                 />
               ) : null}

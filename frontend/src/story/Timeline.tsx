@@ -15,6 +15,9 @@ export interface TimelineProps {
   mapKm: number
   onScrub: (year: number) => void
   onToggle: () => void
+  /** Folded: play, year and a thin scrubber only; the chart and readout hide. */
+  folded?: boolean
+  onFold?: () => void
 }
 
 const W = 1000
@@ -43,7 +46,7 @@ function labelTops(fracs: number[]): number[] {
  * cursor on the current year. A real <input type=range> sits on top, so
  * keyboard, screen readers and thumbs all work.
  */
-export function Timeline({ first, last, year, playing, variable, mapFollows, mapKm, onScrub, onToggle }: TimelineProps) {
+export function Timeline({ first, last, year, playing, variable, mapFollows, mapKm, onScrub, onToggle, folded = false, onFold }: TimelineProps) {
   const fp = variable ? footprintOf(variable.id, variable.footprint) : null
   const label =
     (variable ? variable.label : 'No record selected') +
@@ -82,7 +85,7 @@ export function Timeline({ first, last, year, playing, variable, mapFollows, map
       : ''
 
   return (
-    <div className="tl" aria-label="Timeline">
+    <div className={folded ? 'tl tl-folded' : 'tl'} aria-label="Timeline">
       <button
         type="button"
         className="tl-play"
@@ -136,6 +139,17 @@ export function Timeline({ first, last, year, playing, variable, mapFollows, map
               ))
             })()
           : null}
+        {/* The scale of the chart: its top and bottom values, so the line reads as numbers. */}
+        {series.length > 1 && !folded ? (
+          <div className="tl-axis" aria-hidden="true">
+            <span style={{ top: `${((y(max) / H) * 100).toFixed(1)}%` }}>
+              {fmt(max, crossesZero)} {variable?.unit}
+            </span>
+            <span style={{ top: `${((y(min) / H) * 100).toFixed(1)}%` }}>
+              {fmt(min, crossesZero)} {variable?.unit}
+            </span>
+          </div>
+        ) : null}
         <div className="tl-ends" aria-hidden="true">
           <span>{first}</span>
           <span>{last}</span>
@@ -148,6 +162,13 @@ export function Timeline({ first, last, year, playing, variable, mapFollows, map
           {label}
         </span>
       </div>
+
+      {onFold ? (
+        <button type="button" className="tl-fold" aria-expanded={!folded} onClick={onFold}>
+          {folded ? 'Show chart' : 'Hide chart'}
+          <span aria-hidden="true">{folded ? '+' : '−'}</span>
+        </button>
+      ) : null}
     </div>
   )
 }

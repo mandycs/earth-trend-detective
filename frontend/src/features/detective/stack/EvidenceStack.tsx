@@ -1,7 +1,7 @@
 'use client'
 
 // The exploded evidence stack (Task 17): the current turn's layers as opaque slabs over the relief (or the flat
-// picture) of the same box. Separation is the point: this view is not the map's "one coloured layer at a time".
+// picture) of the same box. Separation is the point: this view is not the map's "one colored layer at a time".
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { MutableRefObject, ReactNode } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
@@ -52,7 +52,7 @@ const WIDE = '(min-width: 900px)'
 
 // ---- geometry helpers (drawing only: nothing here is printed) ----
 
-/** Width (east-west) and depth (north-south) of the box in metres. */
+/** Width (east-west) and depth (north-south) of the box in meters. */
 function boxMetres(b: Bbox): [number, number] {
   const [w, s, e, n] = b
   const mid = (((s + n) / 2) * Math.PI) / 180
@@ -217,7 +217,7 @@ function SlabMesh({
   onPick: (key: string) => void; onHover: (key: string | null) => void; onTexture: (key: string, status: PictureStatus) => void
 }) {
   const url = slab.texture.url
-  // An empty or failed picture leaves a neutral slab: never a colour that was not in the data.
+  // An empty or failed picture leaves a neutral slab: never a color that was not in the data.
   const { tex, status } = useTexture(url)
   useEffect(() => {
     if (url) onTexture(slab.key, status)
@@ -397,7 +397,7 @@ function SlabCard({
 }: {
   slab: Slab; picture: PictureStatus | undefined; active: boolean; onPick: (key: string) => void; onHover: (key: string | null) => void
   cardRef: (el: HTMLButtonElement | null) => void; pickHint: string
-  /** The colour key of a classed layer: on its first card only, so two years of land cover do not repeat it. */
+  /** The color key of a classed layer: on its first card only, so two years of land cover do not repeat it. */
   showKey: boolean
 }) {
   const when = whenText(slab)
@@ -428,7 +428,7 @@ function SlabCard({
         <span
           className={styles.cardRamp}
           role="img"
-          aria-label={`Colour ramp${slab.legend?.unit ? ` for ${slab.legend.unit}` : ''}`}
+          aria-label={`Color scale${slab.legend?.unit ? ` for ${slab.legend.unit}` : ''}`}
           style={{ background: `linear-gradient(to right, ${stops.join(', ')})` }}
         />
       )}

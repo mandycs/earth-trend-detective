@@ -99,7 +99,7 @@ export default function HomePage() {
           <div>
             <h2>Read it right</h2>
             <p>
-              The share the climate does not explain is a clue, not an attribution. Factors we did not measure end up
+              The share the climate does not explain is a clue, not proof. Factors we did not measure end up
               in it too.
             </p>
             <p className={styles.footerNote}>Built for NASA Space Apps 2026, Málaga.</p>

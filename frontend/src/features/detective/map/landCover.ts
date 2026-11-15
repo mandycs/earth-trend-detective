@@ -1,8 +1,8 @@
-// The land cover classes a viewer can read on the map, in plain words. Colours copied from the GIBS colormap of
+// The land cover classes a viewer can read on the map, in plain words. Colors copied from the GIBS colormap of
 // MODIS_Combined_L3_IGBP_Land_Cover_Type_Annual:
 //   https://gibs.earthdata.nasa.gov/colormaps/v1.3/MODIS_IGBP_Land_Cover_Type.xml (fetched 2026-11-15)
-// A class that has several IGBP colours (five forest types, two shrublands, crops and the crop mosaic) keeps all of
-// them, so the swatch shows every colour it stands for. Savannas, wetlands and "unclassified" are left out: the
+// A class that has several IGBP colors (five forest types, two shrublands, crops and the crop mosaic) keeps all of
+// them, so the swatch shows every color it stands for. Savannas, wetlands and "unclassified" are left out: the
 // legend names the classes people look for, it is not the full table.
 
 export interface LandCoverClass { name: string; colours: string[] }
@@ -29,7 +29,7 @@ export function landCoverClasses(layerId: string): readonly LandCoverClass[] {
   return LAND_COVER_LAYER_IDS.has(layerId) ? LAND_COVER_CLASSES : [];
 }
 
-/** A CSS background for a swatch: one colour, or hard stripes of each. */
+/** A CSS background for a swatch: one color, or hard stripes of each. */
 export function swatchBackground(c: LandCoverClass): string {
   if (c.colours.length === 1) return c.colours[0];
   const step = 100 / c.colours.length;

@@ -8,7 +8,7 @@ const DAMP = 2 * Math.sqrt(STIFF); // critically damped: no bounce past the targ
 const POS_EPS = 0.0008;
 const VEL_EPS = 0.004;
 
-/** One spring step towards `target`; snaps onto it once close and slow. Returns a fresh state. */
+/** One spring step toward `target`; snaps onto it once close and slow. Returns a fresh state. */
 export function springStep(m: SlabMotion, target: number, dt: number): SlabMotion {
   const a = STIFF * (target - m.y) - DAMP * m.v;
   const v = m.v + a * dt;

@@ -53,7 +53,7 @@ export function QuestionBox({
         <p className={styles.qReadonly}>{initialQuestion}</p>
         <p className={styles.qMeta}>{replayLine(recordedAt)}</p>
         <Link href="/detective" className={styles.textBtn}>
-          Run it live
+          Start a live case
         </Link>
       </section>
     )

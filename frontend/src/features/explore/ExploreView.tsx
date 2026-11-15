@@ -113,12 +113,13 @@ export default function ExploreView() {
             Investigate anywhere
           </Link>
           <Link href="/story/lake_mead" className={styles.topbarHint}>
-            Solved cases <span aria-hidden="true">→</span>
+            Lake Mead case <span aria-hidden="true">→</span>
           </Link>
         </nav>
       </header>
       <div className={styles.layout}>
         <MapView place={place} onPick={investigate} />
+        <h1 className="sr-only">Explore the map</h1>
         <aside ref={panel} className={styles.panel} aria-label="Results">
           {place && (
             <div className={styles.placeBar}>
@@ -134,10 +135,10 @@ export default function ExploreView() {
 
           {status.kind === "empty" && (
             <div className={styles.state}>
-              <h1 className={styles.stateTitle}>Pick a place to investigate</h1>
+              <h2 className={styles.stateTitle}>Pick a place to investigate</h2>
               <p>
-                Click anywhere on the map and the detective opens with that place picked. Ask it what is changing
-                there, whether it is real, and whether it is the climate.
+                Click anywhere on the map to open the detective with that place picked. Ask what is changing there,
+                whether the change is real, and how much of it the climate explains.
               </p>
               {sites.length > 0 && (
                 <>
@@ -164,7 +165,7 @@ export default function ExploreView() {
           {status.kind === "error" && (
             <div className={styles.state} role="alert">
               <h2 className={styles.stateTitle}>
-                We couldn&apos;t analyse this place
+                We couldn&apos;t analyze this place
               </h2>
               <p>{status.message}</p>
               <div className={styles.stepNav}>

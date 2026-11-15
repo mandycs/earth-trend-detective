@@ -13,7 +13,7 @@ export interface TerrainProps {
   split?: number
   /** Called with texture coordinates when the visitor clicks the ground (not after a drag). */
   onPick?: (uv: THREE.Vector2) => void
-  /** Ground width in metres of the plane's x extent. */
+  /** Ground width in meters of the plane's x extent. */
   widthMetres: number
   exaggeration: number
   /** depth / width of the plane. */
@@ -36,7 +36,7 @@ const EDGE = 0.035
  * Height of a still water surface in the elevation model, if there is one.
  * Radar elevation models record lakes and the sea as perfectly flat, so a
  * still surface shows up as one 1-metre bin holding a large share of the
- * pixels. Returns metres, or null when no such flat level exists.
+ * pixels. Returns meters, or null when no such flat level exists.
  */
 export function waterLevel(grid: HeightGrid): number | null {
   const counts = new Map<number, number>()
@@ -137,10 +137,10 @@ export function waterMask(grid: HeightGrid, level: number): Uint8Array {
 
 /** Metres within which a height counts as the flat water surface. */
 const WATER_TOLERANCE = 0.06
-/** How far under the water surface flat pixels are pushed, in metres. */
+/** How far under the water surface flat pixels are pushed, in meters. */
 const WATER_DEPTH = 2
 
-/** Mean colour of a picture, for the ground that runs on to the horizon. */
+/** Mean color of a picture, for the ground that runs on to the horizon. */
 export function meanColour(texture: THREE.Texture): THREE.Color {
   const image = texture.image as CanvasImageSource | undefined
   const colour = new THREE.Color('#6b5a48')
@@ -190,8 +190,8 @@ const SLOTS = Array.from({ length: MAX_OVERLAYS }, (_, i) => i)
 
 /**
  * Builds the relief on the CPU from full-precision heights, so normals,
- * shadows and silhouettes come from real metres, then cuts it out as a slab
- * with earth-coloured sides, like a museum relief model.
+ * shadows and silhouettes come from real meters, then cuts it out as a slab
+ * with earth-colored sides, like a museum relief model.
  */
 function buildGeometry(grid: HeightGrid, aspect: number, scale: number, water: number | null, segments = 512) {
   const mask = water == null ? null : waterMask(grid, water)

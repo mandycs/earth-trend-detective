@@ -51,8 +51,21 @@ instead of showing every control at once.
 
 ## Verdict stamp
 
-Icon + words + fill strength, never colour alone, all in ink:
-`↓ Real` (solid ink, dark text) · `↑ Likely` (ink outline) · `? Can't tell yet` (tertiary dashed outline).
+A label, never a control: no box around it. Icon + words + a three-bar strength meter, all in ink:
+`▮▮▮ ↓ Real` (three bars filled) · `▮▮▯ ↑ Likely` (two filled) · `▯▯▯ ? Can't tell yet` (none filled,
+tertiary ink). Revised 15 Nov 2026: the boxed stamps read as buttons.
+
+## Labels vs. controls
+
+Accepted on 15 Nov 2026.
+
+- **Only controls get a box or a fill.** Status keys (layer status, verdicts, the relief note on the
+  map) are text: small uppercase key text or a caption, no border, no background.
+- **One filled button per view.** The current task (Next, Ask, Investigate). Map tools such as the
+  drone view are outlined on the ground colour.
+- **Secondary detail folds.** Gaps, pending records, caveats, method and sources are `<details>` with
+  a `+`/`−` and a count in the summary (`.sp-fold`). In the record list only the selected record shows
+  where it is measured.
 
 ## Brand
 
@@ -91,7 +104,11 @@ link to the challenge ("Be an Earth System Trend Detective").
 - Instrument: reading column on the left over the scrim (about 38 % wide on desktop); map controls
   bottom right; stepper or timeline along the bottom. Below 1100 px the map sits on top and the
   reading column follows.
-- No eyebrows, gradients (other than scrims), glass or decorative shadows.
+- No eyebrows, gradients (other than scrims) or decorative shadows.
+- Glass only on navigation chrome that sits over imagery or the map: nav bars, the case strip on the
+  cover, the film's play button and its small controls. Tokens `--glass-bg` (ground at 72 %),
+  `--glass-blur`, `--glass-line`. The tint carries the contrast (text ≥ 4.5:1 on it even with no
+  blur); the blur is decoration on top. Never on panels, cards or reading text.
 
 ## Map layers
 

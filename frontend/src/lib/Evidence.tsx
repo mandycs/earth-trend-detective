@@ -18,7 +18,7 @@ export function RangeBar({ variable }: { variable: SiteVariable }) {
       <div
         className="ev-range-track"
         role="img"
-        aria-label={`Most likely change ${fmt(mid, true)} ${unit} per decade, range ${fmt(lo, true)} to ${fmt(hi, true)}.${crosses ? ' The range includes no change.' : ' The range does not include zero.'}`}
+        aria-label={`Most likely change ${fmt(mid, true)} ${unit} per decade, range ${fmt(lo, true)} to ${fmt(hi, true)}.${crosses ? ' The range includes no change.' : ' The whole range is on one side of zero.'}`}
       >
         <span className="ev-range-zero" style={{ left: `${x(0)}%` }} />
         <span className="ev-range-band" style={{ left: `${x(lo)}%`, width: `${x(hi) - x(lo)}%` }} />

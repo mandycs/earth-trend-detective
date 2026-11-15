@@ -36,8 +36,8 @@ export interface PlainGuide {
 export const FRAMING = "The satellites measure. Alibi tests. You decide.";
 export const CLUE_LINE = "Whatever Alibi finds is a clue, not proof.";
 
-/** What a layer's colours mean, in everyday words, by layer id. Meaning only: colours are named only when a key
- * with the real colours is drawn next to the words (land cover). */
+/** What a layer's colors mean, in everyday words, by layer id. Meaning only: colors are named only when a key
+ * with the real colors is drawn next to the words (land cover). */
 const LAYER_WORDS: Readonly<Record<string, string>> = {
   true_colour: "A real photo from space, like looking down from a very high plane.",
   true_colour_viirs: "A real photo from space, like looking down from a very high plane.",
@@ -45,7 +45,7 @@ const LAYER_WORDS: Readonly<Record<string, string>> = {
   base_hq: "A cloud-free photo from space, sharp enough to see fields and roads.",
   before_after: "Two real photos from space of the same spot, years apart.",
   hillshade: "Shading that makes hills and valleys pop out.",
-  precipitation: "Rain falling that day: the heavier the rain, the stronger the colour.",
+  precipitation: "Rain falling that day: the heavier the rain, the stronger the color.",
   ndvi: "How green the plants are, from bare ground to thick green.",
   ndvi_gibs: "How green the plants are, from bare ground to thick green.",
   lst_day: "How hot the ground gets by day. That is the ground itself, not the air.",
@@ -60,16 +60,16 @@ const LAYER_WORDS: Readonly<Record<string, string>> = {
   chlorophyll: "How much tiny algae floats in the water.",
 };
 
-/** Land cover in plain words, naming only colours that the key beside it really shows. */
+/** Land cover in plain words, naming only colors that the key beside it really shows. */
 export function landCoverWords(classes: readonly LandCoverClass[] = LAND_COVER_CLASSES): string {
   const has = (n: string) => classes.some((c) => c.name === n);
   const parts = [
     has("Urban / built-up") ? "red patches = cities and towns" : null,
     has("Water") ? "blue = water" : null,
     has("Forest") ? "green = forest" : null,
-    has("Barren") ? "grey = bare ground" : null,
+    has("Barren") ? "gray = bare ground" : null,
   ].filter((x): x is string => !!x);
-  return `Each colour is a kind of ground${parts.length ? `: ${parts.join(", ")}` : ""}.`;
+  return `Each color is a kind of ground${parts.length ? `: ${parts.join(", ")}` : ""}.`;
 }
 
 /** The time a layer shows, said plainly; null when the view carries none. */
@@ -86,9 +86,9 @@ function layerWords(lv: LayerView): string {
   if (Object.hasOwn(LAYER_WORDS, lv.layerId)) return LAYER_WORDS[lv.layerId];
   const base = lv.layerId.replace(/^(year|trend)_/, "").replace(/_gibs$/, "");
   if (Object.hasOwn(LAYER_WORDS, base)) return LAYER_WORDS[base];
-  if (lv.layerId.startsWith("overlay:")) return "A map the detective made for this question, one coloured square per data cell.";
+  if (lv.layerId.startsWith("overlay:")) return "A map the detective made for this question, one colored square per data cell.";
   const unit = lv.legend?.unit;
-  return unit ? `The colours show ${unit}.` : "One record drawn as a map.";
+  return unit ? `The colors show ${unit}.` : "One record drawn as a map.";
 }
 
 function layerItem(lv: LayerView, key: string, title: string): PlainItem {
@@ -120,7 +120,7 @@ export function lookingAt(view: MapView, target: Target | null): PlainItem[] {
     out.push(item("curtain", "curtain", "The curtain", `Drag the line across the map to compare two years: ${a} on the left, ${b} on the right.`));
     out.push({ ...layerItem(view.curtain.left, "curtain-layer", "Compared"), lines: view.curtain.left.legend?.labels ?? [] });
   } else if (view.evidence) {
-    out.push(layerItem(view.evidence, "evidence", "Coloured layer"));
+    out.push(layerItem(view.evidence, "evidence", "Colored layer"));
   }
   if (view.context && contextDrawn(view)) out.push(layerItem(view.context, "context", "Underneath"));
   return out;
@@ -128,15 +128,15 @@ export function lookingAt(view: MapView, target: Target | null): PlainItem[] {
 
 /** The same items before any investigation: what will appear, said generically. */
 export const GENERIC_ITEMS: readonly PlainItem[] = [
-  item("pin", "pin", "The pin", "Tap the globe to drop it on the place you want to ask about, or draw a box."),
+  item("pin", "pin", "The pin", "Click or tap the globe to drop it on the place you want to ask about, or draw a box."),
   item("cell", "cell", "The dashed square", "Satellites measure in squares. One value covers the whole square, not just your spot, so the square shows how big it is."),
-  item("layer", "layer", "One coloured layer", "Alibi paints one record at a time on the ground, like heat, plants or water, so colours never mix."),
+  item("layer", "layer", "One colored layer", "Alibi paints one record at a time on the ground, like heat, plants or water, so colors never mix."),
   item("curtain", "curtain", "The curtain", "When Alibi compares two years, drag the line across the map to see before and after."),
 ];
 
 const VERDICT_STAMPS: readonly StampLine[] = [
   { icon: "↑↓", text: "Real", meaning: "It is really changing, and very unlikely to be chance." },
-  { icon: "↑↓", text: "Likely", meaning: "Probably changing. A strong hint, not proof yet." },
+  { icon: "↑↓", text: "Likely", meaning: "Probably changing. A strong hint, not certain yet." },
   { icon: "?", text: "Can't tell yet", meaning: "Too noisy or too short to tell a real change from chance." },
 ];
 const SUSPECT_STAMPS: readonly StampLine[] = [
@@ -188,7 +188,7 @@ export const STACK_PLAIN: readonly string[] = [
 ];
 export const STACK_TECH: readonly string[] = [
   "Each slab is a texture from the run: GIBS tiles or a case PNG in the box's bounds. The base is a NASADEM heightmap when the place is a solved case, a flat plane otherwise.",
-  "Slabs keep their native resolution and their own colour ramp; the gap between slabs is for reading only, not a value.",
+  "Slabs keep their native resolution and their own color scale; the gap between slabs is for reading only, not a value.",
 ];
 
 // ---------------------------------------------------------------- under the hood
@@ -214,7 +214,7 @@ function techLayer(lv: LayerView, key: string, role: string): TechLayer {
 
 /** The core methods, each with a one-line plain gloss; `used` when its tool ran in this run. */
 const CORE_METHODS: readonly { tool: string; name: string; gloss: string }[] = [
-  { tool: "trend_test", name: "Mann-Kendall trend test, Hamed & Rao correction", gloss: "Counts how often later values beat earlier ones; the correction stops neighbouring months, which look alike, from faking a trend." },
+  { tool: "trend_test", name: "Mann-Kendall trend test, Hamed & Rao correction", gloss: "Counts how often later values beat earlier ones; the correction stops neighboring months, which look alike, from faking a trend." },
   { tool: "trend_test", name: "Sen slope", gloss: "How fast it changes: the middle value of the slopes between every pair of points, so one odd year can't drag it." },
   { tool: "climate_residual", name: "Climate residual (RESTREND-style)", gloss: "Predicts the record from the climate we measured, then checks if what is left over still trends. Left over = not explained by that climate." },
   { tool: "correlate", name: "Pearson correlation on year-on-year changes", gloss: "Do two records go up and down together from one year to the next? Using the changes removes the shared long-term trend." },
@@ -282,7 +282,7 @@ export function techGuide(view: MapView, inv: Investigation | null, events: read
   if (view.curtain) {
     layers.push(techLayer(view.curtain.left, "curtain-left", "Curtain, left"));
     layers.push(techLayer(view.curtain.right, "curtain-right", "Curtain, right"));
-  } else if (view.evidence) layers.push(techLayer(view.evidence, "evidence", "Coloured layer"));
+  } else if (view.evidence) layers.push(techLayer(view.evidence, "evidence", "Colored layer"));
   if (view.context && contextDrawn(view)) layers.push(techLayer(view.context, "context", "Underneath"));
   for (const fp of view.footprints) {
     layers.push({ key: `cell:${fp.source}`, role: "Data cell outline", title: fp.label, source: "",

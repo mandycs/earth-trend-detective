@@ -3,7 +3,7 @@ export const SLOW_AFTER_S = 15
 export const VERY_SLOW_AFTER_S = 60
 
 export function waitingNote(seconds: number): string | null {
-  if (seconds >= VERY_SLOW_AFTER_S) return 'Still downloading. Some records come from NASA servers in many small pieces; a first visit to a place can take a few minutes.'
+  if (seconds >= VERY_SLOW_AFTER_S) return 'Still downloading. Some NASA records arrive in many small pieces, so a first visit to a place can take a few minutes.'
   if (seconds >= SLOW_AFTER_S) return 'Downloading satellite records. This can take a minute or two.'
   return null
 }

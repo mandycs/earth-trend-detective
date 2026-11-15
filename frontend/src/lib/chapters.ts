@@ -38,7 +38,7 @@ export function chaptersFor(site: Site): Chapter[] {
       lead.verdict === 'real'
         ? 'Real: too steady to be chance'
         : lead.verdict === 'likely'
-          ? 'Likely: a strong hint, not yet proof'
+          ? 'Likely: a strong hint, not yet certain'
           : "Can't tell yet: too noisy to call",
     line: range || (lead.years_needed ? `About ${lead.years_needed} more years of data would be needed.` : ''),
   }

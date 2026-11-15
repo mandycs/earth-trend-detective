@@ -48,11 +48,11 @@ export function overlaySpecs(view: MapView, target: Target | null, opts: { point
   return out;
 }
 
-/** Context layers that are pictures, not coloured data: they may sit under one evidence layer. */
+/** Context layers that are pictures, not colored data: they may sit under one evidence layer. */
 const PICTURE_CONTEXT: ReadonlySet<string> = new Set(["true_colour", "true_colour_viirs", "base", "base_hq", "hillshade"]);
 
 /**
- * One coloured layer at a time (DESIGN.md): a coloured context (land cover) is drawn only while nothing else is;
+ * One colored layer at a time (DESIGN.md): a colored context (land cover) is drawn only while nothing else is;
  * a photograph or relief context stays under the evidence or the curtain.
  */
 export function contextDrawn(view: MapView): boolean {
@@ -63,7 +63,7 @@ export function contextDrawn(view: MapView): boolean {
 
 /**
  * Bottom to top, all below the base style's borders. The main map draws the context, then the evidence (or the
- * curtain's left side); the curtain map draws only the curtain's right side, so one coloured layer shows per side.
+ * curtain's left side); the curtain map draws only the curtain's right side, so one colored layer shows per side.
  */
 export function drawSpecs(view: MapView, side: MapSide, target: Target | null): DrawSpec[] {
   const out: DrawSpec[] = [];
@@ -155,7 +155,7 @@ export function fitPadding(width: number, height: number): Padding {
 
 /**
  * The map's resting padding: at ≥ 1100 px the reading column (38 % of the width) covers the left of a full-bleed
- * map, so the globe centres in the free area to its right instead of the whole viewport.
+ * map, so the globe centers in the free area to its right instead of the whole viewport.
  */
 export function restPadding(width: number): Padding {
   return { top: 0, right: 0, bottom: 0, left: width >= READING_BREAKPOINT ? Math.round(width * 0.38) : 0 };
@@ -190,7 +190,7 @@ export function pickStep(pending: Corner | null, mode: PickMode, at: Corner): { 
   return { pending: null, result: box.ok ? { target: { kind: "box", bbox: box.bbox } } : { error: box.message } };
 }
 
-export const OPPOSITE_CORNER_HINT = "Tap the opposite corner";
+export const OPPOSITE_CORNER_HINT = "Click or tap the opposite corner";
 
 // ---- words on screen ----
 
@@ -202,7 +202,7 @@ export function curtainYears(c: CurtainView): [string, string] {
 
 export function curtainAriaLabel(c: CurtainView): string {
   const [a, b] = curtainYears(c);
-  return `Slide between ${a} and ${b}`;
+  return `Slide to compare ${a} and ${b}`;
 }
 
 /** The time a layer shows, as drawn: a full date for daily/monthly tiles, the year otherwise, or a file's period. */
@@ -219,7 +219,7 @@ const signed = (n: number): string => String(n).replace("-", "−");
 export interface LegendEntry {
   key: string; role: string; title: string; when: string | null; unit: string | null; range: string | null;
   ramp: string[]; labels: string[]; source: string; resolution: string | null;
-  /** Named colour classes (land cover): swatches with plain names, colours copied from the GIBS colormap. */
+  /** Named color classes (land cover): swatches with plain names, colors copied from the GIBS colormap. */
   classes: readonly LandCoverClass[];
 }
 
@@ -250,10 +250,10 @@ export const TERRAIN_LINE = `${TERRAIN.attribution} · Heights ×${TERRAIN.exagg
 /** DEM tile errors tolerated before the relief is dropped and the map goes flat. */
 export const DEM_ERRORS_BEFORE_FLAT = 3;
 
-/** The map's accessible name, which says what a tap does. */
+/** The map's accessible name, which says what a click or tap does. */
 export function mapLabel(pickEnabled: boolean, mode: PickMode): string {
   if (!pickEnabled) return "Globe showing the investigation.";
-  return mode === "box" ? "Globe. Tap two corners to draw a box." : "Globe. Tap a place to investigate it.";
+  return mode === "box" ? "Globe. Click or tap two corners to draw a box." : "Globe. Click or tap a place to investigate it.";
 }
 
 /** Every drawn layer, top first: the evidence (or the curtain's sides), the context, then the footprints. */

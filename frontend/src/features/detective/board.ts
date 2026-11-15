@@ -9,7 +9,7 @@ export interface StampBeat {
 }
 
 export const STATUS_WORDS: Record<SuspectStatus, { icon: string; text: string; meaning: string }> = {
-  supported: { icon: "✓", text: "SUPPORTED", meaning: "Its evidence holds after correcting for every test run." },
+  supported: { icon: "✓", text: "SUPPORTED", meaning: "Its evidence still holds after allowing for all the tests we ran." },
   ruled_out: { icon: "✕", text: "RULED OUT", meaning: "Tested with enough years and no clear change." },
   hint: { icon: "~", text: "HINT", meaning: "Points this way, but not strong enough yet." },
   trend_only: { icon: "◐", text: "TREND REAL · NOT LINKED", meaning: "Its own trend is real, but no test links it to the change." },

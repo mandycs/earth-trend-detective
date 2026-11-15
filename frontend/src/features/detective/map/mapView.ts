@@ -210,7 +210,7 @@ function imagePair(
   return { layerId, title, source, left: side(urls[0], years[0], "a"), right: side(urls[1], years[1], "b") };
 }
 
-/** A curtain replaces the coloured evidence layer: one coloured layer at a time (DESIGN.md). */
+/** A curtain replaces the colored evidence layer: one colored layer at a time (DESIGN.md). */
 const withCurtain = (view: MapView, curtain: CurtainView): MapView => ({ ...view, curtain, evidence: null });
 
 function showBeforeAfter(view: MapView, op: Extract<MapOp, { op: "show_before_after" }>, ctx: MapContext): MapView {
@@ -307,7 +307,7 @@ export function openingView(place: PlaceEvent, now?: string | null): MapView {
   };
 }
 
-/** The place bbox grown `PULL_OUT`× around its centre, clamped to valid degrees. */
+/** The place bbox grown `PULL_OUT`× around its center, clamped to valid degrees. */
 export function pulledOut(bbox: Bbox): Bbox {
   const [w, s, e, n] = bbox;
   const cx = (w + e) / 2;

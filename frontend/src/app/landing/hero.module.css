@@ -30,7 +30,87 @@
   position: absolute;
   top: var(--gutter);
   left: var(--gutter);
+  z-index: 2;
   margin: 0;
+  /* The name is the first thing on the page: big and heavy, not a corner tag. */
+  font-size: clamp(1.9rem, 3.6vw, 3.4rem);
+  font-weight: 850;
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.55); /* taste-skill-ignore: keeps the name legible over bright frames */
+}
+
+/* One big button on the center of the film. Clear while it plays (the film is the point), solid when paused. */
+.bigPlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 2;
+  width: 96px;
+  height: 96px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  color: #fff;
+  cursor: pointer;
+  transition: opacity 240ms var(--ease), transform 240ms var(--ease);
+}
+
+.bigPlay:hover {
+  transform: translate(-50%, -50%) scale(1.06);
+}
+
+.bigPlay:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 4px;
+}
+
+/* Playing: out of the way until the pointer comes over the film or the button gets keyboard focus. */
+.bigPlayOn {
+  opacity: 0;
+}
+
+.hero:hover .bigPlayOn,
+.bigPlayOn:focus-visible {
+  opacity: 1;
+}
+
+.film {
+  cursor: pointer;
+}
+
+.keyHint {
+  margin: 0 0 0 8px;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 0.95rem;
+}
+
+.keyHint kbd {
+  padding: 2px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+/* Touch screens have no space bar and no hover: hide the hint, keep the pause button faintly in view. */
+@media (hover: none) {
+  .keyHint {
+    display: none;
+  }
+  .bigPlayOn {
+    opacity: 0.6;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bigPlay {
+    transition: none;
+  }
 }
 
 .controls {
@@ -53,7 +133,9 @@
   font: inherit;
   font-size: 1rem;
   color: var(--ink);
-  background: rgba(10, 12, 14, 0.62);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
   border: 1px solid rgba(233, 236, 238, 0.35);
   cursor: pointer;
   text-decoration: none;
@@ -90,5 +172,17 @@
   }
   .skip {
     margin-left: 0;
+  }
+  .brand {
+    top: 14px;
+    font-size: 1.7rem;
+  }
+  .keyHint {
+    display: none;
+  }
+  .bigPlay {
+    top: calc(64px + 28vw); /* center of the 16:9 film box, not of the padded section */
+    width: 72px;
+    height: 72px;
   }
 }

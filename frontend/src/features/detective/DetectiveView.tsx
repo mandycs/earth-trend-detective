@@ -491,13 +491,13 @@ export default function DetectiveView({ cases, recordings, initialSite, initialP
           {hasStack(stack) && (
             <div className={styles.explodeRow}>
               <button type="button" ref={explodeRef} className="btn" onClick={openStack} aria-haspopup="dialog">
-                Explode the evidence
+                See the evidence layer by layer
               </button>
               {shownSlab && (
                 <p className={styles.runNote} role="status">
                   On the map: {slabCaption(shownSlab)}.{' '}
                   <button type="button" className={styles.textBtn} onClick={() => setShownSlab(null)}>
-                    Back to the ending view
+                    Back to the final map
                   </button>
                 </p>
               )}

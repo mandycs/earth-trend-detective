@@ -15,7 +15,7 @@ const show = (layer_id: string, year: number | null = null): MapOp => ({ op: "sh
 const compare: MapOp = { op: "show_before_after", layer_id: "ndvi", year_a: 2003, year_b: 2024, before_url: null, after_url: null, bbox: null };
 const footprint: MapOp = { op: "show_footprint", source: "grace", label: "GRACE cell", size: "~300 km", bbox: [-116, 35, -113, 38], approximate: true };
 
-test("one coloured layer at a time: land cover is drawn alone, and leaves when evidence arrives", () => {
+test("one colored layer at a time: land cover is drawn alone, and leaves when evidence arrives", () => {
   const opening = openingView(PLACE, NOW.now);
   assert.equal(opening.context?.layerId, "land_cover");
   assert.deepEqual(drawSpecs(opening, "main", null).map((s) => s.id), ["det-context"]);
@@ -50,7 +50,7 @@ test("a curtain puts its left side on the main map and only its right side on th
   assert.deepEqual(drawSpecs(fold([show("ndvi")]), "curtain", null), []);
 });
 
-test("footprints are labelled approximate and the picked box is an outline; a point is not a layer", () => {
+test("footprints are labeled approximate and the picked box is an outline; a point is not a layer", () => {
   const v = fold([footprint]);
   const box = drawSpecs(v, "main", { kind: "box", bbox: [-115, 36, -114, 37] });
   assert.deepEqual(box.slice(1).map((s) => s.kind), ["footprint", "outline"]);
@@ -69,8 +69,8 @@ test("the curtain map draws a picked point as a layer", () => {
 
 test("the map names what a tap does", () => {
   assert.equal(mapLabel(false, "box"), "Globe showing the investigation.");
-  assert.equal(mapLabel(true, "box"), "Globe. Tap two corners to draw a box.");
-  assert.equal(mapLabel(true, "point"), "Globe. Tap a place to investigate it.");
+  assert.equal(mapLabel(true, "box"), "Globe. Click or tap two corners to draw a box.");
+  assert.equal(mapLabel(true, "point"), "Globe. Click or tap a place to investigate it.");
 });
 
 test("signature ignores opacity", () => {
@@ -115,7 +115,7 @@ test("box picking takes two taps and reports a bad box as an error", () => {
 test("curtain label names the two years drawn", () => {
   const v = fold([compare]);
   assert.ok(v.curtain);
-  if (v.curtain) assert.equal(curtainAriaLabel(v.curtain), `Slide between ${v.curtain.left.year} and ${v.curtain.right.year}`);
+  if (v.curtain) assert.equal(curtainAriaLabel(v.curtain), `Slide to compare ${v.curtain.left.year} and ${v.curtain.right.year}`);
 });
 
 test("drawn time: annual layers say the year, daily ones the date", () => {
@@ -160,7 +160,7 @@ test("an empty view has no legend", () => {
   assert.equal(legendModel(empty), null);
 });
 
-test("the resting globe centres right of the reading column on wide screens only", () => {
+test("the resting globe centers right of the reading column on wide screens only", () => {
   assert.deepEqual(restPadding(1440), { top: 0, right: 0, bottom: 0, left: 547 });
   assert.equal(restPadding(1099).left, 0);
   assert.equal(restPadding(390).left, 0);

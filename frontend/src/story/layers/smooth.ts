@@ -5,8 +5,8 @@ import type { LayerDef } from './model'
 /**
  * Data layers arrive as their native grid stretched with hard blocks (e.g.
  * MODIS 1 km cells drawn 9-10 px wide in a 1024 px image). This rebuilds the
- * native grid, colours it with the layer's own continuous ramp, and lets the
- * GPU interpolate between cell centres: the same values, read as a field.
+ * native grid, colors it with the layer's own continuous ramp, and lets the
+ * GPU interpolate between cell centers: the same values, read as a field.
  */
 
 /** Typical block width along rows: a fractional period such as 9.5 px, or 1 when already native. */
@@ -94,7 +94,7 @@ export function smoothTexture(siteId: string, def: LayerDef, year: number): Prom
       const valid = new Uint8Array(cols * rows)
       for (let j = 0; j < rows; j += 1) {
         for (let i = 0; i < cols; i += 1) {
-          // Sample the centre of each native cell.
+          // Sample the center of each native cell.
           const sx = Math.min(grid.width - 1, Math.floor((i + 0.5) * (grid.width / cols)))
           const sy = Math.min(grid.height - 1, Math.floor((j + 0.5) * (grid.height / rows)))
           const raw = grid.samples[sy * grid.width + sx]
@@ -114,7 +114,7 @@ export function smoothTexture(siteId: string, def: LayerDef, year: number): Prom
           valid[j * cols + i] = alpha > 0 ? 1 : 0
         }
       }
-      // Give empty cells their neighbour's colour (alpha stays 0), so the
+      // Give empty cells their neighbor's color (alpha stays 0), so the
       // linear filter does not pull dark halos into the edges of the data.
       for (let pass = 0; pass < 2; pass += 1) {
         const filled = valid.slice()

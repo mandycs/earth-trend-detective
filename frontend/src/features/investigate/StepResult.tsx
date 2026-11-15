@@ -31,7 +31,7 @@ function Variables({ result, years }: { result: VariablesResult; years: [number,
         <div className={styles.split}>
           <p className={styles.note}>
             Share of the change in {split.label.toLowerCase()} the climate does not explain
-            {split.residual_pct_range ? ', depending on the climate model' : ''}. A clue, not an attribution.
+            {split.residual_pct_range ? ', depending on the climate model' : ''}. A clue, not proof.
           </p>
           <SplitBar variable={split} />
         </div>
@@ -126,7 +126,7 @@ function ThenNow({ result, name }: { result: ThenNowResult; name: string }) {
             before: { src: before.url, year: before.year },
             after: { src: after.url, year: after.year },
             note: `Two pictures of the same season (${before.date} and ${after.date}). Pictures, not a measurement.`,
-            source: 'MODIS Terra true colour, NASA GIBS',
+            source: 'MODIS Terra true color, NASA GIBS',
           }}
           alt={`Satellite picture of ${name}`}
         />

@@ -137,7 +137,7 @@ test("curtain years are the years drawn, not the years asked", () => {
   assert.ok(!("yearA" in v.curtain) && !("yearB" in v.curtain));
 });
 
-test("a curtain replaces the coloured evidence layer", () => {
+test("a curtain replaces the colored evidence layer", () => {
   const v = fold([
     layer("ndvi"),
     { op: "show_before_after", layer_id: "ndvi", year_a: 2003, year_b: 2023, before_url: null, after_url: null, bbox: null },

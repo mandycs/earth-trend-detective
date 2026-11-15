@@ -14,7 +14,7 @@ export interface CurtainCamera {
   zoom: number
   pitch: number
   bearing: number
-  /** The main map's padding, so the two halves share the same centre. */
+  /** The main map's padding, so the two halves share the same center. */
   padding?: PaddingOptions
 }
 

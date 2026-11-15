@@ -183,7 +183,7 @@ test("catalog layers become one WMS GetMap for the exact box and the drawn date"
   assert.equal(url.searchParams.get("TIME"), m.slabs[0].date);
   assert.equal(m.slabs[0].year, 2024);
   assert.deepEqual(m.bbox, box);
-  // A free point has no relief model: a flat base with a cloud-free picture (never a cloudy day's true colour).
+  // A free point has no relief model: a flat base with a cloud-free picture (never a cloudy day's true color).
   assert.equal(m.base?.kind, "flat");
   assert.equal(m.base?.heightmap, null);
   const pic = new URL(m.base?.picture?.url ?? "");

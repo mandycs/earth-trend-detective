@@ -92,5 +92,5 @@ export function stampFor(verdict: Verdict, direction: Direction): StampInfo {
   if (verdict === 'real') {
     return { icon, text: 'Real', meaning: `Going ${direction}, and very unlikely to be chance.` }
   }
-  return { icon, text: 'Likely', meaning: `Probably going ${direction}. A strong hint, not yet proof.` }
+  return { icon, text: 'Likely', meaning: `Probably going ${direction}. A strong hint, not yet certain.` }
 }

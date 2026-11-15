@@ -34,7 +34,7 @@ test("caps gaps", () => {
   assert.deepEqual(replaySchedule(rec([0, 100, 20000, 20100])).map((s) => s.atMs), [0, 100, 6100, 6200]);
 });
 
-test("honours a custom cap", () => {
+test("honors a custom cap", () => {
   assert.deepEqual(replaySchedule(rec([0, 5000]), 1000).map((s) => s.atMs), [0, 1000]);
 });
 
