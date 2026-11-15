@@ -360,6 +360,33 @@ def fetch_point_monthly(
     return series, cell
 
 
+def fetch_point_yearly_peaks(
+    dataset: str,
+    variable: str,
+    lat: float,
+    lon: float,
+    start: int,
+    end: int,
+    months: tuple[int, int] = YEARLY_MAX_MONTHS,
+    client: httpx.Client | None = None,
+    cache_dir: Path | None = None,
+) -> tuple[dict[int, tuple[float | None, str | None]], tuple[float, float], list[int]]:
+    """Yearly peak of a daily product over `months`: {year: (value, "YYYY-MM-DD")}, the grid cell
+    used and the years whose fetch failed (absent from the dict). A year with no valid day is
+    (None, None), never 0; the value is not rounded."""
+    frames, cell, missing = _point_frames(dataset, variable, lat, lon, start, end, months, client, cache_dir)
+    peaks: dict[int, tuple[float | None, str | None]] = {}
+    for frame in frames:
+        year = int(frame["time"].dt.year.iloc[0])
+        valid = frame.dropna(subset=["value"])
+        if valid.empty:
+            peaks[year] = (None, None)
+            continue
+        top = valid.loc[valid["value"].idxmax()]
+        peaks[year] = (float(top["value"]), top["time"].strftime("%Y-%m-%d"))
+    return peaks, cell, missing
+
+
 def fetch_point_yearly_max(
     dataset: str,
     variable: str,
@@ -375,12 +402,11 @@ def fetch_point_yearly_max(
 
     A year with no valid day is NaN, never 0. `series.attrs["temporal"] == "annual"`.
     """
-    frames, cell, missing = _point_frames(dataset, variable, lat, lon, start, end, months, client, cache_dir)
-    values: dict[pd.Timestamp, float] = {}
-    for frame in frames:
-        year = int(frame["time"].dt.year.iloc[0])
-        peak = frame["value"].max(skipna=True)
-        values[pd.Timestamp(year=year, month=1, day=1)] = float(peak) if np.isfinite(peak) else np.nan
+    peaks, cell, missing = fetch_point_yearly_peaks(dataset, variable, lat, lon, start, end, months, client, cache_dir)
+    values = {
+        pd.Timestamp(year=year, month=1, day=1): (np.nan if value is None else value)
+        for year, (value, _date) in peaks.items()
+    }
     series = pd.Series(values, dtype=float).sort_index().rename(variable)
     series.index = pd.DatetimeIndex(series.index)
     series.attrs["cell"] = cell

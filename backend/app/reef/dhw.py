@@ -11,6 +11,7 @@ It is heat stress, not bleaching or coral death.
 
 from __future__ import annotations
 
+import calendar
 import math
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -31,7 +32,6 @@ THRESHOLD_LABELS = {
 }
 LABEL = "Heat stress (degree heating weeks)"
 UNIT = "°C-weeks"
-METHOD = "Yearly maximum of the daily degree heating weeks, January to June, at each reef point."
 SOURCE = {
     "name": "NOAA Coral Reef Watch daily degree heating weeks (not NASA)",
     "url": "https://coastwatch.noaa.gov/erddap/griddap/noaacrwdhwDaily.html",
@@ -48,44 +48,36 @@ def _key(threshold: float) -> str:
     return str(int(threshold))
 
 
-def dhw_point_url(lat: float, lon: float, year: int) -> str:
-    """The January 1 - June 30 request for one point and year (stride 1)."""
-    axes = [
-        erddap._axis(f"{year}-01-01T12:00:00Z", f"{year}-06-30T12:00:00Z"),
-        erddap._axis(lat),
-        erddap._axis(lon),
-    ]
-    return erddap.griddap_url(DHW_DATASET, DHW_VAR, axes)
-
-
 def yearly_max(
     point: ReefPoint,
     years: Sequence[int],
     cache_dir: Path | None,
     client: httpx.Client | None,
 ) -> dict[int, YearlyMax]:
-    """Peak daily DHW and its date per year. A year with no valid day is `YearlyMax(None, None)`;
-    a year whose fetch failed is absent (ERDDAP raises if the first years all fail)."""
+    """Peak daily DHW (unrounded) and its date per requested year. A year with no valid day is
+    `YearlyMax(None, None)`; a year whose fetch failed is absent (ERDDAP raises if the first
+    years all fail)."""
     ordered = sorted(years)
-    frames, _cell, _failed = erddap._point_frames(
+    peaks, _cell, _failed = erddap.fetch_point_yearly_peaks(
         DHW_DATASET, DHW_VAR, point.lat, point.lon, ordered[0], ordered[-1],
         erddap.warm_season(point.lat), client, cache_dir,
     )  # fmt: skip
     wanted = set(ordered)
-    out: dict[int, YearlyMax] = {}
-    for frame in frames:
-        year = int(frame["time"].dt.year.iloc[0])
-        valid = frame.dropna(subset=["value"])
-        if year not in wanted:
-            continue
-        if valid.empty:
-            out[year] = YearlyMax(None, None)
-            continue
-        top = valid.loc[valid["value"].idxmax()]
-        out[year] = YearlyMax(
-            round(float(top["value"]), 2), top["time"].strftime("%Y-%m-%d")
+    return {
+        year: YearlyMax(value, date)
+        for year, (value, date) in peaks.items()
+        if year in wanted
+    }
+
+
+def _window_text(points: Sequence[ReefPoint]) -> str:
+    windows = {erddap.warm_season(p.lat) for p in points}
+    if len(windows) != 1:
+        raise ValueError(
+            "reef points with different warm-season windows need their own method text"
         )
-    return out
+    first, last = windows.pop()
+    return f"{calendar.month_name[first]} to {calendar.month_name[last]}"
 
 
 def heat_stress_summary(
@@ -94,19 +86,23 @@ def heat_stress_summary(
     start: int,
     end: int,
 ) -> dict:
-    """Counts of reef-years at or above each threshold, in two halves of the study period."""
+    """Counts of reef-years at or above each threshold, in two halves of the study period.
+
+    Thresholds are tested on the unrounded value; values are rounded to 2 decimals for display only.
+    """
     years = list(range(start, end + 1))
     rows = []
+    raw: dict[tuple[str, int], float | None] = {}
     for p in points:
         got = yearly.get(p.id, {})
-        series = [
-            {"year": y, "value": (got.get(y) or YearlyMax(None, None)).value, "date": (got.get(y) or YearlyMax(None, None)).date}
-            for y in years
-        ]  # fmt: skip
+        series = []
+        for y in years:
+            entry = got.get(y) or YearlyMax(None, None)
+            raw[(p.id, y)] = entry.value
+            shown = None if entry.value is None else round(entry.value, 2)
+            series.append({"year": y, "value": shown, "date": entry.date})
         above = {
-            _key(t): [
-                r["year"] for r in series if r["value"] is not None and r["value"] >= t
-            ]
+            _key(t): [y for y in years if (v := raw[(p.id, y)]) is not None and v >= t]
             for t in THRESHOLDS
         }
         rows.append(
@@ -122,19 +118,16 @@ def heat_stress_summary(
     mid = start + (end - start + 1) // 2 - 1
     periods = []
     for lo, hi in ((start, mid), (mid + 1, end)):
-        cells = [r for row in rows for r in row["yearly_max"] if lo <= r["year"] <= hi]
-        measured = sum(1 for r in cells if r["value"] is not None)
+        values = [raw[(p.id, y)] for p in points for y in range(lo, hi + 1)]
+        measured = [v for v in values if v is not None]
         periods.append(
             {
                 "years": [lo, hi],
                 "reef_years_at_or_above": {
-                    _key(t): sum(
-                        1 for r in cells if r["value"] is not None and r["value"] >= t
-                    )
-                    for t in THRESHOLDS
+                    _key(t): sum(1 for v in measured if v >= t) for t in THRESHOLDS
                 },
-                "reef_years_measured": measured,
-                "reef_years_missing": len(cells) - measured,
+                "reef_years_measured": len(measured),
+                "reef_years_missing": len(values) - len(measured),
             }
         )
     return {
@@ -143,7 +136,7 @@ def heat_stress_summary(
         "thresholds": [{"value": t, "label": THRESHOLD_LABELS[t]} for t in THRESHOLDS],
         "points": rows,
         "periods": periods,
-        "method": METHOD,
+        "method": f"Yearly maximum of the daily degree heating weeks, {_window_text(points)}, at each reef point.",
         "source": dict(SOURCE),
     }
 

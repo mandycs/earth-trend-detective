@@ -30,13 +30,25 @@ def _client(handler) -> httpx.Client:
     return httpx.Client(transport=httpx.MockTransport(handler))
 
 
-def test_point_url_is_half_year():
-    url = dhw.dhw_point_url(-18.8, 147.6, 2016)
-    assert url.startswith(
+def test_request_is_half_year_at_the_point(tmp_path):
+    urls: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        urls.append(str(request.url))
+        return httpx.Response(200, text=_csv([("2016-03-21", "5.0")]))
+
+    dhw.yearly_max(DAVIES, [2016], tmp_path, _client(handler))
+    assert len(urls) == 1
+    assert urls[0].startswith(
         "https://coastwatch.noaa.gov/erddap/griddap/noaacrwdhwDaily.csv?degree_heating_week%5B"
     )
-    decoded = unquote(url)
-    assert "(2016-01-01T12:00:00Z):1:(2016-06-30T12:00:00Z)" in decoded
+    decoded = unquote(urls[0])
+    time_axis = decoded.split("[")[1].split("]")[0]
+    first, last = (part.strip("()") for part in time_axis.split(":1:"))
+    assert (
+        "2016-01-01" <= first[:10] <= "2016-01-02"
+        and "2016-06-29" <= last[:10] <= "2016-06-30"
+    )
     assert "(-18.8)" in decoded and "(147.6)" in decoded
 
 
@@ -70,7 +82,8 @@ def test_failed_fetch_is_missing_not_below_four(tmp_path):
         return httpx.Response(200, text=_csv([("2020-03-21", "1.0")]))
 
     out = dhw.yearly_max(DAVIES, [2019, 2020], tmp_path, _client(handler))
-    assert 2019 not in out or out[2019] == dhw.YearlyMax(None, None)
+    assert 2019 not in out
+    assert out[2020] == dhw.YearlyMax(1.0, "2020-03-21")
     summary = dhw.heat_stress_summary({"davies": out}, [DAVIES], 2019, 2020)
     assert [y["year"] for y in summary["points"][0]["yearly_max"]] == [2019, 2020]
     assert summary["points"][0]["yearly_max"][0]["value"] is None
@@ -109,6 +122,25 @@ def _scout_yearly():
         }
         for pid, vals in listed.items()
     }
+
+
+def test_threshold_uses_unrounded_value_and_rounds_for_display():
+    yearly = {"davies": {2020: dhw.YearlyMax(3.996, "2020-03-01")}}
+    summary = dhw.heat_stress_summary(yearly, [DAVIES], 2020, 2020)
+    assert summary["points"][0]["yearly_max"][0]["value"] == 4.0
+    assert summary["points"][0]["years_at_or_above"]["4"] == []
+    assert summary["periods"][1]["reef_years_at_or_above"]["4"] == 0
+
+
+def test_method_window_follows_the_hemisphere():
+    summary = dhw.heat_stress_summary({}, [DAVIES], 2020, 2021)
+    assert "January to June" in summary["method"]
+    north = dhw.ReefPoint("n", "N", 10.0, 100.0)
+    assert (
+        "July to December" in dhw.heat_stress_summary({}, [north], 2020, 2021)["method"]
+    )
+    with pytest.raises(ValueError):
+        dhw.heat_stress_summary({}, [DAVIES, north], 2020, 2021)
 
 
 def test_summary_counts_scout_years():
