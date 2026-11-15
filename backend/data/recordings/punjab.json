@@ -1,0 +1,1616 @@
+{
+ "question": "Is the groundwater going down here?",
+ "request": {
+  "question": "Is the groundwater going down here?",
+  "lat": 29.95,
+  "lon": 77.0
+ },
+ "started_at": "2026-11-15T12:48:45+00:00",
+ "partial": false,
+ "events": [
+  {
+   "t_ms": 37,
+   "event": "place",
+   "data": {
+    "thread_id": "f6358a4c12074f9883108a00d0b797c2",
+    "follow_up": false,
+    "forked_from": null,
+    "id": "point",
+    "name": "Point 29.950, 77.000",
+    "lat": 29.95,
+    "lon": 77.0,
+    "bbox": [
+     76.9,
+     29.849999999999998,
+     77.1,
+     30.05
+    ],
+    "tags": [],
+    "site_id": null,
+    "years": [
+     2003,
+     2024
+    ]
+   }
+  },
+  {
+   "t_ms": 1457,
+   "event": "thinking",
+   "data": {
+    "text": "I'll start by profiling the place."
+   }
+  },
+  {
+   "t_ms": 1457,
+   "event": "tool_start",
+   "data": {
+    "id": "toolu_01VRtVvL9evNdT4v5LCQEYKG",
+    "tool": "profile_place",
+    "args": {}
+   }
+  },
+  {
+   "t_ms": 1951,
+   "event": "tool_done",
+   "data": {
+    "id": "toolu_01VRtVvL9evNdT4v5LCQEYKG",
+    "tool": "profile_place",
+    "summary": "Done.",
+    "result": {
+     "tags": [
+      "agriculture",
+      "vegetated"
+     ],
+     "land_cover_pct": {
+      "Cropland": 97.1,
+      "Savanna": 1.3,
+      "Urban and built-up land": 1.0,
+      "Cropland and natural vegetation mosaic": 0.7
+     },
+     "dominant": "Cropland",
+     "land_cover_year": 2023,
+     "data_cells": {
+      "grace": "~300 km",
+      "power": "~50 km"
+     },
+     "evidence_id": "e1",
+     "map": "The map camera flew to the place."
+    },
+    "evidence_id": "e1"
+   }
+  },
+  {
+   "t_ms": 1951,
+   "event": "map",
+   "data": {
+    "op": "fly_to",
+    "bbox": [
+     76.9,
+     29.849999999999998,
+     77.1,
+     30.05
+    ],
+    "pitch": 55.0,
+    "bearing": 0.0
+   }
+  },
+  {
+   "t_ms": 2842,
+   "event": "tool_start",
+   "data": {
+    "id": "toolu_01ViyVXL1btBiBSsucBY4Fco",
+    "tool": "list_variables",
+    "args": {}
+   }
+  },
+  {
+   "t_ms": 2843,
+   "event": "tool_done",
+   "data": {
+    "id": "toolu_01ViyVXL1btBiBSsucBY4Fco",
+    "tool": "list_variables",
+    "summary": "Done.",
+    "result": {
+     "variables": [
+      {
+       "id": "t2m",
+       "label": "Air temperature",
+       "definition": "How warm the air near the ground is, averaged over each month, estimated by a NASA global weather model.",
+       "role": "driver",
+       "source": "power",
+       "resolution": "~50 km",
+       "available": true
+      },
+      {
+       "id": "precip",
+       "label": "Rainfall",
+       "definition": "How much water falls from the sky each day, as rain or snow, averaged over each month, from NASA satellites and weather models.",
+       "role": "driver",
+       "source": "power",
+       "resolution": "~50 km",
+       "available": true
+      },
+      {
+       "id": "solar",
+       "label": "Sunlight at the surface",
+       "definition": "How much sunlight reaches the ground each day, averaged over each month, estimated from NASA satellite measurements.",
+       "role": "driver",
+       "source": "power",
+       "resolution": "~50 km",
+       "available": true
+      },
+      {
+       "id": "et",
+       "label": "Water evaporated by land and plants",
+       "definition": "How much water rises from the soil and from plant leaves back into the air, estimated from satellite data every few days.",
+       "role": "impact",
+       "source": "appeears",
+       "resolution": "dataset native resolution",
+       "available": false,
+       "reason": "not_available_here: only precomputed for the solved cases"
+      },
+      {
+       "id": "ndvi_gibs",
+       "label": "Plant greenness (annual mean of monthly values)",
+       "definition": "How green and leafy the land looks from space, as the annual mean of monthly values from NASA's MODIS satellite pictures; higher means more plant growth.",
+       "role": "impact",
+       "source": "gibs",
+       "resolution": "~1 km",
+       "available": true
+      },
+      {
+       "id": "lst_gibs",
+       "label": "Daytime ground temperature (annual mean of monthly values)",
+       "definition": "How hot the ground surface itself is in the daytime, as the annual mean of monthly values from NASA's MODIS satellite pictures. It is not the air temperature.",
+       "role": "impact",
+       "source": "gibs",
+       "resolution": "~5.6 km",
+       "available": true
+      },
+      {
+       "id": "soil_moisture",
+       "label": "Topsoil moisture",
+       "definition": "How much water is held in the top layer of soil, estimated by a NASA land model and averaged over each month.",
+       "role": "impact",
+       "source": "gldas",
+       "resolution": "~25 km",
+       "available": true
+      },
+      {
+       "id": "runoff",
+       "label": "Surface runoff",
+       "definition": "How much rain or melted snow flows over the land into rivers and lakes instead of soaking into the ground, from a NASA land model.",
+       "role": "impact",
+       "source": "gldas",
+       "resolution": "~25 km",
+       "available": true
+      },
+      {
+       "id": "grace_tws",
+       "label": "Total water stored",
+       "definition": "All the water stored in a region — underground, in the soil, in snow and in lakes — weighed from space by the GRACE satellites.",
+       "role": "impact",
+       "source": "grace",
+       "resolution": "~300 km",
+       "available": true
+      },
+      {
+       "id": "t2m_upstream",
+       "label": "Air temperature upstream",
+       "definition": "Air temperature from a NASA weather model, averaged over several points upstream of the site, where the water that reaches it comes from.",
+       "role": "driver",
+       "source": "power",
+       "resolution": "~50 km",
+       "available": false,
+       "reason": "not_available_here: only set up for the solved cases that need it"
+      },
+      {
+       "id": "precip_upstream",
+       "label": "Rainfall and snowfall upstream",
+       "definition": "Rain and snow from a NASA weather model, averaged over several points upstream of the site, where the water that reaches it comes from.",
+       "role": "driver",
+       "source": "power",
+       "resolution": "~50 km",
+       "available": false,
+       "reason": "not_available_here: only set up for the solved cases that need it"
+      },
+      {
+       "id": "degree_days",
+       "label": "Melt warmth (degree-days)",
+       "definition": "A warmth-for-melting score: the month's average air temperature, counted only when it is above freezing, times the days in the month.",
+       "role": "driver",
+       "source": "power",
+       "resolution": "~50 km",
+       "available": false,
+       "reason": "not_available_here: only set up for the solved cases that need it"
+      },
+      {
+       "id": "winter_precip",
+       "label": "Winter snowfall and rain so far",
+       "definition": "Rain and snow added up through the October-to-April season, when snow builds up in mountains; the total restarts each October.",
+       "role": "driver",
+       "source": "power",
+       "resolution": "~50 km",
+       "available": false,
+       "reason": "not_available_here: only set up for the solved cases that need it"
+      },
+      {
+       "id": "sst",
+       "label": "Sea surface temperature",
+       "definition": "How warm the top of the sea is, averaged over each month, from NASA JPL's MUR map built from several satellites.",
+       "role": "driver",
+       "source": "erddap",
+       "resolution": "~1 km",
+       "available": false,
+       "reason": "not_available_here: a sea variable; this place is on land"
+      },
+      {
+       "id": "chlorophyll",
+       "label": "Chlorophyll in the sea (log10)",
+       "definition": "How much green algae colours the sea, from NASA's MODIS Aqua satellite; shown as a log10 value, so +1 means ten times more.",
+       "role": "impact",
+       "source": "erddap",
+       "resolution": "~4 km",
+       "available": false,
+       "reason": "not_available_here: a sea variable; this place is on land"
+      },
+      {
+       "id": "dhw",
+       "label": "Heat stress on corals (degree heating weeks, NOAA, not NASA)",
+       "definition": "How much heat has built up in the sea over the last 12 weeks, the yearly peak from NOAA Coral Reef Watch; 4 or more stresses corals.",
+       "role": "driver",
+       "source": "erddap",
+       "resolution": "~5 km",
+       "available": false,
+       "reason": "not_available_here: a sea variable; this place is on land"
+      }
+     ],
+     "evidence_id": "e2"
+    },
+    "evidence_id": "e2"
+   }
+  },
+  {
+   "t_ms": 4554,
+   "event": "thinking",
+   "data": {
+    "text": "Groundwater question: I'll fetch GRACE total water, topsoil moisture and rainfall."
+   }
+  },
+  {
+   "t_ms": 4554,
+   "event": "tool_start",
+   "data": {
+    "id": "toolu_011Jao1S4DQpviJVWyfMnnZq",
+    "tool": "get_series",
+    "args": {
+     "var_id": "grace_tws"
+    }
+   }
+  },
+  {
+   "t_ms": 4554,
+   "event": "tool_start",
+   "data": {
+    "id": "toolu_01EAkzYi6XumnV3xBRyVLrqK",
+    "tool": "get_series",
+    "args": {
+     "var_id": "soil_moisture"
+    }
+   }
+  },
+  {
+   "t_ms": 4554,
+   "event": "tool_start",
+   "data": {
+    "id": "toolu_01AbucNmWNUSWQeMa2gePDG7",
+    "tool": "get_series",
+    "args": {
+     "var_id": "precip"
+    }
+   }
+  },
+  {
+   "t_ms": 5101,
+   "event": "tool_done",
+   "data": {
+    "id": "toolu_011Jao1S4DQpviJVWyfMnnZq",
+    "tool": "get_series",
+    "summary": "Total water stored.",
+    "result": {
+     "status": "ok",
+     "series_id": "grace_tws:2003-2024",
+     "var_id": "grace_tws",
+     "label": "Total water stored",
+     "unit": "cm",
+     "n_months": 233,
+     "years": [
+      2003,
+      2024
+     ],
+     "chart": [
+      {
+       "year": 2003,
+       "value": 19.6686
+      },
+      {
+       "year": 2004,
+       "value": 10.6768
+      },
+      {
+       "year": 2005,
+       "value": 9.6871
+      },
+      {
+       "year": 2006,
+       "value": 1.4397
+      },
+      {
+       "year": 2007,
+       "value": -1.302
+      },
+      {
+       "year": 2008,
+       "value": -7.8153
+      },
+      {
+       "year": 2009,
+       "value": -12.6863
+      },
+      {
+       "year": 2010,
+       "value": -15.1338
+      },
+      {
+       "year": 2011,
+       "value": -10.047
+      },
+      {
+       "year": 2012,
+       "value": -18.697
+      },
+      {
+       "year": 2013,
+       "value": -20.5734
+      },
+      {
+       "year": 2014,
+       "value": -23.5956
+      },
+      {
+       "year": 2015,
+       "value": -22.7026
+      },
+      {
+       "year": 2016,
+       "value": -33.1658
+      },
+      {
+       "year": 2017,
+       "value": -46.7068
+      },
+      {
+       "year": 2018,
+       "value": -58.3687
+      },
+      {
+       "year": 2019,
+       "value": -56.5752
+      },
+      {
+       "year": 2020,
+       "value": -56.5677
+      },
+      {
+       "year": 2021,
+       "value": -66.5198
+      },
+      {
+       "year": 2022,
+       "value": -66.3936
+      },
+      {
+       "year": 2023,
+       "value": -62.5163
+      },
+      {
+       "year": 2024,
+       "value": -64.9713
+      }
+     ],
+     "evidence_id": "e3"
+    },
+    "evidence_id": "e3"
+   }
+  },
+  {
+   "t_ms": 5101,
+   "event": "tool_done",
+   "data": {
+    "id": "toolu_01EAkzYi6XumnV3xBRyVLrqK",
+    "tool": "get_series",
+    "summary": "Topsoil moisture.",
+    "result": {
+     "status": "ok",
+     "series_id": "soil_moisture:2003-2024",
+     "var_id": "soil_moisture",
+     "label": "Topsoil moisture",
+     "unit": "kg/m²",
+     "n_months": 264,
+     "years": [
+      2003,
+      2024
+     ],
+     "chart": [
+      {
+       "year": 2003,
+       "value": 18.5313
+      },
+      {
+       "year": 2004,
+       "value": 16.5085
+      },
+      {
+       "year": 2005,
+       "value": 16.4356
+      },
+      {
+       "year": 2006,
+       "value": 15.1335
+      },
+      {
+       "year": 2007,
+       "value": 16.9225
+      },
+      {
+       "year": 2008,
+       "value": 20.2047
+      },
+      {
+       "year": 2009,
+       "value": 15.6608
+      },
+      {
+       "year": 2010,
+       "value": 19.1045
+      },
+      {
+       "year": 2011,
+       "value": 21.3258
+      },
+      {
+       "year": 2012,
+       "value": 17.9547
+      },
+      {
+       "year": 2013,
+       "value": 21.1597
+      },
+      {
+       "year": 2014,
+       "value": 16.1565
+      },
+      {
+       "year": 2015,
+       "value": 15.8926
+      },
+      {
+       "year": 2016,
+       "value": 14.948
+      },
+      {
+       "year": 2017,
+       "value": 16.3836
+      },
+      {
+       "year": 2018,
+       "value": 18.3288
+      },
+      {
+       "year": 2019,
+       "value": 18.2069
+      },
+      {
+       "year": 2020,
+       "value": 16.7609
+      },
+      {
+       "year": 2021,
+       "value": 18.7462
+      },
+      {
+       "year": 2022,
+       "value": 20.4687
+      },
+      {
+       "year": 2023,
+       "value": 19.0509
+      },
+      {
+       "year": 2024,
+       "value": 17.1746
+      }
+     ],
+     "evidence_id": "e4"
+    },
+    "evidence_id": "e4"
+   }
+  },
+  {
+   "t_ms": 5101,
+   "event": "tool_done",
+   "data": {
+    "id": "toolu_01AbucNmWNUSWQeMa2gePDG7",
+    "tool": "get_series",
+    "summary": "Rainfall.",
+    "result": {
+     "status": "ok",
+     "series_id": "precip:2003-2024",
+     "var_id": "precip",
+     "label": "Rainfall",
+     "unit": "mm/day",
+     "n_months": 264,
+     "years": [
+      2003,
+      2024
+     ],
+     "chart": [
+      {
+       "year": 2003,
+       "value": 2.6008
+      },
+      {
+       "year": 2004,
+       "value": 2.1458
+      },
+      {
+       "year": 2005,
+       "value": 2.185
+      },
+      {
+       "year": 2006,
+       "value": 1.7867
+      },
+      {
+       "year": 2007,
+       "value": 2.2383
+      },
+      {
+       "year": 2008,
+       "value": 3.3008
+      },
+      {
+       "year": 2009,
+       "value": 2.01
+      },
+      {
+       "year": 2010,
+       "value": 3.2383
+      },
+      {
+       "year": 2011,
+       "value": 2.9292
+      },
+      {
+       "year": 2012,
+       "value": 2.0383
+      },
+      {
+       "year": 2013,
+       "value": 3.3758
+      },
+      {
+       "year": 2014,
+       "value": 1.975
+      },
+      {
+       "year": 2015,
+       "value": 2.7217
+      },
+      {
+       "year": 2016,
+       "value": 1.995
+      },
+      {
+       "year": 2017,
+       "value": 2.6533
+      },
+      {
+       "year": 2018,
+       "value": 3.3625
+      },
+      {
+       "year": 2019,
+       "value": 2.5425
+      },
+      {
+       "year": 2020,
+       "value": 2.9708
+      },
+      {
+       "year": 2021,
+       "value": 3.3617
+      },
+      {
+       "year": 2022,
+       "value": 3.6633
+      },
+      {
+       "year": 2023,
+       "value": 3.5508
+      },
+      {
+       "year": 2024,
+       "value": 2.8208
+      }
+     ],
+     "evidence_id": "e5"
+    },
+    "evidence_id": "e5"
+   }
+  },
+  {
+   "t_ms": 6861,
+   "event": "tool_start",
+   "data": {
+    "id": "toolu_01LaheUeviRTKaRqNNsavx8a",
+    "tool": "trend_test",
+    "args": {
+     "series_id": "grace_tws:2003-2024"
+    }
+   }
+  },
+  {
+   "t_ms": 6861,
+   "event": "tool_start",
+   "data": {
+    "id": "toolu_01NjAEfqXTzpXm2NCcUXvd8R",
+    "tool": "trend_test",
+    "args": {
+     "series_id": "soil_moisture:2003-2024"
+    }
+   }
+  },
+  {
+   "t_ms": 6861,
+   "event": "tool_start",
+   "data": {
+    "id": "toolu_01Ro9NuoBg7Ev9bzU6q2mSr7",
+    "tool": "trend_test",
+    "args": {
+     "series_id": "precip:2003-2024"
+    }
+   }
+  },
+  {
+   "t_ms": 6861,
+   "event": "tool_start",
+   "data": {
+    "id": "toolu_01BJFat4b3HLeFmbfJoceCDg",
+    "tool": "show_footprint",
+    "args": {
+     "source": "grace"
+    }
+   }
+  },
+  {
+   "t_ms": 6894,
+   "event": "tool_done",
+   "data": {
+    "id": "toolu_01LaheUeviRTKaRqNNsavx8a",
+    "tool": "trend_test",
+    "summary": "grace_tws. verdict real.",
+    "result": {
+     "test_id": "t1",
+     "series_id": "grace_tws:2003-2024",
+     "var_id": "grace_tws",
+     "basis": "monthly",
+     "years": [
+      2003,
+      2024
+     ],
+     "n_months": 233,
+     "too_short": false,
+     "slope_per_decade": -41.3207,
+     "ci_low": -45.0745,
+     "ci_high": -37.2941,
+     "unit": "cm per decade",
+     "p_value": 0.0,
+     "years_needed": 0,
+     "q_session": 0.0,
+     "verdict": "real",
+     "direction": "down",
+     "n_tests_so_far": 1,
+     "everyday": {
+      "litres_per_m2_per_decade": -413.0,
+      "litres_per_m2_over_period": -868.0,
+      "over_years": 21,
+      "way": "less"
+     },
+     "evidence_id": "e6"
+    },
+    "evidence_id": "e6"
+   }
+  },
+  {
+   "t_ms": 6894,
+   "event": "tool_done",
+   "data": {
+    "id": "toolu_01NjAEfqXTzpXm2NCcUXvd8R",
+    "tool": "trend_test",
+    "summary": "soil_moisture. verdict unknown.",
+    "result": {
+     "test_id": "t2",
+     "series_id": "soil_moisture:2003-2024",
+     "var_id": "soil_moisture",
+     "basis": "monthly",
+     "years": [
+      2003,
+      2024
+     ],
+     "n_months": 264,
+     "too_short": false,
+     "slope_per_decade": 0.4159,
+     "ci_low": -0.8583,
+     "ci_high": 1.6649,
+     "unit": "kg/m² per decade",
+     "p_value": 0.5099,
+     "years_needed": 36,
+     "q_session": 0.5099,
+     "verdict": "unknown",
+     "direction": "flat",
+     "n_tests_so_far": 2,
+     "everyday": {
+      "litres_per_m2_per_decade": 0.4,
+      "litres_per_m2_over_period": 0.9,
+      "over_years": 21,
+      "way": "more"
+     },
+     "evidence_id": "e7"
+    },
+    "evidence_id": "e7"
+   }
+  },
+  {
+   "t_ms": 6894,
+   "event": "tool_done",
+   "data": {
+    "id": "toolu_01Ro9NuoBg7Ev9bzU6q2mSr7",
+    "tool": "trend_test",
+    "summary": "precip. verdict real.",
+    "result": {
+     "test_id": "t3",
+     "series_id": "precip:2003-2024",
+     "var_id": "precip",
+     "basis": "annual means",
+     "years": [
+      2003,
+      2024
+     ],
+     "n_years": 22,
+     "too_short": false,
+     "slope_per_decade": 0.4583,
+     "ci_low": 0.0861,
+     "ci_high": 0.8692,
+     "unit": "mm/day per decade",
+     "p_value": 0.0278,
+     "years_needed": 0,
+     "q_session": 0.0418,
+     "verdict": "real",
+     "direction": "up",
+     "n_tests_so_far": 3,
+     "evidence_id": "e8"
+    },
+    "evidence_id": "e8"
+   }
+  },
+  {
+   "t_ms": 6894,
+   "event": "tool_done",
+   "data": {
+    "id": "toolu_01BJFat4b3HLeFmbfJoceCDg",
+    "tool": "show_footprint",
+    "summary": "One value covers this whole cell, not the exact point; the outline is approximate.",
+    "result": {
+     "status": "shown",
+     "source": "grace",
+     "size": "~300 km",
+     "note": "One value covers this whole cell, not the exact point; the outline is approximate."
+    },
+    "evidence_id": null
+   }
+  },
+  {
+   "t_ms": 6894,
+   "event": "map",
+   "data": {
+    "op": "show_footprint",
+    "source": "grace",
+    "label": "GRACE water storage approximate data cell (~300 km)",
+    "size": "~300 km",
+    "bbox": [
+     75.4449,
+     28.6025,
+     78.5551,
+     31.2975
+    ],
+    "approximate": true
+   }
+  },
+  {
+   "t_ms": 6897,
+   "event": "board",
+   "data": {
+    "suspects": [],
+    "n_tests": 3,
+    "verdicts": {
+     "t1": {
+      "verdict": "real",
+      "direction": "down"
+     },
+     "t2": {
+      "verdict": "unknown",
+      "direction": "flat"
+     },
+     "t3": {
+      "verdict": "real",
+      "direction": "up"
+     }
+    }
+   }
+  },
+  {
+   "t_ms": 9345,
+   "event": "thinking",
+   "data": {
+    "text": "Next: climate_residual, get_series, land_cover_change."
+   }
+  },
+  {
+   "t_ms": 9345,
+   "event": "tool_start",
+   "data": {
+    "id": "toolu_01R8KSd55ibkrUwSUatWEThw",
+    "tool": "climate_residual",
+    "args": {
+     "var_id": "grace_tws"
+    }
+   }
+  },
+  {
+   "t_ms": 9345,
+   "event": "tool_start",
+   "data": {
+    "id": "toolu_01TnsDEC4dPvPfJxfemewUar",
+    "tool": "get_series",
+    "args": {
+     "var_id": "t2m"
+    }
+   }
+  },
+  {
+   "t_ms": 9345,
+   "event": "tool_start",
+   "data": {
+    "id": "toolu_017RAK5BMLsPUb6VcLTB24DF",
+    "tool": "land_cover_change",
+    "args": {}
+   }
+  },
+  {
+   "t_ms": 10347,
+   "event": "tool_done",
+   "data": {
+    "id": "toolu_01R8KSd55ibkrUwSUatWEThw",
+    "tool": "climate_residual",
+    "summary": "Total water stored. verdict real.",
+    "result": {
+     "var_id": "grace_tws",
+     "label": "Total water stored",
+     "test_id": "t4",
+     "test_ids": [
+      "t4"
+     ],
+     "pct_not_explained": 67.4,
+     "pct_range": null,
+     "drivers": [
+      "precip",
+      "t2m",
+      "precip_12mo"
+     ],
+     "model": "Local climate at the site",
+     "r2": 0.288,
+     "n_months": 223,
+     "unit": "cm per decade",
+     "total_slope_per_decade": -40.9785,
+     "climate_slope_per_decade": -12.6235,
+     "residual_slope_per_decade": -27.6161,
+     "p_value": 0.0,
+     "n_tests_so_far": 4,
+     "caveat": "Factors not in the model, such as water use, end up in the residual. This is a clue, not proof of a cause.",
+     "wording": "not explained by the climate we measured — a clue, not proof",
+     "everyday": {
+      "in_ten_not_explained": 7,
+      "share_word": "most",
+      "out_of": "ten"
+     },
+     "evidence_id": "e10",
+     "q_session": 0.0,
+     "verdict": "real",
+     "direction": "down"
+    },
+    "evidence_id": "e10"
+   }
+  },
+  {
+   "t_ms": 10347,
+   "event": "tool_done",
+   "data": {
+    "id": "toolu_01TnsDEC4dPvPfJxfemewUar",
+    "tool": "get_series",
+    "summary": "Air temperature.",
+    "result": {
+     "status": "ok",
+     "series_id": "t2m:2003-2024",
+     "var_id": "t2m",
+     "label": "Air temperature",
+     "unit": "°C",
+     "n_months": 264,
+     "years": [
+      2003,
+      2024
+     ],
+     "chart": [
+      {
+       "year": 2003,
+       "value": 24.7817
+      },
+      {
+       "year": 2004,
+       "value": 25.385
+      },
+      {
+       "year": 2005,
+       "value": 24.8575
+      },
+      {
+       "year": 2006,
+       "value": 25.785
+      },
+      {
+       "year": 2007,
+       "value": 25.3783
+      },
+      {
+       "year": 2008,
+       "value": 24.2092
+      },
+      {
+       "year": 2009,
+       "value": 25.5258
+      },
+      {
+       "year": 2010,
+       "value": 25.23
+      },
+      {
+       "year": 2011,
+       "value": 23.9808
+      },
+      {
+       "year": 2012,
+       "value": 24.7633
+      },
+      {
+       "year": 2013,
+       "value": 24.0542
+      },
+      {
+       "year": 2014,
+       "value": 24.8842
+      },
+      {
+       "year": 2015,
+       "value": 24.5292
+      },
+      {
+       "year": 2016,
+       "value": 25.7392
+      },
+      {
+       "year": 2017,
+       "value": 24.8458
+      },
+      {
+       "year": 2018,
+       "value": 24.2558
+      },
+      {
+       "year": 2019,
+       "value": 24.145
+      },
+      {
+       "year": 2020,
+       "value": 23.6842
+      },
+      {
+       "year": 2021,
+       "value": 24.23
+      },
+      {
+       "year": 2022,
+       "value": 24.2783
+      },
+      {
+       "year": 2023,
+       "value": 23.6475
+      },
+      {
+       "year": 2024,
+       "value": 24.8367
+      }
+     ],
+     "evidence_id": "e9"
+    },
+    "evidence_id": "e9"
+   }
+  },
+  {
+   "t_ms": 10347,
+   "event": "tool_done",
+   "data": {
+    "id": "toolu_017RAK5BMLsPUb6VcLTB24DF",
+    "tool": "land_cover_change",
+    "summary": "Done.",
+    "result": {
+     "status": "ok",
+     "year_a": 2003,
+     "year_b": 2023,
+     "dominant_before": "Cropland",
+     "dominant_after": "Cropland",
+     "changes": [],
+     "layer": "land_cover",
+     "source": {
+      "name": "MODIS land cover type (MCD12Q1, IGBP classes), via NASA GIBS",
+      "url": "https://lpdaac.usgs.gov/products/mcd12q1v061/"
+     },
+     "caveat": "At 500 m, orchards and tree crops may be classed as savanna or woody vegetation, not cropland.",
+     "evidence_id": "e11"
+    },
+    "evidence_id": "e11"
+   }
+  },
+  {
+   "t_ms": 10347,
+   "event": "map",
+   "data": {
+    "op": "show_layer",
+    "layer_id": "land_cover",
+    "year": 2023
+   }
+  },
+  {
+   "t_ms": 10350,
+   "event": "board",
+   "data": {
+    "suspects": [],
+    "n_tests": 4,
+    "verdicts": {
+     "t1": {
+      "verdict": "real",
+      "direction": "down"
+     },
+     "t2": {
+      "verdict": "unknown",
+      "direction": "flat"
+     },
+     "t3": {
+      "verdict": "real",
+      "direction": "up"
+     },
+     "t4": {
+      "verdict": "real",
+      "direction": "down"
+     }
+    }
+   }
+  },
+  {
+   "t_ms": 11841,
+   "event": "tool_start",
+   "data": {
+    "id": "toolu_01GJTRtf9jAEGxTc6KQ9cgqh",
+    "tool": "correlate",
+    "args": {
+     "series_a": "grace_tws:2003-2024",
+     "series_b": "precip:2003-2024",
+     "max_lag": 1
+    }
+   }
+  },
+  {
+   "t_ms": 11841,
+   "event": "tool_start",
+   "data": {
+    "id": "toolu_019YWK38JRx26HfTsz3wwifL",
+    "tool": "trend_test",
+    "args": {
+     "series_id": "t2m:2003-2024"
+    }
+   }
+  },
+  {
+   "t_ms": 11872,
+   "event": "tool_done",
+   "data": {
+    "id": "toolu_01GJTRtf9jAEGxTc6KQ9cgqh",
+    "tool": "correlate",
+    "summary": "Moving together is a clue, not proof that one drives the other.",
+    "result": {
+     "series_a": "grace_tws:2003-2024",
+     "series_b": "precip:2003-2024",
+     "method": "Pearson r of year-on-year changes; lag k pairs a in year t with b in year t-k",
+     "lags": [
+      {
+       "lag": 0,
+       "test_id": "t5",
+       "r": 0.231,
+       "p": 0.3574,
+       "n_years": 18,
+       "too_short": false,
+       "q_session": 0.536,
+       "verdict": "unknown",
+       "direction": "flat"
+      },
+      {
+       "lag": 1,
+       "test_id": "t6",
+       "r": -0.133,
+       "p": 0.6121,
+       "n_years": 17,
+       "too_short": false,
+       "q_session": 0.6121,
+       "verdict": "unknown",
+       "direction": "flat"
+      }
+     ],
+     "test_ids": [
+      "t5",
+      "t6"
+     ],
+     "n_tests_so_far": 6,
+     "note": "Moving together is a clue, not proof that one drives the other.",
+     "evidence_id": "e12"
+    },
+    "evidence_id": "e12"
+   }
+  },
+  {
+   "t_ms": 11872,
+   "event": "tool_done",
+   "data": {
+    "id": "toolu_019YWK38JRx26HfTsz3wwifL",
+    "tool": "trend_test",
+    "summary": "t2m. verdict real.",
+    "result": {
+     "test_id": "t7",
+     "series_id": "t2m:2003-2024",
+     "var_id": "t2m",
+     "basis": "monthly",
+     "years": [
+      2003,
+      2024
+     ],
+     "n_months": 264,
+     "too_short": false,
+     "slope_per_decade": -0.4734,
+     "ci_low": -0.7575,
+     "ci_high": -0.1876,
+     "unit": "°C per decade",
+     "p_value": 0.0011,
+     "years_needed": 0,
+     "q_session": 0.0026,
+     "verdict": "real",
+     "direction": "down",
+     "n_tests_so_far": 7,
+     "everyday": {
+      "change_over_period_c": -1.0,
+      "over_years": 21,
+      "way": "cooler"
+     },
+     "evidence_id": "e13"
+    },
+    "evidence_id": "e13"
+   }
+  },
+  {
+   "t_ms": 11877,
+   "event": "board",
+   "data": {
+    "suspects": [],
+    "n_tests": 7,
+    "verdicts": {
+     "t1": {
+      "verdict": "real",
+      "direction": "down"
+     },
+     "t2": {
+      "verdict": "unknown",
+      "direction": "flat"
+     },
+     "t3": {
+      "verdict": "real",
+      "direction": "up"
+     },
+     "t4": {
+      "verdict": "real",
+      "direction": "down"
+     },
+     "t5": {
+      "verdict": "unknown",
+      "direction": "flat"
+     },
+     "t6": {
+      "verdict": "unknown",
+      "direction": "flat"
+     },
+     "t7": {
+      "verdict": "real",
+      "direction": "down"
+     }
+    }
+   }
+  },
+  {
+   "t_ms": 17179,
+   "event": "tool_start",
+   "data": {
+    "id": "toolu_014HsneSwm4mHiz4VNeT415C",
+    "tool": "update_board",
+    "args": {
+     "suspect": "less rain",
+     "status": "ruled_out",
+     "evidence_ids": [
+      "e8",
+      "e12"
+     ],
+     "note": "Rainfall went up, by 0.4583 mm/day per decade, while total water stored went down.",
+     "target_var": "grace_tws",
+     "kind": "climate",
+     "suspect_var": "precip",
+     "expects": "down"
+    }
+   }
+  },
+  {
+   "t_ms": 17180,
+   "event": "tool_start",
+   "data": {
+    "id": "toolu_01MXi4wq31BmmKJazbvBF8k5",
+    "tool": "update_board",
+    "args": {
+     "suspect": "warmer air",
+     "status": "ruled_out",
+     "evidence_ids": [
+      "e13"
+     ],
+     "note": "Air temperature went down, by 0.4734 °C per decade, so warming does not fit.",
+     "target_var": "grace_tws",
+     "kind": "climate",
+     "suspect_var": "t2m",
+     "expects": "up"
+    }
+   }
+  },
+  {
+   "t_ms": 17180,
+   "event": "tool_start",
+   "data": {
+    "id": "toolu_01AnoojWBtMwxnuXryHnoYF1",
+    "tool": "update_board",
+    "args": {
+     "suspect": "water use for irrigation",
+     "status": "supported",
+     "evidence_ids": [
+      "e10",
+      "e11"
+     ],
+     "note": "67.4% of the fall in total water is not explained by the weather we measured, in a place that is 97.1% cropland; a clue, not proof.",
+     "target_var": "grace_tws",
+     "kind": "non_climate"
+    }
+   }
+  },
+  {
+   "t_ms": 17184,
+   "event": "tool_done",
+   "data": {
+    "id": "toolu_014HsneSwm4mHiz4VNeT415C",
+    "tool": "update_board",
+    "summary": "less rain. Rainfall went up, by 0.4583 mm/day per decade, while total water stored went down.",
+    "result": {
+     "id": "less rain",
+     "label": "less rain",
+     "status": "ruled_out",
+     "evidence": [
+      "e8",
+      "e12"
+     ],
+     "note": "Rainfall went up, by 0.4583 mm/day per decade, while total water stored went down.",
+     "downgraded": null,
+     "claimed": "ruled_out",
+     "dropped": [],
+     "target_var": "grace_tws",
+     "kind": "climate",
+     "suspect_var": "precip",
+     "expects": "down",
+     "n_tests": 7
+    },
+    "evidence_id": null
+   }
+  },
+  {
+   "t_ms": 17184,
+   "event": "tool_done",
+   "data": {
+    "id": "toolu_01MXi4wq31BmmKJazbvBF8k5",
+    "tool": "update_board",
+    "summary": "warmer air. Air temperature went down, by 0.4734 °C per decade, so warming does not fit.",
+    "result": {
+     "id": "warmer air",
+     "label": "warmer air",
+     "status": "ruled_out",
+     "evidence": [
+      "e13"
+     ],
+     "note": "Air temperature went down, by 0.4734 °C per decade, so warming does not fit.",
+     "downgraded": null,
+     "claimed": "ruled_out",
+     "dropped": [],
+     "target_var": "grace_tws",
+     "kind": "climate",
+     "suspect_var": "t2m",
+     "expects": "up",
+     "n_tests": 7
+    },
+    "evidence_id": null
+   }
+  },
+  {
+   "t_ms": 17185,
+   "event": "tool_done",
+   "data": {
+    "id": "toolu_01AnoojWBtMwxnuXryHnoYF1",
+    "tool": "update_board",
+    "summary": "water use for irrigation. 67.4% of the fall in total water is not explained by the weather we measured, in a place that is 97.1% cropland; a clue, not proof.",
+    "result": {
+     "id": "water use for irrigation",
+     "label": "water use for irrigation",
+     "status": "supported",
+     "evidence": [
+      "e10",
+      "e11"
+     ],
+     "note": "67.4% of the fall in total water is not explained by the weather we measured, in a place that is 97.1% cropland; a clue, not proof.",
+     "downgraded": null,
+     "claimed": "supported",
+     "dropped": [],
+     "target_var": "grace_tws",
+     "kind": "non_climate",
+     "suspect_var": null,
+     "expects": null,
+     "n_tests": 7
+    },
+    "evidence_id": null
+   }
+  },
+  {
+   "t_ms": 17189,
+   "event": "board",
+   "data": {
+    "suspects": [
+     {
+      "id": "less rain",
+      "label": "less rain",
+      "status": "ruled_out",
+      "evidence": [
+       "e8",
+       "e12"
+      ],
+      "note": "Rainfall went up, by 0.4583 mm/day per decade, while total water stored went down.",
+      "downgraded": null,
+      "claimed": "ruled_out",
+      "dropped": [],
+      "target_var": "grace_tws",
+      "kind": "climate",
+      "suspect_var": "precip",
+      "expects": "down"
+     },
+     {
+      "id": "warmer air",
+      "label": "warmer air",
+      "status": "ruled_out",
+      "evidence": [
+       "e13"
+      ],
+      "note": "Air temperature went down, by 0.4734 °C per decade, so warming does not fit.",
+      "downgraded": null,
+      "claimed": "ruled_out",
+      "dropped": [],
+      "target_var": "grace_tws",
+      "kind": "climate",
+      "suspect_var": "t2m",
+      "expects": "up"
+     },
+     {
+      "id": "water use for irrigation",
+      "label": "water use for irrigation",
+      "status": "supported",
+      "evidence": [
+       "e10",
+       "e11"
+      ],
+      "note": "67.4% of the fall in total water is not explained by the weather we measured, in a place that is 97.1% cropland; a clue, not proof.",
+      "downgraded": null,
+      "claimed": "supported",
+      "dropped": [],
+      "target_var": "grace_tws",
+      "kind": "non_climate",
+      "suspect_var": null,
+      "expects": null
+     }
+    ],
+    "n_tests": 7,
+    "verdicts": {
+     "t1": {
+      "verdict": "real",
+      "direction": "down"
+     },
+     "t2": {
+      "verdict": "unknown",
+      "direction": "flat"
+     },
+     "t3": {
+      "verdict": "real",
+      "direction": "up"
+     },
+     "t4": {
+      "verdict": "real",
+      "direction": "down"
+     },
+     "t5": {
+      "verdict": "unknown",
+      "direction": "flat"
+     },
+     "t6": {
+      "verdict": "unknown",
+      "direction": "flat"
+     },
+     "t7": {
+      "verdict": "real",
+      "direction": "down"
+     }
+    }
+   }
+  },
+  {
+   "t_ms": 23684,
+   "event": "board",
+   "data": {
+    "suspects": [
+     {
+      "id": "less rain",
+      "label": "less rain",
+      "status": "ruled_out",
+      "evidence": [
+       "e8",
+       "e12"
+      ],
+      "note": "Rainfall went up, by 0.4583 mm/day per decade, while total water stored went down.",
+      "downgraded": null,
+      "claimed": "ruled_out",
+      "dropped": [],
+      "target_var": "grace_tws",
+      "kind": "climate",
+      "suspect_var": "precip",
+      "expects": "down"
+     },
+     {
+      "id": "warmer air",
+      "label": "warmer air",
+      "status": "ruled_out",
+      "evidence": [
+       "e13"
+      ],
+      "note": "Air temperature went down, by 0.4734 °C per decade, so warming does not fit.",
+      "downgraded": null,
+      "claimed": "ruled_out",
+      "dropped": [],
+      "target_var": "grace_tws",
+      "kind": "climate",
+      "suspect_var": "t2m",
+      "expects": "up"
+     },
+     {
+      "id": "water use for irrigation",
+      "label": "water use for irrigation",
+      "status": "supported",
+      "evidence": [
+       "e10",
+       "e11"
+      ],
+      "note": "67.4% of the fall in total water is not explained by the weather we measured, in a place that is 97.1% cropland; a clue, not proof.",
+      "downgraded": null,
+      "claimed": "supported",
+      "dropped": [],
+      "target_var": "grace_tws",
+      "kind": "non_climate",
+      "suspect_var": null,
+      "expects": null
+     }
+    ],
+    "n_tests": 7,
+    "verdicts": {
+     "t1": {
+      "verdict": "real",
+      "direction": "down"
+     },
+     "t2": {
+      "verdict": "unknown",
+      "direction": "flat"
+     },
+     "t3": {
+      "verdict": "real",
+      "direction": "up"
+     },
+     "t4": {
+      "verdict": "real",
+      "direction": "down"
+     },
+     "t5": {
+      "verdict": "unknown",
+      "direction": "flat"
+     },
+     "t6": {
+      "verdict": "unknown",
+      "direction": "flat"
+     },
+     "t7": {
+      "verdict": "real",
+      "direction": "down"
+     }
+    }
+   }
+  },
+  {
+   "t_ms": 23685,
+   "event": "answer",
+   "data": {
+    "text": "Yes, the total water stored here, underground and on the surface, is going down, by about 868 litres on each square metre over 21 years. We can't measure groundwater alone, and one satellite value covers a big square about 300 km across. The weather we measured doesn't explain most of the drop, which is a clue, not proof.",
+    "checked": true,
+    "figures": [
+     "868",
+     "21",
+     "300"
+    ],
+    "source": "llm",
+    "rejected": [],
+    "next_questions": [
+     "Is it still going down in recent years?",
+     "What about sunlight at the surface here?",
+     "What about plant greenness here?"
+    ]
+   }
+  },
+  {
+   "t_ms": 23685,
+   "event": "done",
+   "data": {
+    "thread_id": "f6358a4c12074f9883108a00d0b797c2",
+    "n_tests": 7,
+    "n_tests_branch": 7,
+    "n_tool_calls": 17
+   }
+  }
+ ]
+}

@@ -12,7 +12,7 @@ import {
 import { providerOfSource } from "../guide/datasets.ts";
 
 function recorded(name: string) {
-  const raw = JSON.parse(readFileSync(join(import.meta.dirname, `../../../../../backend/data/recordings/${name}.json`), "utf8"));
+  const raw = JSON.parse(readFileSync(join(import.meta.dirname, `recordings/${name}.json`), "utf8"));
   const rec = parseRecording(raw);
   assert.ok(rec);
   const events = replaySchedule(rec).map((e) => e.event);

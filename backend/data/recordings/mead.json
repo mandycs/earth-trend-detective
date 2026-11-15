@@ -5,14 +5,14 @@
   "lat": 36.1,
   "lon": -114.7
  },
- "started_at": "2026-11-15T10:41:00+00:00",
+ "started_at": "2026-11-15T12:49:30+00:00",
  "partial": false,
  "events": [
   {
-   "t_ms": 350,
+   "t_ms": 45,
    "event": "place",
    "data": {
-    "thread_id": "baf8cb9e3b884fe0adbe3727976e9503",
+    "thread_id": "e489a422cd244a92b52631e54068d571",
     "follow_up": false,
     "forked_from": null,
     "id": "point",
@@ -34,26 +34,26 @@
    }
   },
   {
-   "t_ms": 1250,
+   "t_ms": 1081,
    "event": "thinking",
    "data": {
     "text": "I'll start by profiling the place."
    }
   },
   {
-   "t_ms": 1600,
+   "t_ms": 1081,
    "event": "tool_start",
    "data": {
-    "id": "toolu_01TuCBoSZ6tMgMc2YseiPfw5",
+    "id": "toolu_014ovDxFwyg9FEedjdDvfXnt",
     "tool": "profile_place",
     "args": {}
    }
   },
   {
-   "t_ms": 2800,
+   "t_ms": 2620,
    "event": "tool_done",
    "data": {
-    "id": "toolu_01TuCBoSZ6tMgMc2YseiPfw5",
+    "id": "toolu_014ovDxFwyg9FEedjdDvfXnt",
     "tool": "profile_place",
     "summary": "Done.",
     "result": {
@@ -81,7 +81,7 @@
    }
   },
   {
-   "t_ms": 3150,
+   "t_ms": 2621,
    "event": "map",
    "data": {
     "op": "fly_to",
@@ -96,30 +96,19 @@
    }
   },
   {
-   "t_ms": 3500,
+   "t_ms": 3360,
    "event": "tool_start",
    "data": {
-    "id": "toolu_011JLvxu2d1FBYVVo8H1cyht",
+    "id": "toolu_017QsdQhDVDfTzmnMET6mX3i",
     "tool": "list_variables",
     "args": {}
    }
   },
   {
-   "t_ms": 3850,
-   "event": "tool_start",
-   "data": {
-    "id": "toolu_01Y742NYYAVx4P6885j5VBhJ",
-    "tool": "solved_case",
-    "args": {
-     "site_id": "lake_mead"
-    }
-   }
-  },
-  {
-   "t_ms": 5050,
+   "t_ms": 3361,
    "event": "tool_done",
    "data": {
-    "id": "toolu_011JLvxu2d1FBYVVo8H1cyht",
+    "id": "toolu_017QsdQhDVDfTzmnMET6mX3i",
     "tool": "list_variables",
     "summary": "Done.",
     "result": {
@@ -274,10 +263,81 @@
    }
   },
   {
-   "t_ms": 6250,
+   "t_ms": 5857,
+   "event": "thinking",
+   "data": {
+    "text": "I'll read the solved Lake Mead case, fetch the water-storage and local weather series, and measure the open-water area."
+   }
+  },
+  {
+   "t_ms": 5857,
+   "event": "tool_start",
+   "data": {
+    "id": "toolu_01XagthEfcQ5tkuigdHxE9Mt",
+    "tool": "solved_case",
+    "args": {
+     "site_id": "lake_mead"
+    }
+   }
+  },
+  {
+   "t_ms": 5857,
+   "event": "tool_start",
+   "data": {
+    "id": "toolu_01GXNUQYCFLowZJtDSo9EqSw",
+    "tool": "get_series",
+    "args": {
+     "var_id": "grace_tws"
+    }
+   }
+  },
+  {
+   "t_ms": 5857,
+   "event": "tool_start",
+   "data": {
+    "id": "toolu_01CkPZ4rx4dDXbDcGXZu6kGU",
+    "tool": "get_series",
+    "args": {
+     "var_id": "precip"
+    }
+   }
+  },
+  {
+   "t_ms": 5857,
+   "event": "tool_start",
+   "data": {
+    "id": "toolu_01Pu9WkkucC6JPQkSoeJ5edd",
+    "tool": "get_series",
+    "args": {
+     "var_id": "t2m"
+    }
+   }
+  },
+  {
+   "t_ms": 5857,
+   "event": "tool_start",
+   "data": {
+    "id": "toolu_0158xsgRDzpKgTaQ2X8ZNz4v",
+    "tool": "water_extent",
+    "args": {}
+   }
+  },
+  {
+   "t_ms": 5857,
+   "event": "tool_start",
+   "data": {
+    "id": "toolu_01RDPUv7ccSpbWRQZs84ghk5",
+    "tool": "show_footprint",
+    "args": {
+     "source": "grace"
+    }
+   }
+  },
+  {
+   "t_ms": 18254,
    "event": "tool_done",
    "data": {
-    "id": "toolu_01Y742NYYAVx4P6885j5VBhJ",
+    "id": "toolu_01XagthEfcQ5tkuigdHxE9Mt",
     "tool": "solved_case",
     "summary": "Done.",
     "result": {
@@ -410,61 +470,10 @@
    }
   },
   {
-   "t_ms": 7150,
-   "event": "thinking",
-   "data": {
-    "text": "I'll fetch the total water stored, the local rainfall and the air temperature."
-   }
-  },
-  {
-   "t_ms": 7500,
-   "event": "tool_start",
-   "data": {
-    "id": "toolu_011EQkMT2S6QYETt1CvbTGTN",
-    "tool": "get_series",
-    "args": {
-     "var_id": "grace_tws"
-    }
-   }
-  },
-  {
-   "t_ms": 7850,
-   "event": "tool_start",
-   "data": {
-    "id": "toolu_01FRY6Km6C1vHNb4zcGw25PW",
-    "tool": "get_series",
-    "args": {
-     "var_id": "precip"
-    }
-   }
-  },
-  {
-   "t_ms": 8200,
-   "event": "tool_start",
-   "data": {
-    "id": "toolu_014pCg9eo4wTsF2bqX6EYwk9",
-    "tool": "get_series",
-    "args": {
-     "var_id": "t2m"
-    }
-   }
-  },
-  {
-   "t_ms": 8550,
-   "event": "tool_start",
-   "data": {
-    "id": "toolu_012UGZXkZeM8Br6LHfE1jLTs",
-    "tool": "show_footprint",
-    "args": {
-     "source": "grace"
-    }
-   }
-  },
-  {
-   "t_ms": 9750,
+   "t_ms": 18254,
    "event": "tool_done",
    "data": {
-    "id": "toolu_011EQkMT2S6QYETt1CvbTGTN",
+    "id": "toolu_01GXNUQYCFLowZJtDSo9EqSw",
     "tool": "get_series",
     "summary": "Total water stored.",
     "result": {
@@ -574,10 +583,10 @@
    }
   },
   {
-   "t_ms": 10950,
+   "t_ms": 18254,
    "event": "tool_done",
    "data": {
-    "id": "toolu_01FRY6Km6C1vHNb4zcGw25PW",
+    "id": "toolu_01CkPZ4rx4dDXbDcGXZu6kGU",
     "tool": "get_series",
     "summary": "Rainfall.",
     "result": {
@@ -687,10 +696,10 @@
    }
   },
   {
-   "t_ms": 12150,
+   "t_ms": 18254,
    "event": "tool_done",
    "data": {
-    "id": "toolu_014pCg9eo4wTsF2bqX6EYwk9",
+    "id": "toolu_01Pu9WkkucC6JPQkSoeJ5edd",
     "tool": "get_series",
     "summary": "Air temperature.",
     "result": {
@@ -800,10 +809,104 @@
    }
   },
   {
-   "t_ms": 13350,
+   "t_ms": 18255,
    "event": "tool_done",
    "data": {
-    "id": "toolu_012UGZXkZeM8Br6LHfE1jLTs",
+    "id": "toolu_0158xsgRDzpKgTaQ2X8ZNz4v",
+    "tool": "water_extent",
+    "summary": "Open water in the box.",
+    "result": {
+     "status": "ok",
+     "series_id": "water_extent:2016-2024",
+     "var_id": "water_extent",
+     "label": "Open water in the box",
+     "definition": "Area of open water in the place's box (OPERA open water, plus partial surface water at its edge), from 30 m Landsat and Sentinel-2 scenes; one clear scene a month, yearly median.",
+     "unit": "km²",
+     "source": "NASA JPL OPERA Dynamic Surface Water Extent (DSWx-HLS, from Harmonized Landsat Sentinel-2), via GIBS",
+     "resolution": "30 m",
+     "basis": "annual",
+     "method": "median over the year of one clear scene a month",
+     "years": [
+      2016,
+      2024
+     ],
+     "n_years": 6,
+     "yearly": [
+      {
+       "year": 2016,
+       "area_km2": 91.94,
+       "clear_months": 11
+      },
+      {
+       "year": 2017,
+       "area_km2": 93.15,
+       "clear_months": 12
+      },
+      {
+       "year": 2018,
+       "area_km2": 92.68,
+       "clear_months": 11
+      },
+      {
+       "year": 2019,
+       "area_km2": 93.28,
+       "clear_months": 12
+      },
+      {
+       "year": 2023,
+       "area_km2": 86.88,
+       "clear_months": 12
+      },
+      {
+       "year": 2024,
+       "area_km2": 87.82,
+       "clear_months": 9
+      }
+     ],
+     "chart": [
+      {
+       "year": 2016,
+       "value": 91.94
+      },
+      {
+       "year": 2017,
+       "value": 93.15
+      },
+      {
+       "year": 2018,
+       "value": 92.68
+      },
+      {
+       "year": 2019,
+       "value": 93.28
+      },
+      {
+       "year": 2023,
+       "value": 86.88
+      },
+      {
+       "year": 2024,
+       "value": 87.82
+      }
+     ],
+     "caveat": "Counts every lake, reservoir and river in the box; a partial-water pixel at the shore counts as a whole 30 m pixel, scattered partial-water pixels away from open water are left out. Months without a clear scene (mostly winter) are left out, so the yearly median leans to the drier months. OPERA has no scenes from mid-August 2020 to the end of 2022.",
+     "no_scene_years": [
+      2021,
+      2022
+     ],
+     "dropped_years": [
+      2020
+     ],
+     "evidence_id": "e7"
+    },
+    "evidence_id": "e7"
+   }
+  },
+  {
+   "t_ms": 18255,
+   "event": "tool_done",
+   "data": {
+    "id": "toolu_01RDPUv7ccSpbWRQZs84ghk5",
     "tool": "show_footprint",
     "summary": "One value covers this whole cell, not the exact point; the outline is approximate.",
     "result": {
@@ -816,7 +919,7 @@
    }
   },
   {
-   "t_ms": 13700,
+   "t_ms": 18255,
    "event": "map",
    "data": {
     "op": "show_footprint",
@@ -833,17 +936,17 @@
    }
   },
   {
-   "t_ms": 14600,
+   "t_ms": 20795,
    "event": "thinking",
    "data": {
-    "text": "Next I'll test the trend in each series over the whole period, and over the last ten years for water stored."
+    "text": "Next I'll test the trends in water stored, rain and air temperature, plus the recent years of water stored."
    }
   },
   {
-   "t_ms": 14950,
+   "t_ms": 20795,
    "event": "tool_start",
    "data": {
-    "id": "toolu_01UtetYjnmGpsGUuJh5atti7",
+    "id": "toolu_015vYdbArjvQffzipUkJqQnt",
     "tool": "trend_test",
     "args": {
      "series_id": "grace_tws:2003-2024"
@@ -851,10 +954,10 @@
    }
   },
   {
-   "t_ms": 15300,
+   "t_ms": 20795,
    "event": "tool_start",
    "data": {
-    "id": "toolu_01EmJw6APHndhDUBwwZTMH2S",
+    "id": "toolu_01CQte4N2S8RWUu6fsyuatnj",
     "tool": "trend_test",
     "args": {
      "series_id": "grace_tws:2003-2024",
@@ -863,10 +966,10 @@
    }
   },
   {
-   "t_ms": 15650,
+   "t_ms": 20795,
    "event": "tool_start",
    "data": {
-    "id": "toolu_01MatwJfzawjmtYPyFHQu6RL",
+    "id": "toolu_01V2Ux4z69LeAyGNaBEJrqRs",
     "tool": "trend_test",
     "args": {
      "series_id": "precip:2003-2024"
@@ -874,10 +977,10 @@
    }
   },
   {
-   "t_ms": 16000,
+   "t_ms": 20795,
    "event": "tool_start",
    "data": {
-    "id": "toolu_01CFLuYbuPm2auJNKxLZS7hg",
+    "id": "toolu_019ioT2BSU21YaFyn7CNcNZK",
     "tool": "trend_test",
     "args": {
      "series_id": "t2m:2003-2024"
@@ -885,10 +988,21 @@
    }
   },
   {
-   "t_ms": 17200,
+   "t_ms": 20795,
+   "event": "tool_start",
+   "data": {
+    "id": "toolu_01C6Y3oaxVqtLoE7fqvENFLu",
+    "tool": "trend_test",
+    "args": {
+     "series_id": "water_extent:2016-2024"
+    }
+   }
+  },
+  {
+   "t_ms": 20820,
    "event": "tool_done",
    "data": {
-    "id": "toolu_01UtetYjnmGpsGUuJh5atti7",
+    "id": "toolu_015vYdbArjvQffzipUkJqQnt",
     "tool": "trend_test",
     "summary": "grace_tws. verdict real.",
     "result": {
@@ -912,16 +1026,22 @@
      "verdict": "real",
      "direction": "down",
      "n_tests_so_far": 1,
-     "evidence_id": "e7"
+     "everyday": {
+      "litres_per_m2_per_decade": -65.0,
+      "litres_per_m2_over_period": -136.0,
+      "over_years": 21,
+      "way": "less"
+     },
+     "evidence_id": "e8"
     },
-    "evidence_id": "e7"
+    "evidence_id": "e8"
    }
   },
   {
-   "t_ms": 18400,
+   "t_ms": 20820,
    "event": "tool_done",
    "data": {
-    "id": "toolu_01EmJw6APHndhDUBwwZTMH2S",
+    "id": "toolu_01CQte4N2S8RWUu6fsyuatnj",
     "tool": "trend_test",
     "summary": "grace_tws. verdict unknown.",
     "result": {
@@ -945,16 +1065,22 @@
      "verdict": "unknown",
      "direction": "flat",
      "n_tests_so_far": 2,
-     "evidence_id": "e8"
+     "everyday": {
+      "litres_per_m2_per_decade": -3.9,
+      "litres_per_m2_over_period": -3.9,
+      "over_years": 10,
+      "way": "less"
+     },
+     "evidence_id": "e9"
     },
-    "evidence_id": "e8"
+    "evidence_id": "e9"
    }
   },
   {
-   "t_ms": 19600,
+   "t_ms": 20820,
    "event": "tool_done",
    "data": {
-    "id": "toolu_01MatwJfzawjmtYPyFHQu6RL",
+    "id": "toolu_01V2Ux4z69LeAyGNaBEJrqRs",
     "tool": "trend_test",
     "summary": "precip. verdict unknown.",
     "result": {
@@ -978,16 +1104,16 @@
      "verdict": "unknown",
      "direction": "flat",
      "n_tests_so_far": 3,
-     "evidence_id": "e9"
+     "evidence_id": "e10"
     },
-    "evidence_id": "e9"
+    "evidence_id": "e10"
    }
   },
   {
-   "t_ms": 20800,
+   "t_ms": 20820,
    "event": "tool_done",
    "data": {
-    "id": "toolu_01CFLuYbuPm2auJNKxLZS7hg",
+    "id": "toolu_019ioT2BSU21YaFyn7CNcNZK",
     "tool": "trend_test",
     "summary": "t2m. verdict real.",
     "result": {
@@ -1011,13 +1137,53 @@
      "verdict": "real",
      "direction": "up",
      "n_tests_so_far": 4,
-     "evidence_id": "e10"
+     "everyday": {
+      "change_over_period_c": 1.4,
+      "over_years": 21,
+      "way": "warmer"
+     },
+     "evidence_id": "e11"
     },
-    "evidence_id": "e10"
+    "evidence_id": "e11"
    }
   },
   {
-   "t_ms": 21150,
+   "t_ms": 20820,
+   "event": "tool_done",
+   "data": {
+    "id": "toolu_01C6Y3oaxVqtLoE7fqvENFLu",
+    "tool": "trend_test",
+    "summary": "water_extent. verdict unknown.",
+    "result": {
+     "test_id": "t5",
+     "series_id": "water_extent:2016-2024",
+     "var_id": "water_extent",
+     "basis": "annual",
+     "status": "observed",
+     "years": [
+      2016,
+      2024
+     ],
+     "n_years": 6,
+     "too_short": true,
+     "slope_per_decade": null,
+     "ci_low": null,
+     "ci_high": null,
+     "unit": "km² per decade",
+     "p_value": null,
+     "years_needed": 12,
+     "caveat": "Counts every lake, reservoir and river in the box; a partial-water pixel at the shore counts as a whole 30 m pixel, scattered partial-water pixels away from open water are left out. Months without a clear scene (mostly winter) are left out, so the yearly median leans to the drier months. OPERA has no scenes from mid-August 2020 to the end of 2022.",
+     "q_session": null,
+     "verdict": "unknown",
+     "direction": "flat",
+     "n_tests_so_far": 4,
+     "evidence_id": "e12"
+    },
+    "evidence_id": "e12"
+   }
+  },
+  {
+   "t_ms": 20823,
    "event": "board",
    "data": {
     "suspects": [],
@@ -1038,22 +1204,26 @@
      "t4": {
       "verdict": "real",
       "direction": "up"
+     },
+     "t5": {
+      "verdict": "unknown",
+      "direction": "flat"
      }
     }
    }
   },
   {
-   "t_ms": 22050,
+   "t_ms": 23376,
    "event": "thinking",
    "data": {
-    "text": "Now I'll test whether the drop in stored water is not explained by the climate we measured, and whether it moves with rainfall."
+    "text": "Next: climate_residual, correlate, show_layer."
    }
   },
   {
-   "t_ms": 22400,
+   "t_ms": 23376,
    "event": "tool_start",
    "data": {
-    "id": "toolu_016FNPdT4bVe9MyTDPtepkLc",
+    "id": "toolu_01CXEdcHcZnXGiUSMb2wWKMj",
     "tool": "climate_residual",
     "args": {
      "var_id": "grace_tws"
@@ -1061,10 +1231,10 @@
    }
   },
   {
-   "t_ms": 22750,
+   "t_ms": 23376,
    "event": "tool_start",
    "data": {
-    "id": "toolu_01RZ8pQqXwP7Fpj2uaeYxY5D",
+    "id": "toolu_011u2UotxuNUuZ9JgJk4EJqW",
     "tool": "correlate",
     "args": {
      "series_a": "grace_tws:2003-2024",
@@ -1074,27 +1244,29 @@
    }
   },
   {
-   "t_ms": 23100,
+   "t_ms": 23376,
    "event": "tool_start",
    "data": {
-    "id": "toolu_01BHuQsvcDZUgu6jTNW3sSe4",
-    "tool": "land_cover_change",
-    "args": {}
+    "id": "toolu_016mt4F8g5knxiEWCMSmmA84",
+    "tool": "show_layer",
+    "args": {
+     "layer_id": "true_colour"
+    }
    }
   },
   {
-   "t_ms": 24300,
+   "t_ms": 23397,
    "event": "tool_done",
    "data": {
-    "id": "toolu_016FNPdT4bVe9MyTDPtepkLc",
+    "id": "toolu_01CXEdcHcZnXGiUSMb2wWKMj",
     "tool": "climate_residual",
     "summary": "Total water stored. verdict real.",
     "result": {
      "var_id": "grace_tws",
      "label": "Total water stored",
-     "test_id": "t5",
+     "test_id": "t6",
      "test_ids": [
-      "t5"
+      "t6"
      ],
      "pct_not_explained": 77.5,
      "pct_range": null,
@@ -1114,19 +1286,24 @@
      "n_tests_so_far": 5,
      "caveat": "Factors not in the model, such as water use, end up in the residual. This is a clue, not proof of a cause.",
      "wording": "not explained by the climate we measured — a clue, not proof",
-     "evidence_id": "e11",
+     "everyday": {
+      "in_ten_not_explained": 8,
+      "share_word": "most",
+      "out_of": "ten"
+     },
+     "evidence_id": "e13",
      "q_session": 0.0016,
      "verdict": "real",
      "direction": "down"
     },
-    "evidence_id": "e11"
+    "evidence_id": "e13"
    }
   },
   {
-   "t_ms": 25500,
+   "t_ms": 23397,
    "event": "tool_done",
    "data": {
-    "id": "toolu_01RZ8pQqXwP7Fpj2uaeYxY5D",
+    "id": "toolu_011u2UotxuNUuZ9JgJk4EJqW",
     "tool": "correlate",
     "summary": "Moving together is a clue, not proof that one drives the other.",
     "result": {
@@ -1136,7 +1313,7 @@
      "lags": [
       {
        "lag": 0,
-       "test_id": "t6",
+       "test_id": "t7",
        "r": 0.25,
        "p": 0.3174,
        "n_years": 18,
@@ -1147,7 +1324,7 @@
       },
       {
        "lag": 1,
-       "test_id": "t7",
+       "test_id": "t8",
        "r": 0.418,
        "p": 0.0952,
        "n_years": 17,
@@ -1158,65 +1335,48 @@
       }
      ],
      "test_ids": [
-      "t6",
-      "t7"
+      "t7",
+      "t8"
      ],
      "n_tests_so_far": 7,
      "note": "Moving together is a clue, not proof that one drives the other.",
-     "evidence_id": "e12"
+     "evidence_id": "e14"
     },
-    "evidence_id": "e12"
+    "evidence_id": "e14"
    }
   },
   {
-   "t_ms": 26700,
+   "t_ms": 23397,
    "event": "tool_done",
    "data": {
-    "id": "toolu_01BHuQsvcDZUgu6jTNW3sSe4",
-    "tool": "land_cover_change",
+    "id": "toolu_016mt4F8g5knxiEWCMSmmA84",
+    "tool": "show_layer",
     "summary": "Done.",
     "result": {
-     "status": "ok",
-     "year_a": 2003,
-     "year_b": 2023,
-     "dominant_before": "Barren",
-     "dominant_after": "Open shrubland",
-     "changes": [
-      {
-       "class": "Water",
-       "before_pct": 21.8,
-       "after_pct": 15.6,
-       "change_points": -6.2
-      },
-      {
-       "class": "Open shrubland",
-       "before_pct": 35.7,
-       "after_pct": 40.8,
-       "change_points": 5.1
-      }
-     ],
-     "layer": "land_cover",
-     "source": {
-      "name": "MODIS land cover type (MCD12Q1, IGBP classes), via NASA GIBS",
-      "url": "https://lpdaac.usgs.gov/products/mcd12q1v061/"
-     },
-     "caveat": "At 500 m, orchards and tree crops may be classed as savanna or woody vegetation, not cropland.",
-     "evidence_id": "e13"
+     "status": "shown",
+     "layer_id": "true_colour",
+     "title": "True colour (MODIS Terra)",
+     "source": "NASA MODIS Terra Corrected Reflectance, via GIBS",
+     "resolution": "~250 m",
+     "unit": "true colour picture",
+     "year": 2024,
+     "year_note": "No date was given: the map shows the last year of the tested period."
     },
-    "evidence_id": "e13"
+    "evidence_id": null
    }
   },
   {
-   "t_ms": 27050,
+   "t_ms": 23397,
    "event": "map",
    "data": {
     "op": "show_layer",
-    "layer_id": "land_cover",
-    "year": 2023
+    "layer_id": "true_colour",
+    "year": 2024,
+    "opacity": 0.8
    }
   },
   {
-   "t_ms": 27400,
+   "t_ms": 23401,
    "event": "board",
    "data": {
     "suspects": [],
@@ -1239,14 +1399,18 @@
       "direction": "up"
      },
      "t5": {
-      "verdict": "real",
-      "direction": "down"
-     },
-     "t6": {
       "verdict": "unknown",
       "direction": "flat"
      },
+     "t6": {
+      "verdict": "real",
+      "direction": "down"
+     },
      "t7": {
+      "verdict": "unknown",
+      "direction": "flat"
+     },
+     "t8": {
       "verdict": "likely",
       "direction": "up"
      }
@@ -1254,32 +1418,26 @@
    }
   },
   {
-   "t_ms": 27750,
-   "event": "tool_start",
+   "t_ms": 26491,
+   "event": "thinking",
    "data": {
-    "id": "toolu_01AnTy8Fdh3PCvwamzNdwNKR",
-    "tool": "show_before_after",
-    "args": {
-     "layer_id": "land_cover",
-     "year_a": 2003,
-     "year_b": 2023
-    }
+    "text": "I'll record both suspects on the board."
    }
   },
   {
-   "t_ms": 28100,
+   "t_ms": 26491,
    "event": "tool_start",
    "data": {
-    "id": "toolu_016SFDfkoWwDj7TtdFKWa6s1",
+    "id": "toolu_015ba2BQrUCqJJyF2T1sTTwV",
     "tool": "update_board",
     "args": {
      "suspect": "less rain (drought)",
      "status": "hint",
      "evidence_ids": [
-      "e9",
-      "e12"
+      "e10",
+      "e14"
      ],
-     "note": "Local rain shows no clear trend, and its year-to-year link with stored water is only a hint at a one-year lag; upstream rain is not available here.",
+     "note": "Local rain shows no clear trend, and its link to water stored is only a weak hint at a one-year lag.",
      "target_var": "grace_tws",
      "kind": "climate",
      "suspect_var": "precip",
@@ -1288,80 +1446,39 @@
    }
   },
   {
-   "t_ms": 28450,
+   "t_ms": 26491,
    "event": "tool_start",
    "data": {
-    "id": "toolu_014jg46YShmnMky5EB9qtrvT",
+    "id": "toolu_01VSaf21UhuqVkfBzkZtEVnW",
     "tool": "update_board",
     "args": {
-     "suspect": "water use (human withdrawals)",
+     "suspect": "human water use",
      "status": "supported",
      "evidence_ids": [
-      "e11"
+      "e13"
      ],
-     "note": "77.5% of the fall in stored water is not explained by the climate we measured — a clue, not proof; water use is not measured directly.",
+     "note": "About 77.5% of the drop in water stored is not explained by the climate we measured, a clue, not proof.",
      "target_var": "grace_tws",
-     "kind": "non_climate",
-     "expects": "down"
+     "kind": "non_climate"
     }
    }
   },
   {
-   "t_ms": 28800,
-   "event": "tool_start",
-   "data": {
-    "id": "toolu_01JANCMyE61RM4G6CYT9cTyL",
-    "tool": "update_board",
-    "args": {
-     "suspect": "warmer air",
-     "status": "hint",
-     "evidence_ids": [
-      "e10",
-      "e11"
-     ],
-     "note": "Air temperature rose by 0.6764 °C per decade, but no test links it directly to the fall in stored water.",
-     "target_var": "grace_tws",
-     "kind": "climate",
-     "suspect_var": "t2m",
-     "expects": "up"
-    }
-   }
-  },
-  {
-   "t_ms": 30000,
+   "t_ms": 26495,
    "event": "tool_done",
    "data": {
-    "id": "toolu_01AnTy8Fdh3PCvwamzNdwNKR",
-    "tool": "show_before_after",
-    "summary": "A curtain to compare two years by eye.",
-    "result": {
-     "status": "shown",
-     "layer_id": "land_cover",
-     "title": "Land cover (MODIS, IGBP classes, yearly)",
-     "source": "NASA MODIS MCD12Q1 Land Cover Type (Aqua+Terra), via GIBS",
-     "resolution": "~500 m",
-     "unit": "IGBP land cover class",
-     "note": "A curtain to compare two years by eye."
-    },
-    "evidence_id": null
-   }
-  },
-  {
-   "t_ms": 31200,
-   "event": "tool_done",
-   "data": {
-    "id": "toolu_016SFDfkoWwDj7TtdFKWa6s1",
+    "id": "toolu_015ba2BQrUCqJJyF2T1sTTwV",
     "tool": "update_board",
-    "summary": "less rain (drought). Local rain shows no clear trend, and its year-to-year link with stored water is only a hint at a one-year lag; upstream rain is not available here.",
+    "summary": "less rain (drought). Local rain shows no clear trend, and its link to water stored is only a weak hint at a one-year lag.",
     "result": {
      "id": "less rain (drought)",
      "label": "less rain (drought)",
      "status": "hint",
      "evidence": [
-      "e9",
-      "e12"
+      "e10",
+      "e14"
      ],
-     "note": "Local rain shows no clear trend, and its year-to-year link with stored water is only a hint at a one-year lag; upstream rain is not available here.",
+     "note": "Local rain shows no clear trend, and its link to water stored is only a weak hint at a one-year lag.",
      "downgraded": null,
      "claimed": "hint",
      "dropped": [],
@@ -1375,72 +1492,34 @@
    }
   },
   {
-   "t_ms": 32400,
+   "t_ms": 26495,
    "event": "tool_done",
    "data": {
-    "id": "toolu_014jg46YShmnMky5EB9qtrvT",
+    "id": "toolu_01VSaf21UhuqVkfBzkZtEVnW",
     "tool": "update_board",
-    "summary": "water use (human withdrawals). 77.5% of the fall in stored water is not explained by the climate we measured — a clue, not proof; water use is not measured directly.",
+    "summary": "human water use. About 77.5% of the drop in water stored is not explained by the climate we measured, a clue, not proof.",
     "result": {
-     "id": "water use (human withdrawals)",
-     "label": "water use (human withdrawals)",
+     "id": "human water use",
+     "label": "human water use",
      "status": "supported",
      "evidence": [
-      "e11"
+      "e13"
      ],
-     "note": "77.5% of the fall in stored water is not explained by the climate we measured — a clue, not proof; water use is not measured directly.",
+     "note": "About 77.5% of the drop in water stored is not explained by the climate we measured, a clue, not proof.",
      "downgraded": null,
      "claimed": "supported",
      "dropped": [],
      "target_var": "grace_tws",
      "kind": "non_climate",
      "suspect_var": null,
-     "expects": "down",
+     "expects": null,
      "n_tests": 7
     },
     "evidence_id": null
    }
   },
   {
-   "t_ms": 33600,
-   "event": "tool_done",
-   "data": {
-    "id": "toolu_01JANCMyE61RM4G6CYT9cTyL",
-    "tool": "update_board",
-    "summary": "warmer air. Air temperature rose by 0.6764 °C per decade, but no test links it directly to the fall in stored water.",
-    "result": {
-     "id": "warmer air",
-     "label": "warmer air",
-     "status": "hint",
-     "evidence": [
-      "e10",
-      "e11"
-     ],
-     "note": "Air temperature rose by 0.6764 °C per decade, but no test links it directly to the fall in stored water.",
-     "downgraded": null,
-     "claimed": "hint",
-     "dropped": [],
-     "target_var": "grace_tws",
-     "kind": "climate",
-     "suspect_var": "t2m",
-     "expects": "up",
-     "n_tests": 7
-    },
-    "evidence_id": null
-   }
-  },
-  {
-   "t_ms": 33950,
-   "event": "map",
-   "data": {
-    "op": "show_before_after",
-    "layer_id": "land_cover",
-    "year_a": 2003,
-    "year_b": 2023
-   }
-  },
-  {
-   "t_ms": 34300,
+   "t_ms": 26499,
    "event": "board",
    "data": {
     "suspects": [
@@ -1449,10 +1528,10 @@
       "label": "less rain (drought)",
       "status": "hint",
       "evidence": [
-       "e9",
-       "e12"
+       "e10",
+       "e14"
       ],
-      "note": "Local rain shows no clear trend, and its year-to-year link with stored water is only a hint at a one-year lag; upstream rain is not available here.",
+      "note": "Local rain shows no clear trend, and its link to water stored is only a weak hint at a one-year lag.",
       "downgraded": null,
       "claimed": "hint",
       "dropped": [],
@@ -1462,37 +1541,20 @@
       "expects": "down"
      },
      {
-      "id": "water use (human withdrawals)",
-      "label": "water use (human withdrawals)",
+      "id": "human water use",
+      "label": "human water use",
       "status": "supported",
       "evidence": [
-       "e11"
+       "e13"
       ],
-      "note": "77.5% of the fall in stored water is not explained by the climate we measured — a clue, not proof; water use is not measured directly.",
+      "note": "About 77.5% of the drop in water stored is not explained by the climate we measured, a clue, not proof.",
       "downgraded": null,
       "claimed": "supported",
       "dropped": [],
       "target_var": "grace_tws",
       "kind": "non_climate",
       "suspect_var": null,
-      "expects": "down"
-     },
-     {
-      "id": "warmer air",
-      "label": "warmer air",
-      "status": "hint",
-      "evidence": [
-       "e10",
-       "e11"
-      ],
-      "note": "Air temperature rose by 0.6764 °C per decade, but no test links it directly to the fall in stored water.",
-      "downgraded": null,
-      "claimed": "hint",
-      "dropped": [],
-      "target_var": "grace_tws",
-      "kind": "climate",
-      "suspect_var": "t2m",
-      "expects": "up"
+      "expects": null
      }
     ],
     "n_tests": 7,
@@ -1514,14 +1576,18 @@
       "direction": "up"
      },
      "t5": {
-      "verdict": "real",
-      "direction": "down"
-     },
-     "t6": {
       "verdict": "unknown",
       "direction": "flat"
      },
+     "t6": {
+      "verdict": "real",
+      "direction": "down"
+     },
      "t7": {
+      "verdict": "unknown",
+      "direction": "flat"
+     },
+     "t8": {
       "verdict": "likely",
       "direction": "up"
      }
@@ -1529,7 +1595,7 @@
    }
   },
   {
-   "t_ms": 34650,
+   "t_ms": 37662,
    "event": "board",
    "data": {
     "suspects": [
@@ -1538,10 +1604,10 @@
       "label": "less rain (drought)",
       "status": "hint",
       "evidence": [
-       "e9",
-       "e12"
+       "e10",
+       "e14"
       ],
-      "note": "Local rain shows no clear trend, and its year-to-year link with stored water is only a hint at a one-year lag; upstream rain is not available here.",
+      "note": "Local rain shows no clear trend, and its link to water stored is only a weak hint at a one-year lag.",
       "downgraded": null,
       "claimed": "hint",
       "dropped": [],
@@ -1551,37 +1617,20 @@
       "expects": "down"
      },
      {
-      "id": "water use (human withdrawals)",
-      "label": "water use (human withdrawals)",
+      "id": "human water use",
+      "label": "human water use",
       "status": "supported",
       "evidence": [
-       "e11"
+       "e13"
       ],
-      "note": "77.5% of the fall in stored water is not explained by the climate we measured — a clue, not proof; water use is not measured directly.",
+      "note": "About 77.5% of the drop in water stored is not explained by the climate we measured, a clue, not proof.",
       "downgraded": null,
       "claimed": "supported",
       "dropped": [],
       "target_var": "grace_tws",
       "kind": "non_climate",
       "suspect_var": null,
-      "expects": "down"
-     },
-     {
-      "id": "warmer air",
-      "label": "warmer air",
-      "status": "hint",
-      "evidence": [
-       "e10",
-       "e11"
-      ],
-      "note": "Air temperature rose by 0.6764 °C per decade, but no test links it directly to the fall in stored water.",
-      "downgraded": null,
-      "claimed": "hint",
-      "dropped": [],
-      "target_var": "grace_tws",
-      "kind": "climate",
-      "suspect_var": "t2m",
-      "expects": "up"
+      "expects": null
      }
     ],
     "n_tests": 7,
@@ -1603,14 +1652,18 @@
       "direction": "up"
      },
      "t5": {
-      "verdict": "real",
-      "direction": "down"
-     },
-     "t6": {
       "verdict": "unknown",
       "direction": "flat"
      },
+     "t6": {
+      "verdict": "real",
+      "direction": "down"
+     },
      "t7": {
+      "verdict": "unknown",
+      "direction": "flat"
+     },
+     "t8": {
       "verdict": "likely",
       "direction": "up"
      }
@@ -1618,20 +1671,16 @@
    }
   },
   {
-   "t_ms": 35000,
+   "t_ms": 37662,
    "event": "answer",
    "data": {
-    "text": "From 2003 to 2024, total water stored fell by about 6.5 cm per decade, a real drop, though one value covers a cell of about 300 km (rain about 50 km). Across 7 tests, local rain showed no clear trend and was only a hint (upstream rain could not be measured here), warmer air rose about 0.68 °C per decade but is only a hint of a link, and 77.5% of the fall is not explained by the climate we measured, a clue, not proof, since water use was not measured directly. The report has no separate test of whether the fall is still getting worse recently, so that is unknown here.",
+    "text": "Yes, all the water stored here, underground and on the surface, has dropped by about 136 litres on each square metre over 21 years, though over the last ten years the trend is too noisy to call yet. The weather we measured doesn't explain most of the drop, which is a clue, not proof, and less rain is only a weak hint. One satellite value covers a big square about 300 km across.",
     "checked": true,
     "figures": [
-     "2003",
-     "2024",
-     "6.5",
-     "300",
-     "50",
-     "7",
-     "0.68",
-     "77.5%"
+     "136",
+     "21",
+     "ten",
+     "300"
     ],
     "source": "llm",
     "rejected": [
@@ -1649,10 +1698,10 @@
    }
   },
   {
-   "t_ms": 35350,
+   "t_ms": 37662,
    "event": "done",
    "data": {
-    "thread_id": "baf8cb9e3b884fe0adbe3727976e9503",
+    "thread_id": "e489a422cd244a92b52631e54068d571",
     "n_tests": 7,
     "n_tests_branch": 7,
     "n_tool_calls": 18

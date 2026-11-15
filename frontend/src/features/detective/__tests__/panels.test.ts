@@ -155,7 +155,7 @@ test("next question chips: trimmed, no repeats, at most three, none when empty",
 
 test("the recorded cases carry next questions the replay can show", () => {
   for (const name of ["mead", "aral"]) {
-    const raw = JSON.parse(readFileSync(join(import.meta.dirname, `../../../../../backend/data/recordings/${name}.json`), "utf8"));
+    const raw = JSON.parse(readFileSync(join(import.meta.dirname, `recordings/${name}.json`), "utf8"));
     const rec = parseRecording(raw);
     assert.ok(rec, name);
     const ans = replaySchedule(rec).map((s) => s.event).find((e) => e.kind === "answer");
