@@ -216,4 +216,17 @@
     bottom: 0;
     background: var(--ground);
   }
+
+  /* Short screens: the cards do not fit beside their slabs, so the column scrolls as a plain list. */
+  .column[data-scroll] {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .column[data-scroll] .card,
+  .column[data-scroll] .baseCard {
+    position: static;
+    transform: none;
+    flex: none;
+  }
 }

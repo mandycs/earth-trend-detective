@@ -249,10 +249,17 @@ export default function DetectiveView({ cases, recordings, initialSite, replay }
     },
     [stack],
   )
+  const refocusExplode = useRef(false)
   const onStackCollapsed = useCallback(() => {
+    refocusExplode.current = true
     setStackMounted(false)
-    explodeRef.current?.focus({ preventScroll: true })
   }, [])
+  // Focus returns once the page behind is no longer inert (after the unmount has rendered).
+  useEffect(() => {
+    if (stackMounted || !refocusExplode.current) return
+    refocusExplode.current = false
+    explodeRef.current?.focus({ preventScroll: true })
+  }, [stackMounted])
   const view = useMemo(() => (shownSlab ? showSlab(sceneView, shownSlab) : sceneView), [sceneView, shownSlab])
 
   const active = isActiveRun(run.status)
@@ -345,14 +352,15 @@ export default function DetectiveView({ cases, recordings, initialSite, replay }
 
   return (
     <div className={styles.shell}>
-      <header className={styles.bar}>
+      {/* While the evidence stack is open it is the only thing that takes focus (aria-modal needs a real trap). */}
+      <header className={styles.bar} inert={stackMounted}>
         <Link href="/" className={`${styles.wordmark} wide`}>
           <Wordmark />
         </Link>
         <RecordingsMenu recordings={recordings} />
       </header>
 
-      <div className={styles.stage}>
+      <div className={styles.stage} inert={stackMounted}>
         <div className={styles.mapArea}>
           <DetectiveMap
             view={view}

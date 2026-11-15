@@ -2,7 +2,7 @@
 
 // The exploded evidence stack (Task 17): the current turn's layers as opaque slabs over the relief (or the flat
 // picture) of the same box. Separation is the point: this view is not the map's "one coloured layer at a time".
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { MutableRefObject } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import type { ThreeEvent } from '@react-three/fiber'
@@ -14,6 +14,8 @@ import { Stamp } from '../../../lib/Stamp'
 import { STATUS_WORDS } from '../board'
 import type { Bbox } from '../events'
 import type { Slab, StackModel } from './stackModel'
+import { atRest, collapseReport, springStep } from './motion'
+import type { CollapseState, SlabMotion } from './motion'
 import styles from './stack.module.css'
 
 export interface EvidenceStackProps {
@@ -61,8 +63,27 @@ function rectIn(box: Bbox, r: Bbox, depth: number): { x0: number; x1: number; z0
   return { x0: cx(r[0]), x1: cx(r[2]), z0: cz(r[3]), z1: cz(r[1]) }
 }
 
-function useTexture(url: string | null): { tex: THREE.Texture | null; failed: boolean } {
-  const [state, setState] = useState<{ tex: THREE.Texture | null; failed: boolean }>({ tex: null, failed: false })
+export type PictureStatus = 'loading' | 'ok' | 'failed' | 'empty'
+
+/** True when every pixel of the picture is fully transparent (a "no data" answer, not a picture). */
+function isBlank(image: CanvasImageSource): boolean {
+  try {
+    const c = document.createElement('canvas')
+    c.width = 32
+    c.height = 32
+    const ctx = c.getContext('2d', { willReadFrequently: true })
+    if (!ctx) return false
+    ctx.drawImage(image, 0, 0, 32, 32)
+    const d = ctx.getImageData(0, 0, 32, 32).data
+    for (let i = 3; i < d.length; i += 4) if (d[i] !== 0) return false
+    return true
+  } catch {
+    return false
+  }
+}
+
+function useTexture(url: string | null): { tex: THREE.Texture | null; status: PictureStatus } {
+  const [state, setState] = useState<{ tex: THREE.Texture | null; status: PictureStatus }>({ tex: null, status: 'loading' })
   useEffect(() => {
     if (!url) return
     let live = true
@@ -72,14 +93,22 @@ function useTexture(url: string | null): { tex: THREE.Texture | null; failed: bo
     loader.load(
       url,
       (t) => {
+        if (!live) {
+          t.dispose()
+          return
+        }
+        if (isBlank(t.image as CanvasImageSource)) {
+          t.dispose()
+          setState({ tex: null, status: 'empty' })
+          return
+        }
         t.colorSpace = THREE.SRGBColorSpace
         t.anisotropy = 4
         loaded = t
-        if (live) setState({ tex: t, failed: false })
-        else t.dispose()
+        setState({ tex: t, status: 'ok' })
       },
       undefined,
-      () => live && setState({ tex: null, failed: true }),
+      () => live && setState({ tex: null, status: 'failed' }),
     )
     return () => {
       live = false
@@ -120,17 +149,22 @@ function Base({ model, depth, onPeak, onFailed }: { model: StackModel; depth: nu
   const { tex } = useTexture(base?.picture?.url ?? null)
   const [grid, setGrid] = useState<HeightGrid | null>(null)
   const hm = base?.heightmap ?? null
+  // Keyed on primitives: a fresh model object with the same heightmap does not reload it.
+  const hmUrl = hm?.url ?? null
+  const hmRgb = hm?.encoding === 'terrain-rgb'
+  const lo = hm?.rangeM?.[0] ?? null
+  const hi = hm?.rangeM?.[1] ?? null
   useEffect(() => {
-    if (!hm) return
+    if (!hmUrl) return
     let live = true
-    const urls = hm.encoding === 'terrain-rgb' ? { rgb: hm.url, grey: hm.url } : { grey: hm.url }
-    loadHeights(urls, hm.rangeM ?? undefined)
+    const urls = hmRgb ? { rgb: hmUrl, grey: hmUrl } : { grey: hmUrl }
+    loadHeights(urls, lo != null && hi != null ? [lo, hi] : undefined)
       .then((g) => live && setGrid(g))
       .catch(() => live && onFailed())
     return () => {
       live = false
     }
-  }, [hm, onFailed])
+  }, [hmUrl, hmRgb, lo, hi, onFailed])
   const metres = model.bbox ? boxMetres(model.bbox)[0] : 1
   const peak = grid ? ((grid.max - grid.min) / metres) * RELIEF_EXAGGERATION : 0
   useEffect(() => onPeak(peak), [peak, onPeak])
@@ -155,23 +189,18 @@ function Base({ model, depth, onPeak, onFailed }: { model: StackModel; depth: nu
 
 // ---- slabs ----
 
-interface Motion {
-  y: number[]
-  v: number[]
-  settledDown: boolean
-}
-
 function SlabMesh({
   slab, box, depth, groupRef, active, onPick, onHover, onTexture,
 }: {
   slab: Slab; box: Bbox; depth: number; groupRef: (g: THREE.Group | null) => void; active: boolean
-  onPick: (key: string) => void; onHover: (key: string | null) => void; onTexture: (key: string, failed: boolean) => void
+  onPick: (key: string) => void; onHover: (key: string | null) => void; onTexture: (key: string, status: PictureStatus) => void
 }) {
   const url = slab.texture.kind === 'cell' ? null : slab.texture.url
-  const { tex, failed } = useTexture(url)
+  // An empty or failed picture leaves a neutral slab: never a colour that was not in the data.
+  const { tex, status } = useTexture(url)
   useEffect(() => {
-    if (url) onTexture(slab.key, failed)
-  }, [failed, url, slab.key, onTexture])
+    if (url) onTexture(slab.key, status)
+  }, [status, url, slab.key, onTexture])
   const edgeColour = active ? EDGE_ON : EDGE
   const cellBox = slab.texture.kind === 'cell' ? slab.texture.bbox : null
   const cellKm = slab.texture.kind === 'cell' ? slab.texture.cellKm : null
@@ -286,26 +315,30 @@ function cellGrid(box: Bbox, cell: Bbox, cellKm: number | null, depth: number): 
 
 // ---- motion, camera and the label anchors ----
 
-const STIFF = 90
-const DAMP = 2 * Math.sqrt(STIFF) // critically damped: no bounce past the target
+type Anchor = { x: number; y: number }
 
 function Rig({
-  slabs, groups, exploded, reduced, groundY, onCollapsed, anchors, follow, stackTop, depth,
+  slabs, groups, exploded, reduced, groundY, onCollapsed, anchors, onAnchors, follow, stackTop, depth,
 }: {
-  slabs: Slab[]; groups: MutableRefObject<(THREE.Group | null)[]>; exploded: boolean; reduced: boolean
-  groundY: number; onCollapsed: () => void; anchors: MutableRefObject<{ x: number; y: number }[]>
+  slabs: Slab[]; groups: MutableRefObject<Map<string, THREE.Group>>; exploded: boolean; reduced: boolean
+  groundY: number; onCollapsed: () => void; anchors: MutableRefObject<Map<string, Anchor>>
+  /** Called when a card anchor moved on screen (slab motion, the visitor turning the stack, a resize). */
+  onAnchors: () => void
   follow: boolean; stackTop: number; depth: number
 }) {
   const { camera, size } = useThree()
-  const motion = useRef<Motion>({ y: slabs.map(() => groundY), v: slabs.map(() => 0), settledDown: false })
+  // Keyed by slab key: a slab added or removed by a late event never shifts another slab's state.
+  const motion = useRef(new Map<string, SlabMotion>())
+  const collapse = useRef<CollapseState>({ wasExploded: false, reported: false })
   const since = useRef(0)
   const done = useRef(onCollapsed)
+  const notify = useRef(onAnchors)
   useEffect(() => {
     done.current = onCollapsed
-  }, [onCollapsed])
+    notify.current = onAnchors
+  }, [onCollapsed, onAnchors])
   useEffect(() => {
     since.current = 0
-    motion.current.settledDown = false
   }, [exploded])
 
   // Frame the stack; on a wide screen it sits left of the label column.
@@ -321,39 +354,39 @@ function Rig({
 
   const v3 = useMemo(() => new THREE.Vector3(), [])
   useFrame((_, dt) => {
-    const m = motion.current
     const step = Math.min(dt, 1 / 30)
     since.current += step
     let moving = false
+    let anchorsMoved = false
+    const live = new Set<string>()
     slabs.forEach((s, i) => {
+      live.add(s.key)
       const target = exploded ? groundY + LIFT + (s.height - 1) * GAP : groundY + i * 0.0004
-      if (reduced) {
-        m.y[i] = target
-        m.v[i] = 0
-      } else {
+      let m = motion.current.get(s.key) ?? { y: groundY, v: 0 }
+      if (reduced) m = { y: target, v: 0 }
+      else {
         // Stagger: the top slab leaves first when exploding, lands last when collapsing.
         const delay = (exploded ? i : slabs.length - 1 - i) * 0.07
-        if (since.current >= delay) {
-          const a = STIFF * (target - m.y[i]) - DAMP * m.v[i]
-          m.v[i] += a * step
-          m.y[i] += m.v[i] * step
-        }
-        if (Math.abs(target - m.y[i]) > 0.0008 || Math.abs(m.v[i]) > 0.004) moving = true
-        else {
-          m.y[i] = target
-          m.v[i] = 0
-        }
+        if (since.current >= delay) m = springStep(m, target, step)
+        if (!atRest(m, target)) moving = true
       }
-      const g = groups.current[i]
-      if (g) g.position.y = m.y[i]
+      motion.current.set(s.key, m)
+      const g = groups.current.get(s.key)
+      if (g) g.position.y = m.y
       // Card anchor: the slab's corner nearest the label column (the camera looks from the south-west), in pixels.
-      v3.set(0.5, m.y[i], depth / 2).project(camera)
-      anchors.current[i] = { x: ((v3.x + 1) / 2) * size.width, y: ((1 - v3.y) / 2) * size.height }
+      v3.set(0.5, m.y, depth / 2).project(camera)
+      const a = { x: ((v3.x + 1) / 2) * size.width, y: ((1 - v3.y) / 2) * size.height }
+      const prev = anchors.current.get(s.key)
+      if (!prev || Math.abs(prev.x - a.x) > 0.5 || Math.abs(prev.y - a.y) > 0.5) {
+        anchors.current.set(s.key, a)
+        anchorsMoved = true
+      }
     })
-    if (!exploded && !moving && !m.settledDown) {
-      m.settledDown = true
-      done.current()
-    }
+    for (const k of [...motion.current.keys()]) if (!live.has(k)) motion.current.delete(k)
+    if (anchorsMoved) notify.current()
+    const r = collapseReport(collapse.current, exploded, moving)
+    collapse.current = r.state
+    if (r.report) done.current()
   })
   return null
 }
@@ -367,9 +400,9 @@ function whenText(s: Slab): string | null {
 }
 
 function SlabCard({
-  slab, failed, active, onPick, onHover, cardRef,
+  slab, picture, active, onPick, onHover, cardRef,
 }: {
-  slab: Slab; failed: boolean; active: boolean; onPick: (key: string) => void; onHover: (key: string | null) => void
+  slab: Slab; picture: PictureStatus | undefined; active: boolean; onPick: (key: string) => void; onHover: (key: string | null) => void
   cardRef: (el: HTMLButtonElement | null) => void
 }) {
   const when = whenText(slab)
@@ -418,7 +451,8 @@ function SlabCard({
           <span>{slab.stamp.label}</span>
         </span>
       )}
-      {failed && <span className={styles.cardMuted}>The picture did not load.</span>}
+      {picture === 'failed' && <span className={styles.cardMuted}>Picture unavailable: it did not load.</span>}
+      {picture === 'empty' && <span className={styles.cardMuted}>Picture unavailable: no data for this date.</span>}
     </button>
   )
 }
@@ -462,14 +496,15 @@ export default function EvidenceStack({ model, exploded, onPick, onClose, onColl
   const depth = box ? boxAspect(box) : 1
   const [peak, setPeak] = useState(0)
   const [active, setActive] = useState<string | null>(null)
-  const [failedTex, setFailedTex] = useState<Record<string, boolean>>({})
+  const [pictures, setPictures] = useState<Record<string, PictureStatus>>({})
   const [wide, setWide] = useState(false)
   const [reliefFailed, setReliefFailed] = useState(false)
   const onReliefFailed = useMemo(() => () => setReliefFailed(true), [])
-  const groups = useRef<(THREE.Group | null)[]>([])
-  const anchors = useRef<{ x: number; y: number }[]>([])
-  const cards = useRef<(HTMLButtonElement | null)[]>([])
-  const lines = useRef<(SVGLineElement | null)[]>([])
+  // All keyed by slab key, never by position.
+  const groups = useRef(new Map<string, THREE.Group>())
+  const anchors = useRef(new Map<string, Anchor>())
+  const cards = useRef(new Map<string, HTMLButtonElement>())
+  const lines = useRef(new Map<string, SVGLineElement>())
   const canvasBox = useRef<HTMLDivElement>(null)
   const column = useRef<HTMLDivElement>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
@@ -499,44 +534,71 @@ export default function EvidenceStack({ model, exploded, onPick, onClose, onColl
     }
   }, [onClose])
 
-  // Wide screens: each card follows its slab, joined by a leader line. Narrow screens: a plain list under the stack.
-  useEffect(() => {
+  // Wide screens: each card follows its slab, joined by a leader line; when the cards do not fit the column
+  // height, the column scrolls as a plain list instead. Narrow screens: a plain list under the stack.
+  // Laid out only when something moved (an anchor, a resize, a card's content), never on an idle frame.
+  const layoutRaf = useRef(0)
+  const layout = useCallback(() => {
+    const col = column.current
+    const cv = canvasBox.current
+    if (!col || !cv) return
+    const plain = () => {
+      for (const c of cards.current.values()) c.style.transform = ''
+      for (const l of lines.current.values()) l.style.display = 'none'
+    }
     if (!wide) {
-      for (const c of cards.current) if (c) c.style.transform = ''
+      delete col.dataset.scroll
+      plain()
       return
     }
-    let raf = 0
-    const tick = () => {
-      const col = column.current
-      const cv = canvasBox.current
-      if (col && cv) {
-        const colRect = col.getBoundingClientRect()
-        const cvRect = cv.getBoundingClientRect()
-        const heights = slabs.map((_, i) => cards.current[i]?.offsetHeight ?? 0)
-        const want = slabs.map((_, i) => (anchors.current[i]?.y ?? 0) + cvRect.top - colRect.top)
-        const baseH = (col.querySelector('[data-base]') as HTMLElement | null)?.offsetHeight ?? 0
-        const ys = layoutCards(want, heights, 0, col.clientHeight - baseH - 16, 10)
-        slabs.forEach((_, i) => {
-          const c = cards.current[i]
-          if (c) c.style.transform = `translateY(${ys[i]}px)`
-          const l = lines.current[i]
-          const a = anchors.current[i]
-          if (l && a) {
-            l.setAttribute('x1', String(a.x))
-            l.setAttribute('y1', String(a.y))
-            l.setAttribute('x2', String(colRect.left - cvRect.left))
-            l.setAttribute('y2', String(ys[i] + heights[i] / 2 + colRect.top - cvRect.top))
-          }
-        })
-      }
-      raf = requestAnimationFrame(tick)
+    const heights = slabs.map((s) => cards.current.get(s.key)?.offsetHeight ?? 0)
+    const baseH = (col.querySelector('[data-base]') as HTMLElement | null)?.offsetHeight ?? 0
+    const room = col.clientHeight - baseH - 16
+    const need = heights.reduce((a, h) => a + h, 0) + 10 * Math.max(0, slabs.length - 1)
+    if (need > room) {
+      col.dataset.scroll = ''
+      plain()
+      return
     }
-    raf = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(raf)
+    delete col.dataset.scroll
+    const colRect = col.getBoundingClientRect()
+    const cvRect = cv.getBoundingClientRect()
+    const want = slabs.map((s) => (anchors.current.get(s.key)?.y ?? 0) + cvRect.top - colRect.top)
+    const ys = layoutCards(want, heights, 0, room, 10)
+    slabs.forEach((s, i) => {
+      const c = cards.current.get(s.key)
+      if (c) c.style.transform = `translateY(${ys[i]}px)`
+      const l = lines.current.get(s.key)
+      const a = anchors.current.get(s.key)
+      if (l && a) {
+        l.style.display = ''
+        l.setAttribute('x1', String(a.x))
+        l.setAttribute('y1', String(a.y))
+        l.setAttribute('x2', String(colRect.left - cvRect.left))
+        l.setAttribute('y2', String(ys[i] + heights[i] / 2 + colRect.top - cvRect.top))
+      }
+    })
   }, [wide, slabs])
+  const scheduleLayout = useCallback(() => {
+    if (layoutRaf.current) return
+    layoutRaf.current = requestAnimationFrame(() => {
+      layoutRaf.current = 0
+      layout()
+    })
+  }, [layout])
+  useEffect(() => {
+    scheduleLayout()
+    const ro = new ResizeObserver(scheduleLayout)
+    if (column.current) ro.observe(column.current)
+    return () => {
+      ro.disconnect()
+      cancelAnimationFrame(layoutRaf.current)
+      layoutRaf.current = 0
+    }
+  }, [scheduleLayout, pictures, reliefFailed])
 
   const onTexture = useMemo(
-    () => (key: string, failed: boolean) => setFailedTex((f) => (f[key] === failed ? f : { ...f, [key]: failed })),
+    () => (key: string, status: PictureStatus) => setPictures((f) => (f[key] === status ? f : { ...f, [key]: status })),
     [],
   )
   const stackTop = groundY + LIFT + Math.max(0, slabs.length - 1) * GAP
@@ -575,14 +637,15 @@ export default function EvidenceStack({ model, exploded, onPick, onClose, onColl
             <ambientLight intensity={0.9} />
             <directionalLight position={[-2.2, 1.6, 1.1]} intensity={1.6} />
             <Base model={model} depth={depth} onPeak={setPeak} onFailed={onReliefFailed} />
-            {slabs.map((s, i) => (
+            {slabs.map((s) => (
               <SlabMesh
                 key={s.key}
                 slab={s}
                 box={box}
                 depth={depth}
                 groupRef={(g) => {
-                  groups.current[i] = g
+                  if (g) groups.current.set(s.key, g)
+                  else groups.current.delete(s.key)
                 }}
                 active={active === s.key}
                 onPick={onPick}
@@ -598,6 +661,7 @@ export default function EvidenceStack({ model, exploded, onPick, onClose, onColl
               groundY={groundY}
               onCollapsed={onCollapsed}
               anchors={anchors}
+              onAnchors={scheduleLayout}
               follow={wide}
               stackTop={stackTop}
               depth={depth}
@@ -614,11 +678,12 @@ export default function EvidenceStack({ model, exploded, onPick, onClose, onColl
           </Canvas>
           {wide && (
             <svg className={styles.leaders} aria-hidden="true">
-              {slabs.map((s, i) => (
+              {slabs.map((s) => (
                 <line
                   key={s.key}
                   ref={(el) => {
-                    lines.current[i] = el
+                    if (el) lines.current.set(s.key, el)
+                    else lines.current.delete(s.key)
                   }}
                   className={active === s.key ? styles.leaderOn : undefined}
                 />
@@ -628,16 +693,17 @@ export default function EvidenceStack({ model, exploded, onPick, onClose, onColl
         </div>
 
         <div className={styles.column} ref={column}>
-          {slabs.map((s, i) => (
+          {slabs.map((s) => (
             <SlabCard
               key={s.key}
               slab={s}
-              failed={failedTex[s.key] === true}
+              picture={pictures[s.key]}
               active={active === s.key}
               onPick={onPick}
               onHover={setActive}
               cardRef={(el) => {
-                cards.current[i] = el
+                if (el) cards.current.set(s.key, el)
+                else cards.current.delete(s.key)
               }}
             />
           ))}
