@@ -51,8 +51,10 @@ are listed in `final-fix-report.md` next to it. In short:
   for the suspect to hold; when the model gives none it is read from the name ("less", "lower"... -> down;
   "more", "warming"... -> up). A `trend` test of `suspect_var` in the evidence that is `real` (corrected,
   enough years) and goes the other way shows the suspect as `ruled_out` whatever was claimed, with
-  `downgraded = "its own data went up, not down"`. A claimed `ruled_out` is also kept on a `likely`
-  opposite trend.
+  `downgraded = "its own data went up, not down"`, but only when the model gave both `expects` and
+  `suspect_var`. A name-derived direction or an inferred `suspect_var` only keeps a claimed `ruled_out`
+  (also on a `likely` opposite trend). When another real/likely test of `suspect_var` goes the expected
+  way, no direction rule applies.
 - `target_var`, `kind` (`climate` / `non_climate`) and `suspect_var` are what the model gave, or `null` on
   older calls and boards. When they are `null`, the code infers them:
   - the target from the residual test, else the first trend-tested series, else `series_a` of the

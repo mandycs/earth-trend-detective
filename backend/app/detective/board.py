@@ -23,8 +23,11 @@ The model asks for a status; the code decides what it may show:
 - Whatever was claimed, a suspect whose own variable has a `real` trend (corrected, enough
   years) opposite to what it `expects` is shown as `ruled_out`, flagged
   `downgraded = "its own data went <up|down>, not <down|up>"` ("less rain" while rain went up).
-  `expects` (up / down) is what the model gave, else read from the suspect's name ("less",
-  "lower"... -> down; "more", "warming"... -> up; none or both -> no direction rule).
+  This forced rule needs both `expects` and `suspect_var` given by the model. A direction read
+  from the suspect's name ("less", "lower"... -> down; "more", "warming"... -> up) or an inferred
+  `suspect_var` may only keep a claimed `ruled_out`, never force one ("less snow" measured by air
+  temperature would read backwards). No rule at all when another real/likely test of
+  `suspect_var` goes the expected way (conflicting periods).
 
 The target, the suspect's own variable and its kind (climate / non_climate) come from the
 model's call; when a call or a stored board has none, they are inferred: the target from the
@@ -187,23 +190,37 @@ def expected_direction(name: str) -> str | None:
     return "down" if down else "up"
 
 
+@dataclass(frozen=True)
+class _Against:
+    verdict: str  # "real" | "likely": the strongest opposite verdict found
+    went: str
+    expected: str
+    explicit: bool  # `expects` and `suspect_var` were both given by the model
+
+
 def _contradiction(suspect: Suspect, records: Mapping[str, TestRecord], corrected: Mapping,
-                   suspect_var: str | None, target: str | None) -> tuple[str, str, str] | None:
-    """(verdict, went, expected) when a trend test of the suspect's own variable, with enough
-    years, goes against `expects`; the verdict is the strongest found ('real' before 'likely')."""
-    expected = suspect.expects if suspect.expects in DIRECTIONS else expected_direction(f"{suspect.id} {suspect.label}")
+                   suspect_var: str | None, target: str | None) -> _Against | None:
+    """The trend tests of the suspect's own variable (enough years) going against what it expects.
+    None when there is none, or when another real/likely test of that variable goes the expected way
+    (e.g. down over the whole period, up since 2014): conflicting tests rule nothing out."""
+    explicit = suspect.expects in DIRECTIONS
+    expected = suspect.expects if explicit else expected_direction(f"{suspect.id} {suspect.label}")
     if expected is None or suspect_var is None or suspect_var == target:
         return None
     opposite = "up" if expected == "down" else "down"
-    hits = [
-        str(corrected[t][1])
+    clear = {
+        t: (corrected[t][1], str(corrected[t][2]))
         for t, r in records.items()
-        if r.kind == "trend" and r.var_id == suspect_var and not r.too_short and str(corrected[t][2]) == opposite
+        if r.kind == "trend" and r.var_id == suspect_var and not r.too_short
         and corrected[t][1] in (Verdict.REAL, Verdict.LIKELY)
-    ]
+    }
+    if any(direction == expected for _, direction in clear.values()):
+        return None
+    hits = [str(v) for v, direction in clear.values() if direction == opposite]
     if not hits:
         return None
-    return ("real" if "real" in hits else "likely"), opposite, expected
+    verdict = "real" if "real" in hits else "likely"
+    return _Against(verdict, opposite, expected, explicit and _var_id(suspect.suspect_var) is not None)
 
 
 def _target_label(target: str | None, ledger: Ledger, catalog: Iterable[Variable]) -> str:
@@ -260,8 +277,9 @@ def _judge(suspect: Suspect, ledger: Ledger, corrected: Mapping, catalog: tuple[
     suspect_var = _var_id(suspect.suspect_var) or infer_suspect_var(records.values(), target)
     against = _contradiction(suspect, records, corrected, suspect_var, target)
     status, downgraded = suspect.claimed, None
-    if against is not None and against[0] == "real" and suspect.claimed != "ruled_out":
-        status, downgraded = "ruled_out", OPPOSITE.format(went=against[1], expected=against[2])
+    forced = against is not None and against.explicit and against.verdict == "real"
+    if forced and suspect.claimed != "ruled_out":
+        status, downgraded = "ruled_out", OPPOSITE.format(went=against.went, expected=against.expected)
     elif suspect.claimed == "supported":
         status, downgraded = _judge_supported(suspect, records, ledger, corrected, catalog, target, suspect_var)
     elif suspect.claimed == "ruled_out":

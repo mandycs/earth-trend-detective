@@ -87,9 +87,41 @@ def test_expected_direction_is_read_from_the_name_when_not_given():
     assert expected_direction("rain") is None
     assert expected_direction("irrigation") is None
     assert expected_direction("more or less rain") is None
+
+
+def test_a_name_derived_direction_only_keeps_a_claimed_rule_out():
     ledger = _ledger(_rec("t1", "grace_tws", "trend", 0.001), RAIN_UP)
-    board = apply_update({}, _update("less rain", ["e2"]), ledger, CATALOG)
-    assert board["less rain"].status == "ruled_out" and board["less rain"].expects is None
+    kept = apply_update({}, _update("less rain", ["e2"], status="ruled_out"), ledger, CATALOG)
+    assert kept["less rain"].status == "ruled_out" and kept["less rain"].expects is None
+    not_forced = apply_update({}, _update("less rain", ["e2"], status="hint"), ledger, CATALOG)
+    assert not_forced["less rain"].status == "hint"
+
+
+def test_less_snow_with_warming_air_is_not_forced_out():
+    """Fix round 1 #2: the name says 'down', but warming air fits 'less snow'."""
+    ledger = _ledger(_rec("t1", "grace_tws", "trend", 0.001), _rec("t2", "t2m", "trend", 0.0001, slope=0.5))
+    board = apply_update({}, _update("less snow", ["e2"], status="hint", suspect_var="t2m"), ledger, CATALOG)
+    assert board["less snow"].status == "hint"
+
+
+def test_an_inferred_suspect_var_never_forces_a_rule_out():
+    """Fix round 1 #1: 'less rain' with no suspect_var and a real warming trend is not ruled out."""
+    ledger = _ledger(_rec("t1", "grace_tws", "trend", 0.001), _rec("t2", "t2m", "trend", 0.0001, slope=0.5))
+    board = apply_update({}, _update("less rain", ["e2"], status="hint", expects="down", suspect_var=None),
+                         ledger, CATALOG)
+    assert board["less rain"].status == "hint"
+    rain = _ledger(_rec("t1", "grace_tws", "trend", 0.001), RAIN_UP)
+    inferred = apply_update({}, _update("less rain", ["e2"], status="hint", expects="down", suspect_var=None),
+                            rain, CATALOG)
+    assert inferred["less rain"].status == "hint"
+
+
+def test_conflicting_tests_of_the_same_variable_do_not_force_a_rule_out():
+    """Fix round 1 #3: rain really down over the whole period, really up since 2014."""
+    ledger = _ledger(_rec("t1", "grace_tws", "trend", 0.001), _rec("t2", "precip", "trend", 0.0001, slope=-3.0),
+                     _rec("t3", "precip", "trend", 0.0001, slope=3.0))
+    board = apply_update({}, _update("less rain", ["e2", "e3"], status="hint", expects="down"), ledger, CATALOG)
+    assert board["less rain"].status == "hint"
 
 
 def test_a_bad_expects_value_is_ignored():
