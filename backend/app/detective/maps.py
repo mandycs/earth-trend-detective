@@ -45,11 +45,14 @@ def url_for(name: str) -> str:
     return f"{URL_PREFIX}{name}"
 
 
-def write_png(rgba: np.ndarray, size: tuple[int, int]) -> str:
-    """Write the RGBA grid (resized to `size`, nearest: no smoothing) under a new name; returns the name."""
+def write_png(rgba: np.ndarray, size: tuple[int, int], name: str | None = None) -> str:
+    """Write the RGBA grid (resized to `size`, nearest: no smoothing) under `name` (default: a new
+    one); returns the name."""
     folder = maps_dir()
     folder.mkdir(parents=True, exist_ok=True)
-    name = new_name()
+    name = new_name() if name is None else name
+    if not NAME_RE.fullmatch(name):
+        raise ValueError("bad map name")
     fd, tmp = tempfile.mkstemp(dir=folder, prefix=".tmp-", suffix=".png")
     try:
         with os.fdopen(fd, "wb") as fh:

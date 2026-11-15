@@ -221,7 +221,7 @@ def _write_json(doc: Mapping, path: Path) -> Path:
     return path
 
 
-def _round(x: float) -> float:
+def round_sig(x: float) -> float:
     return float(f"{x:.4g}")
 
 
@@ -274,8 +274,8 @@ def write_variable_maps(
         "label": var.label,
         "kind": "trend",
         "unit": f"{var.units} per decade",
-        "vmin": -_round(vmax),
-        "vmax": _round(vmax),
+        "vmin": -round_sig(vmax),
+        "vmax": round_sig(vmax),
         "colormap": style.colormap,
         "stops": legend_stops(style.colormap),
         "legend": {
@@ -287,8 +287,8 @@ def write_variable_maps(
         "alpha": {"significant": ALPHA_SIGNIFICANT, "faded": ALPHA_FADED},
         "years": [start, end],
         "pixels": int(finite.sum()),
-        "share_significant": _round(float(significant[finite].mean())) if finite.any() else None,
-        "share_up": _round(float((slope[finite] > 0).mean())) if finite.any() else None,
+        "share_significant": round_sig(float(significant[finite].mean())) if finite.any() else None,
+        "share_up": round_sig(float((slope[finite] > 0).mean())) if finite.any() else None,
         "method": "Per pixel: Sen slope and Mann-Kendall S on annual means of deseasonalized monthly anomalies.",
         "value_file": f"trend_{var.id}_values.png",
         "value_offset": t_off,
@@ -311,8 +311,8 @@ def write_variable_maps(
         "label": var.label,
         "kind": "anomaly",
         "unit": var.units,
-        "vmin": -_round(ymax),
-        "vmax": _round(ymax),
+        "vmin": -round_sig(ymax),
+        "vmax": round_sig(ymax),
         "colormap": style.colormap,
         "stops": legend_stops(style.colormap),
         "legend": {

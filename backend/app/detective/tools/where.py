@@ -21,6 +21,7 @@ from __future__ import annotations
 import logging
 import math
 from collections.abc import Sequence
+from typing import NamedTuple
 
 import numpy as np
 import pandas as pd
@@ -83,7 +84,29 @@ def has_grid(var: Variable) -> bool:
 
 def trend_map(session: Session, var_id: str) -> dict:
     args = {"var_id": var_id, "start": session.start, "end": session.end}
-    return data._through_ledger(session, "trend_map", args, lambda: _safe(session, var_id))
+    return data._through_ledger(
+        session, "trend_map", args, lambda: _safe(session, var_id), on_hit=lambda hit: _ensure_png(session, hit)
+    )
+
+
+def _ensure_png(session: Session, hit: dict) -> dict:
+    """A cached map whose PNG is gone (cleaned up after MAX_AGE_DAYS): drawn again under the same
+    name from the grid caches. No test is logged and no op added; a failure leaves the hit as is."""
+    url = hit.get("url")
+    if hit.get("status") != "ok" or not isinstance(url, str):
+        return hit
+    name = url.rsplit("/", 1)[-1]
+    if not maps.NAME_RE.fullmatch(name) or (maps.maps_dir() / name).is_file():
+        return hit
+    try:
+        var = data._variable(session, str(hit.get("var_id")))
+        grid = _grid_for(var, session.start, session.end, tuple(float(c) for c in session.place.bbox)) if var else None
+        picture = _picture(var, grid) if grid is not None else None
+        if picture is not None:
+            maps.write_png(picture.rgba, picture.size, name=name)
+    except Exception as exc:  # noqa: BLE001 - the cached result still stands
+        logger.warning("trend_map %s: redraw failed: %s: %s", hit.get("var_id"), type(exc).__name__, exc)
+    return hit
 
 
 def _safe(session: Session, var_id: str) -> dict:
@@ -109,13 +132,10 @@ def _trend_map(session: Session, var_id: str) -> dict:
         return _not_available(reason, var_id=var_id)
     start, end = session.start, session.end
     bbox = tuple(float(c) for c in session.place.bbox)
+    if var.source == "gibs" and start > gibs_values.last_complete_year():
+        return _not_available(data.NO_COMPLETED_YEAR_REASON, var_id=var_id)
     try:
-        if var.source == "erddap":
-            grid = _erddap_grid(var, bbox, start, end)
-        else:
-            if start > gibs_values.last_complete_year():
-                return _not_available(data.NO_COMPLETED_YEAR_REASON, var_id=var_id)
-            grid = _gibs_grid(var, bbox, start, end)
+        grid = _grid_for(var, start, end, bbox)
     except Exception as exc:  # noqa: BLE001 - a failing source is a result, not a crash
         logger.warning("trend_map %s: source failed: %s: %s", var_id, type(exc).__name__, exc)
         source = gather.SOURCES.get(var.source)
@@ -123,6 +143,12 @@ def _trend_map(session: Session, var_id: str) -> dict:
     if grid is None or not np.isfinite(grid.annual).any():
         return _not_available(f"no data for {var.label} here in {start}-{end}", var_id=var_id)
     return _render(session, var, bbox, grid)
+
+
+def _grid_for(var: Variable, start: int, end: int, bbox: tuple[float, ...]) -> _Grid | None:
+    if var.source == "erddap":
+        return _erddap_grid(var, bbox, start, end)
+    return _gibs_grid(var, bbox, start, end)
 
 
 # --------------------------------------------------------------------------- grids
@@ -154,6 +180,24 @@ def capped_size(size: tuple[int, int], max_side: int = MAX_SIDE) -> tuple[int, i
     return max(1, round(width * k)), max(1, round(height * k))
 
 
+def _step(coords: np.ndarray, fallback: float) -> float:
+    diffs = np.abs(np.diff(np.sort(coords)))
+    diffs = diffs[diffs > 0]
+    return float(np.median(diffs)) if diffs.size else fallback
+
+
+def cell_edges(lat: np.ndarray, lon: np.ndarray, fallback_step: float) -> list[float]:
+    """[west, south, east, north] of the outer cell edges: centres min - step/2 ... max + step/2."""
+    lat, lon = np.asarray(lat, dtype=float), np.asarray(lon, dtype=float)
+    dy, dx = _step(lat, fallback_step), _step(lon, fallback_step)
+    return [
+        max(float(lon.min()) - dx / 2, -180.0),
+        max(float(lat.min()) - dy / 2, -90.0),
+        min(float(lon.max()) + dx / 2, 180.0),
+        min(float(lat.max()) + dy / 2, 90.0),
+    ]
+
+
 def _area_median(cube: np.ndarray) -> np.ndarray:
     flat = cube.reshape(cube.shape[0], -1)
     out = np.full(cube.shape[0], np.nan)
@@ -165,7 +209,8 @@ def _area_median(cube: np.ndarray) -> np.ndarray:
 
 
 def _erddap_grid(var: Variable, bbox: tuple[float, ...], start: int, end: int) -> _Grid | None:
-    stride = stride_for(bbox, ERDDAP_CELLS_PER_DEGREE.get(var.dataset, DEFAULT_CELLS_PER_DEGREE))
+    cells = ERDDAP_CELLS_PER_DEGREE.get(var.dataset, DEFAULT_CELLS_PER_DEGREE)
+    stride = stride_for(bbox, cells)
     raw = erddap.fetch_grid(var.dataset, var.band, bbox, start, end, stride)
     cube = raw.sortby("latitude", ascending=False).sortby("longitude")
     values = cube.values.astype(float) * var.scale + var.offset
@@ -181,7 +226,11 @@ def _erddap_grid(var: Variable, bbox: tuple[float, ...], start: int, end: int) -
     anomalies = site_maps.deseasonalize(times, values)
     annual = site_maps.annual_means(times, anomalies, years)
     area = gather.conform(pd.Series(_area_median(values), index=times, name=var.id), start, end)
-    attrs = {"missing_years": [int(y) for y in raw.attrs.get("missing_years") or []], "stride": stride}
+    attrs = {
+        "missing_years": [int(y) for y in raw.attrs.get("missing_years") or []],
+        "stride": stride,
+        "bounds": cell_edges(cube["latitude"].values, cube["longitude"].values, stride / cells),
+    }
     return _Grid(years, annual, area, "monthly", attrs)
 
 
@@ -239,18 +288,26 @@ def _area_test(session: Session, var: Variable, grid: _Grid) -> tuple[str, dict]
             result=res,
         )
     )
-    fields = {
+    corrected = data._corrected_fields(session, test_id)
+    # Only the verdict travels at the top; the test's own numbers describe the area median,
+    # not the two map findings, so they sit under the non-quotable `map` subtree.
+    top = {
         "test_id": test_id,
         "basis": grid.basis,
-        **size,
         "too_short": res.too_short,
+        "q_session": corrected["q_session"],
+        "verdict": corrected["verdict"],
+        "direction": corrected["direction"],
+    }
+    detail = {
+        **size,
         "area_slope_per_decade": _num(slope),
         "ci_low": _num(res.ci_low),
         "ci_high": _num(res.ci_high),
         "p_value": _num(res.p_value),
-        **data._corrected_fields(session, test_id),
+        "n_tests_so_far": corrected["n_tests_so_far"],
     }
-    return test_id, fields
+    return top, detail
 
 
 def _render_size(ny: int, nx: int) -> tuple[int, int]:
@@ -260,20 +317,41 @@ def _render_size(ny: int, nx: int) -> tuple[int, int]:
     return nx * factor, ny * factor
 
 
-def _render(session: Session, var: Variable, bbox: tuple[float, ...], grid: _Grid) -> dict:
-    min_years = annual_stats.MIN_YEARS
-    slope, pval = site_maps.sen_mk_grid(grid.years, grid.annual, min_years=min_years)
-    finite = np.isfinite(slope)
-    if not finite.any():
-        return _not_available(f"fewer than {min_years} years with data in any pixel here", var_id=var.id)
+class _Picture(NamedTuple):
+    rgba: np.ndarray
+    size: tuple[int, int]
+    slope: np.ndarray
+    significant: np.ndarray
+    vmax: float
+
+
+def _picture(var: Variable, grid: _Grid) -> _Picture | None:
+    """Per-pixel Sen slope coloured like the site trend maps; None when no pixel has enough years."""
+    slope, pval = site_maps.sen_mk_grid(grid.years, grid.annual, min_years=annual_stats.MIN_YEARS)
+    if not np.isfinite(slope).any():
+        return None
     style = site_maps.style_for(var)
     vmax = site_maps.symmetric_limit(slope)
     significant = np.isfinite(pval) & (pval < site_maps.SIG_LEVEL)
     alpha = np.where(significant, site_maps.ALPHA_SIGNIFICANT, site_maps.ALPHA_FADED).astype(np.uint8)
     rgba = site_maps.colorize(slope, vmax, style.colormap, alpha)
-    name = maps.write_png(rgba, _render_size(*slope.shape))
+    return _Picture(rgba, _render_size(*slope.shape), slope, significant, vmax)
+
+
+def _render(session: Session, var: Variable, bbox: tuple[float, ...], grid: _Grid) -> dict:
+    picture = _picture(var, grid)
+    if picture is None:
+        return _not_available(f"fewer than {annual_stats.MIN_YEARS} years with data in any pixel here", var_id=var.id)
+    slope, significant = picture.slope, picture.significant
+    finite = np.isfinite(slope)
+    name = maps.write_png(picture.rgba, picture.size)
+    try:
+        test, test_detail = _area_test(session, var, grid)
+    except BaseException:
+        (maps.maps_dir() / name).unlink(missing_ok=True)  # no map without its counted test
+        raise
     url = maps.url_for(name)
-    _, test = _area_test(session, var, grid)
+    style = site_maps.style_for(var)
     unit = f"{var.units} per decade"
     legend = {
         "unit": unit,
@@ -284,10 +362,11 @@ def _render(session: Session, var: Variable, bbox: tuple[float, ...], grid: _Gri
             "transparent": "Transparent = not enough data",
         },
         "stops": site_maps.legend_stops(style.colormap),
-        "range": [-site_maps._round(vmax), site_maps._round(vmax)],
+        "range": [-site_maps.round_sig(picture.vmax), site_maps.round_sig(picture.vmax)],
     }
     have = [y for k, y in enumerate(grid.years) if np.isfinite(grid.annual[k]).any()]
     period = [have[0], have[-1]]
+    bounds = list(grid.attrs.get("bounds") or bbox)  # ERDDAP: the cells' outer edges; GIBS: the box drawn
     source = grid.attrs.get("source_name") or ERDDAP_SOURCE_NAMES.get(var.dataset) or gather.SOURCES[var.source].title
     resolution = data.resolution_of(var)
     title = f"{var.label}: trend per pixel, {period[0]}–{period[1]}"
@@ -295,7 +374,7 @@ def _render(session: Session, var: Variable, bbox: tuple[float, ...], grid: _Gri
         {
             "op": "overlay",
             "url": url,
-            "bounds": list(bbox),
+            "bounds": bounds,
             "legend": legend,
             "title": title,
             "source": source,
@@ -303,26 +382,29 @@ def _render(session: Session, var: Variable, bbox: tuple[float, ...], grid: _Gri
             "period": period,
         }
     )
-    extra = {k: grid.attrs[k] for k in ("precision", "caveat", "dropped_years") if grid.attrs.get(k)}
-    if grid.attrs.get("missing_years"):
-        extra["missing_years"] = grid.attrs["missing_years"]
+    words = {k: grid.attrs[k] for k in ("precision", "caveat") if grid.attrs.get(k)}
+    details = {
+        "bounds": bounds,
+        "legend": legend,
+        "years": period,
+        "pixels": int(finite.sum()),
+        "area_test": test_detail,
+        **{k: grid.attrs[k] for k in ("missing_years", "dropped_years") if grid.attrs.get(k)},
+    }
+    # Only the two findings are quotable; everything else numeric sits under `map` (non-figure).
     return {
         "status": "ok",
         "var_id": var.id,
         "label": var.label,
         "url": url,
-        "bounds": list(bbox),
-        "legend": legend,
         "title": title,
         "source": source,
         "resolution": resolution,
-        "years": period,
-        "pixels": int(finite.sum()),
-        "share_significant": _num(float(significant[finite].mean()), 3),
-        "share_up": _num(float((slope[finite] > 0).mean()), 3),
-        "median_slope_per_decade": _num(float(np.median(slope[finite]))),
         "unit": unit,
+        "share_significant": _num(float(significant[finite].mean()), 3),
+        "median_slope_per_decade": _num(float(np.median(slope[finite]))),
         **test,
-        **extra,
+        **words,
         "note": NOTE,
+        "map": details,
     }

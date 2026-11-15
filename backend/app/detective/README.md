@@ -64,7 +64,8 @@ are listed in `final-fix-report.md` next to it. In short:
   the GIBS yearly layers. Heat stress (`dhw`, a daily product reduced to a yearly peak) and every point source
   answer "no gridded source for this variable". Pixel significance is drawn (faded when p ≥ 0.05) but never
   corrected over the area; the one counted test is on the median over the map area. The PNGs live in
-  `backend/data/detective/maps/` and are removed after 7 days, so a thread re-opened later can point to a map
-  that is gone (the route answers 404). GIBS grids have their own disk cache (`backend/data/cache/gibs_grids/`),
+  `backend/data/detective/maps/` and are removed after 7 days; a re-opened thread whose map is gone draws it
+  again under the same name from the grid caches (no new test). Only `share_significant` and
+  `median_slope_per_decade` are quotable; bounds, legend and the area test's numbers sit under `map`. GIBS grids have their own disk cache (`backend/data/cache/gibs_grids/`),
   separate from the point-series cache, so the first map of a GIBS variable fetches the pictures again
   (NO₂: about 2.5 minutes).

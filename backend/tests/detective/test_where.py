@@ -75,11 +75,13 @@ def test_trend_map_writes_png_and_overlay_op(grid_calls, _dirs):
     with Image.open(path) as im:
         assert im.format == "PNG" and im.mode == "RGBA"
         assert max(im.size) >= where.MIN_RENDER_SIDE
-    assert got["bounds"] == list(s.place.bbox)
+    step = 0.2 / 9  # the fake grid: 10 cell centres from 146.9 to 147.1 (and -18.1 to -17.9)
+    assert got["map"]["bounds"] == pytest.approx([146.9 - step / 2, -18.1 - step / 2, 147.1 + step / 2, -17.9 + step / 2])
+    assert "bounds" not in got and "legend" not in got and "share_up" not in got
     assert 0.3 < got["share_significant"] < 0.7  # the east half has a clear trend
     assert got["median_slope_per_decade"] is not None and got["median_slope_per_decade"] > 0
     assert got["basis"] == "monthly"  # sea temperature stays on its own basis
-    legend = got["legend"]
+    legend = got["map"]["legend"]
     assert legend["unit"] == "°C per decade"
     assert legend["labels"]["faded"].startswith("Faded = not statistically significant")
     assert legend["labels"]["transparent"] == "Transparent = not enough data"
@@ -89,6 +91,7 @@ def test_trend_map_writes_png_and_overlay_op(grid_calls, _dirs):
     assert op["op"] == "overlay"
     assert {"url", "bounds", "legend", "title", "source", "resolution", "period"} <= set(op)
     assert op["url"] == got["url"] and op["period"] == [2003, 2024] and op["resolution"] == "~1 km"
+    assert op["bounds"] == got["map"]["bounds"] and op["legend"] == legend
     # exactly one counted test, on the median over the map area
     assert s.ledger.n_tests == 1
     record = s.ledger.test("t1")
@@ -164,8 +167,8 @@ def test_chlorophyll_is_mapped_on_log10(monkeypatch):
     monkeypatch.setattr(erddap, "fetch_grid", fake)
     got = where.trend_map(_session(), var_id="chlorophyll")
     assert got["status"] == "ok", got
-    assert got["unit"] == "log10(mg/m³) per decade" and got["years"] == [2003, 2024]
-    assert got["missing_years"] == [2010]
+    assert got["unit"] == "log10(mg/m³) per decade" and got["map"]["years"] == [2003, 2024]
+    assert got["map"]["missing_years"] == [2010]
 
 
 # --------------------------------------------------------------------------- GIBS
@@ -200,8 +203,9 @@ def test_gibs_yearly_trend_map_and_its_cache(monkeypatch):
     s = _session(tags=("vegetated",), lat=37.0, lon=-4.5)
     got = where.trend_map(s, var_id="ndvi_gibs")
     assert got["status"] == "ok", got
-    assert got["basis"] == "annual" and got["n_years"] == 21
-    assert got["missing_years"] == [2015]
+    assert got["basis"] == "annual" and got["map"]["area_test"]["n_years"] == 21
+    assert got["map"]["missing_years"] == [2015]
+    assert got["map"]["bounds"] == [-4.6, 36.9, -4.4, 37.1]  # GIBS draws the box itself
     assert got["precision"] == "palette step ≈ 0.01 NDVI"
     assert 0.3 < got["share_significant"] < 0.7
     assert s.map[-1]["op"] == "overlay" and "GIBS" in s.map[-1]["source"]
@@ -313,3 +317,61 @@ def test_main_app_serves_the_route_and_registers_the_tool(grid_calls):
 
 def test_not_this_place_reason_says_profile_first():
     assert "call profile_place first" in tools.NOT_THIS_PLACE_REASON
+
+
+# --------------------------------------------------------------------------- fix round 1
+
+
+def test_only_the_two_findings_are_quotable(grid_calls):
+    s = _session()
+    got = where.trend_map(s, var_id="sst")
+    figures = s.ledger.figures()
+    assert got["share_significant"] in figures and got["median_slope_per_decade"] in figures
+    assert set(figures) == {got["share_significant"], got["median_slope_per_decade"]}
+    for n in got["map"]["bounds"] + got["map"]["legend"]["range"] + [got["map"]["pixels"]]:
+        assert n not in figures
+
+
+def test_a_missing_png_is_drawn_again_from_the_caches(grid_calls):
+    s = _session()
+    got = where.trend_map(s, var_id="sst")
+    path = maps.MAPS_DIR / got["url"].rsplit("/", 1)[1]
+    first = path.read_bytes()
+    path.unlink()  # cleaned up after 7 days
+    again = where.trend_map(s, var_id="sst")
+    assert again["url"] == got["url"] and path.read_bytes() == first
+    assert s.ledger.n_tests == 1 and len(s.map) == 1  # no new test, no new op
+    where.trend_map(s, var_id="sst")  # the file is there: nothing fetched
+    assert len(grid_calls) == 2
+
+
+def test_no_png_left_when_the_test_fails(grid_calls, monkeypatch):
+    def boom(*a, **k):
+        raise RuntimeError("ledger broke")
+
+    monkeypatch.setattr(where, "_area_test", boom)
+    got = where.trend_map(_session(), var_id="sst")
+    assert got["status"] == "not_available"
+    assert not maps.MAPS_DIR.exists() or list(maps.MAPS_DIR.glob("*.png")) == []
+
+
+def test_png_is_north_up(monkeypatch):
+    """Only the north half warms: PNG row 0 (top) is the clear, coloured half."""
+
+    def fake(dataset, variable, bbox, start, end, stride, client=None, cache_dir=None):
+        grid = _sea_grid(start, end, warming=0.0)
+        years = (np.arange(grid.sizes["time"]) / 12.0)[:, None]
+        north = grid["latitude"].values > -18.0  # ascending latitude: the north half is the end
+        return (grid + xr.DataArray(0.05 * years * north[None, :], dims=("time", "latitude"))).assign_attrs(missing_years=[])
+
+    monkeypatch.setattr(erddap, "fetch_grid", fake)
+    got = where.trend_map(_session(), var_id="sst")
+    with Image.open(maps.MAPS_DIR / got["url"].rsplit("/", 1)[1]) as im:
+        alpha = np.asarray(im)[..., 3]
+    assert (alpha[0, 1:] == 230).all()  # top row: clear trend (skip the transparent land cell)
+    assert (alpha[-1] == 70).mean() > 0.8  # bottom row: mostly faded
+
+
+def test_cell_edges():
+    assert where.cell_edges(np.array([0.0, 1.0, 2.0]), np.array([10.0, 10.5]), 1.0) == [9.75, -0.5, 10.75, 2.5]
+    assert where.cell_edges(np.array([5.0]), np.array([5.0]), 0.04) == pytest.approx([4.98, 4.98, 5.02, 5.02])
