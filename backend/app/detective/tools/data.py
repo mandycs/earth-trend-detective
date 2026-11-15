@@ -116,6 +116,17 @@ def _not_available(reason: str, transient: bool = False, **extra) -> dict:
     return out
 
 
+# Refusals that hang on the place tags: before profile_place they are not final.
+_TAG_REASONS = frozenset({NOT_THIS_PLACE_REASON, NOT_SEA_REASON, NOT_REEF_REASON})
+
+
+def _place_refusal(session: Session, reason: str, **extra) -> dict:
+    """A refusal from `_unavailable_reason`; never cached while the place is unprofiled, so the
+    same call after profile_place is answered, not replayed."""
+    unprofiled = not session.place.tags and reason in _TAG_REASONS
+    return _not_available(reason, transient=unprofiled, **extra)
+
+
 def _variable(session: Session, var_id: str) -> Variable | None:
     return next((v for v in session.catalog if v.id == var_id), None)
 
@@ -327,7 +338,7 @@ def _fetch(session: Session, var_id: str, start: int, end: int) -> dict:
     reason = _unavailable_reason(session, var, extra_ids)
     if reason is not None:
         twin = GIBS_TWINS.get(var_id) if reason == OFF_CASE_REASON else None
-        return _not_available(reason, var_id=var_id, **({"use_instead": twin} if twin else {}))
+        return _place_refusal(session, reason, var_id=var_id, **({"use_instead": twin} if twin else {}))
     if var.source == "gibs" and start > gibs_values.last_complete_year():
         return _not_available(NO_COMPLETED_YEAR_REASON, var_id=var_id)  # a plain answer, not a failure
     fetcher = gather.FETCHERS.get(var.source)

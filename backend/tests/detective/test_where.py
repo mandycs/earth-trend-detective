@@ -375,3 +375,32 @@ def test_png_is_north_up(monkeypatch):
 def test_cell_edges():
     assert where.cell_edges(np.array([0.0, 1.0, 2.0]), np.array([10.0, 10.5]), 1.0) == [9.75, -0.5, 10.75, 2.5]
     assert where.cell_edges(np.array([5.0]), np.array([5.0]), 0.04) == pytest.approx([4.98, 4.98, 5.02, 5.02])
+
+
+# --------------------------------------------------------------------------- final review fixes
+
+
+def test_cached_trend_map_reflects_tests_logged_since(grid_calls, monkeypatch):
+    from app.detective.ledger import TestRecord
+    from app.stats.trend import TrendResult
+
+    # a strong test alone (p=0.01 -> real) that cannot survive 20 tests (q=0.2)
+    strong = TrendResult(264, 22.0, False, 0.5, 0.2, 0.8, 1.0, 0.5, 0.01, 1.0)
+    monkeypatch.setattr(where, "mk_trend_test", lambda anomalies: strong)
+    s = _session()
+    got = where.trend_map(s, var_id="sst")
+    assert got["verdict"] == "real"
+    for i in range(19):
+        s.ledger.add_test(TestRecord(f"x{i}", f"v{i}", "v", "trend", 0.5, 0.1, False, None))
+    again = where.trend_map(s, var_id="sst")
+    fresh = tools._corrected_fields(s, got["test_id"])
+    assert again["evidence_id"] == got["evidence_id"] and s.ledger.n_tests == 20
+    assert again["q_session"] == fresh["q_session"] and again["verdict"] == fresh["verdict"]
+    assert again["direction"] == fresh["direction"]
+    assert again["verdict"] != "real" and again["q_session"] == pytest.approx(0.2)
+    assert len(grid_calls) == 1
+
+
+def test_unprofiled_place_refusal_is_not_cached(grid_calls):
+    got = where.trend_map(_session(tags=()), var_id="sst")
+    assert got["status"] == "not_available" and "evidence_id" not in got and grid_calls == []

@@ -1,5 +1,6 @@
 """Reservoir water extent at 30 m (OPERA DSWx-HLS via GIBS): classes, cloudy scenes, years, the tool."""
 
+from dataclasses import replace
 from pathlib import Path
 
 import httpx
@@ -436,3 +437,16 @@ def test_a_cloudy_year_with_scenes_every_month_is_cached_as_dropped(sky, tmp_pat
     with pytest.raises(wx.WaterExtentError):
         wx.fetch_yearly_water(SMALL, 2016, 2016, client=httpx.Client())  # 8 clear months: dropped
     assert len(list((tmp_path / "cache").glob("*.json"))) == 1
+
+
+# --------------------------------------------------------------------------- final review fixes
+
+
+def test_profile_first_refusal_is_not_cached(fetch):
+    """Told to call profile_place first, the model does; the next call must not replay the refusal."""
+    s = _session(tags=())
+    first = water.water_extent(s)
+    assert first["reason"] == water.PROFILE_FIRST_REASON and "evidence_id" not in first
+    s.place = replace(s.place, tags=("water", "vegetated"))  # what profile_place does
+    again = water.water_extent(s)
+    assert again["status"] == "ok" and fetch != []

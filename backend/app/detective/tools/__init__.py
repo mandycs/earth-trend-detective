@@ -12,6 +12,7 @@ from typing import Literal, NamedTuple
 from pydantic import BaseModel, Field
 
 from app.detective.tools import analysis, case_board, context, data, mapping, water, where
+from app.extractors import water_extent as wx
 
 
 class ToolSpec(NamedTuple):
@@ -78,7 +79,7 @@ class TrendMapArgs(BaseModel):
 
 
 class WaterExtentArgs(BaseModel):
-    year_a: int | None = Field(default=None, description="First year (default: 2016, the start of the water maps).")
+    year_a: int | None = Field(default=None, description=f"First year (default: {wx.FIRST_YEAR}, the start of the water maps).")
     year_b: int | None = Field(default=None, description="Last year (default: the end of the investigation period).")
 
 
@@ -252,9 +253,9 @@ TOOLS: dict[str, ToolSpec] = {
     ),
     "water_extent": ToolSpec(
         water.water_extent,
-        "Measures the open-water area (km²) in this place's box for each year, at 30 m, from NASA OPERA water "
-        "maps of Landsat and Sentinel-2 scenes (one clear scene a month, yearly median; from 2016, no scenes "
-        "from mid-2020 to the end of 2022). Use it for a reservoir or lake. Returns the yearly areas and a "
+        f"Measures the open-water area (km²) in this place's box for each year, at {wx.RESOLUTION}, from NASA "
+        f"OPERA water maps of Landsat and Sentinel-2 scenes (one clear scene a month, yearly median; from "
+        f"{wx.FIRST_YEAR}, with a gap in the record that the caveat names). Use it for a reservoir or lake. Returns the yearly areas and a "
         "series_id to pass to trend_test (one value per year). Counts every water body in the box; refused "
         "when the box reaches the sea. Not a test; always repeat the returned caveat.",
         WaterExtentArgs,

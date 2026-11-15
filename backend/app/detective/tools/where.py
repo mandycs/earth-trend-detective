@@ -85,8 +85,18 @@ def has_grid(var: Variable) -> bool:
 def trend_map(session: Session, var_id: str) -> dict:
     args = {"var_id": var_id, "start": session.start, "end": session.end}
     return data._through_ledger(
-        session, "trend_map", args, lambda: _safe(session, var_id), on_hit=lambda hit: _ensure_png(session, hit)
+        session, "trend_map", args, lambda: _safe(session, var_id), on_hit=lambda hit: _on_hit(session, hit)
     )
+
+
+def _on_hit(session: Session, hit: dict) -> dict:
+    """A repeated call: the same map and test, but q and verdict reflect every test logged since."""
+    hit = _ensure_png(session, hit)
+    test_id = hit.get("test_id")
+    if test_id is None:
+        return hit
+    fresh = data._corrected_fields(session, test_id)
+    return {**hit, **{k: fresh[k] for k in ("q_session", "verdict", "direction")}}
 
 
 def _ensure_png(session: Session, hit: dict) -> dict:
@@ -129,7 +139,7 @@ def _trend_map(session: Session, var_id: str) -> dict:
         return _not_available(data.UNKNOWN_CASE_REASON, var_id=var_id)
     reason = data._unavailable_reason(session, var, extra_ids)  # the same predicate as get_series
     if reason is not None:
-        return _not_available(reason, var_id=var_id)
+        return data._place_refusal(session, reason, var_id=var_id)
     start, end = session.start, session.end
     bbox = tuple(float(c) for c in session.place.bbox)
     if var.source == "gibs" and start > gibs_values.last_complete_year():

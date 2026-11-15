@@ -261,3 +261,13 @@ def test_resolution_comes_from_the_dataset():
     assert in_case["lst_day"]["resolution"] == "~1 km"
     assert in_case["snow_cover"]["resolution"] == "~500 m"
     assert rows["et"]["resolution"] == "dataset native resolution"
+
+
+def test_unprofiled_place_refusal_is_not_cached():
+    """A refusal that hangs on the place tags, before profile_place: shown, never replayed."""
+    s = _session(tags=())
+    got = tools.get_series(s, var_id="sst")
+    assert got["status"] == "not_available" and got["reason"] == tools.NOT_SEA_REASON
+    assert "evidence_id" not in got and got["transient"] is True
+    profiled = tools.get_series(_session(tags=("vegetated",)), var_id="sst")
+    assert profiled["reason"] == tools.NOT_SEA_REASON and profiled["evidence_id"]  # a known land place: cached

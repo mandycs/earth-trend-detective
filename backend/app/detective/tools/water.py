@@ -80,7 +80,8 @@ def _water(session: Session, start: int, end: int) -> dict:
     if start > end:
         return data._not_available(NO_YEARS_REASON, var_id=VAR_ID)
     if not session.place.tags:  # not profiled, or its land cover failed: the box is unknown
-        return data._not_available(PROFILE_FIRST_REASON, var_id=VAR_ID)
+        # Never cached: after profile_place the same call must be answered, not replayed.
+        return data._not_available(PROFILE_FIRST_REASON, transient=True, var_id=VAR_ID)
     if data.SEA_TAGS & set(session.place.tags) or data._open_sea(session):
         return data._not_available(AT_SEA_REASON, var_id=VAR_ID)
     # The profile treats a failed sea check as land; here an unknown answer is a refusal.
