@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import type { Map as MlMap } from 'maplibre-gl'
+import type { Map as MlMap, PaddingOptions } from 'maplibre-gl'
 import { STYLE } from '../explore/mapStyle'
 import { curtainAriaLabel, curtainYears, drawSpecs, initialSplit } from './map/draw'
 import type { DrawSpec } from './map/draw'
@@ -14,6 +14,8 @@ export interface CurtainCamera {
   zoom: number
   pitch: number
   bearing: number
+  /** The main map's padding, so the two halves share the same centre. */
+  padding?: PaddingOptions
 }
 
 /** Filled by CurtainMap with a function that moves its camera; the main map calls it on every `move`. */
@@ -76,6 +78,7 @@ export function CurtainMap({ curtain, camera, overlays = [], sync, flat = false 
         maxPitch: 85,
         ...cameraRef.current,
       })
+      if (cameraRef.current.padding) m.setPadding(cameraRef.current.padding)
       // Relief is decided by the main map alone (`flat`): dropping it here on this map's own DEM errors would
       // leave the two halves misaligned. Errors on this map are otherwise not news (the main map reports).
       m.on('error', () => {})

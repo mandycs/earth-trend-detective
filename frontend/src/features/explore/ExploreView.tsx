@@ -2,12 +2,14 @@
 
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FriendlyError, fetchSites, fetchSweep } from "./api";
 import { fmtPlace } from "./format";
 import ResultsPanel from "./ResultsPanel";
 import { CloseIcon } from "../../lib/Icons";
 import type { Place, Site, SweepResponse } from "./types";
+import { detectiveHref } from "../detective/viewModel";
 import styles from "./explore.module.css";
 
 const MapView = dynamic(() => import("./MapView"), {
@@ -57,6 +59,9 @@ export default function ExploreView() {
   const [sites, setSites] = useState<Site[]>([]);
   const controller = useRef<AbortController | null>(null);
   const panel = useRef<HTMLElement>(null);
+  const router = useRouter();
+  // A click on the map opens the detective with that place already picked; the examples below keep the quick check.
+  const investigate = useCallback((lat: number, lon: number) => router.push(detectiveHref(lat, lon)), [router]);
 
   useEffect(() => {
     const c = new AbortController();
@@ -113,7 +118,7 @@ export default function ExploreView() {
         </nav>
       </header>
       <div className={styles.layout}>
-        <MapView place={place} onPick={analyze} />
+        <MapView place={place} onPick={investigate} />
         <aside ref={panel} className={styles.panel} aria-label="Results">
           {place && (
             <div className={styles.placeBar}>
@@ -131,12 +136,12 @@ export default function ExploreView() {
             <div className={styles.state}>
               <h1 className={styles.stateTitle}>Pick a place to investigate</h1>
               <p>
-                Click anywhere on the map. We&apos;ll check what is changing there, whether it is real, and whether it
-                is the climate.
+                Click anywhere on the map and the detective opens with that place picked. Ask it what is changing
+                there, whether it is real, and whether it is the climate.
               </p>
               {sites.length > 0 && (
                 <>
-                  <p className={styles.note}>Or start with a known case:</p>
+                  <p className={styles.note}>Or run a quick check on a known case:</p>
                   <div className={styles.chips}>
                     {sites.map((s) => (
                       <button

@@ -151,6 +151,24 @@ export function fitPadding(width: number, height: number): Padding {
   };
 }
 
+/**
+ * The map's resting padding: at ≥ 1100 px the reading column (38 % of the width) covers the left of a full-bleed
+ * map, so the globe centres in the free area to its right instead of the whole viewport.
+ */
+export function restPadding(width: number): Padding {
+  return { top: 0, right: 0, bottom: 0, left: width >= READING_BREAKPOINT ? Math.round(width * 0.38) : 0 };
+}
+
+/**
+ * fitBounds padding on top of `restPadding`: maplibre adds the map's own padding to the one passed to fitBounds, so
+ * the reading column must not be counted twice.
+ */
+export function fitPaddingOverRest(width: number, height: number): Padding {
+  const pad = fitPadding(width, height);
+  const rest = restPadding(width);
+  return { ...pad, left: rest.left > 0 ? Math.max(pad.left - rest.left, Math.min(pad.left, EDGE)) : pad.left };
+}
+
 /** Where the curtain divider starts: the middle of the map that the reading column leaves visible. */
 export function initialSplit(width: number): number {
   return width >= READING_BREAKPOINT ? 70 : 50;

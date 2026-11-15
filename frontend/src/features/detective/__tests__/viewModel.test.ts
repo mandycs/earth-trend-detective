@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  focusTargetFor, forkKeepTurns, forkTurn, localDate, parseLatLon, previewCamera, trimToTurn, turnCount, turnOutcomes, wrapTarget,
+  detectiveHref, focusTargetFor, forkKeepTurns, forkTurn, localDate, parseLatLon, pointFromParams, previewCamera, trimToTurn, turnCount, turnOutcomes, wrapTarget,
 } from "../viewModel.ts";
 import type { AnswerEvent, DetEvent, DoneEvent, PlaceEvent } from "../events.ts";
 import type { Target } from "../request.ts";
@@ -135,4 +135,19 @@ test("an answer that lands after the run is over takes the focus once", () => {
   assert.equal(focusTargetFor("finished", "finished", "live", true, false), "answer");
   assert.equal(focusTargetFor("finished", "finished", "live", true, true), null);
   assert.equal(focusTargetFor("idle", "idle", "live", true, false), null);
+});
+
+test("?lat=&lon= becomes a point; missing, junk or out-of-range values are ignored", () => {
+  assert.deepEqual(pointFromParams("36.87", "-4.17"), { kind: "point", lat: 36.87, lon: -4.17 });
+  assert.deepEqual(pointFromParams(" -90 ", "179.5"), { kind: "point", lat: -90, lon: 179.5 });
+  const cases: Array<[string | undefined, string | undefined]> = [
+    [undefined, "1"], ["1", undefined], ["", ""], ["abc", "1"], ["1", "1e400"], ["91", "0"], ["0", "-181"],
+    ["NaN", "0"], ["1,2", "3"], ["4", "5x"],
+  ];
+  for (const [lat, lon] of cases) assert.equal(pointFromParams(lat, lon), null, `${lat}, ${lon}`);
+});
+
+test("explore hands a picked point to the detective as ?lat=&lon=", () => {
+  assert.equal(detectiveHref(36.871234567, -4.17), "/detective?lat=36.87123&lon=-4.17");
+  assert.equal(detectiveHref(10, 190), "/detective?lat=10&lon=-170");
 });

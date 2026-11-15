@@ -1497,6 +1497,38 @@
   text-shadow: 0 1px 12px rgba(0, 0, 0, 0.5); /* taste-skill-ignore: scrim under text on a photo */
 }
 
+.doc-start {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  min-width: 0;
+}
+
+/* Always on screen during the story: the way to the detective, a quiet text link (one primary per screen). */
+.doc-ask {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+  text-decoration: none;
+  white-space: nowrap;
+  background: rgba(0, 0, 0, 0.25);
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.6); /* taste-skill-ignore: scrim under text on a photo */
+}
+
+.doc-ask:hover,
+.doc-ask:focus-visible {
+  background: #fff;
+  color: #0e1012;
+  text-shadow: none;
+}
+
 .doc-chapters {
   display: flex;
   gap: 4px;
@@ -1531,6 +1563,7 @@
 
 .doc-year {
   justify-self: end;
+  white-space: nowrap; /* "2003–2024" never breaks into two lines that crowd the corner */
   font-size: clamp(2.4rem, 4.6vw, 4rem);
   font-weight: 850;
   line-height: 1;
@@ -1631,14 +1664,21 @@
   text-underline-offset: 4px;
 }
 
-@media (max-width: 720px) {
+/* Below this the wordmark, "Ask Alibi", the three chapters and the year do not fit on one row: chapters go under. */
+@media (max-width: 1180px) {
   .doc-top {
-    grid-template-columns: 1fr auto;
+    grid-template-columns: minmax(0, 1fr) auto;
   }
   .doc-chapters {
     grid-column: 1 / -1;
     grid-row: 2;
     justify-content: center;
+  }
+}
+
+@media (max-width: 720px) {
+  .doc-year {
+    font-size: 2rem;
   }
   .doc-chapter {
     padding: 0 6px;
@@ -1652,7 +1692,7 @@
   .doc-bottom {
     left: 16px;
     right: 16px;
-    bottom: 16px;
+    bottom: max(16px, env(safe-area-inset-bottom));
   }
   .doc-controls {
     flex-wrap: wrap;

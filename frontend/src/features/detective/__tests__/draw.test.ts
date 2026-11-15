@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  TERRAIN_LINE, curtainAriaLabel, drawSpecs, drawnWhen, fitPadding, footprintData, imageCoordinates, initialSplit,
+  TERRAIN_LINE, curtainAriaLabel, drawSpecs, drawnWhen, fitPadding, fitPaddingOverRest, footprintData, restPadding, imageCoordinates, initialSplit,
   contextDrawn, legendModel, mapLabel, overlaySpecs, pickStep, specLayerIds, specSignature,
 } from "../map/draw.ts";
 import { applyMapOp, openingView } from "../map/mapView.ts";
@@ -158,4 +158,16 @@ test("legend shows the curtain's two years and no range when a bound is missing"
 test("an empty view has no legend", () => {
   const empty: MapView = { place: null, context: null, evidence: null, curtain: null, footprints: [], camera: null, notes: [] };
   assert.equal(legendModel(empty), null);
+});
+
+test("the resting globe centres right of the reading column on wide screens only", () => {
+  assert.deepEqual(restPadding(1440), { top: 0, right: 0, bottom: 0, left: 547 });
+  assert.equal(restPadding(1099).left, 0);
+  assert.equal(restPadding(390).left, 0);
+});
+
+test("a camera fit does not count the reading column twice (maplibre adds the map's own padding)", () => {
+  assert.equal(fitPaddingOverRest(1440, 900).left, 48);
+  assert.equal(fitPaddingOverRest(1440, 900).right, fitPadding(1440, 900).right);
+  assert.equal(fitPaddingOverRest(1000, 800).left, fitPadding(1000, 800).left);
 });

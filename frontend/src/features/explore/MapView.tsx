@@ -81,9 +81,9 @@ export default function MapView({ place, onPick }: Props) {
         ref={container}
         className={styles.map}
         role="application"
-        aria-label="World map. Click a place to investigate it, or use the example buttons in the panel."
+        aria-label="World map. Click a place to open it in the detective, or use the example buttons in the panel."
       />
-      {!place && !failed && <p className={styles.mapHint}>Click anywhere on Earth to investigate it</p>}
+      {!place && !failed && <p className={styles.mapHint}>Click anywhere on Earth to ask the detective about it</p>}
       {failed && (
         <p className={styles.mapError} role="alert">
           The map could not load. Check your connection and reload the page. You can still try the example places in

@@ -1,6 +1,6 @@
 'use client'
 
-import { useId, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import type { Ref } from 'react'
 import Link from 'next/link'
 import type { HistoryStep } from './api'
@@ -29,16 +29,23 @@ export interface QuestionBoxProps {
   recordedAt?: string | null
   /** Focus lands here when a live run starts (the Ask button it replaces is gone). */
   stopRef?: Ref<HTMLButtonElement>
+  /** Focus the question on mount: the place came picked in the link, so asking is the next step. */
+  autoFocus?: boolean
 }
 
 export function QuestionBox({
   target, status, mode, followUp, forkFrom, initialQuestion, onAsk, onStop, onCancelFork, onPickMode, pickMode,
-  recordedAt = null, stopRef,
+  recordedAt = null, stopRef, autoFocus = false,
 }: QuestionBoxProps) {
   const [question, setQuestion] = useState(initialQuestion)
   const id = useId()
   const reasonId = `${id}-reason`
   const active = isActiveRun(status)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
+  useEffect(() => {
+    if (autoFocus) inputRef.current?.focus({ preventScroll: true })
+    // Only on mount: a later re-render must not pull the focus back.
+  }, [])
 
   if (mode === 'replay') {
     return (
@@ -100,6 +107,7 @@ export function QuestionBox({
       </label>
       <textarea
         id={`${id}-q`}
+        ref={inputRef}
         className={styles.qInput}
         value={question}
         onChange={(e) => setQuestion(e.target.value)}
