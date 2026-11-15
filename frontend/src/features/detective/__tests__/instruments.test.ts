@@ -8,7 +8,7 @@ import { questionReading, toolLine, varCatalog } from "../instruments.ts";
 
 /** The live Lake Mead point run (recorded from the API on 15 Nov 2026). */
 function meadRun() {
-  const raw = JSON.parse(readFileSync(join(import.meta.dirname, "../../../../../backend/data/recordings/mead.json"), "utf8"));
+  const raw = JSON.parse(readFileSync(join(import.meta.dirname, "recordings/mead.json"), "utf8"));
   const rec = parseRecording(raw);
   assert.ok(rec);
   return groupScenes(replaySchedule(rec).map((e) => e.event), { ended: true });

@@ -307,7 +307,7 @@ test("the story button says why no stack opened: a failed load is not an empty c
 
 test("the live Lake Mead point run: real strata, and the GRACE cell keeps its whole period and firmest stamp", async () => {
   const { parseRecording, replaySchedule } = await import("../replay.ts");
-  const raw = JSON.parse(readFileSync(join(import.meta.dirname, "../../../../../backend/data/recordings/mead.json"), "utf8"));
+  const raw = JSON.parse(readFileSync(join(import.meta.dirname, "recordings/mead.json"), "utf8"));
   const rec = parseRecording(raw);
   assert.ok(rec);
   const ctx: MapContext = { caseLayers: lakeMeadCase(), now: NOW };

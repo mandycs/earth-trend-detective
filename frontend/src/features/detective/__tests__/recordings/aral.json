@@ -1,0 +1,791 @@
+{
+ "question": "Is the Aral Sea still shrinking?",
+ "request": {
+  "question": "Is the Aral Sea still shrinking?",
+  "lat": 45.0,
+  "lon": 59.5
+ },
+ "started_at": "2026-11-15T00:56:13+00:00",
+ "partial": false,
+ "events": [
+  {
+   "t_ms": 63,
+   "event": "place",
+   "data": {
+    "thread_id": "16afa8491ecb41749ad0ee3b6b626c09",
+    "follow_up": false,
+    "forked_from": null,
+    "id": "point",
+    "name": "Point 45.000, 59.500",
+    "lat": 45.0,
+    "lon": 59.5,
+    "bbox": [
+     59.4,
+     44.9,
+     59.6,
+     45.1
+    ],
+    "tags": [],
+    "site_id": null,
+    "years": [
+     2003,
+     2024
+    ]
+   }
+  },
+  {
+   "t_ms": 1884,
+   "event": "thinking",
+   "data": {
+    "text": "I'll start by profiling the place to see what kind of land it is and how big the data cells are."
+   }
+  },
+  {
+   "t_ms": 1884,
+   "event": "tool_start",
+   "data": {
+    "id": "toolu_01Kp2S2VDf8V1dGrXwyi6QUg",
+    "tool": "profile_place",
+    "args": {}
+   }
+  },
+  {
+   "t_ms": 2387,
+   "event": "tool_done",
+   "data": {
+    "id": "toolu_01Kp2S2VDf8V1dGrXwyi6QUg",
+    "tool": "profile_place",
+    "summary": "Done.",
+    "result": {
+     "tags": [
+      "water_body"
+     ],
+     "land_cover": {
+      "Water": 0.999,
+      "Barren": 0.001
+     },
+     "dominant": "Water",
+     "land_cover_year": 2023,
+     "data_cells": {
+      "grace": "~300 km",
+      "power": "~50 km"
+     },
+     "evidence_id": "e1"
+    },
+    "evidence_id": "e1"
+   }
+  },
+  {
+   "t_ms": 4115,
+   "event": "thinking",
+   "data": {
+    "text": "Next I'll list which variables apply to this place and which can be fetched."
+   }
+  },
+  {
+   "t_ms": 4115,
+   "event": "tool_start",
+   "data": {
+    "id": "toolu_015BQcxohyycCJEqm6xH6SBo",
+    "tool": "list_variables",
+    "args": {}
+   }
+  },
+  {
+   "t_ms": 4116,
+   "event": "tool_done",
+   "data": {
+    "id": "toolu_015BQcxohyycCJEqm6xH6SBo",
+    "tool": "list_variables",
+    "summary": "Done.",
+    "result": {
+     "variables": [
+      {
+       "id": "t2m",
+       "label": "Air temperature",
+       "definition": "How warm the air near the ground is, averaged over each month, estimated by a NASA global weather model.",
+       "role": "driver",
+       "source": "power",
+       "resolution": "~50 km",
+       "available": true
+      },
+      {
+       "id": "precip",
+       "label": "Rainfall",
+       "definition": "How much water falls from the sky each day, as rain or snow, averaged over each month, from NASA satellites and weather models.",
+       "role": "driver",
+       "source": "power",
+       "resolution": "~50 km",
+       "available": true
+      },
+      {
+       "id": "solar",
+       "label": "Sunlight at the surface",
+       "definition": "How much sunlight reaches the ground each day, averaged over each month, estimated from NASA satellite measurements.",
+       "role": "driver",
+       "source": "power",
+       "resolution": "~50 km",
+       "available": true
+      },
+      {
+       "id": "lst_day",
+       "label": "Daytime ground temperature",
+       "definition": "How hot the ground surface itself is in the daytime, seen from space by a NASA satellite. It is not the air temperature.",
+       "role": "impact",
+       "source": "appeears",
+       "resolution": "~1 km",
+       "available": false,
+       "reason": "not_available_here: only precomputed for the solved cases"
+      },
+      {
+       "id": "soil_moisture",
+       "label": "Topsoil moisture",
+       "definition": "How much water is held in the top layer of soil, estimated by a NASA land model and averaged over each month.",
+       "role": "impact",
+       "source": "gldas",
+       "resolution": "~25 km",
+       "available": true
+      },
+      {
+       "id": "runoff",
+       "label": "Surface runoff",
+       "definition": "How much rain or melted snow flows over the land into rivers and lakes instead of soaking into the ground, from a NASA land model.",
+       "role": "impact",
+       "source": "gldas",
+       "resolution": "~25 km",
+       "available": true
+      },
+      {
+       "id": "grace_tws",
+       "label": "Total water stored",
+       "definition": "All the water stored in a region — underground, in the soil, in snow and in lakes — weighed from space by the GRACE satellites.",
+       "role": "impact",
+       "source": "grace",
+       "resolution": "~300 km",
+       "available": true
+      },
+      {
+       "id": "water_area",
+       "label": "Open-water area",
+       "definition": "The area of a lake or reservoir covered by open water, in square kilometres, seen from space every few days when the sky is clear.",
+       "role": "impact",
+       "source": "appeears_water",
+       "resolution": "~500 m",
+       "available": false,
+       "reason": "not_available_here: only precomputed for the solved cases"
+      },
+      {
+       "id": "t2m_upstream",
+       "label": "Air temperature upstream",
+       "definition": "Air temperature from a NASA weather model, averaged over several points upstream of the site, where the water that reaches it comes from.",
+       "role": "driver",
+       "source": "power",
+       "resolution": "~50 km",
+       "available": false,
+       "reason": "not_available_here: only set up for the solved cases that need it"
+      },
+      {
+       "id": "precip_upstream",
+       "label": "Rainfall and snowfall upstream",
+       "definition": "Rain and snow from a NASA weather model, averaged over several points upstream of the site, where the water that reaches it comes from.",
+       "role": "driver",
+       "source": "power",
+       "resolution": "~50 km",
+       "available": false,
+       "reason": "not_available_here: only set up for the solved cases that need it"
+      },
+      {
+       "id": "degree_days",
+       "label": "Melt warmth (degree-days)",
+       "definition": "A warmth-for-melting score: the month's average air temperature, counted only when it is above freezing, times the days in the month.",
+       "role": "driver",
+       "source": "power",
+       "resolution": "~50 km",
+       "available": false,
+       "reason": "not_available_here: only set up for the solved cases that need it"
+      },
+      {
+       "id": "winter_precip",
+       "label": "Winter snowfall and rain so far",
+       "definition": "Rain and snow added up through the October-to-April season, when snow builds up in mountains; the total restarts each October.",
+       "role": "driver",
+       "source": "power",
+       "resolution": "~50 km",
+       "available": false,
+       "reason": "not_available_here: only set up for the solved cases that need it"
+      }
+     ],
+     "evidence_id": "e2"
+    },
+    "evidence_id": "e2"
+   }
+  },
+  {
+   "t_ms": 6430,
+   "event": "thinking",
+   "data": {
+    "text": "Open-water area isn't available here. I'll use the GRACE total water stored series as a stand-in. I'll also check the land cover change."
+   }
+  },
+  {
+   "t_ms": 6430,
+   "event": "tool_start",
+   "data": {
+    "id": "toolu_01FzuQJQ6nQZw4RJRkYcUkSY",
+    "tool": "get_series",
+    "args": {
+     "var_id": "grace_tws"
+    }
+   }
+  },
+  {
+   "t_ms": 6430,
+   "event": "tool_start",
+   "data": {
+    "id": "toolu_01Hd5ixJCtXtcNfXLa97N7ZP",
+    "tool": "land_cover_change",
+    "args": {}
+   }
+  },
+  {
+   "t_ms": 6430,
+   "event": "tool_start",
+   "data": {
+    "id": "toolu_01Pctj7Um8zkXqQZnXyRckvG",
+    "tool": "show_footprint",
+    "args": {
+     "source": "grace"
+    }
+   }
+  },
+  {
+   "t_ms": 7431,
+   "event": "tool_done",
+   "data": {
+    "id": "toolu_01FzuQJQ6nQZw4RJRkYcUkSY",
+    "tool": "get_series",
+    "summary": "Total water stored.",
+    "result": {
+     "status": "ok",
+     "series_id": "grace_tws:2003-2024",
+     "var_id": "grace_tws",
+     "label": "Total water stored",
+     "unit": "cm",
+     "n_months": 233,
+     "years": [
+      2003,
+      2024
+     ],
+     "chart": [
+      {
+       "year": 2003,
+       "value": 6.9406
+      },
+      {
+       "year": 2004,
+       "value": 6.0513
+      },
+      {
+       "year": 2005,
+       "value": 5.9665
+      },
+      {
+       "year": 2006,
+       "value": 2.9266
+      },
+      {
+       "year": 2007,
+       "value": -0.9531
+      },
+      {
+       "year": 2008,
+       "value": -6.0342
+      },
+      {
+       "year": 2009,
+       "value": -7.9571
+      },
+      {
+       "year": 2010,
+       "value": -7.5881
+      },
+      {
+       "year": 2011,
+       "value": -8.8161
+      },
+      {
+       "year": 2012,
+       "value": -9.4466
+      },
+      {
+       "year": 2013,
+       "value": -12.113
+      },
+      {
+       "year": 2014,
+       "value": -13.0375
+      },
+      {
+       "year": 2015,
+       "value": -10.8425
+      },
+      {
+       "year": 2016,
+       "value": -10.297
+      },
+      {
+       "year": 2017,
+       "value": -13.6739
+      },
+      {
+       "year": 2018,
+       "value": -17.7881
+      },
+      {
+       "year": 2019,
+       "value": -18.5578
+      },
+      {
+       "year": 2020,
+       "value": -20.597
+      },
+      {
+       "year": 2021,
+       "value": -23.1378
+      },
+      {
+       "year": 2022,
+       "value": -23.1932
+      },
+      {
+       "year": 2023,
+       "value": -23.794
+      },
+      {
+       "year": 2024,
+       "value": -23.4367
+      }
+     ],
+     "evidence_id": "e3"
+    },
+    "evidence_id": "e3"
+   }
+  },
+  {
+   "t_ms": 7431,
+   "event": "tool_done",
+   "data": {
+    "id": "toolu_01Hd5ixJCtXtcNfXLa97N7ZP",
+    "tool": "land_cover_change",
+    "summary": "Done.",
+    "result": {
+     "status": "ok",
+     "year_a": 2003,
+     "year_b": 2023,
+     "dominant_before": "Water",
+     "dominant_after": "Water",
+     "changes": [],
+     "layer": "land_cover",
+     "source": {
+      "name": "MODIS land cover type (MCD12Q1, IGBP classes), via NASA GIBS",
+      "url": "https://lpdaac.usgs.gov/products/mcd12q1v061/"
+     },
+     "caveat": "At 500 m, orchards and tree crops may be classed as savanna or woody vegetation, not cropland.",
+     "evidence_id": "e4"
+    },
+    "evidence_id": "e4"
+   }
+  },
+  {
+   "t_ms": 7431,
+   "event": "tool_done",
+   "data": {
+    "id": "toolu_01Pctj7Um8zkXqQZnXyRckvG",
+    "tool": "show_footprint",
+    "summary": "One value covers this whole cell, not the exact point; the outline is approximate.",
+    "result": {
+     "status": "shown",
+     "source": "grace",
+     "size": "~300 km",
+     "note": "One value covers this whole cell, not the exact point; the outline is approximate."
+    },
+    "evidence_id": null
+   }
+  },
+  {
+   "t_ms": 7432,
+   "event": "map",
+   "data": {
+    "op": "show_layer",
+    "layer_id": "land_cover",
+    "year": 2023
+   }
+  },
+  {
+   "t_ms": 7432,
+   "event": "map",
+   "data": {
+    "op": "show_footprint",
+    "source": "grace",
+    "label": "GRACE water storage approximate data cell (~300 km)",
+    "size": "~300 km",
+    "bbox": [
+     57.5944,
+     43.6525,
+     61.4056,
+     46.3475
+    ],
+    "approximate": true
+   }
+  },
+  {
+   "t_ms": 9027,
+   "event": "tool_start",
+   "data": {
+    "id": "toolu_011VpgYbQaKhvpjc6kD2y6s5",
+    "tool": "trend_test",
+    "args": {
+     "series_id": "grace_tws:2003-2024"
+    }
+   }
+  },
+  {
+   "t_ms": 9027,
+   "event": "tool_start",
+   "data": {
+    "id": "toolu_01CpF493BWSSfEjqnTXgLxtN",
+    "tool": "show_before_after",
+    "args": {
+     "layer_id": "true_colour",
+     "year_a": 2003,
+     "year_b": 2024
+    }
+   }
+  },
+  {
+   "t_ms": 9048,
+   "event": "tool_done",
+   "data": {
+    "id": "toolu_011VpgYbQaKhvpjc6kD2y6s5",
+    "tool": "trend_test",
+    "summary": "grace_tws. verdict real.",
+    "result": {
+     "test_id": "t1",
+     "series_id": "grace_tws:2003-2024",
+     "var_id": "grace_tws",
+     "years": [
+      2003,
+      2024
+     ],
+     "n_months": 233,
+     "too_short": false,
+     "slope_per_decade": -14.6675,
+     "ci_low": -16.4052,
+     "ci_high": -12.8591,
+     "unit": "cm per decade",
+     "p_value": 0.0,
+     "years_needed": 0,
+     "q_session": 0.0,
+     "verdict": "real",
+     "direction": "down",
+     "n_tests_so_far": 1,
+     "evidence_id": "e5"
+    },
+    "evidence_id": "e5"
+   }
+  },
+  {
+   "t_ms": 9048,
+   "event": "tool_done",
+   "data": {
+    "id": "toolu_01CpF493BWSSfEjqnTXgLxtN",
+    "tool": "show_before_after",
+    "summary": "A curtain to compare two years by eye.",
+    "result": {
+     "status": "shown",
+     "layer_id": "true_colour",
+     "title": "True colour (MODIS Terra)",
+     "source": "NASA MODIS Terra Corrected Reflectance, via GIBS",
+     "resolution": "~250 m",
+     "unit": "true colour picture",
+     "note": "A curtain to compare two years by eye."
+    },
+    "evidence_id": null
+   }
+  },
+  {
+   "t_ms": 9048,
+   "event": "map",
+   "data": {
+    "op": "show_before_after",
+    "layer_id": "true_colour",
+    "year_a": 2003,
+    "year_b": 2024
+   }
+  },
+  {
+   "t_ms": 9048,
+   "event": "board",
+   "data": {
+    "suspects": [],
+    "n_tests": 1,
+    "verdicts": {
+     "t1": {
+      "verdict": "real",
+      "direction": "down"
+     }
+    }
+   }
+  },
+  {
+   "t_ms": 10792,
+   "event": "thinking",
+   "data": {
+    "text": "Next: climate_residual."
+   }
+  },
+  {
+   "t_ms": 10792,
+   "event": "tool_start",
+   "data": {
+    "id": "toolu_01CpWiitAZmyC8DFif3iCivp",
+    "tool": "climate_residual",
+    "args": {
+     "var_id": "grace_tws"
+    }
+   }
+  },
+  {
+   "t_ms": 12065,
+   "event": "tool_done",
+   "data": {
+    "id": "toolu_01CpWiitAZmyC8DFif3iCivp",
+    "tool": "climate_residual",
+    "summary": "Total water stored. verdict real.",
+    "result": {
+     "var_id": "grace_tws",
+     "label": "Total water stored",
+     "test_id": "t2",
+     "test_ids": [
+      "t2"
+     ],
+     "pct_not_explained": 97.6,
+     "pct_range": null,
+     "drivers": [
+      "precip",
+      "t2m",
+      "precip_12mo"
+     ],
+     "model": "Local climate at the site",
+     "r2": 0.036,
+     "n_months": 223,
+     "unit": "cm per decade",
+     "total_slope_per_decade": -14.3949,
+     "climate_slope_per_decade": -0.6884,
+     "residual_slope_per_decade": -14.0522,
+     "p_value": 0.0,
+     "n_tests_so_far": 2,
+     "caveat": "Factors not in the model, such as water use, end up in the residual. This is a clue, not proof of a cause. Climate explains little of the ups and downs here, so read the split with extra care.",
+     "wording": "not explained by the climate we measured — a clue, not proof",
+     "evidence_id": "e8",
+     "q_session": 0.0,
+     "verdict": "real",
+     "direction": "down"
+    },
+    "evidence_id": "e8"
+   }
+  },
+  {
+   "t_ms": 12066,
+   "event": "board",
+   "data": {
+    "suspects": [],
+    "n_tests": 2,
+    "verdicts": {
+     "t1": {
+      "verdict": "real",
+      "direction": "down"
+     },
+     "t2": {
+      "verdict": "real",
+      "direction": "down"
+     }
+    }
+   }
+  },
+  {
+   "t_ms": 14274,
+   "event": "tool_start",
+   "data": {
+    "id": "toolu_01LS3BAqVo7Lbw16ZW2gb2eW",
+    "tool": "update_board",
+    "args": {
+     "suspect": "Less rain / warmer air (climate)",
+     "status": "hint",
+     "evidence_ids": [
+      "e8"
+     ],
+     "note": ""
+    }
+   }
+  },
+  {
+   "t_ms": 14274,
+   "event": "tool_start",
+   "data": {
+    "id": "toolu_01XaM9d5GCuv95YaSu8j4x9r",
+    "tool": "show_layer",
+    "args": {
+     "layer_id": "true_colour",
+     "year": 2024
+    }
+   }
+  },
+  {
+   "t_ms": 14277,
+   "event": "tool_done",
+   "data": {
+    "id": "toolu_01LS3BAqVo7Lbw16ZW2gb2eW",
+    "tool": "update_board",
+    "summary": "Less rain / warmer air (climate).",
+    "result": {
+     "id": "Less rain / warmer air (climate)",
+     "label": "Less rain / warmer air (climate)",
+     "status": "hint",
+     "evidence": [
+      "e8"
+     ],
+     "note": "",
+     "downgraded": null,
+     "claimed": "hint",
+     "dropped": [],
+     "n_tests": 2,
+     "note_removed": "The note was not shown: notes may only use figures from tool results and never claim a cause."
+    },
+    "evidence_id": null
+   }
+  },
+  {
+   "t_ms": 14277,
+   "event": "tool_done",
+   "data": {
+    "id": "toolu_01XaM9d5GCuv95YaSu8j4x9r",
+    "tool": "show_layer",
+    "summary": "Done.",
+    "result": {
+     "status": "shown",
+     "layer_id": "true_colour",
+     "title": "True colour (MODIS Terra)",
+     "source": "NASA MODIS Terra Corrected Reflectance, via GIBS",
+     "resolution": "~250 m",
+     "unit": "true colour picture"
+    },
+    "evidence_id": null
+   }
+  },
+  {
+   "t_ms": 14277,
+   "event": "map",
+   "data": {
+    "op": "show_layer",
+    "layer_id": "true_colour",
+    "year": 2024,
+    "opacity": 0.8
+   }
+  },
+  {
+   "t_ms": 14277,
+   "event": "board",
+   "data": {
+    "suspects": [
+     {
+      "id": "Less rain / warmer air (climate)",
+      "label": "Less rain / warmer air (climate)",
+      "status": "hint",
+      "evidence": [
+       "e8"
+      ],
+      "note": "",
+      "downgraded": null,
+      "claimed": "hint",
+      "dropped": []
+     }
+    ],
+    "n_tests": 2,
+    "verdicts": {
+     "t1": {
+      "verdict": "real",
+      "direction": "down"
+     },
+     "t2": {
+      "verdict": "real",
+      "direction": "down"
+     }
+    }
+   }
+  },
+  {
+   "t_ms": 24760,
+   "event": "board",
+   "data": {
+    "suspects": [
+     {
+      "id": "Less rain / warmer air (climate)",
+      "label": "Less rain / warmer air (climate)",
+      "status": "hint",
+      "evidence": [
+       "e8"
+      ],
+      "note": "",
+      "downgraded": null,
+      "claimed": "hint",
+      "dropped": []
+     }
+    ],
+    "n_tests": 2,
+    "verdicts": {
+     "t1": {
+      "verdict": "real",
+      "direction": "down"
+     },
+     "t2": {
+      "verdict": "real",
+      "direction": "down"
+     }
+    }
+   }
+  },
+  {
+   "t_ms": 24760,
+   "event": "answer",
+   "data": {
+    "text": "Yes, between 2003 and 2024 the total water stored around the Aral Sea went down by about 14.7 cm per decade, and the tests found this decline is real. About 97.6% of that drop is not explained by the climate we measured (less rain and warmer air), which is a clue, not proof. We ran 2 tests, and the sea is smaller than one data cell, which is roughly 300 km across.",
+    "checked": true,
+    "figures": [
+     "2003",
+     "2024",
+     "14.7",
+     "97.6%",
+     "2",
+     "300"
+    ],
+    "source": "llm",
+    "next_questions": [
+     "Is it still going down in recent years?",
+     "Can we test the link with less rain / warmer air (climate)?",
+     "What about air temperature here?"
+    ]
+   }
+  },
+  {
+   "t_ms": 24760,
+   "event": "done",
+   "data": {
+    "thread_id": "16afa8491ecb41749ad0ee3b6b626c09",
+    "n_tests": 2,
+    "n_tests_branch": 2,
+    "n_tool_calls": 10
+   }
+  }
+ ]
+}

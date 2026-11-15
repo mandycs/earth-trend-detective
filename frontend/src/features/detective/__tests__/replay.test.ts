@@ -2,6 +2,23 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { RECORDING_NAME, parseRecording, replaySchedule, targetFromRequest } from "../replay.ts";
 import type { Recording } from "../replay.ts";
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+
+test("every demo recording parses, finishes, and ends on a checked answer", () => {
+  const dir = join(import.meta.dirname, "../../../../../backend/data/recordings");
+  const files = readdirSync(dir).filter((f) => f.endsWith(".json"));
+  assert.ok(files.length > 0);
+  for (const f of files) {
+    assert.ok(RECORDING_NAME.test(f.slice(0, -5)), f);
+    const r = parseRecording(JSON.parse(readFileSync(join(dir, f), "utf8")));
+    assert.ok(r, f);
+    const schedule = replaySchedule(r);
+    assert.equal(schedule[schedule.length - 1].event.kind, "done", f);
+    const answer = schedule.find((s) => s.event.kind === "answer");
+    assert.ok(answer && answer.event.kind === "answer" && answer.event.data.checked, f);
+  }
+});
 
 const rec = (ts: number[], event = "thinking"): Recording => ({
   question: "q", request: {}, started_at: "2026-11-15T10:00:00Z",
