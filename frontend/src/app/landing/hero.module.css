@@ -12,7 +12,8 @@
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  /* contain, not cover: the film's titles sit near its edges and cover cut them on 16:10 screens */
+  object-fit: contain;
 }
 
 /* Only the corners darken, so the film keeps its own titles readable. */

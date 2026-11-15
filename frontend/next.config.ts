@@ -13,6 +13,9 @@ const nextConfig: NextConfig = {
   images: {
     // The cover pictures come from public/sites and only change on a redeploy (which starts a fresh cache).
     minimumCacheTTL: 60 * 60 * 24 * 7,
+    // No 3840 px variant: a full-screen cover never needs more than 2048, and the big ones are slow to make.
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
+    formats: ['image/webp'],
   },
   // public/ files are not content-hashed, so they get a day of fresh cache plus a week of
   // stale-while-revalidate instead of `immutable`: a redeploy with new data shows up within a day,
