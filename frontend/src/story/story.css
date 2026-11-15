@@ -63,6 +63,7 @@
 .st-explore {
   margin-left: auto;
   min-height: 44px;
+  min-width: 44px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -72,8 +73,21 @@
   white-space: nowrap;
 }
 
-.st-ask + .st-explore-last {
+.st-ask + .st-explore-last,
+.st-stack-btn + .st-explore-last,
+.st-stack-status + .st-explore-last {
   margin-left: 20px;
+}
+
+/* "Layer stack": a button dressed as the header's other quiet links. */
+.st-explore.st-stack-btn {
+  margin-left: 20px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .st-explore:hover {
@@ -1976,4 +1990,46 @@
     top: 76px;
     max-width: min(520px, calc(100% - 340px));
   }
+}
+
+/* Why the layer stack did not open (no layers, or a failed load), under the header. The live region is always
+   mounted and fixed, so it never takes room in the header row. */
+.st-stack-status {
+  position: fixed;
+}
+
+.st-stack-note {
+  position: fixed;
+  top: 64px;
+  right: 16px;
+  z-index: 30;
+  max-width: min(360px, calc(100vw - 32px));
+  padding: 12px 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-size: 1rem;
+}
+
+.st-stack-note p {
+  margin: 0 0 8px;
+}
+
+.st-stack-note-actions {
+  display: flex;
+  gap: 16px;
+}
+
+.st-stack-note-btn {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
 }

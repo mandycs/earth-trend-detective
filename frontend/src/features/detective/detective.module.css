@@ -1,0 +1,1179 @@
+/* ------------------------------------------------------------------ map */
+/* Ink on ground, square corners, no accent: colour belongs to the data layers (DESIGN.md). */
+
+.mapWrap {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 55svh;
+  background: #050608;
+  overflow: hidden;
+}
+
+.map {
+  position: absolute !important;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.mapWrap :global(.maplibregl-ctrl-group) {
+  border-radius: 0;
+  background: var(--surface);
+  box-shadow: none !important; /* taste-skill-ignore: removes maplibre's own shadow */
+}
+
+.mapWrap :global(.maplibregl-ctrl-group button) {
+  width: 48px;
+  height: 48px;
+}
+
+.mapWrap :global(.maplibregl-ctrl-icon) {
+  filter: invert(1);
+}
+
+.mapWrap :global(.maplibregl-ctrl-attrib),
+.mapWrap :global(.maplibregl-ctrl-attrib.maplibregl-compact) {
+  background: rgba(11, 13, 16, 0.85) !important;
+  color: var(--ink-2);
+}
+
+.mapWrap :global(.maplibregl-ctrl-attrib.maplibregl-compact) {
+  min-height: 44px;
+  padding-right: 44px;
+}
+
+.mapWrap :global(.maplibregl-ctrl-attrib-button) {
+  width: 44px;
+  height: 44px;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.mapWrap :global(.maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-inner) {
+  padding: 10px 0 10px 8px;
+}
+
+.mapWrap :global(.maplibregl-ctrl-attrib a) {
+  color: var(--ink-2);
+}
+
+.cornerDot {
+  width: 16px;
+  height: 16px;
+  background: var(--ink);
+  border: 3px solid var(--ground);
+}
+
+/* hints and notes: top, clear of the reading column on wide screens */
+
+.mapNotes {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.mapHint,
+.mapNote {
+  margin: 0;
+  padding: 10px 14px;
+  background: var(--ground);
+  color: var(--ink);
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+.mapHint {
+  font-weight: 700;
+}
+
+.mapHintSub {
+  color: var(--ink-2);
+  font-weight: 500;
+}
+
+.mapNote {
+  color: var(--ink-2);
+}
+
+.mapError {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  margin: 0;
+  padding: 14px 16px;
+  background: var(--surface);
+  border-left: 5px solid var(--ink);
+  font-size: 1rem;
+  z-index: 4;
+}
+
+@media (min-width: 1100px) {
+  .mapNotes,
+  .mapError {
+    left: calc(40% + 16px);
+  }
+}
+
+/* legend: folded behind one text button, bottom right beside the map controls */
+
+.legend {
+  position: absolute;
+  right: 76px;
+  bottom: 60px; /* clear of the 44 px attribution line */
+  width: min(380px, calc(100% - 92px));
+  display: flex;
+  flex-direction: column-reverse;
+  z-index: 3;
+}
+
+.legendToggle {
+  align-self: flex-end;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.legendToggle:hover {
+  background: var(--surface-2);
+}
+
+.legendToggle:focus-visible,
+.curtainRange:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.legendChevron {
+  display: inline-block;
+  width: 1ch;
+  font-weight: 800;
+}
+
+.legendPanel {
+  max-height: min(60svh, 520px);
+  overflow-y: auto;
+  padding: 14px 16px;
+  background: var(--ground);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.legendPanel p {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
+.legendEntry {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.legendEntry + .legendEntry {
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.legendRole {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-3);
+  font-weight: 700;
+}
+
+.legendTitle {
+  font-weight: 700;
+}
+
+.legendMuted {
+  color: var(--ink-2);
+}
+
+.legendCurtain {
+  font-weight: 700;
+}
+
+.legendRamp {
+  height: 14px;
+  margin: 4px 0;
+}
+
+.dashSwatch {
+  display: inline-block;
+  width: 28px;
+  border-top: 3px dashed var(--ink);
+}
+
+/* curtain: a second map clipped at a vertical divider */
+
+.curtain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.curtainMap {
+  position: absolute !important;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.curtainDivider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  margin-left: -1.5px;
+  background: var(--ink);
+}
+
+.curtainGrip {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 48px;
+  height: 48px;
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-items: center;
+  background: var(--ink);
+  color: var(--ground);
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.curtainYear {
+  position: absolute;
+  top: 16px;
+  margin: 0;
+  padding: 8px 14px;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.curtainYearLeft {
+  left: 16px;
+}
+
+.curtainYearRight {
+  right: 16px;
+}
+
+@media (min-width: 1100px) {
+  .curtainYearLeft {
+    left: calc(40% + 16px);
+  }
+}
+
+/* Full-height range input; only its thumb takes the pointer, so the map below stays draggable. */
+.curtainRange {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  background: transparent;
+  appearance: none;
+  -webkit-appearance: none;
+  pointer-events: none;
+  cursor: ew-resize;
+}
+
+.curtainRange::-webkit-slider-runnable-track {
+  height: 100%;
+  background: transparent;
+}
+
+.curtainRange::-moz-range-track {
+  height: 100%;
+  background: transparent;
+}
+
+.curtainRange::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 48px;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  pointer-events: auto;
+  cursor: ew-resize;
+}
+
+.curtainRange::-moz-range-thumb {
+  width: 48px;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  pointer-events: auto;
+  cursor: ew-resize;
+}
+
+/* ------------------------------------------------------- reading column */
+/* Instrument mode (DESIGN.md): ink on ground, square corners, no accent, body ≥ 16 px. */
+
+.muted {
+  color: var(--ink-2);
+}
+
+.tertiary {
+  color: var(--ink-3);
+}
+
+.textBtn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+
+.textBtn:hover {
+  text-decoration-thickness: 2px;
+}
+
+/* question box */
+
+.qbox {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.qHint,
+.qMeta,
+.qReadonly,
+.qStatus,
+.qReason {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
+.qHint {
+  font-weight: 600;
+}
+
+.qMeta,
+.qReason,
+.qStatus {
+  color: var(--ink-2);
+}
+
+.qReadonly {
+  font-size: 1.1875rem;
+  font-weight: 600;
+}
+
+.toggleRow {
+  display: flex;
+  gap: 2px;
+}
+
+.toggle {
+  min-width: 96px;
+  min-height: 48px;
+  padding: 0 18px;
+  border: 2px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink-2);
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.toggle[aria-pressed='true'] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--ground);
+}
+
+.qInput {
+  width: 100%;
+  min-height: 96px;
+  padding: 12px 14px;
+  border: 2px solid var(--line);
+  border-radius: 0;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 1.0625rem;
+  line-height: 1.45;
+  resize: vertical;
+}
+
+.qInput:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 0;
+  border-color: var(--ink);
+}
+
+.qInput::placeholder {
+  color: var(--ink-3);
+}
+
+.qActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+}
+
+.forkLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  padding: 8px 12px;
+  border-left: 4px solid var(--ink);
+  background: var(--surface);
+}
+
+.forkLine p {
+  margin: 0;
+  font-size: 1rem;
+}
+
+/* scene subtitle */
+
+.scene {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.scenePlace {
+  font-family: var(--font-display);
+  font-stretch: 75%;
+  font-weight: 800;
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  line-height: 1.05;
+}
+
+.sceneQuestion {
+  font-size: 1.1875rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.sceneTool {
+  color: var(--ink-3);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sceneState,
+.sceneSummary,
+.sceneError {
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.sceneState {
+  color: var(--ink-2);
+}
+
+.sceneError {
+  padding: 12px 14px;
+  border-left: 5px solid var(--ink);
+  background: var(--surface);
+}
+
+.compare {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.compareSide {
+  display: grid;
+  grid-template-columns: 2ch 1fr auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 6px 12px;
+  background: var(--surface);
+  font-size: 1rem;
+}
+
+.compareKey {
+  font-family: var(--font-display);
+  font-weight: 800;
+}
+
+.compareYears {
+  color: var(--ink-2);
+}
+
+/* chart */
+
+.chart {
+  width: 100%;
+  margin: 4px 0;
+}
+
+.chartCanvas {
+  position: relative;
+  width: 100%;
+}
+
+.chartSvg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.chartBand {
+  fill: var(--ink);
+  fill-opacity: 0.18;
+  stroke: none;
+}
+
+.chartTrend {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2;
+  stroke-dasharray: 8 6;
+  vector-effect: non-scaling-stroke;
+}
+
+.chartLine {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.5;
+  stroke-opacity: 0.7;
+  vector-effect: non-scaling-stroke;
+}
+
+.chartDot {
+  fill: var(--ink);
+}
+
+.chartValue {
+  position: absolute;
+  padding: 0 4px;
+  background: var(--ground);
+  color: var(--ink);
+  font-size: 1rem;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.chartAxis {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 4px;
+  color: var(--ink-2);
+  font-size: 1rem;
+}
+
+.chartLegend {
+  margin-top: 6px;
+  color: var(--ink-3);
+  font-size: 1rem;
+}
+
+/* case board */
+
+.board {
+  display: flex;
+  flex-direction: column;
+}
+
+.boardToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 0;
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: left;
+}
+
+.boardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 12px;
+}
+
+.boardBody[data-open='false'] {
+  display: none;
+}
+
+/* A stamp that lands while the board is folded (narrow screens) still shows, under the toggle. */
+.boardNews {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 0;
+  font-size: 1rem;
+}
+
+@media (min-width: 1100px) {
+  .boardToggle {
+    display: none;
+  }
+
+  .boardNews {
+    display: none;
+  }
+
+  .boardBody[data-open='false'] {
+    display: flex;
+  }
+}
+
+.boardTitle {
+  color: var(--ink-3);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.suspects {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.suspect {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px;
+  background: var(--surface);
+}
+
+.suspectText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
+.suspectText p {
+  margin: 0;
+}
+
+.suspectLabel {
+  font-weight: 700;
+}
+
+.suspectStamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  min-height: 32px;
+  padding: 2px 8px;
+  border: 3px solid var(--ink);
+  font-family: var(--font-display);
+  font-stretch: 85%;
+  font-weight: 800;
+  font-size: 1rem;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.suspectSupported {
+  background: var(--ink);
+  color: var(--ground);
+}
+
+.suspectHint {
+  color: var(--ink);
+}
+
+.suspectRuledOut {
+  border-style: dashed;
+  color: var(--ink-2);
+  border-color: var(--ink-2);
+}
+
+.suspectTrendOnly {
+  border-style: double;
+  border-width: 4px;
+  color: var(--ink-2);
+  border-color: var(--ink-2);
+}
+
+.suspectOpen {
+  border-width: 2px;
+  border-color: var(--line);
+  color: var(--ink-3);
+}
+
+@media (max-width: 520px) {
+  .suspectStamp {
+    white-space: normal;
+  }
+}
+
+@keyframes stampIn {
+  from {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.stampIn {
+  animation: stampIn 400ms var(--ease-out) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stampIn {
+    animation: none;
+  }
+}
+
+/* answer */
+
+.answer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.answer p {
+  margin: 0;
+}
+
+.answerText {
+  font-size: 1.1875rem;
+  line-height: 1.5;
+}
+
+.answerClue {
+  font-family: var(--font-display);
+  font-stretch: 75%;
+  font-weight: 800;
+  font-size: 1.5rem;
+  line-height: 1.1;
+}
+
+.answerCheck {
+  color: var(--ink-2);
+  font-size: 1rem;
+}
+
+.notMeasured {
+  padding: 12px 14px;
+  background: var(--surface);
+}
+
+.notMeasuredTitle {
+  margin: 0 0 6px;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.notMeasured ul {
+  margin: 0;
+  padding-left: 1.2em;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+/* steps */
+
+.steps ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  border-left: 3px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 1rem;
+  text-align: left;
+}
+
+.step:hover {
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.step[aria-current='step'] {
+  border-left-color: var(--ink);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.stepIcon {
+  display: inline-block;
+  width: 1.5ch;
+  text-align: center;
+  font-weight: 800;
+}
+
+/* history */
+
+.history {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.historyRows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.historyRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 12px;
+  padding: 4px 12px;
+  background: var(--surface);
+  font-size: 1rem;
+}
+
+/* ------------------------------------------------------- page layout */
+/* Instrument mode (DESIGN.md): map full bleed, reading column on the left over a scrim (~38 % on desktop).
+   Below 1100 px the map sits on top (55svh) and the column follows. */
+
+.shell {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--ground);
+}
+
+.bar {
+  position: relative;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 56px;
+  padding: 6px var(--gutter);
+  background: var(--ground);
+}
+
+.wordmark {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 1.05rem;
+  text-decoration: none;
+  white-space: nowrap;
+  color: var(--ink);
+}
+
+.recWrap {
+  position: relative;
+}
+
+.recMenu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  width: min(420px, calc(100vw - 32px));
+  max-height: 60svh;
+  overflow-y: auto;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  z-index: 7;
+}
+
+.recItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 44px;
+  padding: 10px 16px;
+  color: var(--ink);
+  font-size: 1rem;
+  line-height: 1.35;
+  text-decoration: none;
+}
+
+.recItem:hover,
+.recItem:focus-visible {
+  background: var(--surface-3);
+}
+
+.recDate {
+  color: var(--ink-2);
+  font-size: 1rem;
+}
+
+.stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.mapArea {
+  position: relative;
+  z-index: 0; /* own stacking context: the curtain and map overlays stay under the scrim and the column */
+  isolation: isolate;
+  height: 55svh;
+  flex: none;
+}
+
+.mapLoading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 1rem;
+}
+
+.scrim {
+  display: none;
+}
+
+.column {
+  position: relative;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px var(--gutter) 48px;
+  background: var(--ground);
+}
+
+.column > * {
+  min-width: 0;
+}
+
+.runNote {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.playerRow {
+  display: flex;
+  gap: 12px;
+  margin-bottom: -12px;
+}
+
+/* solved-case chips and the typed place */
+
+.chips {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chipsLabel,
+.coordsLabel {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 1rem;
+}
+
+.chipRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.chip:hover {
+  background: var(--surface-3);
+}
+
+.coords {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.coordsRow {
+  display: flex;
+  gap: 8px;
+}
+
+.coordsInput {
+  flex: 1;
+  min-width: 0;
+  height: 48px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: var(--surface-2);
+  color: var(--ink);
+  font: inherit;
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.coordsInput::placeholder {
+  color: var(--ink-3);
+}
+
+.coordsInput:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 0;
+}
+
+@media (min-width: 1100px) {
+  .shell {
+    height: 100dvh;
+    overflow: hidden;
+  }
+  .bar {
+    height: 64px;
+    flex: none;
+  }
+  /* The map fills everything under the bar; the bar stays solid so map labels never meet the header link. */
+  .stage {
+    min-height: 0;
+  }
+  .mapArea {
+    position: absolute;
+    inset: 0;
+    height: auto;
+  }
+  .scrim {
+    display: block;
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 48%;
+    pointer-events: none;
+    z-index: 3;
+    /* Stops are in the scrim's own width (48 % of the page): solid behind the 38 % column, then a short fade. */
+    background: linear-gradient(90deg, rgba(14, 16, 18, 0.96) 0%, rgba(14, 16, 18, 0.93) 82%, rgba(14, 16, 18, 0.5) 91%, transparent 100%);
+  }
+  .column {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 38%;
+    overflow-y: auto;
+    padding: 12px var(--gutter) 48px;
+    background: transparent;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line) transparent;
+  }
+  /* The expanded attribution stays on the map side, clear of the reading column. */
+  .mapArea :global(.maplibregl-ctrl-attrib) {
+    max-width: calc(52vw - 32px);
+  }
+  /* Desktop opens the attribution expanded (two lines): the legend sits above it, not on it. */
+  .legend {
+    bottom: 92px;
+  }
+}
+
+/* the ending's closing beat: explode the evidence (Task 17) */
+
+.explodeRow {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
