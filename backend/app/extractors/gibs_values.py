@@ -272,3 +272,134 @@ def fetch_annual(
     elif layer.transparent_value is not None:
         series.attrs["caveat"] = SNOW_CAVEAT
     return series
+
+
+# --------------------------------------------------------------------------- yearly grids (trend maps)
+
+GRID_CACHE_DIR = Path(__file__).resolve().parents[2] / "data" / "cache" / "gibs_grids"
+grid_cache_dir_default: Path = GRID_CACHE_DIR  # patched in tests
+
+
+def _grid_cache_path(cache_dir: Path, layer: GibsLayer, bbox: Sequence[float], size: tuple[int, int], year: int) -> Path:
+    parts: list = [layer.gibs_layer, [round(float(c), 6) for c in bbox], list(size), list(YEAR_MONTHS), list(layer.days), year]
+    key = json.dumps(parts)
+    return cache_dir / layer.id / f"{hashlib.sha256(key.encode()).hexdigest()[:20]}.npz"
+
+
+def _read_grid(path: Path, size: tuple[int, int]) -> dict | None:
+    """The cached year ({"grid": array | None, "palette_step", "saturated_share", "scale_top"});
+    a corrupt or wrongly shaped file is deleted."""
+    if not path.exists():
+        return None
+    try:
+        with np.load(path, allow_pickle=False) as npz:
+            has = bool(npz["has_grid"])
+            grid = np.array(npz["grid"], dtype=float) if has else None
+            out = {"grid": grid, "palette_step": float(npz["palette_step"]), "saturated_share": float(npz["saturated_share"])}
+            top = float(npz["scale_top"])
+        if grid is not None and grid.shape != (size[1], size[0]):
+            raise ValueError(f"shape {grid.shape} != {size[1]}x{size[0]}")
+        if np.isfinite(top):
+            out["scale_top"] = top
+        return out
+    except (OSError, ValueError, KeyError, TypeError, EOFError) as exc:
+        logger.warning("GIBS grid cache %s unreadable (%s), fetching again", path.name, exc)
+        path.unlink(missing_ok=True)
+        return None
+
+
+def _write_grid(path: Path, entry: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.", suffix=".tmp")
+    grid = entry["grid"]
+    try:
+        with os.fdopen(fd, "wb") as fh:
+            np.savez_compressed(
+                fh,
+                has_grid=np.array(grid is not None),
+                grid=np.zeros((0, 0)) if grid is None else grid.astype(np.float32),
+                palette_step=np.array(entry["palette_step"]),
+                saturated_share=np.array(entry["saturated_share"]),
+                scale_top=np.array(entry.get("scale_top", float("nan"))),
+            )
+        os.replace(tmp, path)
+    except BaseException:
+        Path(tmp).unlink(missing_ok=True)
+        raise
+
+
+def fetch_annual_grids(
+    layer: GibsLayer,
+    bbox: Sequence[float],
+    start: int,
+    end: int,
+    size: tuple[int, int],
+    client: httpx.Client | None = None,
+    cache_dir: Path | None = None,
+) -> tuple[dict[int, np.ndarray], dict]:
+    """Yearly mean grid (display units, rows north first, shape (height, width)) per kept year.
+
+    Same years, rules and failures as `fetch_annual`, but the whole grid is kept: each completed
+    year is cached on disk (`data/cache/gibs_grids/`, atomic), also a year with no clear picture;
+    a year with a failed request is a gap in `attrs["missing_years"]` and never cached. Raises
+    `GibsError` when nothing usable comes back.
+    """
+    cache = grid_cache_dir_default if cache_dir is None else cache_dir
+    years = list(range(max(start, layer.first_year), min(end, last_complete_year()) + 1))
+    paths = {y: _grid_cache_path(cache, layer, bbox, size, y) for y in years}
+    entries: dict[int, dict] = {}
+    for year in years:
+        hit = _read_grid(paths[year], size)
+        if hit is not None:
+            entries[year] = hit
+    todo = [y for y in years if y not in entries]
+    failed: set[int] = set()
+    if todo:
+        own = client is None
+        client = client or httpx.Client(timeout=TIMEOUT_S)
+        try:
+            try:
+                table = load_colormap(client, layer)
+            except httpx.HTTPError as exc:
+                raise GibsError(f"GIBS colormap {layer.colormap!r}: {type(exc).__name__}") from exc
+            if not table:
+                raise GibsError(f"GIBS colormap {layer.colormap!r} unreadable")
+            saturated: dict[int, float] = {}
+            grids = yearly_values(
+                layer, bbox, todo, client, YEAR_MONTHS, size=size, table=table, workers=WORKERS,
+                failed=failed, saturated=saturated,
+            )
+        finally:
+            if own:
+                client.close()
+        step = palette_step(table)
+        for year in todo:
+            if year in failed:
+                continue  # partial: a gap, and asked again next time
+            entries[year] = {"grid": grids.get(year), "palette_step": step, "saturated_share": saturated.get(year, 0.0)}
+            if getattr(table, "top_value", None) is not None:
+                entries[year]["scale_top"] = float(table.top_value)
+            if year < _this_year():
+                try:
+                    _write_grid(paths[year], entries[year])
+                except OSError as exc:  # a cache that cannot be written must not lose the data
+                    logger.warning("GIBS grid cache write failed: %s", exc)
+    kept = {y: entries[y]["grid"] for y in years if y in entries and entries[y]["grid"] is not None}
+    if years and not kept:
+        why = "requests failed" if failed else "no usable picture for this box"
+        raise GibsError(f"GIBS {layer.gibs_layer}: {why} in {start}-{end}")
+    steps = [entries[y]["palette_step"] for y in entries]
+    attrs: dict = {
+        "palette_step": steps[0] if steps else float("nan"),
+        "dropped_years": [y for y in years if y in entries and entries[y]["grid"] is None],
+        "missing_years": sorted(failed),
+        "saturated_share": {y: entries[y]["saturated_share"] for y in kept},
+    }
+    tops = [entries[y]["scale_top"] for y in entries if "scale_top" in entries[y]]
+    if tops:
+        attrs["scale_top"] = tops[0]
+    if layer.caveat:
+        attrs["caveat"] = layer.caveat
+    elif layer.transparent_value is not None:
+        attrs["caveat"] = SNOW_CAVEAT
+    return kept, attrs

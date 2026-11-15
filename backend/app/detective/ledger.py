@@ -20,7 +20,10 @@ from app.stats.trend import TrendResult
 from app.stats.verdict import Direction, Verdict, classify
 
 # p and q values are never figures the answer may quote.
-_NON_FIGURE_KEYS = frozenset({"chart", "series", "url", "bbox", "evidence_id", "p_value", "p", "q_session", "q"})
+# `map` / `legend`: a trend map's drawing data (bounds, colour range, pixel counts), never quoted.
+_NON_FIGURE_KEYS = frozenset(
+    {"chart", "series", "url", "bbox", "evidence_id", "p_value", "p", "q_session", "q", "map", "legend"}
+)
 
 
 @dataclass(frozen=True)
@@ -73,6 +76,28 @@ def _numbers(value: Any) -> list[float]:
         return [n for k, v in value.items() if k not in _NON_FIGURE_KEYS for n in _numbers(v)]
     if isinstance(value, (list, tuple)):
         return [n for v in value for n in _numbers(v)]
+    return []
+
+
+def _is_percent_key(key: object) -> bool:
+    return isinstance(key, str) and (key.endswith("_pct") or key.startswith("pct_"))
+
+
+def _percent_numbers(value: Any, inside: bool = False) -> list[float]:
+    """Numbers a tool gave as percentages: under a key ending in `_pct` or starting with `pct_`."""
+    if isinstance(value, bool):
+        return []
+    if isinstance(value, (int, float)):
+        return [value] if inside else []
+    if isinstance(value, Mapping):
+        return [
+            n
+            for k, v in value.items()
+            if k not in _NON_FIGURE_KEYS
+            for n in _percent_numbers(v, inside or _is_percent_key(k))
+        ]
+    if isinstance(value, (list, tuple)):
+        return [n for v in value for n in _percent_numbers(v, inside)]
     return []
 
 
@@ -196,6 +221,15 @@ class Ledger:
             )
         ledger._test_keys = {str(k): str(v) for k, v in (state.get("test_keys") or {}).items()}
         return ledger
+
+    def percent_figures(self) -> list[float]:
+        """Every number a tool returned as a percentage (the answer may quote it with "%")."""
+        seen: list[float] = []
+        for result in self.results.values():
+            for n in _percent_numbers(result):
+                if n not in seen:
+                    seen.append(n)
+        return seen
 
     def figures(self) -> list[float]:
         seen: list[float] = []

@@ -125,3 +125,16 @@
   4 days a month (1, 9, 17, 25 → 48 pictures a year, ≈ 7 s per year uncached), a year needs
   half of them seen; variable `no2_omi`, label "annual mean of daily values on 4 days a
   month". Colormap parser now reads `1.06e+14` exponents (MODIS colormaps parse unchanged).
+- **Task 6 (2026-11-15, spike read live).** (a) The Earthdata GIS image service
+  `C2617126679-POCLOUD/OPERA_L3_DSWX-HLS_V1_B01_WTR` only starts on 2023-01-01. The same product
+  (CMR `OPERA_L3_DSWX-HLS_V1`, historical record from 2016-01-01) is on GIBS as
+  `OPERA_L3_Dynamic_Surface_Water_Extent-HLS` with fixed class colours (colormap
+  `OPERA_Dynamic_Surface_Water_Extent`), time domain 2016-01-07..2020-08-15 and 2023-01-01..now:
+  no scenes at all from mid-August 2020 to the end of 2022 (CMR has none either). Decision: (a)'s
+  product and classes, read through GIBS (no auth), scene days from CMR. Water rule ruling:
+  "classes 1–2" taken literally gives ~24 km² in winter at La Viñuela (thousands of class-2 specks on
+  the hills; the reservoir is 5.65 km² full), so water = class 1 plus class-2 pixels touching class 1.
+  One clear scene a month (cover ≥ 99 %, cloud/snow ≤ 5 % of the box), yearly median, a year needs 9
+  clear months. La Viñuela live: 2016 3.51, 2017 3.10, 2018 3.21, 2019 3.62, 2023 1.56, 2024 1.96,
+  2025 3.66 km² (2020 dropped, 2021–2022 no scenes) → 7 years, trend test too short until 2028.
+  Uncached ≈ 130 s for 2016–2025, cached < 1 s. (b) HLS true colour was not needed.

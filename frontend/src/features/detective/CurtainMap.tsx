@@ -1,0 +1,144 @@
+'use client'
+
+import { useEffect, useRef, useState } from 'react'
+import type { Map as MlMap, PaddingOptions } from 'maplibre-gl'
+import { STYLE } from '../explore/mapStyle'
+import { curtainAriaLabel, curtainYears, drawSpecs, initialSplit } from './map/draw'
+import type { DrawSpec } from './map/draw'
+import type { CurtainView, MapView } from './map/mapView'
+import { addRelief, syncSpecs } from './mapSync'
+import styles from './detective.module.css'
+
+export interface CurtainCamera {
+  center: [number, number]
+  zoom: number
+  pitch: number
+  bearing: number
+  /** The main map's padding, so the two halves share the same centre. */
+  padding?: PaddingOptions
+}
+
+/** Filled by CurtainMap with a function that moves its camera; the main map calls it on every `move`. */
+export type CurtainSync = { current: ((camera: CurtainCamera) => void) | null }
+
+interface Props {
+  curtain: CurtainView
+  /** The camera to open on. Later moves arrive through `sync`, without a React render per frame. */
+  camera: CurtainCamera
+  /** Footprints and the picked box or point, so they stay visible on the right of the divider too. */
+  overlays?: DrawSpec[]
+  sync?: CurtainSync
+  /** The main map lost its relief: drop it here too so both halves still line up. */
+  flat?: boolean
+}
+
+const curtainOnly = (curtain: CurtainView): MapView => ({
+  place: null, context: null, evidence: null, curtain, footprints: [], camera: null, notes: [],
+})
+
+/**
+ * The right-hand picture of a comparison: a second, non-interactive map over the main one, clipped at the divider.
+ * Same style and the same relief as the main map, so the two halves line up at any pitch.
+ */
+export function CurtainMap({ curtain, camera, overlays = [], sync, flat = false }: Props) {
+  const container = useRef<HTMLDivElement>(null)
+  const map = useRef<MlMap | null>(null)
+  const registry = useRef(new Map<string, string>())
+  const cameraRef = useRef(camera)
+  const [ready, setReady] = useState(false)
+  const [split, setSplit] = useState(() => (typeof window === 'undefined' ? 50 : initialSplit(window.innerWidth)))
+
+  useEffect(() => {
+    cameraRef.current = camera
+    map.current?.jumpTo(camera)
+  }, [camera])
+
+  useEffect(() => {
+    if (!sync) return
+    sync.current = (c) => {
+      // Kept for the map built later (its import is async): it opens where the main map is now.
+      cameraRef.current = c
+      map.current?.jumpTo(c)
+    }
+    return () => {
+      sync.current = null
+    }
+  }, [sync])
+
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      const maplibregl = (await import('maplibre-gl')).default
+      if (cancelled || !container.current) return
+      const m = new maplibregl.Map({
+        container: container.current,
+        style: { ...STYLE, projection: { type: 'globe' } },
+        interactive: false,
+        attributionControl: false,
+        maxPitch: 85,
+        ...cameraRef.current,
+      })
+      if (cameraRef.current.padding) m.setPadding(cameraRef.current.padding)
+      // Relief is decided by the main map alone (`flat`): dropping it here on this map's own DEM errors would
+      // leave the two halves misaligned. Errors on this map are otherwise not news (the main map reports).
+      m.on('error', () => {})
+      m.on('load', () => {
+        if (cancelled) return
+        addRelief(m)
+        setReady(true)
+      })
+      map.current = m
+    })().catch(() => {
+      // The main map reports load failures; a missing curtain leaves the left picture readable.
+    })
+    const reg = registry.current
+    return () => {
+      cancelled = true
+      map.current?.remove()
+      map.current = null
+      reg.clear()
+      setReady(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    const m = map.current
+    if (m && ready && flat && m.getTerrain()) m.setTerrain(null)
+  }, [flat, ready])
+
+  useEffect(() => {
+    const m = map.current
+    if (!m || !ready) return
+    syncSpecs(m, [...drawSpecs(curtainOnly(curtain), 'curtain', null), ...overlays], registry.current)
+  }, [curtain, overlays, ready])
+
+  const [yearA, yearB] = curtainYears(curtain)
+  return (
+    <div className={styles.curtain}>
+      <div ref={container} className={styles.curtainMap} style={{ clipPath: `inset(0 0 0 ${split}%)` }} aria-hidden="true" />
+      <div className={styles.curtainDivider} style={{ left: `${split}%` }} aria-hidden="true">
+        <span className={styles.curtainGrip}>↔</span>
+      </div>
+      <p className={`${styles.curtainYear} ${styles.curtainYearLeft}`}>
+        <span aria-hidden="true">◀ </span>
+        {yearA}
+      </p>
+      <p className={`${styles.curtainYear} ${styles.curtainYearRight}`}>
+        {yearB}
+        <span aria-hidden="true"> ▶</span>
+      </p>
+      <input
+        type="range"
+        className={styles.curtainRange}
+        min={0}
+        max={100}
+        step={0.5}
+        value={split}
+        aria-label={curtainAriaLabel(curtain)}
+        onChange={(e) => setSplit(Number(e.target.value))}
+      />
+    </div>
+  )
+}
+
+export default CurtainMap

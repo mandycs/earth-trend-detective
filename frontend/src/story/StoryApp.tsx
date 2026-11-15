@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { Wordmark } from '../brand/Wordmark'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type * as THREE from 'three'
 import { readFrame, useSite, useStoryAssets } from './useSite'
@@ -13,6 +14,7 @@ import { StoryPanel } from './StoryPanel'
 import { Timeline } from './Timeline'
 import type { SiteVariable } from './types'
 import { bboxWidthMeters } from './types'
+import { CaseLayersButton } from '../features/detective/stack/CaseLayersButton'
 import { CASE_IDS, fmt, leadVariable, shortName } from '../lib/cases'
 import { LayerPanel } from './layers/LayerPanel'
 import { Curtain } from './layers/Curtain'
@@ -453,7 +455,7 @@ export default function StoryApp({ caseId }: { caseId: string }) {
     <div className={mode === 'doc' ? 'st st-documentary' : drone ? 'st st-in-drone' : 'st'}>
       <header className="st-bar">
         <Link href="/" className="st-wordmark wide">
-          Earth Trend Detective
+          <Wordmark />
         </Link>
         <nav className="st-cases" aria-label="Cases">
           {CASE_IDS.map((id) => (
@@ -462,11 +464,12 @@ export default function StoryApp({ caseId }: { caseId: string }) {
             </Link>
           ))}
         </nav>
-        <Link href={`/investigate?site=${caseId}`} className="st-explore st-ask">
+        <Link href={`/detective?site=${caseId}`} className="st-explore st-ask">
           <span>
-            Ask<span className="st-hide-sm"> the detective</span>
+            Ask Alibi
           </span>
         </Link>
+        {site && <CaseLayersButton siteId={caseId} bbox={site.bbox} className="st-explore st-stack-btn" />}
         <Link href="/explore" className="st-explore st-explore-last">
           <span>
             Explore<span className="st-hide-sm"> any point</span>
@@ -481,9 +484,14 @@ export default function StoryApp({ caseId }: { caseId: string }) {
             {site && mode === 'doc' ? (
               <div className="doc">
                 <div className="doc-top">
-                  <Link href="/" className="doc-wordmark wide">
-                    Earth Trend Detective
-                  </Link>
+                  <div className="doc-start">
+                    <Link href="/" className="doc-wordmark wide">
+                      <Wordmark />
+                    </Link>
+                    <Link href={`/detective?site=${caseId}`} className="doc-ask">
+                      Ask Alibi
+                    </Link>
+                  </div>
                   <ol className="doc-chapters" aria-label="Chapters">
                     {CHAPTER_NAMES.map((name, i) => (
                       <li key={name}>
@@ -542,9 +550,16 @@ export default function StoryApp({ caseId }: { caseId: string }) {
                     <button type="button" className="doc-quiet" onClick={() => setDocPlaying((p) => !p)} aria-pressed={!docPlaying}>
                       {docPlaying ? 'Pause' : 'Play'}
                     </button>
-                    <button type="button" className="btn btn-primary" onClick={nextChapter}>
-                      {chapter >= CHAPTER_NAMES.length - 1 ? 'Explore freely →' : `Next: ${CHAPTER_NAMES[chapter + 1].replace(/\?$/, '').toLowerCase()} →`}
-                    </button>
+                    {chapter >= CHAPTER_NAMES.length - 1 ? (
+                      // The story ends here: "Explore" (above) stays for this case, the detective takes any other place.
+                      <Link href="/detective" className="btn btn-primary">
+                        Ask Alibi about another place →
+                      </Link>
+                    ) : (
+                      <button type="button" className="btn btn-primary" onClick={nextChapter}>
+                        {`Next: ${CHAPTER_NAMES[chapter + 1].replace(/\?$/, '').toLowerCase()} →`}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

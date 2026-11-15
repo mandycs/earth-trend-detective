@@ -1,4 +1,6 @@
-# Earth Trend Detective
+# Alibi
+
+*An Earth trend detective.* The satellites saw it all. Nobody told the story.
 
 **Is it the climate, or is it us?**
 

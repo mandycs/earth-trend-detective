@@ -252,7 +252,7 @@ def board_payload(case: Mapping, store: BaseStore | None = None, thread_id: str 
     """The board re-judged against the correction as it stands now, the number of tests in the
     thread's family, and the corrected verdict of every test of this branch (by test id)."""
     session = _case_session(case, store, thread_id)
-    judged = case_board.evaluate(session.board, session.ledger)
+    judged = case_board.evaluate(session.board, session.ledger, session.catalog)
     verdicts = {tid: {"verdict": str(v), "direction": str(d)} for tid, (_, v, d) in session.ledger.corrected().items()}
     return {"suspects": case_board.as_json(judged), "n_tests": session.ledger.n_finite(), "verdicts": verdicts}
 
@@ -265,6 +265,7 @@ def answer_payload(answer: Mapping | None) -> dict | None:
         "checked": bool(answer.get("checked")),
         "figures": list(answer.get("figures") or []),
         "source": answer.get("source"),  # "llm" | "template"
+        "rejected": list(answer.get("rejected") or []),  # why each narrator try was turned down (no model text)
     }
 
 

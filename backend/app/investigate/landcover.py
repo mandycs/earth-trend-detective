@@ -34,8 +34,8 @@ TAG_MIN_SHARE = 0.15
 WATER_CLASS = "Water"
 URBAN_CLASS = "Urban and built-up land"
 ICE_CLASS = "Permanent snow and ice"
-ICE_NEIGHBOUR_SHARE = 0.05  # Barren with at least this much ice beside it is not a desert
-POLAR_LAT = 60.0  # Open shrubland poleward of this is tundra, not desert
+ICE_NEIGHBOUR_SHARE = 0.05  # Barren or shrubland with at least this much ice beside it is not a desert
+POLAR_LAT = 60.0  # Barren or open shrubland poleward of this is tundra or polar rock, not desert
 ZONE_OCEAN_SHARE = 0.5
 ZONE_COAST_SHARE = 0.05
 ZONE_CITY_SHARE = 0.15
@@ -102,8 +102,9 @@ def tags_for(
 ) -> tuple[str, ...]:
     """Catalog tags of every class covering at least `min_share` (in first-seen order).
 
-    `desert` is withheld where it would be wrong: Barren beside permanent snow or ice is bare
-    rock around a glacier, and Open shrubland poleward of 60 degrees is tundra (Greenland, Siberia).
+    `desert` is withheld where it would be wrong: Barren or Open shrubland beside permanent snow
+    or ice is bare rock or alpine scrub around a glacier, and poleward of 60 degrees it is tundra or
+    polar rock (Greenland, Svalbard, Siberia).
     """
     by_name = {name: tags for name, tags in CLASSES.values()}
     icy = shares.get(ICE_CLASS, 0.0) >= ICE_NEIGHBOUR_SHARE
@@ -113,7 +114,7 @@ def tags_for(
         if share < min_share:
             continue
         for tag in by_name.get(name, ()):
-            if tag == "desert" and ((name == "Barren" and icy) or (name == "Open shrubland" and polar)):
+            if tag == "desert" and (icy or polar):
                 continue
             if tag not in out:
                 out.append(tag)

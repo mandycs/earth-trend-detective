@@ -2,11 +2,19 @@
 
 Each call appends one op to `session.map` (`show_layer`, `set_year`, `show_before_after`,
 `fly_to`, `show_footprint`). They are instructions, not evidence: never cached by the
-ledger, they log no tests, and what they return to the model carries no figures (legend
-ranges go to the front through the layer catalog, not to the model).
+ledger, they log no tests, and what they return to the model carries no measured figures (legend
+ranges go to the front through the layer catalog, not to the model). The only numbers in them are
+years: a `show_layer` without a date returns the `year` it chose (with `year_note`), and the ops
+carry the years and boxes they were given.
 
 Valid layer ids: `catalog/map_layers.yaml` (GIBS layers, checked against the GIBS
 capabilities) plus, inside a solved case, the ids of `sites/<id>/layers.json`.
+
+The map also follows the investigation on its own:
+- `auto_fly_to`: when the place is profiled, the camera flies to it (pitch 55) unless it already moved;
+- `show_layer` with no date and no year shows the last year of the most recent tested period (else
+  the investigation's end year), when the layer has that year;
+- `case_layer_rows`: inside a solved case, its own layers (e.g. `trend_lst_day`, `before_after`).
 """
 
 from __future__ import annotations
@@ -22,13 +30,14 @@ from typing import Any
 import yaml
 
 from app import layers
+from app.detective.cells import CELL_KM
 from app.detective.session import Session
 
 MAP_LAYERS_PATH = Path(__file__).resolve().parents[3] / "catalog" / "map_layers.yaml"
 ZONES = frozenset({"any", "farmland", "water", "snow", "city", "fire", "sea"})
 DEFAULT_OPACITY = 0.8
 MAX_PITCH = 85.0  # MapLibre's limit
-FOOTPRINT_KM = {"grace": 300.0, "power": 50.0, "gldas": 25.0}
+FOOTPRINT_KM = CELL_KM
 FOOTPRINT_LABEL = {
     "grace": "GRACE water storage approximate data cell",
     "power": "NASA POWER weather approximate data cell",
@@ -38,6 +47,10 @@ FOOTPRINT_NOTE = "One value covers this whole cell, not the exact point; the out
 _DATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
 _SITE_ID_RE = re.compile(r"[a-z0-9_]+")
 _KM_PER_DEG = 111.32
+AUTO_PITCH = 55.0
+AUTO_FLY_NOTE = "The map camera flew to the place."
+TESTED_YEAR_NOTE = "No date was given: the map shows the last year of the tested period."
+_CASE_YEARLY = "yearly"
 
 
 def _rejected(reason: str) -> dict:
@@ -123,6 +136,27 @@ def _find(session: Session, layer_id: str) -> tuple[dict | None, bool]:
     return None, False
 
 
+def tested_year(session: Session) -> int:
+    """Last year of the most recent tested period (a test result with `years`), else the investigation's end."""
+    for result in reversed(list(session.ledger.results.values())):
+        years = result.get("years")
+        if (result.get("test_id") or result.get("test_ids")) and isinstance(years, list) and len(years) == 2:
+            try:
+                return int(years[1])
+            except (TypeError, ValueError):
+                continue
+    return int(session.end)
+
+
+def _default_year(session: Session, row: dict, is_case: bool) -> int | None:
+    """The tested year when this layer has it (a case layer only when it is yearly)."""
+    year = tested_year(session)
+    if is_case:
+        years = row.get("years") or []
+        return year if row.get("kind") == _CASE_YEARLY and year in years else None
+    return None if _date_problem(row, None, year) else year
+
+
 def show_layer(
     session: Session, layer_id: str, date: str | None = None, year: int | None = None, opacity: float = DEFAULT_OPACITY
 ) -> dict:
@@ -133,6 +167,10 @@ def show_layer(
         problem = _date_problem(row, date, year)
         if problem:
             return _rejected(problem)
+    defaulted = False
+    if date is None and year is None:
+        year = _default_year(session, row, is_case)
+        defaulted = year is not None
     try:
         alpha = min(max(float(opacity), 0.0), 1.0)
     except (TypeError, ValueError):
@@ -144,7 +182,10 @@ def show_layer(
         op["year"] = int(year)
     op["opacity"] = alpha
     session.map.append(op)
-    return {"status": "shown", **_describe(layer_id, row, is_case)}
+    out = {"status": "shown", **_describe(layer_id, row, is_case)}
+    if defaulted:
+        out |= {"year": int(year), "year_note": TESTED_YEAR_NOTE}
+    return out
 
 
 def set_year(session: Session, year: int) -> dict:
@@ -187,6 +228,21 @@ def fly_to(session: Session, bbox: list[float], pitch: float = 55, bearing: floa
     tilt = min(max(float(pitch), 0.0), MAX_PITCH)
     session.map.append({"op": "fly_to", "bbox": box, "pitch": tilt, "bearing": float(bearing) % 360.0})
     return {"status": "shown", "note": "The map camera moved."}
+
+
+def auto_fly_to(session: Session) -> bool:
+    """Fly the camera to the place (pitch 55) unless it already moved; True when it flew."""
+    if any(op.get("op") == "fly_to" for op in session.map):
+        return False
+    return fly_to(session, list(session.place.bbox), pitch=AUTO_PITCH).get("status") == "shown"
+
+
+def case_layer_rows(session: Session) -> list[dict]:
+    """The solved case's own layers ({layer_id, title, kind}), empty outside a case."""
+    return [
+        {"layer_id": layer_id, "title": str(row.get("title") or layer_id), "kind": str(row.get("kind") or "")}
+        for layer_id, row in _case_layers(session).items()
+    ]
 
 
 def show_footprint(session: Session, source: str) -> dict:

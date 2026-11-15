@@ -1,0 +1,26 @@
+# Build context = repo root (both images need sites/; the web build also reads
+# backend/data/recordings through its prebuild sync). Keep it small and secret-free.
+**/node_modules
+**/.next
+**/.venv
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+frontend/public/sites
+backend/data/cache
+backend/data/detective
+backend/tests
+video
+docs
+.superpowers
+.claude
+.git
+.github
+.env
+.env.*
+**/.env
+**/.env.*
+*.log
+**/*.nc
+**/*.h5
+**/*.hdf

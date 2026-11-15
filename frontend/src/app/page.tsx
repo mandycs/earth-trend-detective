@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import Link from 'next/link'
+import { Wordmark } from '../brand/Wordmark'
 import { readCases } from '../lib/readSites'
 import { shortName } from '../lib/cases'
 import { chaptersFor } from '../lib/chapters'
@@ -49,15 +50,15 @@ export default function HomePage() {
           <div className={styles.ownShade} aria-hidden="true" />
           <div className={styles.ownText}>
             <h2 id="own-title" className={`${styles.ownTitle} narrow`}>
-              Now ask about your own place
+              Three places, three answers. Now pick yours.
             </h2>
             <p>
-              Pick any point on Earth and ask a question. The detective runs its NASA checks one by one and answers
-              with what the data can and cannot say.
+              Click anywhere on the globe and ask in plain words. The detective picks the satellite records that fit the place,
+              tests each one, and shows you what it found, scene by scene.
             </p>
             <div className={styles.ownActions}>
-              <Link href="/investigate" className="btn btn-primary">
-                Ask the detective
+              <Link href="/detective" className="btn btn-primary">
+                Investigate anywhere
               </Link>
               <Link href="/explore" className={styles.quiet}>
                 Or browse the map
@@ -68,7 +69,9 @@ export default function HomePage() {
       </main>
 
       <footer className={styles.footer}>
-        <p className={`${styles.footerName} wide`}>Earth Trend Detective</p>
+        <p className={`${styles.footerName} wide`}>
+          <Wordmark full />
+        </p>
         <div className={styles.footerCols}>
           <div>
             <h2>Data</h2>

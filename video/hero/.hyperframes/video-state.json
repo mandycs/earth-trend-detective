@@ -1,0 +1,737 @@
+{
+  "version": 1,
+  "historyId": "aeebacc8-0006-4410-aab7-f1b513270fab",
+  "currentRevision": "69602578-40b8-45b5-a404-521f4214b758",
+  "pendingChanges": false,
+  "files": {
+    "AGENTS.md": {
+      "hash": "268ff46777938da818baa92a718571785e9acf2cef2d3ffbacbb93483dcba37a",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/26/268ff46777938da818baa92a718571785e9acf2cef2d3ffbacbb93483dcba37a"
+    },
+    "CLAUDE.md": {
+      "hash": "268ff46777938da818baa92a718571785e9acf2cef2d3ffbacbb93483dcba37a",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/26/268ff46777938da818baa92a718571785e9acf2cef2d3ffbacbb93483dcba37a"
+    },
+    "SPEC.md": {
+      "hash": "ce6e6730357708574cc5635f0a8ada024924c2b2638b1d3c7d868cc78f9848bc",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/ce/ce6e6730357708574cc5635f0a8ada024924c2b2638b1d3c7d868cc78f9848bc"
+    },
+    "STORYLINES.md": {
+      "hash": "091ffed548cdfded82dce2cc9880891bd40fba3de7e5c0945e1f86e2d2d82b38",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/09/091ffed548cdfded82dce2cc9880891bd40fba3de7e5c0945e1f86e2d2d82b38"
+    },
+    "assets/aletsch/2003.jpg": {
+      "hash": "126b01f4d259f87fd40c8c438bdf5c3ddf99064f36712e34638664d974e6d798",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/12/126b01f4d259f87fd40c8c438bdf5c3ddf99064f36712e34638664d974e6d798"
+    },
+    "assets/aletsch/2005.jpg": {
+      "hash": "58669e45514308f4d331a63116a705cb68a3dca6a6cd096122dc6bdc19e5b22c",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/58/58669e45514308f4d331a63116a705cb68a3dca6a6cd096122dc6bdc19e5b22c"
+    },
+    "assets/aletsch/2008.jpg": {
+      "hash": "ee2c07940995b2ba5d51b877421e2a3eada181e80fdc69acc1c117512a4a9b25",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/ee/ee2c07940995b2ba5d51b877421e2a3eada181e80fdc69acc1c117512a4a9b25"
+    },
+    "assets/aletsch/2009.jpg": {
+      "hash": "c13bfc2ebf5fe571dd4c87fb3914c15053084855af83014eb350f73fe40b2261",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/c1/c13bfc2ebf5fe571dd4c87fb3914c15053084855af83014eb350f73fe40b2261"
+    },
+    "assets/aletsch/2010.jpg": {
+      "hash": "c927454e2173f7c3538083d242598c8f487d58f61744253216f949be3d3fd3ff",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/c9/c927454e2173f7c3538083d242598c8f487d58f61744253216f949be3d3fd3ff"
+    },
+    "assets/aletsch/2011.jpg": {
+      "hash": "158acfec02f44ec5b1efea54c15a31d1ec88e056fad65c11f254eea8e9f84757",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/15/158acfec02f44ec5b1efea54c15a31d1ec88e056fad65c11f254eea8e9f84757"
+    },
+    "assets/aletsch/2012.jpg": {
+      "hash": "2a966438b8c512c77931f58650920c07296eacbe4091178ed43a061ed6bcd774",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/2a/2a966438b8c512c77931f58650920c07296eacbe4091178ed43a061ed6bcd774"
+    },
+    "assets/aletsch/2013.jpg": {
+      "hash": "fe23b2137c139d3ca019d448b8f52689cc42e5ade271871820e88731dfbea446",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/fe/fe23b2137c139d3ca019d448b8f52689cc42e5ade271871820e88731dfbea446"
+    },
+    "assets/aletsch/2014.jpg": {
+      "hash": "01b637119ad216b450ea39146be8e06d98dbb67d45cf635416975c8fa1402f56",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/01/01b637119ad216b450ea39146be8e06d98dbb67d45cf635416975c8fa1402f56"
+    },
+    "assets/aletsch/2015.jpg": {
+      "hash": "68bd7231f62e65dea9cefde67c1927c202e00aae5cf50503aa70a6bbb6285816",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/68/68bd7231f62e65dea9cefde67c1927c202e00aae5cf50503aa70a6bbb6285816"
+    },
+    "assets/aletsch/2016.jpg": {
+      "hash": "1396fa57a93c793a8301db7fe627a4b648c63b1a5053a4edd817aba56c03b764",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/13/1396fa57a93c793a8301db7fe627a4b648c63b1a5053a4edd817aba56c03b764"
+    },
+    "assets/aletsch/2017.jpg": {
+      "hash": "1fd80e5702ea9ffc740811ea6d693b7ec823e2a26924101a05da3255462ac056",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/1f/1fd80e5702ea9ffc740811ea6d693b7ec823e2a26924101a05da3255462ac056"
+    },
+    "assets/aletsch/2018.jpg": {
+      "hash": "45f7925413d87b54ccdde5b4be648101f2800ff155f056407d8e5f360edb70c5",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/45/45f7925413d87b54ccdde5b4be648101f2800ff155f056407d8e5f360edb70c5"
+    },
+    "assets/aletsch/2019.jpg": {
+      "hash": "d28fa4f61482184e37cd1812e524f0d56116de6aec3b15578f300f35daca2e98",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/d2/d28fa4f61482184e37cd1812e524f0d56116de6aec3b15578f300f35daca2e98"
+    },
+    "assets/aletsch/2020.jpg": {
+      "hash": "3b01d9827429c30816b9e3d803989ca274da846cba687fa5d3f87b76fbda49ed",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/3b/3b01d9827429c30816b9e3d803989ca274da846cba687fa5d3f87b76fbda49ed"
+    },
+    "assets/aletsch/2021.jpg": {
+      "hash": "84e3a1d1d338ede037e47c325abca76d6b73a9f38f0fd91a77d46ba8c58f85a4",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/84/84e3a1d1d338ede037e47c325abca76d6b73a9f38f0fd91a77d46ba8c58f85a4"
+    },
+    "assets/aletsch/2022.jpg": {
+      "hash": "fb55b007eeba73c232ce784c3c273c98dc957432f6ceeffc0a9d159d267069f5",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/fb/fb55b007eeba73c232ce784c3c273c98dc957432f6ceeffc0a9d159d267069f5"
+    },
+    "assets/aletsch/2023.jpg": {
+      "hash": "de5d1b4398c6e59e9b6803b50806e9b77e4820b721e786a58ad9a008bac777d6",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/de/de5d1b4398c6e59e9b6803b50806e9b77e4820b721e786a58ad9a008bac777d6"
+    },
+    "assets/aletsch/2024.jpg": {
+      "hash": "97cf9cf0c23564e628bb43860086009804c0d696d91f28b2fe94dc465fab22da",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/97/97cf9cf0c23564e628bb43860086009804c0d696d91f28b2fe94dc465fab22da"
+    },
+    "assets/donana/2004.jpg": {
+      "hash": "cc1cac6fadad4706c18ea0cf05b70423191e361bff0c113d682c4eb46ff1a67b",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/cc/cc1cac6fadad4706c18ea0cf05b70423191e361bff0c113d682c4eb46ff1a67b"
+    },
+    "assets/donana/2006.jpg": {
+      "hash": "18babab77d63855b68975ef4792d98ee083b554a76fa364439c153e625c99587",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/18/18babab77d63855b68975ef4792d98ee083b554a76fa364439c153e625c99587"
+    },
+    "assets/donana/2008.jpg": {
+      "hash": "50c6a43d5ba29bae568ac6c85c093599bd22c9090ab431333518e5392ab66df9",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/50/50c6a43d5ba29bae568ac6c85c093599bd22c9090ab431333518e5392ab66df9"
+    },
+    "assets/donana/2010.jpg": {
+      "hash": "f15e7cf998c8e2a7a5b98ddf58b4ad790d527b0615f91d88b336b478e47cff56",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/f1/f15e7cf998c8e2a7a5b98ddf58b4ad790d527b0615f91d88b336b478e47cff56"
+    },
+    "assets/donana/2013.jpg": {
+      "hash": "d0d662432d80ff1009e0e3e46eded08b4740b69723d12a1affe70637dc491f0d",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/d0/d0d662432d80ff1009e0e3e46eded08b4740b69723d12a1affe70637dc491f0d"
+    },
+    "assets/donana/2016.jpg": {
+      "hash": "47b2375630db50cebf3dc80163249fd41772542f7b7c444415fdb82a6354bb92",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/47/47b2375630db50cebf3dc80163249fd41772542f7b7c444415fdb82a6354bb92"
+    },
+    "assets/donana/2019.jpg": {
+      "hash": "c84e5fa65d02731c2a742977e7c9c29203457c7abdb696dfccacf1d5855340f8",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/c8/c84e5fa65d02731c2a742977e7c9c29203457c7abdb696dfccacf1d5855340f8"
+    },
+    "assets/donana/2022.jpg": {
+      "hash": "0e6c1bbc8aac56ac0d60eabc6513fe89c29f044effd2eb48f3984c1f966bd581",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/0e/0e6c1bbc8aac56ac0d60eabc6513fe89c29f044effd2eb48f3984c1f966bd581"
+    },
+    "assets/mead/2003.jpg": {
+      "hash": "662eb2d3d8ad9901f67d0f4d0652d2ecde76793fe3c0c75110820fe295e0c853",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/66/662eb2d3d8ad9901f67d0f4d0652d2ecde76793fe3c0c75110820fe295e0c853"
+    },
+    "assets/mead/2004.jpg": {
+      "hash": "702900be0529ae53b254923f51fb7f31803f319e77c3376fbfec114de97232d8",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/70/702900be0529ae53b254923f51fb7f31803f319e77c3376fbfec114de97232d8"
+    },
+    "assets/mead/2005.jpg": {
+      "hash": "5e2756bfdbb9a54d031739cf617a698042041cb58b3bfdfe58b2c05d4617ee75",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/5e/5e2756bfdbb9a54d031739cf617a698042041cb58b3bfdfe58b2c05d4617ee75"
+    },
+    "assets/mead/2006.jpg": {
+      "hash": "3f7b5b3f2ffd93191163b36020623571ab1d8aa880de27b3ed2a5beaf76d47f0",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/3f/3f7b5b3f2ffd93191163b36020623571ab1d8aa880de27b3ed2a5beaf76d47f0"
+    },
+    "assets/mead/2007.jpg": {
+      "hash": "2cf5c1ced5984136737337aa93273be0c144938831c3b2028ed6c88540165430",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/2c/2cf5c1ced5984136737337aa93273be0c144938831c3b2028ed6c88540165430"
+    },
+    "assets/mead/2008.jpg": {
+      "hash": "82a941ffe3e066b1d50307a67200c15b7f3d2eea9af85cd758c719e7f8e1b5c9",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/82/82a941ffe3e066b1d50307a67200c15b7f3d2eea9af85cd758c719e7f8e1b5c9"
+    },
+    "assets/mead/2009.jpg": {
+      "hash": "42f705c7f1b0d30714cb0806b7eed8c266a3debc5753d37049dda5852599c2ea",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/42/42f705c7f1b0d30714cb0806b7eed8c266a3debc5753d37049dda5852599c2ea"
+    },
+    "assets/mead/2010.jpg": {
+      "hash": "62b1d310ad8d37898db4a1b8181074b361dab406419cb1537448e24ed83c7449",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/62/62b1d310ad8d37898db4a1b8181074b361dab406419cb1537448e24ed83c7449"
+    },
+    "assets/mead/2011.jpg": {
+      "hash": "4d0010903f1165bda29aae70c09176f09d0ae0a78b0ce842ac0b5ecb90cbc08e",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/4d/4d0010903f1165bda29aae70c09176f09d0ae0a78b0ce842ac0b5ecb90cbc08e"
+    },
+    "assets/mead/2012.jpg": {
+      "hash": "769b0f536b2a33a84710f016fbed5f8303d52b250fee2672610fc6ca59617c79",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/76/769b0f536b2a33a84710f016fbed5f8303d52b250fee2672610fc6ca59617c79"
+    },
+    "assets/mead/2013.jpg": {
+      "hash": "769d4afc206f6cbc53bc2ca8e3a82304e94cb1e1d5dcc01c064947a5e8284d76",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/76/769d4afc206f6cbc53bc2ca8e3a82304e94cb1e1d5dcc01c064947a5e8284d76"
+    },
+    "assets/mead/2014.jpg": {
+      "hash": "374e03b5259e30f0ce7db779cadafad91590d7007449622f5deef67ce735d4a9",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/37/374e03b5259e30f0ce7db779cadafad91590d7007449622f5deef67ce735d4a9"
+    },
+    "build.py": {
+      "hash": "aa662d1eb498378926fdb6b30abc60ce84519c8f750b2801e2e6d1d348f18b7d",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/aa/aa662d1eb498378926fdb6b30abc60ce84519c8f750b2801e2e6d1d348f18b7d"
+    },
+    "compositions/aletsch.html": {
+      "hash": "b5db37d48cab67ea5c079125465c4b8f09e6321192cf93a957980fa2fd70667e",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/b5/b5db37d48cab67ea5c079125465c4b8f09e6321192cf93a957980fa2fd70667e"
+    },
+    "compositions/claim.html": {
+      "hash": "da7f544512fa06604785bd79bc6b1aedc0d2aaf485bef615606206b669cc851d",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/da/da7f544512fa06604785bd79bc6b1aedc0d2aaf485bef615606206b669cc851d"
+    },
+    "compositions/donana.html": {
+      "hash": "c9015fd12767b322e14083dd863dedac3342d44744352a0f0db7d05af4785be1",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/c9/c9015fd12767b322e14083dd863dedac3342d44744352a0f0db7d05af4785be1"
+    },
+    "compositions/mead.html": {
+      "hash": "2a65db4681f44d708bc70dc4e65ddd227bae0de4fb4905dc26e396627d771aca",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/2a/2a65db4681f44d708bc70dc4e65ddd227bae0de4fb4905dc26e396627d771aca"
+    },
+    "hyperframes.json": {
+      "hash": "35a6d4ea79ebe911f0d81705f7aace5d8ff0316b745b0311d56af50c9c237cb7",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/35/35a6d4ea79ebe911f0d81705f7aace5d8ff0316b745b0311d56af50c9c237cb7"
+    },
+    "index.html": {
+      "hash": "7fab4dc90889362d8db34063b95e00feb571c90943b1a25ad89d8f7442380953",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/7f/7fab4dc90889362d8db34063b95e00feb571c90943b1a25ad89d8f7442380953"
+    },
+    "meta.json": {
+      "hash": "257219c5e195f81a42a6edcd136feeb06e3e1095161111d6930546709e9cfa6d",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/25/257219c5e195f81a42a6edcd136feeb06e3e1095161111d6930546709e9cfa6d"
+    },
+    "package.json": {
+      "hash": "4b97d94b5a9b04c7adcaf755750a7b51e2667bcf528f82343ec514360a76fe10",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/4b/4b97d94b5a9b04c7adcaf755750a7b51e2667bcf528f82343ec514360a76fe10"
+    },
+    "grade.attr": {
+      "hash": "7987aa06f3f258ce4130ba2e73183bc893f76a080d60e13b404ad1c4eb76f73a",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/79/7987aa06f3f258ce4130ba2e73183bc893f76a080d60e13b404ad1c4eb76f73a"
+    },
+    "grade.json": {
+      "hash": "d2735718c97411d1ea1d48bbbcfc0e8b86bc51b79b000106cd0a0c973b041506",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/d2/d2735718c97411d1ea1d48bbbcfc0e8b86bc51b79b000106cd0a0c973b041506"
+    },
+    "boards/stills/contact-sheet.jpg": {
+      "hash": "f735910fdbd2135fb4f40e179fedab21c3108bc979bbbfec35de74e8d38a3da7",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/f7/f735910fdbd2135fb4f40e179fedab21c3108bc979bbbfec35de74e8d38a3da7"
+    },
+    "boards/stills/frame-00-at-0.3s.png": {
+      "hash": "cb3d01a84a84ee3b54b46b22a159295008a354439d60dc2732006c17daba5707",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/cb/cb3d01a84a84ee3b54b46b22a159295008a354439d60dc2732006c17daba5707"
+    },
+    "boards/stills/frame-02-at-8.7s.png": {
+      "hash": "a9aba219394749cdc075adb06249f4a7a7cd5192c3809e6696e2ac1d790877c5",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/a9/a9aba219394749cdc075adb06249f4a7a7cd5192c3809e6696e2ac1d790877c5"
+    },
+    "boards/stills/frame-03-at-13.5s.png": {
+      "hash": "64de2685e4bc70943b43a06502a071c54127f89922c5423da01f6bbf5a01eb1c",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/64/64de2685e4bc70943b43a06502a071c54127f89922c5423da01f6bbf5a01eb1c"
+    },
+    "boards/stills/frame-04-at-21.5s.png": {
+      "hash": "386e3066a7f89c441f01aba79a37e72283536ecebd9319f6d4fe1ddb96f96bab",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/38/386e3066a7f89c441f01aba79a37e72283536ecebd9319f6d4fe1ddb96f96bab"
+    },
+    "boards/stills/frame-05-at-27.2s.png": {
+      "hash": "ba501fb136659dc8f0c328568b22e436eacd5d3145f46f6fe4e035f6d30b7181",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/ba/ba501fb136659dc8f0c328568b22e436eacd5d3145f46f6fe4e035f6d30b7181"
+    },
+    "boards/stills/frame-06-at-29.6s.png": {
+      "hash": "732e389467ed161f1b11be38bb366e1b44bdb65f34f19e7b3b47bce96121eb6b",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/73/732e389467ed161f1b11be38bb366e1b44bdb65f34f19e7b3b47bce96121eb6b"
+    },
+    "boards/stills/frame-01-at-4.6s.png": {
+      "hash": "ba37992f0594a1b4c0eb9e6191c09d4923389169cab9db3e10df155c6e0d3036",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/ba/ba37992f0594a1b4c0eb9e6191c09d4923389169cab9db3e10df155c6e0d3036"
+    },
+    "boards/storyboard.html": {
+      "hash": "14754ab1b2ca0f72d08ec3f9df47a46d52270ee386223e948d6ff1ea0e18d9ef",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/14/14754ab1b2ca0f72d08ec3f9df47a46d52270ee386223e948d6ff1ea0e18d9ef"
+    },
+    "STORYBOARD.md": {
+      "hash": "7c4b3586f84a814e000e0f8c7615d58864b09dbfc7457b48bdb6ac9fa35a6d70",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/7c/7c4b3586f84a814e000e0f8c7615d58864b09dbfc7457b48bdb6ac9fa35a6d70"
+    },
+    "assets/music/lyria-hero.mp3": {
+      "hash": "4e5b3c65f9c30c092d56417321fd7fc4ec59e169a735e389c187409208239088",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/4e/4e5b3c65f9c30c092d56417321fd7fc4ec59e169a735e389c187409208239088"
+    },
+    "assets/music/hero-30.mp3": {
+      "hash": "bbcb3ae3376df06e23d5fd23bcd91f8360ffa02652c2ce0eb179f06c9544dbb4",
+      "content": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/bb/bbcb3ae3376df06e23d5fd23bcd91f8360ffa02652c2ce0eb179f06c9544dbb4"
+    }
+  },
+  "revisions": {
+    "85f453e8-bf5d-4967-92ce-699474d9ccf9": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1794692345496,
+      "endedAt": 1794692345505,
+      "files": {
+        "build.py": {
+          "before": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/a6/a6a7526415cdc59f6e6bae8643864e258f9eb349c2473c62ca3469704de4f3aa",
+          "after": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/6c/6c9fb32f007fe8d07275da8137ce66a7d103fd6d220ad317730f451d917c75f4"
+        },
+        "compositions/aletsch.html": {
+          "before": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/6a/6ade540adc0ed592cd2c20c1d6fdee903822acbc5628292e7d323e478ad5d356",
+          "after": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/b5/b5db37d48cab67ea5c079125465c4b8f09e6321192cf93a957980fa2fd70667e"
+        },
+        "compositions/claim.html": {
+          "before": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/25/25d1f732abd4d26463a27b87f1b6775a5c5a42c0b2a59e70bdebc9db6a32d3f4",
+          "after": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/da/da7f544512fa06604785bd79bc6b1aedc0d2aaf485bef615606206b669cc851d"
+        },
+        "compositions/donana.html": {
+          "before": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/e0/e03ff041d28ee333f54b4a66c8275abb2aab04f0e469985d86f33c2f05bea7eb",
+          "after": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/c9/c9015fd12767b322e14083dd863dedac3342d44744352a0f0db7d05af4785be1"
+        },
+        "compositions/mead.html": {
+          "before": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/5a/5ac2dac854a2b00afc56a79f1c2306d71cb0ee1dbdcc4702c69a5c08804a06e5",
+          "after": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/7f/7fd4f9540162509bc4c1b37a7be02d98bdcde0fd4ca51b1f0e7e94d0e162f165"
+        },
+        "grade.attr": {
+          "before": null,
+          "after": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/79/7987aa06f3f258ce4130ba2e73183bc893f76a080d60e13b404ad1c4eb76f73a"
+        },
+        "grade.json": {
+          "before": null,
+          "after": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/d2/d2735718c97411d1ea1d48bbbcfc0e8b86bc51b79b000106cd0a0c973b041506"
+        }
+      }
+    },
+    "4a6d9f84-e31f-4dff-bbaf-4970eee8452f": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1794692380803,
+      "endedAt": 1794692380844,
+      "files": {
+        "assets/mead/2020.jpg": {
+          "before": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/33/33952eac5d26cf1b2d3329586c01f4ee533e895121d075f84f48ae6f90d2de26",
+          "after": null
+        },
+        "boards/stills/contact-sheet.jpg": {
+          "before": null,
+          "after": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/2c/2c053715158a18d55cae9a642d1efe48bbc7753cd18a9dae807f07c3283b6fda"
+        },
+        "boards/stills/frame-00-at-0.3s.png": {
+          "before": null,
+          "after": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/41/419d2075997c92e5525a208bfa3c7f12cb10435194972d268df9d2e2a4f7e0dd"
+        },
+        "boards/stills/frame-01-at-5.5s.png": {
+          "before": null,
+          "after": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/22/2280bb87ce059c038a90edbfc76ef7aa5ff47b054e78c830cff4079cbb4f17a1"
+        },
+        "boards/stills/frame-02-at-8.7s.png": {
+          "before": null,
+          "after": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/ed/edc20b0db5358ea1a4387e4f78620e014325cf9c6a50fc6e0b539baf55fbe253"
+        },
+        "boards/stills/frame-03-at-13.5s.png": {
+          "before": null,
+          "after": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/64/64de2685e4bc70943b43a06502a071c54127f89922c5423da01f6bbf5a01eb1c"
+        },
+        "boards/stills/frame-04-at-21.5s.png": {
+          "before": null,
+          "after": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/38/386e3066a7f89c441f01aba79a37e72283536ecebd9319f6d4fe1ddb96f96bab"
+        },
+        "boards/stills/frame-05-at-27.2s.png": {
+          "before": null,
+          "after": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/ba/ba501fb136659dc8f0c328568b22e436eacd5d3145f46f6fe4e035f6d30b7181"
+        },
+        "boards/stills/frame-06-at-29.6s.png": {
+          "before": null,
+          "after": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/73/732e389467ed161f1b11be38bb366e1b44bdb65f34f19e7b3b47bce96121eb6b"
+        },
+        "build.py": {
+          "before": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/6c/6c9fb32f007fe8d07275da8137ce66a7d103fd6d220ad317730f451d917c75f4",
+          "after": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/aa/aa662d1eb498378926fdb6b30abc60ce84519c8f750b2801e2e6d1d348f18b7d"
+        },
+        "compositions/mead.html": {
+          "before": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/7f/7fd4f9540162509bc4c1b37a7be02d98bdcde0fd4ca51b1f0e7e94d0e162f165",
+          "after": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/2a/2a65db4681f44d708bc70dc4e65ddd227bae0de4fb4905dc26e396627d771aca"
+        }
+      }
+    },
+    "b2c7f933-bb05-465b-af27-10f1a71586d0": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1794692515276,
+      "endedAt": 1794692515292,
+      "files": {
+        "boards/stills/contact-sheet.jpg": {
+          "before": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/2c/2c053715158a18d55cae9a642d1efe48bbc7753cd18a9dae807f07c3283b6fda",
+          "after": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/f7/f735910fdbd2135fb4f40e179fedab21c3108bc979bbbfec35de74e8d38a3da7"
+        },
+        "boards/stills/frame-00-at-0.3s.png": {
+          "before": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/41/419d2075997c92e5525a208bfa3c7f12cb10435194972d268df9d2e2a4f7e0dd",
+          "after": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/cb/cb3d01a84a84ee3b54b46b22a159295008a354439d60dc2732006c17daba5707"
+        },
+        "boards/stills/frame-01-at-4.6s.png": {
+          "before": null,
+          "after": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/ba/ba37992f0594a1b4c0eb9e6191c09d4923389169cab9db3e10df155c6e0d3036"
+        },
+        "boards/stills/frame-01-at-5.5s.png": {
+          "before": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/22/2280bb87ce059c038a90edbfc76ef7aa5ff47b054e78c830cff4079cbb4f17a1",
+          "after": null
+        },
+        "boards/stills/frame-02-at-8.7s.png": {
+          "before": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/ed/edc20b0db5358ea1a4387e4f78620e014325cf9c6a50fc6e0b539baf55fbe253",
+          "after": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/a9/a9aba219394749cdc075adb06249f4a7a7cd5192c3809e6696e2ac1d790877c5"
+        },
+        "boards/storyboard.html": {
+          "before": null,
+          "after": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/14/14754ab1b2ca0f72d08ec3f9df47a46d52270ee386223e948d6ff1ea0e18d9ef"
+        },
+        "STORYBOARD.md": {
+          "before": null,
+          "after": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/7c/7c4b3586f84a814e000e0f8c7615d58864b09dbfc7457b48bdb6ac9fa35a6d70"
+        }
+      }
+    },
+    "968c97c3-70b1-427e-8f1f-10428d6dd21f": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1794696033784,
+      "endedAt": 1794696036102,
+      "files": {
+        "assets/music/held-in-motion-30.mp3": {
+          "before": null,
+          "after": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/aa/aadf582ccb2f6720ca0a0f3f595f113cfa3a076c81bfa85f12da222edd52a916"
+        },
+        "assets/music/into-the-battle-WATERMARK.mp3": {
+          "before": null,
+          "after": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/1d/1dd5046ce7254e71d741977d7a32b822df3e5995f7a465de2d4a211bab91a807"
+        },
+        "assets/music/lyria-hero.mp3": {
+          "before": null,
+          "after": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/4e/4e5b3c65f9c30c092d56417321fd7fc4ec59e169a735e389c187409208239088"
+        }
+      }
+    },
+    "711fe416-4bcb-44fb-a8f9-1b386be4da39": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1794696042671,
+      "endedAt": 1794696044671,
+      "files": {
+        "assets/music/held-in-motion-30.mp3": {
+          "before": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/aa/aadf582ccb2f6720ca0a0f3f595f113cfa3a076c81bfa85f12da222edd52a916",
+          "after": null
+        },
+        "assets/music/into-the-battle-WATERMARK.mp3": {
+          "before": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/1d/1dd5046ce7254e71d741977d7a32b822df3e5995f7a465de2d4a211bab91a807",
+          "after": null
+        }
+      }
+    },
+    "69602578-40b8-45b5-a404-521f4214b758": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1794696059579,
+      "endedAt": 1794696062378,
+      "files": {
+        "assets/music/hero-30.mp3": {
+          "before": null,
+          "after": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/bb/bbcb3ae3376df06e23d5fd23bcd91f8360ffa02652c2ce0eb179f06c9544dbb4"
+        },
+        "index.html": {
+          "before": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/d4/d46bbae333a02e750558c1198b1917f2ef2cb7455afaecb554d63e0fe087201c",
+          "after": "/home/mandycs/.cache/hyperframes/history/aeebacc8-0006-4410-aab7-f1b513270fab/blobs/7f/7fab4dc90889362d8db34063b95e00feb571c90943b1a25ad89d8f7442380953"
+        }
+      }
+    }
+  },
+  "checks": {
+    "latest": {
+      "revision": null,
+      "id": "3575a66f-6dbb-4ccf-aa45-03def06a923c"
+    },
+    "revisions": {},
+    "unversioned": [
+      {
+        "id": "3575a66f-6dbb-4ccf-aa45-03def06a923c",
+        "scope": "project",
+        "report": "/home/mandycs/Escritorio/earth-trend-detective/video/hero/.hyperframes/artifacts/checks/3575a66f-6dbb-4ccf-aa45-03def06a923c.json",
+        "metadata": {
+          "ok": true,
+          "browserSkipped": false,
+          "options": {
+            "samples": 9,
+            "atTransitions": false,
+            "maxIssues": 80,
+            "collapseStatic": true,
+            "tolerance": 2,
+            "timeout": 45000,
+            "cache": true,
+            "contrast": true,
+            "craft": true,
+            "strict": false,
+            "snapshots": false,
+            "safeZones": [
+              "tiktok",
+              "reels",
+              "shorts"
+            ],
+            "browserGpuMode": "auto",
+            "includeUnmounted": false
+          }
+        },
+        "createdAt": 1794692270957,
+        "contentHash": "801aeaa336be1b7f5e30abe4ae53c5f4d8115639ac7e239526df483df8ca86ab",
+        "revision": null,
+        "inputFingerprint": "913dd7e2d96cea289903000652e654302912c7aeb250eafa70f0712e570a1c9e",
+        "inputScope": "local-project-files",
+        "attribution": "unversioned"
+      }
+    ]
+  },
+  "snapshots": {
+    "latest": {
+      "revision": null,
+      "id": "90e3f0ee-bb84-4a3f-84e5-96854df32377-6"
+    },
+    "revisions": {
+      "4a6d9f84-e31f-4dff-bbaf-4970eee8452f": [
+        {
+          "scope": "full",
+          "id": "b45622ca-ff83-4815-8bb5-ec2a464f5c26-0",
+          "image": "/tmp/claude-1000/-home-mandycs-Escritorio-earth-trend-detective/4faa587e-a7bb-49c8-a24f-b4862718eab9/scratchpad/hero/snapmead/frame-00-at-0.3s.png",
+          "time": 0.3,
+          "metadata": {
+            "width": 1920,
+            "height": 1080,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1794692386869,
+          "contentHash": "cb3d01a84a84ee3b54b46b22a159295008a354439d60dc2732006c17daba5707",
+          "revision": "4a6d9f84-e31f-4dff-bbaf-4970eee8452f",
+          "inputFingerprint": "e1b3ac38cd065fb7ea828ee5a5370c9e4536293ddf4d0e5a28ef16185bd108e2",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "scope": "full",
+          "id": "b45622ca-ff83-4815-8bb5-ec2a464f5c26-1",
+          "image": "/tmp/claude-1000/-home-mandycs-Escritorio-earth-trend-detective/4faa587e-a7bb-49c8-a24f-b4862718eab9/scratchpad/hero/snapmead/frame-01-at-4.5s.png",
+          "time": 4.5,
+          "metadata": {
+            "width": 1920,
+            "height": 1080,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1794692386869,
+          "contentHash": "5de660424859db1794915a3235fa35696df46c3acfeb5cb804bf15b06850812e",
+          "revision": "4a6d9f84-e31f-4dff-bbaf-4970eee8452f",
+          "inputFingerprint": "e1b3ac38cd065fb7ea828ee5a5370c9e4536293ddf4d0e5a28ef16185bd108e2",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "scope": "full",
+          "id": "b45622ca-ff83-4815-8bb5-ec2a464f5c26-2",
+          "image": "/tmp/claude-1000/-home-mandycs-Escritorio-earth-trend-detective/4faa587e-a7bb-49c8-a24f-b4862718eab9/scratchpad/hero/snapmead/frame-02-at-8.7s.png",
+          "time": 8.7,
+          "metadata": {
+            "width": 1920,
+            "height": 1080,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1794692386869,
+          "contentHash": "a9aba219394749cdc075adb06249f4a7a7cd5192c3809e6696e2ac1d790877c5",
+          "revision": "4a6d9f84-e31f-4dff-bbaf-4970eee8452f",
+          "inputFingerprint": "e1b3ac38cd065fb7ea828ee5a5370c9e4536293ddf4d0e5a28ef16185bd108e2",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        }
+      ]
+    },
+    "unversioned": [
+      {
+        "scope": "full",
+        "id": "90e3f0ee-bb84-4a3f-84e5-96854df32377-0",
+        "image": "/home/mandycs/Escritorio/earth-trend-detective/video/hero/boards/stills/frame-00-at-0.3s.png",
+        "time": 0.3,
+        "metadata": {
+          "width": 1920,
+          "height": 1080,
+          "zoomScale": 1,
+          "browserGpuMode": "auto",
+          "warnings": [],
+          "partial": false
+        },
+        "createdAt": 1794692402458,
+        "contentHash": "cb3d01a84a84ee3b54b46b22a159295008a354439d60dc2732006c17daba5707",
+        "revision": null,
+        "inputFingerprint": "e1b3ac38cd065fb7ea828ee5a5370c9e4536293ddf4d0e5a28ef16185bd108e2",
+        "inputScope": "local-project-files",
+        "attribution": "inputs-changed"
+      },
+      {
+        "scope": "full",
+        "id": "90e3f0ee-bb84-4a3f-84e5-96854df32377-1",
+        "image": "/home/mandycs/Escritorio/earth-trend-detective/video/hero/boards/stills/frame-01-at-4.6s.png",
+        "time": 4.6,
+        "metadata": {
+          "width": 1920,
+          "height": 1080,
+          "zoomScale": 1,
+          "browserGpuMode": "auto",
+          "warnings": [],
+          "partial": false
+        },
+        "createdAt": 1794692402458,
+        "contentHash": "ba37992f0594a1b4c0eb9e6191c09d4923389169cab9db3e10df155c6e0d3036",
+        "revision": null,
+        "inputFingerprint": "e1b3ac38cd065fb7ea828ee5a5370c9e4536293ddf4d0e5a28ef16185bd108e2",
+        "inputScope": "local-project-files",
+        "attribution": "inputs-changed"
+      },
+      {
+        "scope": "full",
+        "id": "90e3f0ee-bb84-4a3f-84e5-96854df32377-2",
+        "image": "/home/mandycs/Escritorio/earth-trend-detective/video/hero/boards/stills/frame-02-at-8.7s.png",
+        "time": 8.7,
+        "metadata": {
+          "width": 1920,
+          "height": 1080,
+          "zoomScale": 1,
+          "browserGpuMode": "auto",
+          "warnings": [],
+          "partial": false
+        },
+        "createdAt": 1794692402458,
+        "contentHash": "a9aba219394749cdc075adb06249f4a7a7cd5192c3809e6696e2ac1d790877c5",
+        "revision": null,
+        "inputFingerprint": "e1b3ac38cd065fb7ea828ee5a5370c9e4536293ddf4d0e5a28ef16185bd108e2",
+        "inputScope": "local-project-files",
+        "attribution": "inputs-changed"
+      },
+      {
+        "scope": "full",
+        "id": "90e3f0ee-bb84-4a3f-84e5-96854df32377-3",
+        "image": "/home/mandycs/Escritorio/earth-trend-detective/video/hero/boards/stills/frame-03-at-13.5s.png",
+        "time": 13.5,
+        "metadata": {
+          "width": 1920,
+          "height": 1080,
+          "zoomScale": 1,
+          "browserGpuMode": "auto",
+          "warnings": [],
+          "partial": false
+        },
+        "createdAt": 1794692402458,
+        "contentHash": "64de2685e4bc70943b43a06502a071c54127f89922c5423da01f6bbf5a01eb1c",
+        "revision": null,
+        "inputFingerprint": "e1b3ac38cd065fb7ea828ee5a5370c9e4536293ddf4d0e5a28ef16185bd108e2",
+        "inputScope": "local-project-files",
+        "attribution": "inputs-changed"
+      },
+      {
+        "scope": "full",
+        "id": "90e3f0ee-bb84-4a3f-84e5-96854df32377-4",
+        "image": "/home/mandycs/Escritorio/earth-trend-detective/video/hero/boards/stills/frame-04-at-21.5s.png",
+        "time": 21.5,
+        "metadata": {
+          "width": 1920,
+          "height": 1080,
+          "zoomScale": 1,
+          "browserGpuMode": "auto",
+          "warnings": [],
+          "partial": false
+        },
+        "createdAt": 1794692402458,
+        "contentHash": "386e3066a7f89c441f01aba79a37e72283536ecebd9319f6d4fe1ddb96f96bab",
+        "revision": null,
+        "inputFingerprint": "e1b3ac38cd065fb7ea828ee5a5370c9e4536293ddf4d0e5a28ef16185bd108e2",
+        "inputScope": "local-project-files",
+        "attribution": "inputs-changed"
+      },
+      {
+        "scope": "full",
+        "id": "90e3f0ee-bb84-4a3f-84e5-96854df32377-5",
+        "image": "/home/mandycs/Escritorio/earth-trend-detective/video/hero/boards/stills/frame-05-at-27.2s.png",
+        "time": 27.2,
+        "metadata": {
+          "width": 1920,
+          "height": 1080,
+          "zoomScale": 1,
+          "browserGpuMode": "auto",
+          "warnings": [],
+          "partial": false
+        },
+        "createdAt": 1794692402458,
+        "contentHash": "ba501fb136659dc8f0c328568b22e436eacd5d3145f46f6fe4e035f6d30b7181",
+        "revision": null,
+        "inputFingerprint": "e1b3ac38cd065fb7ea828ee5a5370c9e4536293ddf4d0e5a28ef16185bd108e2",
+        "inputScope": "local-project-files",
+        "attribution": "inputs-changed"
+      },
+      {
+        "scope": "full",
+        "id": "90e3f0ee-bb84-4a3f-84e5-96854df32377-6",
+        "image": "/home/mandycs/Escritorio/earth-trend-detective/video/hero/boards/stills/frame-06-at-29.6s.png",
+        "time": 29.6,
+        "metadata": {
+          "width": 1920,
+          "height": 1080,
+          "zoomScale": 1,
+          "browserGpuMode": "auto",
+          "warnings": [],
+          "partial": false
+        },
+        "createdAt": 1794692402458,
+        "contentHash": "732e389467ed161f1b11be38bb366e1b44bdb65f34f19e7b3b47bce96121eb6b",
+        "revision": null,
+        "inputFingerprint": "e1b3ac38cd065fb7ea828ee5a5370c9e4536293ddf4d0e5a28ef16185bd108e2",
+        "inputScope": "local-project-files",
+        "attribution": "inputs-changed"
+      }
+    ]
+  },
+  "renders": {
+    "latest": {
+      "id": "557f6ddc-4b89-41b7-ba45-5c5dbaa47dda",
+      "completedAt": 1794696097737,
+      "output": "/home/mandycs/Escritorio/earth-trend-detective/video/hero/renders/hero-film-music-draft.mp4",
+      "status": "completed",
+      "revision": "69602578-40b8-45b5-a404-521f4214b758"
+    },
+    "retainedRevisions": [
+      "69602578-40b8-45b5-a404-521f4214b758"
+    ]
+  },
+  "pendingArtifactCleanup": []
+}

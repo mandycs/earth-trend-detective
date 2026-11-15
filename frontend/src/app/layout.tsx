@@ -17,7 +17,7 @@ const manrope = Manrope({
 })
 
 export const metadata: Metadata = {
-  title: 'Earth Trend Detective',
+  title: 'Alibi · An Earth trend detective',
   description:
     'Pick a place, see what is changing there, whether the change is real, and how much of it the climate does not explain.',
 }

@@ -11,7 +11,8 @@ from typing import Literal, NamedTuple
 
 from pydantic import BaseModel, Field
 
-from app.detective.tools import analysis, case_board, context, data, mapping
+from app.detective.tools import analysis, case_board, context, data, mapping, water, where
+from app.extractors import water_extent as wx
 
 
 class ToolSpec(NamedTuple):
@@ -73,6 +74,15 @@ class SolvedCaseArgs(BaseModel):
     site_id: str = Field(description="Id of a solved case, e.g. 'lake_mead'.")
 
 
+class TrendMapArgs(BaseModel):
+    var_id: str = Field(description="Variable id from list_variables with a gridded source (sea temperature, chlorophyll, GIBS yearly layers).")
+
+
+class WaterExtentArgs(BaseModel):
+    year_a: int | None = Field(default=None, description=f"First year (default: {wx.FIRST_YEAR}, the start of the water maps).")
+    year_b: int | None = Field(default=None, description="Last year (default: the end of the investigation period).")
+
+
 class YearsNeededArgs(BaseModel):
     series_id: str = Field(description="series_id returned by get_series.")
 
@@ -113,18 +123,49 @@ class ShowFootprintArgs(BaseModel):
 class UpdateBoardArgs(BaseModel):
     suspect: str = Field(description="Short name of the suspect, e.g. 'irrigation' or 'less rain'.")
     status: Literal["open", "supported", "hint", "ruled_out"] = Field(
-        description="Status you propose; the code may downgrade it (supported -> hint, ruled_out -> open)."
+        description="Status you propose; the code may downgrade it (supported -> trend_only or hint, "
+        "ruled_out -> open)."
     )
-    evidence_ids: list[str] = Field(description="evidence_id values of the tool results that back this status.")
+    evidence_ids: list[str] = Field(
+        description="evidence_id values of the tool results that back this status. For 'supported', include the "
+        "test that links the suspect to target_var: the correlate(target, suspect) result, or for a non_climate "
+        "suspect the climate_residual result of target_var."
+    )
     note: str = Field(description="One plain sentence on why, using only figures from tool results.")
+    target_var: str | None = Field(
+        default=None,
+        description="Always give it: the variable id whose change this suspect would explain (the variable under "
+        "investigation), e.g. 'grace_tws'. The same for every suspect of one question.",
+    )
+    kind: Literal["climate", "non_climate"] | None = Field(
+        default=None,
+        description="Always give it: 'climate' for weather and climate suspects (rain, temperature, snow, sunlight), "
+        "'non_climate' for water use, irrigation, dams, land change and anything else the climate data does not "
+        "measure. A climate suspect can only be supported by a correlate test with target_var; a non_climate one "
+        "also by a real climate_residual of target_var.",
+    )
+    suspect_var: str | None = Field(
+        default=None,
+        description="The catalog variable that measures this suspect, e.g. 'precip' for 'less rain'. Give it "
+        "whenever one exists: a correlate test counts as a link only when it pairs target_var with this variable. "
+        "Omit it for a suspect no catalog variable measures (it can then only be supported by the residual).",
+    )
+    expects: Literal["up", "down"] | None = Field(
+        default=None,
+        description="Always give it when suspect_var is given: the way suspect_var must go for this suspect to "
+        "hold, e.g. 'down' for 'less rain', 'up' for 'warmer air'. If the suspect's own trend is real and goes "
+        "the other way, the board rules the suspect out.",
+    )
 
 
 TOOLS: dict[str, ToolSpec] = {
     "profile_place": ToolSpec(
         data.profile_place,
-        "Call this first. Profiles the picked place: land-cover shares and the dominant class "
+        "Call this first. Profiles the picked place: land-cover shares in percent of the box "
+        "(land_cover_pct) and the dominant class "
         "(MODIS, ~20 km box), the tags that decide which variables apply, and the size of the data "
-        "cells. Coarse sources average over big cells (GRACE ~300 km, POWER ~50 km), so a single "
+        "cells. It also flies the map to the place and, in a solved case, lists the case's own map layers "
+        "(case_layers). Coarse sources average over big cells (GRACE ~300 km, POWER ~50 km), so a single "
         "field or street is never resolved.",
         NoArgs,
     ),
@@ -148,7 +189,9 @@ TOOLS: dict[str, ToolSpec] = {
         "Tests a fetched series for a long-term trend after removing the seasonal cycle "
         "(Mann-Kendall with Sen slope). Returns slope per decade with its 95% range, p-value, the "
         "q-value corrected over every test of this investigation, the verdict (real / likely / "
-        "unknown), direction and how many more years would be needed. Every call counts as a test "
+        "unknown), direction and how many more years would be needed. Rain, runoff and snow cover are "
+        "tested on the means of complete years instead (basis: annual means), because their dry or "
+        "snow-free seasons hide the change in monthly values. Every call counts as a test "
         "and makes the correction stricter, so test only what the question needs. Quote only the "
         "returned numbers.",
         TrendTestArgs,
@@ -190,7 +233,8 @@ TOOLS: dict[str, ToolSpec] = {
     "land_cover_change": ToolSpec(
         context.land_cover_change,
         "Shows how the land cover around this place changed between two years (MODIS, 500 m): the "
-        "classes whose share moved most, with before and after shares, and shows the land cover layer "
+        "classes whose share moved most, with before_pct and after_pct (percent of the box) and "
+        "change_points (the move in percentage points, not a percent change), and shows the land cover layer "
         "on the map. Always repeat the returned caveat: at 500 m, orchards and tree crops can be "
         "classed as savanna or woody vegetation. Not a statistical test.",
         LandCoverArgs,
@@ -209,11 +253,29 @@ TOOLS: dict[str, ToolSpec] = {
         "no new tests. Use it to compare with a similar place, not as evidence about this place.",
         SolvedCaseArgs,
     ),
+    "trend_map": ToolSpec(
+        where.trend_map,
+        "Shows WHERE a variable changes around this place: a map of the trend per pixel (slope per decade), "
+        "put on the map with its legend. Pixels without a clear trend on their own are faded; that is a picture, "
+        "not a test. Returns share_significant (quote it only as the 'share of the area with a clear trend'), "
+        "median_slope_per_decade and ONE trend test on the median over the map area, corrected like every test "
+        "(it counts as one test). Only for variables with a gridded source; others answer not_available.",
+        TrendMapArgs,
+    ),
+    "water_extent": ToolSpec(
+        water.water_extent,
+        f"Measures the open-water area (km²) in this place's box for each year, at {wx.RESOLUTION}, from NASA "
+        f"OPERA water maps of Landsat and Sentinel-2 scenes (one clear scene a month, yearly median; from "
+        f"{wx.FIRST_YEAR}, with a gap in the record that the caveat names). Use it for a reservoir or lake. Returns the yearly areas and a "
+        "series_id to pass to trend_test (one value per year). Counts every water body in the box; refused "
+        "when the box reaches the sea. Not a test; always repeat the returned caveat.",
+        WaterExtentArgs,
+    ),
     "show_layer": ToolSpec(
         mapping.show_layer,
         "Puts one layer on the map: the evidence of the current step (the variable just tested, for its year "
-        "or day), with its legend, source and resolution shown to the user. Unknown ids or dates outside the "
-        "layer are rejected. A map instruction: not a test, no figure comes from it.",
+        "or day), with its legend, source and resolution shown to the user. With no date and no year it shows the "
+        "last year of the period you tested. Unknown ids or dates outside the layer are rejected. A map instruction: not a test, no figure comes from it.",
         ShowLayerArgs,
     ),
     "set_year": ToolSpec(
@@ -243,10 +305,16 @@ TOOLS: dict[str, ToolSpec] = {
     "update_board": ToolSpec(
         case_board.update_board,
         "Writes one suspect on the case board with a status (open / supported / hint / ruled_out), the "
-        "evidence_ids that back it and a short note. The code keeps the board honest: 'supported' needs an "
-        "evidence test that survives the correction over every test of this investigation, otherwise it is "
-        "shown as 'hint' with the reason; 'ruled_out' needs a test with no clear trend and enough years, "
-        "otherwise 'open'. Report the status the board returns, not the one you asked for.",
+        "evidence_ids that back it, a short note, the target_var under investigation and the suspect's kind "
+        "(climate / non_climate). The code keeps the board honest: 'supported' needs an evidence test that LINKS "
+        "the suspect to target_var and survives the correction over every test of this investigation: a "
+        "correlate test between target_var and suspect_var (the variable that measures the suspect), or "
+        "(non_climate suspects only) a real "
+        "climate_residual of target_var. A suspect whose own trend is real but has no such link is shown as "
+        "'trend_only' (TREND REAL, NOT LINKED); otherwise it is shown as 'hint' with the reason. 'ruled_out' "
+        "needs a test with no clear trend and enough years, or its own data going the other way from 'expects', "
+        "otherwise 'open'; a suspect whose own data really went the other way is ruled out whatever you ask. "
+        "Report the status the board returns, not the one you asked for.",
         UpdateBoardArgs,
     ),
 }

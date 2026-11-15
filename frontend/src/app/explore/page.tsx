@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import ExploreView from "@/features/explore/ExploreView";
 
 export const metadata: Metadata = {
-  title: "Explore · Earth Trend Detective",
+  title: "Explore · Alibi",
   description: "Click any place on Earth to see what is changing, whether it is real, and whether it is the climate.",
 };
 

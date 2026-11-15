@@ -72,6 +72,20 @@ def test_high_latitude_open_shrubland_is_not_desert():
     assert "desert" in tags_for(shares)  # no latitude known: unchanged behaviour
 
 
+def test_high_latitude_barren_without_ice_is_not_desert():
+    # bare rock in the Arctic (Svalbard, north Greenland) with no ice inside the box
+    assert "desert" not in tags_for({"Barren": 0.9, "Grassland": 0.1}, lat=78.0)
+    assert "desert" not in tags_for({"Barren": 0.9}, lat=-75.0)
+    assert "desert" in tags_for({"Barren": 0.9}, lat=23.0)
+
+
+def test_shrubland_beside_snow_is_not_desert():
+    # high mountains below the polar circle: shrubs and ice side by side
+    shares = {"Open shrubland": 0.7, "Permanent snow and ice": 0.3}
+    assert "desert" not in tags_for(shares, lat=30.0)
+    assert "snow" in tags_for(shares, lat=30.0)
+
+
 def test_sea_variable_off_land_not_available():
     rows = _rows(_session(tags=("vegetated",)))
     assert rows["sst"]["available"] is False

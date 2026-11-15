@@ -19,7 +19,7 @@ const TITLES: Record<string, string> = {
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params
-  return { title: `${TITLES[id] ?? 'Case'} · Earth Trend Detective` }
+  return { title: `${TITLES[id] ?? 'Case'} · Alibi` }
 }
 
 export default async function StoryPage({ params }: { params: Promise<{ id: string }> }) {

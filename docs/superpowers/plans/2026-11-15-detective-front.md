@@ -740,3 +740,29 @@ Exact changes:
 - `done.n_tests` is the size of the thread-wide correction family (fix wave) and is the number shown. `n_tests_branch` is parsed but not shown (YAGNI).
 - The cases use the AWS relief too. NASADEM ships per case as a single `heightmap_rgb.png`, not as tiles, and `raster-dem` needs tiles. Do not add a per-case DEM after 13:00 (spec §8 freeze). The legend says which relief is shown.
 - Cut order if late (spec §8): Task 12's curtain → plain toggle between the two years; terrain → flat globe (`setTerrain(null)`). Never cut: the scene player, board stamps, the answer check line, replay.
+
+### Task 17: Exploded evidence stack (added 2026-11-15, Mandy)
+
+Why: make the cross-variable reasoning visible. The layers the agent used as evidence float as stacked slabs
+over the 3D relief of the same box; the data-cell size becomes visible (GRACE is one coarse block over a 30 m
+base). Closing beat of every investigation ("Explode the evidence") and an optional view in solved cases.
+
+**Files:**
+- Create: `frontend/src/features/detective/stack/stackModel.ts` (pure), `frontend/src/features/detective/__tests__/stackModel.test.ts`
+- Create: `frontend/src/features/detective/stack/EvidenceStack.tsx` (R3F, client component, reuses the story relief helpers if usable)
+- Modify: the detective route/view from Tasks 13–14 (button "Explode the evidence" on the ending scene; Esc / button to collapse)
+- Modify: the story case view (optional "Layers" button) only through a prop, no restructure
+
+**Interfaces:**
+- `stackFor(inv: Investigation, view: MapView, opts: {max: 5}) -> StackModel` where `StackModel = {bbox, base: {kind: "relief", source, resolution}, slabs: Slab[]}` and `Slab = {key, title, source, resolution, period|year, legend (incl. labels/stops), verdict?: {verdict, direction}, stamp?: StampBeat, texture: {kind: "wms"|"png"|"cell", url?, cellKm?}, height: number}`.
+  - Slabs = the distinct evidence layers shown during the run (from the map-view history), most recent last, capped at `max` (keep the ones with a verdict first); data-cell footprints (GRACE, POWER) become `kind: "cell"` slabs drawn as one coarse block (`cellKm` from the footprint op `size`).
+  - `wms` textures use a single GIBS WMS GetMap for the exact bbox and the slab's drawn date (same URL rules as Task 6 `catalog.ts`); case layers use their PNGs from `sites/<id>/`.
+  - Heights evenly spaced; pure, deterministic.
+- `EvidenceStack` props `{model: StackModel, exploded: boolean, onPick(key)}`: planes with textures, spring animation between collapsed (all at ground) and exploded; each slab has a label card (title · source · resolution · drawn year/period · stamp icon + text). Picking a slab collapses and shows that layer on the main map.
+
+**Rules:** images are for seeing only — no number on a slab that did not come from a tool result; years shown are the drawn years; ≤ 5 slabs; respects `prefers-reduced-motion` (no animation, instant layout); English UI; tap targets ≥ 44 px; works with replayed runs.
+
+- [ ] Step 1: failing tests for `stackFor` (Lake Mead recording fixture: footprint becomes a `cell` slab; cap at 5; verdict-first ordering; drawn year, not asked year; empty investigation → no slabs).
+- [ ] Step 2: implement `stackModel.ts` → PASS.
+- [ ] Step 3: `EvidenceStack.tsx` + wiring; `npm run typecheck`, `npm run build`; manual check on a replay (`?replay=<name>`): explode/collapse, labels readable at 2 m, reduced motion.
+- [ ] Step 4: commit `feat: explode the evidence into its layers`.

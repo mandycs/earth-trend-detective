@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { Wordmark } from '../../brand/Wordmark'
 import { useEffect, useState } from 'react'
 import styles from './cover.module.css'
 
@@ -69,7 +70,7 @@ export function CoverReel({ cases, years }: { cases: ReelCase[]; years: string }
 
       <header className={styles.reelTop}>
         <Link href="/" className={`${styles.wordmark} wide`}>
-          Earth Trend Detective
+          <Wordmark />
         </Link>
         <ol className={styles.reelCases} aria-label="Cases">
           {cases.map((c, i) => (
@@ -105,8 +106,8 @@ export function CoverReel({ cases, years }: { cases: ReelCase[]; years: string }
           <i style={{ width: `${((index + t) / cases.length) * 100}%` }} />
         </div>
         <div className={styles.reelControls}>
-          <Link href="/investigate" className={styles.quiet}>
-            Investigate any point
+          <Link href="/detective" className={styles.quiet}>
+            Pick your own place
           </Link>
           <button type="button" className={styles.quiet} onClick={() => setPlaying((p) => !p)} aria-pressed={!playing}>
             {playing ? 'Pause' : 'Play'}

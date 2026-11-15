@@ -29,7 +29,7 @@ from app.detective.session import Session
 from app.detective.tools import data
 from app.investigate.landcover import box_around
 from app.site_report import residual_withheld_reason
-from app.stats.annual import annual_trend, annual_years_needed
+from app.stats.annual import MIN_YEARS, annual_trend, annual_years_needed, n_years
 from app.stats.deseason import monthly_anomalies
 from app.stats.lineup import MIN_PAIRS, _pairs, annualize, year_changes
 from app.stats.residual import CANDIDATE_MODELS, residual_for
@@ -354,6 +354,17 @@ def _years(session: Session, series: pd.Series, series_id: str) -> dict:
             "years": [int(series.index.year.min()), int(series.index.year.max())],
             "years_needed": annual_years_needed(series, annual_trend(series)),
         }
+    var_id = str(series.name or series_id.split(":")[0])
+    if var_id in data.SKEWED_WATER:  # the same annual means trend_test uses
+        first, last = int(series.index.year.min()), int(series.index.year.max())
+        means = data.complete_year_means(series, first, last)
+        if n_years(means) >= MIN_YEARS:
+            return {
+                "series_id": series_id,
+                "basis": data.ANNUAL_MEANS,
+                "years": [int(means.index.year.min()), int(means.index.year.max())],
+                "years_needed": annual_years_needed(means, annual_trend(means)),
+            }
     anomalies = monthly_anomalies(series)
     res = mk_trend_test(anomalies)  # only feeds the formula; not a counted test, nothing is logged
     slope = None if res.too_short else res.sen_slope_per_decade

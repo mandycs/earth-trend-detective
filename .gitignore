@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+!.env.docker.example
 
 # Python
 __pycache__/
@@ -28,5 +29,8 @@ dist/
 # Detective checkpoints and store (local SQLite)
 backend/data/detective/
 
-# Worktrees symlink the cache (a symlink is not matched by a trailing slash)
+# Local data cache link in worktrees (a symlink is not matched by **/data/cache/)
 backend/data/cache
+
+# Agent working notes
+.superpowers/
