@@ -50,6 +50,8 @@ export interface DetectiveViewProps {
   cases: CaseChip[]
   recordings: RecordingChip[]
   initialSite?: string
+  /** A point handed over in the link (`?lat=&lon=`, from a click on /explore), already validated. */
+  initialPoint?: Target | null
   replay?: string
 }
 
@@ -165,7 +167,7 @@ function CoordsField({ onTarget }: { onTarget: (t: Target) => void }) {
   )
 }
 
-export default function DetectiveView({ cases, recordings, initialSite, replay }: DetectiveViewProps) {
+export default function DetectiveView({ cases, recordings, initialSite, initialPoint = null, replay }: DetectiveViewProps) {
   const det = useDetectiveRun()
   const { run, inv, outcomes, turns, recording } = det
   const player = useScenePlayer(inv)
@@ -173,7 +175,7 @@ export default function DetectiveView({ cases, recordings, initialSite, replay }
 
   const [target, setTarget] = useState<Target | null>(() => {
     const c = initialSite ? cases.find((x) => x.id === initialSite) : undefined
-    return c ? caseTarget(c) : null
+    return c ? caseTarget(c) : initialPoint
   })
   // Where the map looks before a run: a preselected, typed or chosen place (map clicks are already in view).
   const [preview, setPreview] = useState<{ target: Target; seq: number } | null>(() => (target ? { target, seq: 1 } : null))
@@ -414,6 +416,7 @@ export default function DetectiveView({ cases, recordings, initialSite, replay }
             pickMode={pickMode}
             recordedAt={recording?.startedAt ?? null}
             stopRef={stopRef}
+            autoFocus={boxKey === 'ask' && !replay && !!initialPoint && target === initialPoint}
           />
           <p className="sr-only" aria-live="polite">
             {announce}

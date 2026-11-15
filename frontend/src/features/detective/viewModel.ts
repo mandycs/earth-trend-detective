@@ -145,3 +145,23 @@ export function previewCamera(target: Target, seq: number): { bbox: Bbox; pitch:
       : [...target.bbox] as Bbox;
   return { bbox, pitch: 0, bearing: 0, seq: -Math.abs(seq) };
 }
+
+// ---- a place handed over in the link (`/detective?lat=&lon=`) ----
+
+const PARAM_NUM = new RegExp(String.raw`^${NUM}$`);
+
+/** `?lat=&lon=` → a point target. Anything missing, not a plain number or out of range is ignored (null). */
+export function pointFromParams(lat: string | undefined, lon: string | undefined): Target | null {
+  if (lat === undefined || lon === undefined) return null;
+  const a = lat.trim().replace(/[−–]/g, "-");
+  const o = lon.trim().replace(/[−–]/g, "-");
+  if (!PARAM_NUM.test(a) || !PARAM_NUM.test(o)) return null;
+  const r = parseLatLon(`${a}, ${o}`);
+  return r.ok ? r.target : null;
+}
+
+/** The detective link for a point picked elsewhere (explore), rounded to 5 decimals (about a metre). */
+export function detectiveHref(lat: number, lon: number): string {
+  const r = (n: number): string => String(Number(n.toFixed(5)));
+  return `/detective?lat=${r(lat)}&lon=${r(wrapped(lon))}`;
+}

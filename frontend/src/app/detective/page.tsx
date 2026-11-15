@@ -6,6 +6,7 @@ import type { CaseChip } from '../../features/detective/DetectiveView'
 import type { RecordingChip } from '../../features/detective/replay'
 import { shortName } from '../../lib/cases'
 import { readCases } from '../../lib/readSites'
+import { pointFromParams } from '../../features/detective/viewModel'
 
 export const metadata: Metadata = {
   title: 'Your case · Alibi',
@@ -27,10 +28,18 @@ function readRecordings(): RecordingChip[] {
   }
 }
 
-export default async function DetectivePage({ searchParams }: { searchParams: Promise<{ replay?: string; site?: string }> }) {
+type Params = Promise<{ replay?: string | string[]; site?: string | string[]; lat?: string | string[]; lon?: string | string[] }>
+
+const one = (v: string | string[] | undefined): string | undefined => (typeof v === 'string' ? v : undefined)
+
+export default async function DetectivePage({ searchParams }: { searchParams: Params }) {
   const params = await searchParams
-  const replay = typeof params.replay === 'string' ? params.replay : undefined
-  const site = typeof params.site === 'string' ? params.site : undefined
+  const replay = one(params.replay)
+  const site = one(params.site)
+  // `?lat=&lon=` (from a click on /explore): a point already picked. A solved case (`site`) wins over it.
+  const point = site ? null : pointFromParams(one(params.lat), one(params.lon))
   const cases: CaseChip[] = readCases().map((s) => ({ id: s.id, name: shortName(s.name), bbox: s.bbox }))
-  return <DetectiveView cases={cases} recordings={readRecordings()} initialSite={site} replay={replay} />
+  return (
+    <DetectiveView cases={cases} recordings={readRecordings()} initialSite={site} initialPoint={point} replay={replay} />
+  )
 }
