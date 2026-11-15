@@ -331,14 +331,14 @@
 
 /* With threshold lines the plot (and the slider over it) leaves a gutter on the
    right for their labels; both shrink together, so the cursor stays on its year. */
-.tl-chart-gutter svg,
-.tl-chart-gutter input,
-.tl-chart-gutter .tl-ends {
+.tl-chart.tl-chart-gutter svg,
+.tl-chart.tl-chart-gutter input,
+.tl-chart.tl-chart-gutter .tl-ends {
   right: 96px;
 }
 
-.tl-chart-gutter svg,
-.tl-chart-gutter input {
+.tl-chart.tl-chart-gutter svg,
+.tl-chart.tl-chart-gutter input {
   width: calc(100% - 96px);
 }
 
