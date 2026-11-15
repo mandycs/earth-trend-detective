@@ -1,0 +1,84 @@
+<template>
+<style>
+  @font-face { font-family: "Archivo"; src: url(assets/fonts/archivo.woff2) format("woff2"); font-weight: 100 900; font-stretch: 62% 125%; }
+  @font-face { font-family: "Manrope"; src: url(assets/fonts/manrope.woff2) format("woff2"); font-weight: 200 800; }
+  #ask-root { position: absolute; inset: 0; overflow: hidden; background: #0e1012; }
+  #ask-root .h { position: absolute; left: 96px; font-family: "Archivo", sans-serif; font-stretch: 75%; font-weight: 800;
+        text-transform: uppercase; color: #e9ecee; line-height: 0.92; }
+  #ask-root .lab { position: absolute; left: 100px; font-family: "Manrope", sans-serif; font-weight: 700; font-size: 30px;
+         letter-spacing: 0.12em; text-transform: uppercase; color: #aeb6bc; }
+  #ask-root .src { position: absolute; left: 100px; bottom: 48px; font-family: "Manrope", sans-serif; font-weight: 500;
+         font-size: 28px; color: #9aa2a8; }
+  #a-box { position: absolute; left: 96px; top: 210px; width: 1728px; height: 170px; border: 3px solid #e9ecee; background: #171a1d;
+           display: flex; align-items: center; padding: 0 44px; }
+  #a-q { font-family: "Manrope", sans-serif; font-weight: 600; font-size: 84px; color: #e9ecee; white-space: nowrap; display: flex; align-items: center; }
+  #a-q i { font-style: normal; opacity: 0; }
+  #a-caret { display: inline-block; width: 6px; height: 90px; background: #e9ecee; margin-left: 6px; }
+  #a-place { position: absolute; left: 96px; top: 400px; font-family: "Manrope", sans-serif; font-weight: 700; font-size: 34px;
+             color: #0e1012; background: #e9ecee; padding: 6px 18px; }
+  .chip { position: absolute; width: 848px; height: 172px; border: 2px solid #4a5157; background: #15181b; padding: 26px 34px;
+          display: flex; flex-direction: column; justify-content: center; gap: 10px; }
+  .chip b { font-family: "Manrope", sans-serif; font-weight: 800; font-size: 54px; color: #e9ecee; line-height: 1; }
+  .chip span { font-family: "Manrope", sans-serif; font-weight: 500; font-size: 34px; color: #aeb6bc; line-height: 1.1; }
+</style>
+<div id="ask-root" data-composition-id="ask" data-width="1920" data-height="1080" data-layout-allow-overlap>
+  <p id="a-l1" class="lab" style="top:150px">Ask in your own words</p>
+  <div id="a-box"><div id="a-q"><i id="a-k0">I</i><i id="a-k1">s</i><i id="a-k2">&nbsp;</i><i id="a-k3">t</i><i id="a-k4">h</i><i id="a-k5">e</i><i id="a-k6">&nbsp;</i><i id="a-k7">w</i><i id="a-k8">a</i><i id="a-k9">t</i><i id="a-k10">e</i><i id="a-k11">r</i><i id="a-k12">&nbsp;</i><i id="a-k13">g</i><i id="a-k14">o</i><i id="a-k15">i</i><i id="a-k16">n</i><i id="a-k17">g</i><i id="a-k18">&nbsp;</i><i id="a-k19">d</i><i id="a-k20">o</i><i id="a-k21">w</i><i id="a-k22">n</i><i id="a-k23">&nbsp;</i><i id="a-k24">w</i><i id="a-k25">h</i><i id="a-k26">e</i><i id="a-k27">r</i><i id="a-k28">e</i><i id="a-k29">&nbsp;</i><i id="a-k30">I</i><i id="a-k31">&nbsp;</i><i id="a-k32">l</i><i id="a-k33">i</i><i id="a-k34">v</i><i id="a-k35">e</i><i id="a-k36">?</i><em id="a-caret"></em></div></div>
+  <div id="a-place">Lake Mead, USA</div>
+  <p id="a-l2" class="lab" style="top:490px">Alibi picks the satellite records</p>
+  <div id="a-c0" class="chip" style="left:96px;top:560px"><b>Total water stored</b><span>GRACE &amp; GRACE-FO gravity satellites</span></div>
+  <div id="a-c1" class="chip" style="left:976px;top:560px"><b>Rainfall</b><span>GPM rain satellites + MERRA-2</span></div>
+  <div id="a-c2" class="chip" style="left:96px;top:760px"><b>Air temperature</b><span>MERRA-2 weather model</span></div>
+  <div id="a-c3" class="chip" style="left:976px;top:760px"><b>Is it real?</b><span>A trend test on every record</span></div>
+</div>
+<script>
+  const tl = gsap.timeline({ paused: true });
+  tl.fromTo("#a-l1", {opacity: 0}, {opacity: 1, duration: 0.2}, 0.05);
+  tl.fromTo("#a-box", {opacity: 0, y: 20}, {opacity: 1, y: 0, duration: 0.3, ease: "power3.out"}, 0.1);
+  tl.set("#a-k0", {opacity: 1}, 0.5);
+  tl.set("#a-k1", {opacity: 1}, 0.545);
+  tl.set("#a-k2", {opacity: 1}, 0.59);
+  tl.set("#a-k3", {opacity: 1}, 0.635);
+  tl.set("#a-k4", {opacity: 1}, 0.68);
+  tl.set("#a-k5", {opacity: 1}, 0.725);
+  tl.set("#a-k6", {opacity: 1}, 0.77);
+  tl.set("#a-k7", {opacity: 1}, 0.815);
+  tl.set("#a-k8", {opacity: 1}, 0.86);
+  tl.set("#a-k9", {opacity: 1}, 0.905);
+  tl.set("#a-k10", {opacity: 1}, 0.95);
+  tl.set("#a-k11", {opacity: 1}, 0.995);
+  tl.set("#a-k12", {opacity: 1}, 1.04);
+  tl.set("#a-k13", {opacity: 1}, 1.085);
+  tl.set("#a-k14", {opacity: 1}, 1.13);
+  tl.set("#a-k15", {opacity: 1}, 1.175);
+  tl.set("#a-k16", {opacity: 1}, 1.22);
+  tl.set("#a-k17", {opacity: 1}, 1.265);
+  tl.set("#a-k18", {opacity: 1}, 1.31);
+  tl.set("#a-k19", {opacity: 1}, 1.355);
+  tl.set("#a-k20", {opacity: 1}, 1.4);
+  tl.set("#a-k21", {opacity: 1}, 1.445);
+  tl.set("#a-k22", {opacity: 1}, 1.49);
+  tl.set("#a-k23", {opacity: 1}, 1.535);
+  tl.set("#a-k24", {opacity: 1}, 1.58);
+  tl.set("#a-k25", {opacity: 1}, 1.625);
+  tl.set("#a-k26", {opacity: 1}, 1.67);
+  tl.set("#a-k27", {opacity: 1}, 1.715);
+  tl.set("#a-k28", {opacity: 1}, 1.76);
+  tl.set("#a-k29", {opacity: 1}, 1.805);
+  tl.set("#a-k30", {opacity: 1}, 1.85);
+  tl.set("#a-k31", {opacity: 1}, 1.895);
+  tl.set("#a-k32", {opacity: 1}, 1.94);
+  tl.set("#a-k33", {opacity: 1}, 1.985);
+  tl.set("#a-k34", {opacity: 1}, 2.03);
+  tl.set("#a-k35", {opacity: 1}, 2.075);
+  tl.set("#a-k36", {opacity: 1}, 2.12);
+  tl.fromTo("#a-caret", {opacity: 1}, {opacity: 0, duration: 0.01, repeat: 9, yoyo: true, repeatDelay: 0.25}, 0.3);
+  tl.fromTo("#a-place", {opacity: 0, x: -20}, {opacity: 1, x: 0, duration: 0.3, ease: "power3.out"}, 2.7);
+  tl.fromTo("#a-l2", {opacity: 0}, {opacity: 1, duration: 0.25}, 3.3);
+  tl.fromTo("#a-c0", {opacity: 0, y: 24}, {opacity: 1, y: 0, duration: 0.3, ease: "power3.out"}, 3.6);
+  tl.fromTo("#a-c1", {opacity: 0, y: 24}, {opacity: 1, y: 0, duration: 0.3, ease: "power3.out"}, 3.95);
+  tl.fromTo("#a-c2", {opacity: 0, y: 24}, {opacity: 1, y: 0, duration: 0.3, ease: "power3.out"}, 4.3);
+  tl.fromTo("#a-c3", {opacity: 0, y: 24}, {opacity: 1, y: 0, duration: 0.3, ease: "power3.out"}, 4.65);
+  window.__timelines["ask"] = tl;
+</script>
+</template>

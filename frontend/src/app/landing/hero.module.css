@@ -1,0 +1,92 @@
+.hero {
+  position: relative;
+  height: 100dvh;
+  min-height: 480px;
+  overflow: hidden;
+  background: #000;
+  color: var(--ink);
+}
+
+.film {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Only the corners darken, so the film keeps its own titles readable. */
+.shade {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0) 22%),
+    linear-gradient(to top, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0) 24%);
+}
+
+.brand {
+  position: absolute;
+  top: var(--gutter);
+  left: var(--gutter);
+  margin: 0;
+}
+
+.controls {
+  position: absolute;
+  left: var(--gutter);
+  right: var(--gutter);
+  bottom: calc(var(--gutter) + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.control,
+.skip {
+  min-height: 44px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  font: inherit;
+  font-size: 1rem;
+  color: var(--ink);
+  background: rgba(10, 12, 14, 0.62);
+  border: 1px solid rgba(233, 236, 238, 0.35);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.control:hover,
+.skip:hover {
+  border-color: var(--ink);
+}
+
+.control:focus-visible,
+.skip:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.skip {
+  margin-left: auto;
+}
+
+@media (max-width: 640px) {
+  /* The film is 16:9; on a phone show all of it instead of cropping the titles. */
+  .hero {
+    height: auto;
+    min-height: 0;
+    padding-top: 64px;
+    padding-bottom: 76px;
+  }
+  .film {
+    position: relative;
+    height: auto;
+    object-fit: contain;
+  }
+  .skip {
+    margin-left: 0;
+  }
+}
