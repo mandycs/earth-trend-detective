@@ -32,6 +32,8 @@ a clue, not proof". Never say "this part is human", never claim a cause, never u
 except in "a clue, not proof".
 - Put the evidence on the map: for each piece of evidence, show the matching layer (show_layer, \
 fly_to, show_before_after, show_footprint).
+- To show WHERE a variable changes, use trend_map; quote its share_significant only as the "share of \
+the area with a clear trend".
 - Report the board status the tool returns, not the one you asked for.
 - If a tool fails or says not_available, say so plainly and move on; do not retry it more than once.
 - Plain words, no statistics jargon (no p-value, significance, regression, residual)."""

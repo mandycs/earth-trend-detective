@@ -11,7 +11,7 @@ from typing import Literal, NamedTuple
 
 from pydantic import BaseModel, Field
 
-from app.detective.tools import analysis, case_board, context, data, mapping
+from app.detective.tools import analysis, case_board, context, data, mapping, where
 
 
 class ToolSpec(NamedTuple):
@@ -71,6 +71,10 @@ class SatellitePictureArgs(BaseModel):
 
 class SolvedCaseArgs(BaseModel):
     site_id: str = Field(description="Id of a solved case, e.g. 'lake_mead'.")
+
+
+class TrendMapArgs(BaseModel):
+    var_id: str = Field(description="Variable id from list_variables with a gridded source (sea temperature, chlorophyll, GIBS yearly layers).")
 
 
 class YearsNeededArgs(BaseModel):
@@ -208,6 +212,15 @@ TOOLS: dict[str, ToolSpec] = {
         "by the climate we measured, plus the case caveats. Already corrected inside the case; it logs "
         "no new tests. Use it to compare with a similar place, not as evidence about this place.",
         SolvedCaseArgs,
+    ),
+    "trend_map": ToolSpec(
+        where.trend_map,
+        "Shows WHERE a variable changes around this place: a map of the trend per pixel (slope per decade), "
+        "put on the map with its legend. Pixels without a clear trend on their own are faded; that is a picture, "
+        "not a test. Returns share_significant (quote it only as the 'share of the area with a clear trend'), "
+        "median_slope_per_decade and ONE trend test on the median over the map area, corrected like every test "
+        "(it counts as one test). Only for variables with a gridded source; others answer not_available.",
+        TrendMapArgs,
     ),
     "show_layer": ToolSpec(
         mapping.show_layer,

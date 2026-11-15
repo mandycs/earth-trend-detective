@@ -60,3 +60,11 @@ are listed in `final-fix-report.md` next to it. In short:
 - Air values from GIBS colours stop at the top of the colour scale (NO₂ 2×10¹⁶ molecules/cm², CO 350 ppbv);
   when more than 1 % of a year's seen pixels sit there, the result says the yearly values and the trend are
   understated.
+- `trend_map` (per-pixel "where" maps) has grids for ERDDAP monthly sea variables (`sst`, `chlorophyll`) and
+  the GIBS yearly layers. Heat stress (`dhw`, a daily product reduced to a yearly peak) and every point source
+  answer "no gridded source for this variable". Pixel significance is drawn (faded when p ≥ 0.05) but never
+  corrected over the area; the one counted test is on the median over the map area. The PNGs live in
+  `backend/data/detective/maps/` and are removed after 7 days, so a thread re-opened later can point to a map
+  that is gone (the route answers 404). GIBS grids have their own disk cache (`backend/data/cache/gibs_grids/`),
+  separate from the point-series cache, so the first map of a GIBS variable fetches the pictures again
+  (NO₂: about 2.5 minutes).
