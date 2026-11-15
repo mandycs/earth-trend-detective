@@ -1,0 +1,13 @@
+{
+  "_note": "Prose for the story mode. No figures here: every number comes from site.json.",
+  "steps": [
+    {"title": "What is changing here?", "body": "The water over the reef, measured from space by NASA's MUR sea temperature record. Pick a layer on the left to see where it warmed."},
+    {"title": "Is it real, or is it chance?", "body": "The warming is steady and shows up across almost all of the sea in this map, inshore and out on the shelf edge. It is not one hot summer."},
+    {"title": "Is it the climate?", "body": "Sea temperature is part of the climate itself, so there is nothing to split off. What changed is how often the heat piles up: heat-stress years used to be rare here, and now they keep coming back."}
+  ],
+  "narrative": "Coral reefs are often called the rainforests of the sea. This one sits in water that keeps getting warmer, and the hot spells that stress corals no longer wait a decade between visits.",
+  "caveats": [
+    "Chlorophyll near the coast is read from water colour, which mud, river water and a shallow sea floor also change. No trend was detected.",
+    "We do not say what drives the heat stress, or whether floods change the water near the coast: this case does not test them."
+  ]
+}

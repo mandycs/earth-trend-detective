@@ -35,9 +35,19 @@ logger = logging.getLogger(__name__)
 SITES_DIR = Path(__file__).resolve().parents[2] / "sites"
 PIPELINE_VERSION = "0.1"
 DEFAULT_EXAGGERATION = 3.0
-VERTICAL_EXAGGERATION: Mapping[str, float] = {"lake_mead": 3, "aletsch": 1.5, "donana": 8}
+VERTICAL_EXAGGERATION: Mapping[str, float] = {
+    "lake_mead": 3,
+    "aletsch": 1.5,
+    "donana": 8,
+    "great_barrier_reef": 30,
+}
 STEPS = ("What is changing here?", "Is it real, or is it chance?", "Is it the climate?")
-COUNTRY: Mapping[str, str] = {"lake_mead": "United States", "aletsch": "Switzerland", "donana": "Spain"}
+COUNTRY: Mapping[str, str] = {
+    "lake_mead": "United States",
+    "aletsch": "Switzerland",
+    "donana": "Spain",
+    "great_barrier_reef": "Australia",
+}
 MIN_MONTHS_PER_YEAR = 8
 BASE_CAVEATS = ("The leftover share is a clue, not an attribution.",)
 GRACE_CAVEAT = (
@@ -225,12 +235,20 @@ def write_site_json(doc: Mapping, site_dir: Path) -> Path:
 
 
 def export_site(site_id: str, sites_dir: Path = SITES_DIR) -> dict:
-    """Build and write site.json for one site id; raises KeyError for an unknown id."""
+    """Build and write site.json for one site id; raises KeyError for an unknown id.
+
+    A sea site goes to `reef.export.export_reef` (cached ERDDAP data only).
+    """
     site_catalog = load_sites()
     site = site_catalog.get(site_id)
     if site is None:
         known = ", ".join(s.id for s in site_catalog.sites)
         raise KeyError(f"unknown site {site_id!r}; known: {known}")
+    if site.pipeline == "sea":  # the reef has its own builder (no land gather, no residual)
+        from app.reef import export as reef_export
+        from app.reef.points import DEFAULT_CACHE_DIR
+
+        return reef_export.export_reef(site, sites_dir, DEFAULT_CACHE_DIR)
     start, end = site_catalog.study_period
     site_dir = sites_dir / site.id
     doc = build_site_json(site, load_catalog(), start, end, site_dir)
