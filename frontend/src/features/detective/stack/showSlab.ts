@@ -2,11 +2,8 @@
 import type { MapView } from "../map/mapView.ts";
 import type { Slab } from "./stackModel.ts";
 
-/** The view with only the picked slab drawn: a layer in its own slot (no curtain), or one data cell. */
+/** The view with only the picked slab drawn: a layer in its own slot (no curtain). */
 export function showSlab(view: MapView, slab: Slab): MapView {
-  if (slab.show.kind === "footprint") {
-    return { ...view, curtain: null, evidence: null, footprints: [slab.show.footprint] };
-  }
   const lv = slab.show.layer;
   // One coloured layer at a time: a context layer is shown alone, an evidence layer over the context.
   if (lv.role === "context") return { ...view, curtain: null, evidence: null, context: lv, footprints: [] };

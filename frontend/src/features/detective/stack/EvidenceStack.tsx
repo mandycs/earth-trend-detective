@@ -13,7 +13,9 @@ import type { HeightGrid } from '../../../story/heights'
 import { Stamp } from '../../../lib/Stamp'
 import { STATUS_WORDS } from '../board'
 import type { Bbox } from '../events'
-import type { Slab, StackModel } from './stackModel'
+import type { Slab, StackCell, StackModel } from './stackModel'
+import { LandCoverKey } from '../LandCoverKey'
+import { landCoverClasses } from '../map/landCover'
 import { atRest, collapseReport, springStep } from './motion'
 import type { CollapseState, SlabMotion } from './motion'
 import styles from './stack.module.css'
@@ -38,13 +40,12 @@ export interface EvidenceStackProps {
 /** Shown on screen with the relief (DESIGN: the vertical exaggeration is shown). */
 export const RELIEF_EXAGGERATION = 3
 const SLAB_T = 0.014
-const CELL_T = 0.05
 const GAP = 0.15
 const LIFT = 0.1
 const SIDE = '#262b30'
 const EDGE = '#3a4146'
 const EDGE_ON = '#e9ecee'
-const CELL_TOP = '#6f787f'
+const CELL_LINE = '#e9ecee'
 const WIDE = '(min-width: 900px)'
 
 // ---- geometry helpers (drawing only: nothing here is printed) ----
@@ -213,30 +214,15 @@ function SlabMesh({
   slab: Slab; box: Bbox; depth: number; groupRef: (g: THREE.Group | null) => void; active: boolean
   onPick: (key: string) => void; onHover: (key: string | null) => void; onTexture: (key: string, status: PictureStatus) => void
 }) {
-  const url = slab.texture.kind === 'cell' ? null : slab.texture.url
+  const url = slab.texture.url
   // An empty or failed picture leaves a neutral slab: never a colour that was not in the data.
   const { tex, status } = useTexture(url)
   useEffect(() => {
     if (url) onTexture(slab.key, status)
   }, [status, url, slab.key, onTexture])
   const edgeColour = active ? EDGE_ON : EDGE
-  const cellBox = slab.texture.kind === 'cell' ? slab.texture.bbox : null
-  const cellKm = slab.texture.kind === 'cell' ? slab.texture.cellKm : null
-  const shapes = useMemo(() => {
-    if (!cellBox) return { edges: new THREE.EdgesGeometry(new THREE.BoxGeometry(1, SLAB_T, depth)), lines: null, r: null }
-    const r = rectIn(box, cellBox, depth)
-    const w = Math.max(0.01, r.x1 - r.x0)
-    const d = Math.max(0.01, r.z1 - r.z0)
-    return { edges: new THREE.EdgesGeometry(new THREE.BoxGeometry(w, CELL_T, d)), lines: cellGrid(box, cellBox, cellKm, depth), r }
-  }, [box, cellBox, cellKm, depth])
-  useEffect(
-    () => () => {
-      shapes.edges.dispose()
-      shapes.lines?.dispose()
-    },
-    [shapes],
-  )
-  const lines = shapes.lines
+  const edges = useMemo(() => new THREE.EdgesGeometry(new THREE.BoxGeometry(1, SLAB_T, depth)), [depth])
+  useEffect(() => () => edges.dispose(), [edges])
   const click = (e: ThreeEvent<MouseEvent>) => {
     e.stopPropagation()
     if (e.delta > 6) return // a drag to turn the stack, not a pick
@@ -252,36 +238,6 @@ function SlabMesh({
       onHover(null)
       document.body.style.cursor = ''
     },
-  }
-
-  if (slab.texture.kind === 'cell') {
-    const r = shapes.r ?? rectIn(box, slab.texture.bbox, depth)
-    const w = Math.max(0.01, r.x1 - r.x0)
-    const d = Math.max(0.01, r.z1 - r.z0)
-    const cx = (r.x0 + r.x1) / 2
-    const cz = (r.z0 + r.z1) / 2
-    return (
-      <group ref={groupRef}>
-        {/* the plate: the whole box, dark, with the outline of neighbouring cells of the same size */}
-        <mesh onClick={click} {...hover}>
-          <boxGeometry args={[1, SLAB_T * 0.6, depth]} />
-          <meshBasicMaterial color={'#1c2024'} />
-        </mesh>
-        {lines && (
-          <lineSegments geometry={lines} position={[0, SLAB_T * 0.31, 0]}>
-            <lineBasicMaterial color={EDGE} />
-          </lineSegments>
-        )}
-        {/* the cell: one coarse block, one value for everything under it */}
-        <mesh position={[cx, CELL_T / 2, cz]} onClick={click} {...hover}>
-          <boxGeometry args={[w, CELL_T, d]} />
-          <meshBasicMaterial color={CELL_TOP} />
-        </mesh>
-        <lineSegments position={[cx, CELL_T / 2, cz]} geometry={shapes.edges}>
-          <lineBasicMaterial color={edgeColour} />
-        </lineSegments>
-      </group>
-    )
   }
 
   return (
@@ -301,34 +257,51 @@ function SlabMesh({
         <meshBasicMaterial attach="material-4" color={SIDE} />
         <meshBasicMaterial attach="material-5" color={SIDE} />
       </mesh>
-      <lineSegments geometry={shapes.edges}>
+      <lineSegments geometry={edges}>
         <lineBasicMaterial color={edgeColour} />
       </lineSegments>
     </group>
   )
 }
 
-/** Grid lines one cell apart, aligned on the footprint, across the box (only when cells are smaller than it). */
-function cellGrid(box: Bbox, cell: Bbox, cellKm: number | null, depth: number): THREE.BufferGeometry | null {
-  if (!cellKm || cellKm <= 0) return null
-  const [wm, dm] = boxMetres(box)
-  const stepX = (cellKm * 1000) / wm
-  const stepZ = ((cellKm * 1000) / dm) * depth
-  if (stepX >= 1 && stepZ >= depth) return null
-  if (1 / stepX > 40 || depth / stepZ > 40) return null
-  const r = rectIn(box, cell, depth)
-  const pts: number[] = []
-  const xs: number[] = []
-  for (let x = r.x0; x >= -0.5; x -= stepX) xs.push(x)
-  for (let x = r.x0 + stepX; x <= 0.5; x += stepX) xs.push(x)
-  const zs: number[] = []
-  for (let z = r.z0; z >= -depth / 2; z -= stepZ) zs.push(z)
-  for (let z = r.z0 + stepZ; z <= depth / 2; z += stepZ) zs.push(z)
-  for (const x of xs) pts.push(x, 0, -depth / 2, x, 0, depth / 2)
-  for (const z of zs) pts.push(-0.5, 0, z, 0.5, 0, z)
-  const g = new THREE.BufferGeometry()
-  g.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3))
-  return g
+/**
+ * Each data cell as a dashed outline on the ground, drawn through the relief so it is never hidden. A cell is one
+ * value for everything inside: an outline, not a map. Clipped to the box (a cell bigger than the box is its edge).
+ */
+function CellOutlines({ cells, box, depth, y }: { cells: StackCell[]; box: Bbox; depth: number; y: number }) {
+  const lines = useMemo(
+    () =>
+      cells.map((c) => {
+        const r = rectIn(box, c.bbox, depth)
+        const inset = c.coversBox ? 0.004 : 0
+        const [x0, x1, z0, z1] = [r.x0 + inset, r.x1 - inset, r.z0 + inset, r.z1 - inset]
+        const g = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(x0, 0, z0), new THREE.Vector3(x1, 0, z0), new THREE.Vector3(x1, 0, z1),
+          new THREE.Vector3(x0, 0, z1), new THREE.Vector3(x0, 0, z0),
+        ])
+        const m = new THREE.LineDashedMaterial({ color: CELL_LINE, dashSize: 0.025, gapSize: 0.015, depthTest: false, transparent: true })
+        const line = new THREE.Line(g, m)
+        line.computeLineDistances()
+        line.renderOrder = 10
+        return { key: c.key, line }
+      }),
+    [cells, box, depth],
+  )
+  useEffect(
+    () => () =>
+      lines.forEach(({ line }) => {
+        line.geometry.dispose()
+        ;(line.material as THREE.Material).dispose()
+      }),
+    [lines],
+  )
+  return (
+    <group position={[0, y, 0]}>
+      {lines.map(({ key, line }) => (
+        <primitive key={key} object={line} />
+      ))}
+    </group>
+  )
 }
 
 // ---- motion, camera and the label anchors ----
@@ -418,15 +391,17 @@ function whenText(s: Slab): string | null {
 }
 
 function SlabCard({
-  slab, picture, active, onPick, onHover, cardRef, pickHint,
+  slab, picture, active, onPick, onHover, cardRef, pickHint, showKey,
 }: {
   slab: Slab; picture: PictureStatus | undefined; active: boolean; onPick: (key: string) => void; onHover: (key: string | null) => void
   cardRef: (el: HTMLButtonElement | null) => void; pickHint: string
+  /** The colour key of a classed layer: on its first card only, so two years of land cover do not repeat it. */
+  showKey: boolean
 }) {
   const when = whenText(slab)
   const st = slab.stamp ? (STATUS_WORDS[slab.stamp.status] ?? STATUS_WORDS.open) : null
-  const cell = slab.texture.kind === 'cell'
   const stops = slab.legend?.stops ?? []
+  const classes = showKey ? landCoverClasses(slab.show.layer.layerId) : []
   return (
     <button
       type="button"
@@ -442,11 +417,11 @@ function SlabCard({
       <span className={styles.cardTitle}>{slab.title}</span>
       <span className={styles.cardLine}>
         {slab.source}
-        {/* each figure once: a cell's label often already carries its size */}
-        {slab.resolution && !slab.source.includes(slab.resolution) ? <> · {cell ? `cell ${slab.resolution}` : slab.resolution}</> : null}
+        {slab.resolution && !slab.source.includes(slab.resolution) ? <> · {slab.resolution}</> : null}
       </span>
       {when && <span className={styles.cardLine}>{when}</span>}
-      {cell && <span className={styles.cardMuted}>One value covers this whole cell; the outline is approximate.</span>}
+      {slab.fromCase && <span className={styles.cardMuted}>From the solved case file of this place</span>}
+      <LandCoverKey classes={classes} compact />
       {stops.length >= 2 && (
         <span
           className={styles.cardRamp}
@@ -475,6 +450,36 @@ function SlabCard({
   )
 }
 
+function CellLine({ cell }: { cell: StackCell }) {
+  const st = cell.stamp ? (STATUS_WORDS[cell.stamp.status] ?? STATUS_WORDS.open) : null
+  return (
+    <span className={styles.cellBlock}>
+      <span className={styles.cardLine}>
+        <span aria-hidden="true" className={styles.cellSwatch} /> Outlined: {cell.title}
+        {cell.period ? `, ${cell.period[0]}–${cell.period[1]}` : ''}
+      </span>
+      <span className={styles.cardMuted}>
+        {cell.label}. One value covers the whole cell, so it is an outline, not a map
+        {cell.coversBox ? '; the cell is bigger than this box, so its edge is the box edge' : ''}.
+      </span>
+      {cell.verdict && (
+        <span className={styles.cardVerdict}>
+          {cell.verdict.label && <span>{cell.verdict.label}:</span>}
+          <Stamp verdict={cell.verdict.verdict} direction={cell.verdict.direction} />
+        </span>
+      )}
+      {st && cell.stamp && (
+        <span className={styles.cardStamp}>
+          <span className={styles.cardStampMark}>
+            <span aria-hidden="true">{st.icon}</span> {st.text}
+          </span>
+          <span>{cell.stamp.label}</span>
+        </span>
+      )}
+    </span>
+  )
+}
+
 function BaseCard({ model, reliefFailed, picture }: { model: StackModel; reliefFailed: boolean; picture?: PictureStatus }) {
   const b = model.base
   if (!b) return null
@@ -492,6 +497,9 @@ function BaseCard({ model, reliefFailed, picture }: { model: StackModel; reliefF
       {b.picture && b.picture.source !== b.source && <span className={styles.cardMuted}>{b.picture.source}</span>}
       {b.picture && picture === 'failed' && <span className={styles.cardMuted}>Picture unavailable: it did not load.</span>}
       {b.picture && picture === 'empty' && <span className={styles.cardMuted}>Picture unavailable: no data for this date.</span>}
+      {model.cells.map((c) => (
+        <CellLine key={c.key} cell={c} />
+      ))}
     </div>
   )
 }
@@ -638,8 +646,9 @@ export default function EvidenceStack({ model, exploded, onPick, onClose, onColl
             The evidence, layer by layer
           </h2>
           <p className={styles.lede}>
-            {lede ?? 'Each slab is a layer drawn in this turn, over the same box. Pick one to see it on the map.'}
+            {lede ?? 'Each slab is one record drawn as a map over the same box, with the ground at the bottom. Pick one to see it on the map.'}
           </p>
+          {model.note && <p className={styles.note}>{model.note}</p>}
         </div>
         <button type="button" ref={closeRef} className="btn" onClick={onClose}>
           {closeLabel ?? 'Back to the map'}
@@ -660,6 +669,7 @@ export default function EvidenceStack({ model, exploded, onPick, onClose, onColl
             <ambientLight intensity={0.9} />
             <directionalLight position={[-2.2, 1.6, 1.1]} intensity={1.6} />
             <Base model={model} depth={depth} onPeak={setPeak} onFailed={onReliefFailed} onPicture={setBasePicture} />
+            <CellOutlines cells={model.cells} box={box} depth={depth} y={peak + 0.004} />
             {slabs.map((s) => (
               <SlabMesh
                 key={s.key}
@@ -716,8 +726,9 @@ export default function EvidenceStack({ model, exploded, onPick, onClose, onColl
         </div>
 
         <div className={styles.column} ref={column}>
-          {slabs.map((s) => (
+          {slabs.map((s, i) => (
             <SlabCard
+              showKey={slabs.findIndex((o) => o.show.layer.layerId === s.show.layer.layerId) === i}
               key={s.key}
               slab={s}
               picture={pictures[s.key]}

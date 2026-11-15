@@ -2,6 +2,7 @@ import type { Ref } from 'react'
 import { Stamp } from '../../lib/Stamp'
 import { verdictFor } from './board'
 import type { ChartModel } from './chart'
+import { toolLine, varCatalog } from './instruments'
 import { compareSides, sceneSummary, toolLabel } from './panels'
 import type { Investigation, Scene } from './scenes'
 import { SceneChart } from './SceneChart'
@@ -36,6 +37,7 @@ export function ScenePanel({ inv, scene, chart, onRetry, focusRef }: ScenePanelP
     )
   }
 
+  const tech = toolLine(scene, varCatalog(inv.scenes))
   const sides = tool?.tool === 'compare' && tool.state === 'done' ? compareSides(tool.result) : null
   const summary = tool?.state === 'done' ? sceneSummary(tool.summary, !!chart?.verdict) : null
 
@@ -44,6 +46,11 @@ export function ScenePanel({ inv, scene, chart, onRetry, focusRef }: ScenePanelP
       {scene.kind === 'opening' && inv.place && <h2 className={styles.scenePlace}>{inv.place.name}</h2>}
       {scene.question && <p className={styles.sceneQuestion}>{scene.question}</p>}
       {tool && <p className={styles.sceneTool}>{toolLabel(tool.tool)}</p>}
+      {tech && (
+        <p className={styles.sceneInstrument}>
+          <span className={styles.sceneInstrumentKey}>Tool used</span> {tech}
+        </p>
+      )}
 
       {tool?.state === 'running' && (
         <p className={styles.sceneState} aria-live="polite">

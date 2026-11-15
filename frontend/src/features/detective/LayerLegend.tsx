@@ -1,6 +1,7 @@
 'use client'
 
 import { useId, useState } from 'react'
+import { LandCoverKey } from './LandCoverKey'
 import { legendModel } from './map/draw'
 import type { MapView } from './map/mapView'
 import styles from './detective.module.css'
@@ -42,6 +43,7 @@ export function LayerLegend({ view, flat = false }: { view: MapView; flat?: bool
                   style={{ background: `linear-gradient(to right, ${e.ramp.join(', ')})` }}
                 />
               ) : null}
+              <LandCoverKey classes={e.classes} />
               {e.unit ? (
                 <p>
                   {e.unit}

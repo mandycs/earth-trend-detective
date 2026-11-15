@@ -7,24 +7,22 @@ import { verdictFor } from "../board.ts";
 import type { Bbox, MapOp } from "../events.ts";
 import type { Investigation, Scene } from "../scenes.ts";
 import { BLUE_MARBLE, blueMarbleUrl, catalogLayer, wmsUrl } from "../map/catalog.ts";
-import { applyMapOp, openingView } from "../map/mapView.ts";
+import { applyMapOp, openingView, pulledOut } from "../map/mapView.ts";
 import type { CaseLayers, FootprintView, LayerLegend, LayerView, MapContext, MapView } from "../map/mapView.ts";
 
 export const STACK_MAX = 5;
 
 export interface StackVerdict { verdict: Verdict; direction: Direction; label: string | null }
-export type SlabTexture =
-  | { kind: "wms"; url: string }
-  | { kind: "png"; url: string }
-  /** One coarse block: the data cell (footprint bbox) where one value covers everything inside. */
-  | { kind: "cell"; cellKm: number | null; bbox: Bbox };
+export type SlabTexture = { kind: "wms"; url: string } | { kind: "png"; url: string };
 /** What picking the slab shows on the main map. */
-export type SlabShow = { kind: "layer"; layer: LayerView } | { kind: "footprint"; footprint: FootprintView };
+export type SlabShow = { kind: "layer"; layer: LayerView };
 export interface Slab {
   key: string; title: string; source: string; resolution: string | null;
   /** The drawn year (never the asked one), or the period a single-file layer or a tested series covers. */
   year: number | null; date: string | null; period: [number, number] | null;
   legend: LayerLegend | null; verdict?: StackVerdict; stamp?: StampBeat; texture: SlabTexture;
+  /** Drawn from the solved case's own files, not by this turn (only in an investigation's stack). */
+  fromCase?: true;
   /** Evenly spaced steps above the base: the first slab is the highest (n), the last sits at 1. */
   height: number;
   show: SlabShow;
@@ -37,9 +35,54 @@ export interface StackBase {
   heightmap: { url: string; encoding: "terrain-rgb" | "grey"; rangeM: [number, number] | null } | null;
   picture: StackPicture | null;
 }
-export interface StackModel { bbox: Bbox | null; base: StackBase | null; slabs: Slab[] }
+/**
+ * A data cell the turn showed (a footprint). Not a map: one value covers the whole cell, so it is drawn as an outline
+ * on the ground, never as a slab. It carries the verdict and stamp of the variables it measures.
+ */
+export interface StackCell {
+  key: string; title: string; label: string; size: string; cellKm: number | null; bbox: Bbox;
+  period: [number, number] | null; verdict?: StackVerdict; stamp?: StampBeat;
+  /** The cell is at least as big as the stack's box on every side: its outline is the box's own edge. */
+  coversBox: boolean;
+  footprint: FootprintView;
+}
+export interface StackModel {
+  bbox: Bbox | null; base: StackBase | null; slabs: Slab[]; cells: StackCell[];
+  /** Said under the title when fewer than two records could be drawn as maps. */
+  note: string | null;
+}
 
-export const EMPTY_STACK: StackModel = Object.freeze({ bbox: null, base: null, slabs: [] }) as StackModel;
+export const EMPTY_STACK: StackModel = Object.freeze({ bbox: null, base: null, slabs: [], cells: [], note: null }) as StackModel;
+
+export const ONE_MAP_NOTE = "Only one record could be drawn as a map here.";
+export const NO_MAP_NOTE = "No record here could be drawn as a map: the data cells are outlined on the ground.";
+
+/** The honest line for a thin stack: nothing when two or more records are maps. */
+export function stackNote(slabs: number, cells: number): string | null {
+  if (slabs === 1) return ONE_MAP_NOTE;
+  if (slabs === 0 && cells > 0) return NO_MAP_NOTE;
+  return null;
+}
+
+/** Something to explode: at least one map slab or one data cell. */
+export function hasStack(m: StackModel | null): m is StackModel {
+  return !!m && (m.slabs.length > 0 || m.cells.length > 0);
+}
+
+/**
+ * The solved case a place sits in, for its stack: the place's own `site_id`, else the case whose box holds the
+ * place's centre (a point typed inside Lake Mead is in the Lake Mead case). A case the agent only cited from
+ * elsewhere is not used: its layers would be of another place.
+ */
+export function stackCaseSite(
+  place: { lat: number; lon: number; site_id: string | null } | null,
+  cases: readonly { id: string; bbox: Bbox }[],
+): string | null {
+  if (!place) return null;
+  if (place.site_id) return place.site_id;
+  const hit = cases.find(({ bbox: [w, s, e, n] }) => place.lon >= w && place.lon <= e && place.lat >= s && place.lat <= n);
+  return hit?.id ?? null;
+}
 
 /** "~300 km" → 300. Only read from the footprint's own size text; null when it carries no km figure. */
 export function cellKmOf(size: string): number | null {
@@ -143,13 +186,16 @@ function varsOfCell(fp: FootprintView, tested: Tested[], sources: Map<string, st
   return out;
 }
 
+/** When several suspects share this evidence, the firmest finding is the one stamped (ties: the latest). */
+const STAMP_RANK: Readonly<Record<string, number>> = { supported: 3, ruled_out: 2, hint: 1, trend_only: 0 };
+
 function stampFor(evidence: Set<string>, board: Investigation["board"]): StampBeat | undefined {
   let found: StampBeat | undefined;
   for (const sp of board?.suspects ?? []) {
     if (sp.status === "open") continue;
-    if (sp.evidence.some((e) => evidence.has(e))) {
-      found = { suspectId: sp.id, label: sp.label, status: sp.status, downgraded: sp.downgraded };
-    }
+    if (!sp.evidence.some((e) => evidence.has(e))) continue;
+    if (found && (STAMP_RANK[sp.status] ?? 0) < (STAMP_RANK[found.status] ?? 0)) continue;
+    found = { suspectId: sp.id, label: sp.label, status: sp.status, downgraded: sp.downgraded };
   }
   return found;
 }
@@ -163,29 +209,42 @@ function textureOf(lv: LayerView, bbox: Bbox): SlabTexture {
 
 type Draft = Omit<Slab, "height">;
 
-function draftFor(d: Drawn, bbox: Bbox, tested: Tested[], sources: Map<string, string>, inv: Investigation, ctx: MapContext): Draft {
-  const vars = d.kind === "layer" ? varsOfLayer(d.layer, ctx) : varsOfCell(d.footprint, tested, sources);
+function findings(vars: Set<string>, tested: Tested[], inv: Investigation): { mine: Tested[]; verdict?: StackVerdict; stamp?: StampBeat } {
   const mine = tested.filter((t) => vars.has(t.varId));
   const lastVerdict = [...mine].reverse().find((t) => t.verdict);
   const verdict = lastVerdict?.verdict
     ? { verdict: lastVerdict.verdict.verdict, direction: lastVerdict.verdict.direction, label: lastVerdict.label }
     : undefined;
   const stamp = stampFor(new Set(mine.flatMap((t) => t.evidence)), inv.board);
-  const extra = { ...(verdict ? { verdict } : {}), ...(stamp ? { stamp } : {}) };
-  if (d.kind === "layer") {
-    const lv = d.layer;
-    return {
-      key: lv.key, title: lv.title, source: lv.source, resolution: lv.resolution, year: lv.year, date: lv.date,
-      period: lv.period, legend: lv.legend, texture: textureOf(lv, bbox), show: { kind: "layer", layer: lv }, ...extra,
-    };
-  }
-  const fp = d.footprint;
-  const label = [...mine].reverse().find((t) => t.label)?.label ?? null;
-  const period = [...mine].reverse().find((t) => t.years)?.years ?? null;
+  return { mine, ...(verdict ? { verdict } : {}), ...(stamp ? { stamp } : {}) };
+}
+
+function layerDraft(lv: LayerView, bbox: Bbox): Draft {
   return {
-    key: `cell:${fp.source}`, title: label ?? "Data cell", source: fp.label, resolution: fp.size, year: null, date: null,
-    period, legend: null, texture: { kind: "cell", cellKm: cellKmOf(fp.size), bbox: [...fp.bbox] as Bbox },
-    show: { kind: "footprint", footprint: fp }, ...extra,
+    key: lv.key, title: lv.title, source: lv.source, resolution: lv.resolution, year: lv.year, date: lv.date,
+    period: lv.period, legend: lv.legend, texture: textureOf(lv, bbox), show: { kind: "layer", layer: lv },
+  };
+}
+
+function withFindings(d: Draft, tested: Tested[], inv: Investigation, ctx: MapContext): Draft {
+  const { verdict, stamp } = findings(varsOfLayer(d.show.layer, ctx), tested, inv);
+  return { ...d, ...(verdict ? { verdict } : {}), ...(stamp ? { stamp } : {}) };
+}
+
+function covers(cell: Bbox, box: Bbox): boolean {
+  return cell[0] <= box[0] && cell[1] <= box[1] && cell[2] >= box[2] && cell[3] >= box[3];
+}
+
+function cellFor(fp: FootprintView, box: Bbox, tested: Tested[], sources: Map<string, string>, inv: Investigation): StackCell {
+  const { mine, verdict, stamp } = findings(varsOfCell(fp, tested, sources), tested, inv);
+  const label = [...mine].reverse().find((t) => t.label)?.label ?? null;
+  // The widest period tested, not the last one: a recent-years test must not relabel the whole record.
+  const period = mine.reduce<[number, number] | null>(
+    (best, t) => (t.years && (!best || t.years[1] - t.years[0] > best[1] - best[0]) ? t.years : best), null);
+  return {
+    key: `cell:${fp.source}`, title: label ?? "Data cell", label: fp.label, size: fp.size, cellKm: cellKmOf(fp.size),
+    bbox: [...fp.bbox] as Bbox, period, coversBox: covers(fp.bbox, box), footprint: fp,
+    ...(verdict ? { verdict } : {}), ...(stamp ? { stamp } : {}),
   };
 }
 
@@ -225,16 +284,20 @@ function baseFor(bbox: Bbox, ctx: MapContext): StackBase {
 }
 
 /**
- * The current turn's evidence as a stack. Slabs: the distinct layers and data cells drawn during the turn, those
- * with a verdict first, then the most recent; at most `max`. `view` is the map view at the ending (its place box
- * stands in when the investigation has no place of its own).
+ * The current turn's evidence as a stack. Slabs: the distinct layers drawn during the turn, those with a verdict
+ * first, then the most recent; then, when the place is in a solved case (`ctx.caseLayers`), that case's own data
+ * layers (trend first, yearly ones at their last year), with no repeats; at most `max` in all. Data cells
+ * (footprints) are never slabs: they are outlined on the ground (`cells`). `view` is the map view at the ending
+ * (its place box stands in when the investigation has no place of its own).
  */
 export function stackFor(inv: Investigation, view: MapView, opts: { max?: number; ctx: MapContext }): StackModel {
   const place = inv.place;
   if (!place) return EMPTY_STACK;
   const ctx = opts.ctx;
   const max = Math.max(0, Math.floor(opts.max ?? STACK_MAX));
-  const bbox = [...(ctx.caseLayers?.bbox ?? view.place?.bbox ?? place.bbox)] as Bbox;
+  // A solved case: its own box. Else the box the ending frames (the place grown 4×): a point's own 0.2° box is
+  // too small for a 500 m layer to read as anything but a few blocks.
+  const bbox = ctx.caseLayers ? ([...ctx.caseLayers.bbox] as Bbox) : pulledOut(view.place?.bbox ?? place.bbox);
   const from = turnStart(inv.scenes);
 
   // Replay the whole thread (set_year depends on what is on the map), collecting only the current turn.
@@ -257,11 +320,17 @@ export function stackFor(inv: Investigation, view: MapView, opts: { max?: number
   const turn = inv.scenes.slice(from);
   const tested = testedIn(turn, inv.board);
   const sources = varSources(inv.scenes);
-  const drawn = [...order.values()];
-  const recentFirst = drawn.map((d) => draftFor(d, bbox, tested, sources, inv, ctx)).reverse();
-  const picked = [...recentFirst.filter((s) => s.verdict), ...recentFirst.filter((s) => !s.verdict)].slice(0, max);
+  const drawn = [...order.values()].reverse();
+  const own = drawn.flatMap((d) => (d.kind === "layer" ? [withFindings(layerDraft(d.layer, bbox), tested, inv, ctx)] : []));
+  const ownOrdered = [...own.filter((s) => s.verdict), ...own.filter((s) => !s.verdict)];
+  const seen = new Set(ownOrdered.map((s) => s.key));
+  const fromCase = (ctx.caseLayers ? caseDrafts(ctx.caseLayers, ctx, bbox) : [])
+    .filter((d) => !seen.has(d.key))
+    .map((d): Draft => ({ ...withFindings(d, tested, inv, ctx), fromCase: true }));
+  const picked = [...ownOrdered, ...fromCase].slice(0, max);
   const slabs = picked.map((s, i): Slab => ({ ...s, height: picked.length - i }));
-  return { bbox, base: baseFor(bbox, ctx), slabs };
+  const cells = drawn.flatMap((d) => (d.kind === "footprint" ? [cellFor(d.footprint, bbox, tested, sources, inv)] : []));
+  return { bbox, base: baseFor(bbox, ctx), slabs, cells, note: stackNote(slabs.length, cells.length) };
 }
 
 // ---- a solved case's own layers (story mode "Layers") ----
@@ -278,6 +347,13 @@ export function stackForCase(cl: CaseLayers, opts: { max?: number; now?: string 
   const max = Math.max(0, Math.floor(opts.max ?? STACK_MAX));
   const ctx: MapContext = { caseLayers: cl, now: opts.now ?? null };
   const bbox = [...cl.bbox] as Bbox;
+  const picked = caseDrafts(cl, ctx, bbox).slice(0, max);
+  const slabs = picked.map((d, i): Slab => ({ ...d, height: picked.length - i }));
+  return { bbox, base: baseFor(bbox, ctx), slabs, cells: [], note: slabs.length === 1 ? ONE_MAP_NOTE : null };
+}
+
+/** A case's data layers as slab drafts, in stacking order, textured for `bbox`. */
+function caseDrafts(cl: CaseLayers, ctx: MapContext, bbox: Bbox): Draft[] {
   const rows = Object.values(cl.rows)
     .filter((r) => CASE_SLAB_KINDS.includes(r.kind) && (r.file || r.file_pattern))
     .sort((a, b) => CASE_SLAB_KINDS.indexOf(a.kind) - CASE_SLAB_KINDS.indexOf(b.kind));
@@ -289,14 +365,9 @@ export function stackForCase(cl: CaseLayers, opts: { max?: number; now?: string 
     const last = years.length > 0 ? years[years.length - 1] : null;
     const v = applyMapOp(empty, { op: "show_layer", layer_id: r.id, date: null, year: last, opacity: 1 }, ctx);
     const lv = v.evidence ?? v.context;
-    if (!lv) continue;
-    drafts.push({
-      key: lv.key, title: lv.title, source: lv.source, resolution: lv.resolution, year: lv.year, date: lv.date,
-      period: lv.period, legend: lv.legend, texture: textureOf(lv, bbox), show: { kind: "layer", layer: lv },
-    });
+    if (lv) drafts.push(layerDraft(lv, bbox));
   }
-  const picked = drafts.slice(0, max);
-  return { bbox, base: baseFor(bbox, ctx), slabs: picked.map((d, i): Slab => ({ ...d, height: picked.length - i })) };
+  return drafts;
 }
 
 export const CASE_STACK_EMPTY = "This case has no data layers to stack.";

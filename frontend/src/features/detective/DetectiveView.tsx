@@ -17,6 +17,7 @@ import { EMPTY_VIEW, mapViewAt } from './map/mapView'
 import type { CaseLayers } from './map/mapView'
 import { historyEnabled, isActiveRun, recordedDate } from './panels'
 import { QuestionBox } from './QuestionBox'
+import { QuestionReading } from './QuestionReading'
 import type { RecordingChip } from './replay'
 import type { Target } from './request'
 import { ScenePanel } from './ScenePanel'
@@ -24,7 +25,7 @@ import { StepList } from './StepList'
 import { useDetectiveRun } from './useDetectiveRun'
 import type { StartOpts } from './useDetectiveRun'
 import { useScenePlayer } from './useScenePlayer'
-import { STACK_MAX, stackFor } from './stack/stackModel'
+import { STACK_MAX, hasStack, stackCaseSite, stackFor } from './stack/stackModel'
 import type { Slab } from './stack/stackModel'
 import { showSlab, slabCaption } from './stack/showSlab'
 import {
@@ -199,8 +200,9 @@ export default function DetectiveView({ cases, recordings, initialSite, initialP
     else if (modeRef.current === 'replay') reset()
   }, [replay, playRecording, reset])
 
-  // Case layers for a solved case, from /sites/<id>/layers.json. A missing file just means none.
-  const siteId = inv.place?.site_id ?? null
+  // Case layers for a solved case, from /sites/<id>/layers.json. A missing file just means none. A point typed
+  // inside a solved case's box (Lake Mead from the explore map) uses that case's layers too.
+  const siteId = useMemo(() => stackCaseSite(inv.place, cases), [inv.place, cases])
   // A string key: `inv.place.bbox` is a fresh array on every regrouping and would refetch on every event.
   const caseBboxKey = siteId ? (cases.find((c) => c.id === siteId)?.bbox ?? inv.place?.bbox ?? null)?.join(',') ?? null : null
   const [caseLayers, setCaseLayers] = useState<CaseLayers | null>(null)
@@ -268,7 +270,7 @@ export default function DetectiveView({ cases, recordings, initialSite, initialP
     else onStackCollapsed()
   }, [onStackCollapsed])
   // The stack went away under the dialog (no ending, no slabs): close it, so the page is not left inert.
-  const stackGone = !stack || stack.slabs.length === 0
+  const stackGone = !hasStack(stack)
   useEffect(() => {
     if (stackMounted && stackGone) onStackCollapsed()
   }, [stackMounted, stackGone, onStackCollapsed])
@@ -459,6 +461,8 @@ export default function DetectiveView({ cases, recordings, initialSite, initialP
             </p>
           )}
 
+          <QuestionReading inv={inv} />
+
           {scene && (
             <ScenePanel
               inv={inv}
@@ -473,7 +477,7 @@ export default function DetectiveView({ cases, recordings, initialSite, initialP
 
           {outcome?.answer && <AnswerPanel answer={outcome.answer} done={outcome.done} headingRef={answerRef} />}
 
-          {stack && stack.slabs.length > 0 && (
+          {hasStack(stack) && (
             <div className={styles.explodeRow}>
               <button type="button" ref={explodeRef} className="btn" onClick={openStack} aria-haspopup="dialog">
                 Explode the evidence

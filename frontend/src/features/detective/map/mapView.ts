@@ -308,7 +308,7 @@ export function openingView(place: PlaceEvent, now?: string | null): MapView {
 }
 
 /** The place bbox grown `PULL_OUT`× around its centre, clamped to valid degrees. */
-function pulledOut(bbox: Bbox): Bbox {
+export function pulledOut(bbox: Bbox): Bbox {
   const [w, s, e, n] = bbox;
   const cx = (w + e) / 2;
   const cy = (s + n) / 2;

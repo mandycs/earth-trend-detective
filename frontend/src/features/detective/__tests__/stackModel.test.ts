@@ -4,11 +4,11 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { groupScenes } from "../scenes.ts";
 import type { BoardEvent, DetEvent, MapOp, PlaceEvent } from "../events.ts";
-import { EMPTY_VIEW, mapViewAt } from "../map/mapView.ts";
+import { EMPTY_VIEW, mapViewAt, pulledOut } from "../map/mapView.ts";
 import type { CaseLayers, MapContext } from "../map/mapView.ts";
 import type { CaseLayerRow } from "../map/types.ts";
 import { catalogLayer, dateFor } from "../map/catalog.ts";
-import { STACK_MAX, cellKmOf, stackFor } from "../stack/stackModel.ts";
+import { NO_MAP_NOTE, ONE_MAP_NOTE, STACK_MAX, cellKmOf, hasStack, stackCaseSite, stackFor } from "../stack/stackModel.ts";
 import { PLACE, RUN_EVENTS } from "./fixtures.ts";
 
 const NOW = "2026-11-15";
@@ -50,17 +50,64 @@ const stack = (events: DetEvent[], ctx: MapContext = NO_CASE, max = STACK_MAX) =
   return stackFor(inv, mapViewAt(inv, inv.scenes.length - 1, ctx), { max, ctx });
 };
 
-test("the recorded Lake Mead run: the GRACE footprint becomes one coarse cell slab", () => {
+test("the recorded Lake Mead run: the GRACE footprint is an outlined cell on the ground, never a slab", () => {
   const m = stack([...RUN_EVENTS]);
+  assert.equal(m.slabs.length, 0);
+  assert.equal(m.cells.length, 1);
+  const c = m.cells[0];
+  assert.equal(c.cellKm, 300);
+  assert.deepEqual(c.bbox, [-116, 34, -113, 37]);
+  assert.equal(c.size, "~300 km");
+  assert.equal(c.label, "GRACE data cell (~300 km)");
+  assert.equal(c.verdict, undefined);
+  assert.equal(c.coversBox, false); // no case layers here: the box is the ending frame, wider than the cell
+  assert.equal(m.note, NO_MAP_NOTE);
+  assert.ok(hasStack(m));
+});
+
+test("a point inside a solved case stacks that case's own layers after the turn's own, with no repeats", () => {
+  const ctx: MapContext = { caseLayers: lakeMeadCase(), now: NOW };
+  const point = { ...POINT, lat: 36.1, lon: -114.7, bbox: [-114.8, 36.0, -114.6, 36.2] as [number, number, number, number] };
+  const m = stack(run(point, [
+    ...tool("list_variables", { variables: [{ id: "grace_tws", source: "grace" }, { id: "lst_day", source: "gibs" }] }),
+    ...tool("get_series", { var_id: "grace_tws", label: "Total water stored", years: [2003, 2024] }, "e3"),
+    map({ op: "show_footprint", source: "grace", label: "GRACE cell (~300 km)", size: "~300 km", bbox: [-116.4, 34.8, -113.0, 37.4], approximate: true }),
+    ...tool("trend_test", { test_id: "k1", var_id: "lst_day", label: "Ground temperature", verdict: "real", direction: "up", years: [2003, 2024] }, "e4"),
+    ...tool("land_cover_change", {}),
+    layer("land_cover", { year: 2023 }),
+    map({ op: "show_before_after", layer_id: "land_cover", year_a: 2003, year_b: 2023, before_url: null, after_url: null, bbox: null }),
+    layer("trend_lst_day"),
+  ], [{ kind: "board", data: { suspects: [], n_tests: 1, verdicts: { k1: { verdict: "real", direction: "up" } } } }]), ctx);
+  assert.equal(m.slabs.length, STACK_MAX);
+  const ids = m.slabs.map((s) => s.show.layer.layerId);
+  // The turn's own first (the tested one first), then the case's, the trend map never twice.
+  assert.equal(ids[0], "trend_lst_day");
+  assert.equal(m.slabs[0].fromCase, undefined);
+  assert.deepEqual(m.slabs[0].verdict, { verdict: "real", direction: "up", label: "Ground temperature" });
+  assert.deepEqual(ids.slice(1, 3), ["land_cover", "land_cover"]);
+  assert.equal(ids.filter((i) => i === "trend_lst_day").length, 1);
+  assert.ok(m.slabs.slice(3).every((s) => s.fromCase === true));
+  assert.deepEqual(ids.slice(3), ["lst_gibs", "ndvi_gibs"]);
+  // A case layer of a tested variable carries its verdict too.
+  assert.equal(m.slabs[3].verdict?.verdict, "real");
+  assert.equal(m.base?.kind, "relief");
+  assert.equal(m.cells.length, 1);
+  assert.equal(m.cells[0].coversBox, true);
+  assert.equal(m.note, null);
+});
+
+test("the stack uses the case a point sits in, never a case cited from elsewhere", () => {
+  const cases = [{ id: "lake_mead", bbox: [-114.9, 35.9, -114.0, 36.6] as [number, number, number, number] }];
+  assert.equal(stackCaseSite({ lat: 36.1, lon: -114.7, site_id: null }, cases), "lake_mead");
+  assert.equal(stackCaseSite({ lat: 45, lon: 59.5, site_id: null }, cases), null);
+  assert.equal(stackCaseSite({ lat: 45, lon: 59.5, site_id: "aletsch" }, cases), "aletsch");
+  assert.equal(stackCaseSite(null, cases), null);
+});
+
+test("one map slab says so instead of standing alone", () => {
+  const m = stack(run(POINT, [...tool("satellite_picture", {}), layer("true_colour", { year: 2024 })]));
   assert.equal(m.slabs.length, 1);
-  const s = m.slabs[0];
-  assert.equal(s.texture.kind, "cell");
-  assert.equal(s.texture.kind === "cell" && s.texture.cellKm, 300);
-  assert.deepEqual(s.texture.kind === "cell" && s.texture.bbox, [-116, 34, -113, 37]);
-  assert.equal(s.resolution, "~300 km");
-  assert.equal(s.source, "GRACE data cell (~300 km)");
-  assert.equal(s.show.kind, "footprint");
-  assert.equal(s.verdict, undefined);
+  assert.equal(m.note, ONE_MAP_NOTE);
 });
 
 test("cellKm reads the footprint size and never invents one", () => {
@@ -130,16 +177,18 @@ test("catalog layers become one WMS GetMap for the exact box and the drawn date"
   const url = new URL(t.kind === "wms" ? t.url : "");
   assert.equal(url.searchParams.get("REQUEST"), "GetMap");
   assert.equal(url.searchParams.get("CRS"), "EPSG:4326");
-  assert.equal(url.searchParams.get("BBOX"), "44.9,59.4,45.1,59.6");
+  const box = pulledOut(POINT.bbox); // the ending frame, not the point's own 0.2° box
+  const wms = [box[1], box[0], box[3], box[2]].join(",");
+  assert.equal(url.searchParams.get("BBOX"), wms);
   assert.equal(url.searchParams.get("TIME"), m.slabs[0].date);
   assert.equal(m.slabs[0].year, 2024);
-  assert.deepEqual(m.bbox, POINT.bbox);
+  assert.deepEqual(m.bbox, box);
   // A free point has no relief model: a flat base with a cloud-free picture (never a cloudy day's true colour).
   assert.equal(m.base?.kind, "flat");
   assert.equal(m.base?.heightmap, null);
   const pic = new URL(m.base?.picture?.url ?? "");
   assert.equal(pic.searchParams.get("LAYERS"), "BlueMarble_ShadedRelief_Bathymetry");
-  assert.equal(pic.searchParams.get("BBOX"), "44.9,59.4,45.1,59.6");
+  assert.equal(pic.searchParams.get("BBOX"), wms);
   assert.equal(pic.searchParams.get("TIME"), null);
 });
 
@@ -167,16 +216,18 @@ test("a data cell takes the verdict and stamp of the variables it measures", () 
     ...tool("climate_residual", { var_id: "grace_tws", label: "Total water stored", test_id: "t2", verdict: "real", direction: "down" }, "e8"),
     { kind: "board", data: board },
   ]));
-  assert.equal(m.slabs.length, 2);
-  const grace = m.slabs[0];
-  assert.equal(grace.key, "cell:grace");
+  assert.equal(m.slabs.length, 0);
+  assert.equal(m.cells.length, 2);
+  const grace = m.cells.find((c) => c.key === "cell:grace");
+  assert.ok(grace);
   assert.equal(grace.title, "Total water stored");
   assert.deepEqual(grace.verdict, { verdict: "real", direction: "down", label: "Total water stored" });
   assert.deepEqual(grace.period, [2003, 2024]);
   assert.equal(grace.stamp?.status, "hint");
   assert.equal(grace.stamp?.label, "Less rain / warmer air");
-  const power = m.slabs[1];
-  assert.equal(power.texture.kind === "cell" && power.texture.cellKm, 50);
+  const power = m.cells.find((c) => c.key === "cell:power");
+  assert.ok(power);
+  assert.equal(power.cellKm, 50);
   assert.equal(power.verdict, undefined);
   assert.equal(power.stamp, undefined);
 });
@@ -223,12 +274,8 @@ test("picking a slab shows that one layer on the map", async () => {
   assert.equal(v.context?.year, 2003);
   assert.deepEqual(v.footprints, []);
   assert.equal(slabCaption(before), "True colour (MODIS Terra), 2003");
-  const cell = m.slabs.find((s) => s.key === "cell:grace");
-  assert.ok(cell);
-  const c = showSlab(end, cell);
-  assert.deepEqual(c.footprints.map((f) => f.source), ["grace"]);
-  assert.equal(c.evidence, null);
-  assert.equal(slabCaption(cell), "Total water stored, 2003–2024");
+  assert.equal(m.slabs.some((s) => s.key === "cell:grace"), false);
+  assert.deepEqual(m.cells.map((c) => c.key), ["cell:grace"]);
   const ndvi = m.slabs.find((s) => s.show.kind === "layer" && s.show.layer.layerId === "ndvi");
   assert.ok(ndvi);
   assert.equal(showSlab(end, ndvi).evidence?.layerId, "ndvi");
@@ -256,4 +303,21 @@ test("the story button says why no stack opened: a failed load is not an empty c
   assert.equal(caseStackNote({ slabs: 0 }), CASE_STACK_EMPTY);
   assert.equal(caseStackNote({ slabs: 3 }), null);
   assert.notEqual(CASE_STACK_FAILED, CASE_STACK_EMPTY);
+});
+
+test("the live Lake Mead point run: real strata, and the GRACE cell keeps its whole period and firmest stamp", async () => {
+  const { parseRecording, replaySchedule } = await import("../replay.ts");
+  const raw = JSON.parse(readFileSync(join(import.meta.dirname, "../../../../../backend/data/recordings/mead.json"), "utf8"));
+  const rec = parseRecording(raw);
+  assert.ok(rec);
+  const ctx: MapContext = { caseLayers: lakeMeadCase(), now: NOW };
+  const m = stack(replaySchedule(rec).map((e) => e.event), ctx);
+  assert.equal(m.slabs.length, STACK_MAX);
+  assert.deepEqual(m.slabs.slice(0, 2).map((s) => s.year), [2023, 2003]);
+  assert.ok(m.slabs.slice(2).every((s) => s.fromCase));
+  assert.equal(m.cells.length, 1);
+  // A recent-years test (2014–2024) must not relabel the record; the residual's "supported" outranks a hint.
+  assert.deepEqual(m.cells[0].period, [2003, 2024]);
+  assert.equal(m.cells[0].stamp?.status, "supported");
+  assert.equal(m.note, null);
 });
