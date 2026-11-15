@@ -11,7 +11,7 @@ import pandas as pd
 from app.catalog import Variable
 from app.detective.board import Suspect
 from app.detective.ledger import Ledger, json_safe
-from app.detective.persistence import load_series
+from app.detective.persistence import load_series, load_tests
 from app.detective.place import Place
 
 if TYPE_CHECKING:
@@ -54,8 +54,11 @@ class Session:
         catalog: tuple[Variable, ...],
         store: BaseStore | None,
         thread_id: str,
+        with_series: bool = True,
     ) -> Session:
-        """Session rebuilt from `to_state()`; series are read from the store, a missing one is skipped."""
+        """Session rebuilt from `to_state()`. With a store, the thread's tests of every branch
+        join the correction (`Ledger.with_family`) and, unless `with_series` is False, the
+        series are read back (a missing one is skipped)."""
         p = state["place"]
         place = Place(
             lat=float(p["lat"]),
@@ -65,13 +68,15 @@ class Session:
             site_id=p.get("site_id"),
         )
         series: dict[str, pd.Series] = {}
+        ledger = Ledger.from_state(state["ledger"])
         if store is not None:
-            for sid in state.get("series_ids") or []:
+            ledger.with_family(load_tests(store, thread_id))
+            for sid in (state.get("series_ids") or []) if with_series else []:
                 s = load_series(store, thread_id, sid)
                 if s is not None:
                     series[sid] = s
         return cls(
-            ledger=Ledger.from_state(state["ledger"]),
+            ledger=ledger,
             place=place,
             catalog=catalog,
             series=series,

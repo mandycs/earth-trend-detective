@@ -14,7 +14,6 @@ status each suspect was claimed with. Every function returns a new board.
 
 from __future__ import annotations
 
-import math
 from collections.abc import Iterable, Mapping
 from dataclasses import asdict, dataclass, field, replace
 
@@ -61,8 +60,8 @@ def _judge(suspect: Suspect, ledger: Ledger, corrected: Mapping) -> Suspect:
     status, downgraded = suspect.claimed, None
     if suspect.claimed == "supported":
         if not any(corrected[t][0] < REAL_Q for t in tests):  # NaN q compares False
-            n = sum(1 for q, _, _ in corrected.values() if math.isfinite(q))
-            status, downgraded = "hint", f"fails correction over {n} tests"
+            n = ledger.n_finite()  # every test of the thread that ran, not only this branch
+            status, downgraded = "hint", f"fails correction over {n} {'test' if n == 1 else 'tests'}"
     elif suspect.claimed == "ruled_out":
         if not any(corrected[t][1] == Verdict.UNKNOWN and not _too_short(ledger, t) for t in tests):
             status, downgraded = "open", RULED_OUT_DOWNGRADE

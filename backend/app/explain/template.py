@@ -12,6 +12,7 @@ from app.site_story import format_number
 
 _DIRECTIONS = frozenset({"up", "down"})
 RESIDUAL_WORDING = "not explained by climate, which is a lead, not proof"
+NO_SPLIT_SENTENCE = "We can't yet tell how much of this change comes from the climate."
 
 
 def _trend_rows(report: Mapping) -> list[Mapping]:
@@ -57,7 +58,7 @@ def _unknown_sentence(rows: Sequence[Mapping]) -> str | None:
 def _climate(row: Mapping, wording: str = RESIDUAL_WORDING) -> str:
     pct = row.get("residual_pct_non_climate")
     if pct is None:
-        return "We can't yet tell how much of this change comes from the climate."
+        return NO_SPLIT_SENTENCE
     pct_range = row.get("residual_pct_range")
     if pct_range and round(float(pct_range[0])) != round(float(pct_range[1])):
         lo, hi = (round(float(x)) for x in pct_range)

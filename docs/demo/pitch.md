@@ -17,15 +17,14 @@
 > satellite data, in plain language."
 
 **[0:28 – 0:58] — La demo, con la pantalla delante**
-> "Three steps. One: what is changing here? Press play — twenty years of water, one line.
+> "Three steps. One: what is changing here? Press play — 22 years of water (2003–2024), one line.
 > Two: is it real, or is it chance? This is where most tools stop. We correct for luck, and for testing
 > several variables at once. Three: is it the climate? We subtract what rain and heat can explain.
-> What is left over is the part that is us."
+> What is left over is not explained by the climate we measured. A clue, not proof."
 
 **[0:58 – 1:18] — Lo que nos hace honestos**
-> "And when the answer is not there, we say so. This case says: can't tell yet, come back in fifteen years.
-> We would rather look uncertain than be wrong. In Doñana, the same method found most ponds flood less
-> than the climate allows. The method is published. **The website didn't exist.**"
+> "And when the answer is not there, we say so. At Lake Mead, topsoil moisture says: can't tell yet, about 14 more years of data needed.
+> We would rather look uncertain than be wrong. The method is published statistics. **The website didn't exist.**"
 
 **[1:18 – 1:30] — Cierre**
 > "Students, local journalists, a town council deciding about water. Pick a place, get an answer, see the
@@ -37,7 +36,7 @@
 
 > "Every lake and river is changing, and everyone has an opinion about why. Earth Trend Detective gives
 > you the evidence: what is changing, whether it is real, and how much the climate does not explain.
-> Three steps, twenty years of NASA data, plain language. And when the data can't answer, it says so.
+> Three steps, 22 years of NASA data (2003–2024), plain language. And when the data can't answer, it says so.
 > Pick a place. See for yourself."
 
 (~62 palabras ≈ 27 s)
@@ -49,11 +48,11 @@
 | Pregunta probable | Respuesta |
 |---|---|
 | ¿Dónde interviene NASA? | "In every series the sweep tests, and in the subtraction that separates climate from the rest. No NASA data, no product." |
-| ¿Qué funciona hoy y qué no? | "The sweep, the statistics and the story mode run on real data for one case; the other two are being generated tonight. The map is next." |
+| ¿Qué funciona hoy y qué no? | "Three cases run on precomputed NASA data: Lake Mead, Aletsch and Doñana, with yearly maps and a 3D relief. The investigator and explore work at any point but need the API. Only Lake Mead has a per-pixel trend map." |
 | ¿Cómo sé que no inventáis cifras? | "The language model only rewrites numbers that are already computed, and a validator checks every figure. If it fails, we ship a template instead." |
 | ¿Cuál es vuestra mayor limitación? | "The leftover share is a clue, not a cause. What we don't measure ends up in it." |
 | ¿En qué os diferenciáis de Climate Engine? | "They give you one variable at a time. We test all of them, correct for multiple testing, and explain the crossing in plain words." |
-| ¿Por qué Doñana? | "A published study already did the climate-versus-not separation pond by pond. We automate what a scientist did by hand." |
+| ¿Por qué Doñana? | "A wetland where water and climate both matter. Our result there is cautious: total water stored is probably going down ("likely", not "real")." |
 | ¿Esto es ciencia o es una demo bonita? | "The statistics are off-the-shelf and published: Mann-Kendall with autocorrelation correction, Sen's slope, false-discovery control. The novelty is putting them together for a non-expert." |
 
 ---

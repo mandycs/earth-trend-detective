@@ -1,0 +1,618 @@
+{
+  "ok": true,
+  "strict": false,
+  "browserSkipped": false,
+  "lint": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 9,
+    "infoCount": 0,
+    "findings": [
+      {
+        "code": "timeline_track_too_dense",
+        "severity": "warning",
+        "message": "Track 0 has 10 timed elements in this HTML file. Smaller sub-compositions keep timelines easier to read, iterate on, and diff.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {},
+        "sourceFile": "/home/mandycs/Escritorio/earth-trend-detective/video/hero/compositions/aletsch.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move coherent scene groups into smaller .html files and mount them from the parent with data-composition-src so the timeline stays easier to inspect, revise, and validate."
+      },
+      {
+        "code": "timeline_track_too_dense",
+        "severity": "warning",
+        "message": "Track 1 has 9 timed elements in this HTML file. Smaller sub-compositions keep timelines easier to read, iterate on, and diff.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {},
+        "sourceFile": "/home/mandycs/Escritorio/earth-trend-detective/video/hero/compositions/aletsch.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move coherent scene groups into smaller .html files and mount them from the parent with data-composition-src so the timeline stays easier to inspect, revise, and validate."
+      },
+      {
+        "code": "timeline_track_too_dense",
+        "severity": "warning",
+        "message": "Track 3 has 19 timed elements in this HTML file. Smaller sub-compositions keep timelines easier to read, iterate on, and diff.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {},
+        "sourceFile": "/home/mandycs/Escritorio/earth-trend-detective/video/hero/compositions/aletsch.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move coherent scene groups into smaller .html files and mount them from the parent with data-composition-src so the timeline stays easier to inspect, revise, and validate."
+      },
+      {
+        "code": "timeline_track_too_dense",
+        "severity": "warning",
+        "message": "Track 0 has 4 timed elements in this HTML file. Smaller sub-compositions keep timelines easier to read, iterate on, and diff.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {},
+        "sourceFile": "/home/mandycs/Escritorio/earth-trend-detective/video/hero/compositions/donana.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move coherent scene groups into smaller .html files and mount them from the parent with data-composition-src so the timeline stays easier to inspect, revise, and validate."
+      },
+      {
+        "code": "timeline_track_too_dense",
+        "severity": "warning",
+        "message": "Track 1 has 4 timed elements in this HTML file. Smaller sub-compositions keep timelines easier to read, iterate on, and diff.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {},
+        "sourceFile": "/home/mandycs/Escritorio/earth-trend-detective/video/hero/compositions/donana.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move coherent scene groups into smaller .html files and mount them from the parent with data-composition-src so the timeline stays easier to inspect, revise, and validate."
+      },
+      {
+        "code": "timeline_track_too_dense",
+        "severity": "warning",
+        "message": "Track 3 has 8 timed elements in this HTML file. Smaller sub-compositions keep timelines easier to read, iterate on, and diff.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {},
+        "sourceFile": "/home/mandycs/Escritorio/earth-trend-detective/video/hero/compositions/donana.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move coherent scene groups into smaller .html files and mount them from the parent with data-composition-src so the timeline stays easier to inspect, revise, and validate."
+      },
+      {
+        "code": "timeline_track_too_dense",
+        "severity": "warning",
+        "message": "Track 0 has 7 timed elements in this HTML file. Smaller sub-compositions keep timelines easier to read, iterate on, and diff.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {},
+        "sourceFile": "/home/mandycs/Escritorio/earth-trend-detective/video/hero/compositions/mead.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move coherent scene groups into smaller .html files and mount them from the parent with data-composition-src so the timeline stays easier to inspect, revise, and validate."
+      },
+      {
+        "code": "timeline_track_too_dense",
+        "severity": "warning",
+        "message": "Track 1 has 6 timed elements in this HTML file. Smaller sub-compositions keep timelines easier to read, iterate on, and diff.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {},
+        "sourceFile": "/home/mandycs/Escritorio/earth-trend-detective/video/hero/compositions/mead.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move coherent scene groups into smaller .html files and mount them from the parent with data-composition-src so the timeline stays easier to inspect, revise, and validate."
+      },
+      {
+        "code": "timeline_track_too_dense",
+        "severity": "warning",
+        "message": "Track 3 has 13 timed elements in this HTML file. Smaller sub-compositions keep timelines easier to read, iterate on, and diff.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {},
+        "sourceFile": "/home/mandycs/Escritorio/earth-trend-detective/video/hero/compositions/mead.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move coherent scene groups into smaller .html files and mount them from the parent with data-composition-src so the timeline stays easier to inspect, revise, and validate."
+      }
+    ],
+    "filesScanned": 5
+  },
+  "runtime": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": []
+  },
+  "layout": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 4,
+    "findings": [
+      {
+        "code": "container_overflow",
+        "severity": "info",
+        "time": 1.667,
+        "selector": "#mead-cam",
+        "message": "Element extends outside a clipping layout container.",
+        "rect": {
+          "left": -13.4,
+          "top": -4.67,
+          "right": 1925.03,
+          "bottom": 1085.7,
+          "width": 1938.43,
+          "height": 1090.37
+        },
+        "containerSelector": "#mead > div:nth-of-type(1)",
+        "fixHint": "Resize/reposition the child or container, or mark intentional overflow with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 1080,
+          "width": 1920,
+          "height": 1080
+        },
+        "overflow": {
+          "left": 13.4,
+          "right": 5.03,
+          "top": 4.67,
+          "bottom": 5.7
+        },
+        "dataAttributes": {},
+        "sourceFile": "compositions/mead.html",
+        "bbox": {
+          "x": -13.4,
+          "y": -4.67,
+          "width": 1938.43,
+          "height": 1090.37
+        },
+        "firstSeen": 1.667,
+        "lastSeen": 8.333,
+        "occurrences": 3,
+        "heldMs": 0,
+        "times": [
+          1.667,
+          5,
+          8.333
+        ]
+      },
+      {
+        "code": "container_overflow",
+        "severity": "info",
+        "time": 11.667,
+        "selector": "#aletsch-cam",
+        "message": "Element extends outside a clipping layout container.",
+        "rect": {
+          "left": -32.17,
+          "top": -11.92,
+          "right": 1940.83,
+          "bottom": 1097.88,
+          "width": 1972.99,
+          "height": 1109.81
+        },
+        "containerSelector": "#aletsch > div:nth-of-type(1)",
+        "fixHint": "Resize/reposition the child or container, or mark intentional overflow with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 1080,
+          "width": 1920,
+          "height": 1080
+        },
+        "overflow": {
+          "left": 32.17,
+          "right": 20.83,
+          "top": 11.92,
+          "bottom": 17.88
+        },
+        "dataAttributes": {},
+        "sourceFile": "compositions/aletsch.html",
+        "bbox": {
+          "x": -32.17,
+          "y": -11.92,
+          "width": 1972.99,
+          "height": 1109.81
+        },
+        "firstSeen": 11.667,
+        "lastSeen": 15,
+        "occurrences": 2,
+        "heldMs": 0,
+        "times": [
+          11.667,
+          15
+        ]
+      },
+      {
+        "code": "container_overflow",
+        "severity": "info",
+        "time": 18.333,
+        "selector": "#donana-cam",
+        "message": "Element extends outside a clipping layout container.",
+        "rect": {
+          "left": -4.3,
+          "top": -2,
+          "right": 1922.8,
+          "bottom": 1082,
+          "width": 1927.1,
+          "height": 1084
+        },
+        "containerSelector": "#donana > div:nth-of-type(1)",
+        "fixHint": "Resize/reposition the child or container, or mark intentional overflow with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 1080,
+          "width": 1920,
+          "height": 1080
+        },
+        "overflow": {
+          "left": 4.3,
+          "right": 2.8
+        },
+        "dataAttributes": {},
+        "sourceFile": "compositions/donana.html",
+        "bbox": {
+          "x": -4.3,
+          "y": -2,
+          "width": 1927.1,
+          "height": 1084
+        },
+        "firstSeen": 18.333,
+        "lastSeen": 21.667,
+        "occurrences": 2,
+        "heldMs": 0,
+        "times": [
+          18.333,
+          21.667
+        ]
+      },
+      {
+        "code": "container_overflow",
+        "severity": "info",
+        "time": 25,
+        "selector": "#claim-cam",
+        "message": "Element extends outside a clipping layout container.",
+        "rect": {
+          "left": -202.88,
+          "top": -70.71,
+          "right": 1996.48,
+          "bottom": 1166.43,
+          "width": 2199.36,
+          "height": 1237.14
+        },
+        "containerSelector": "#claim > div:nth-of-type(1)",
+        "fixHint": "Resize/reposition the child or container, or mark intentional overflow with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 0,
+          "top": 0,
+          "right": 1920,
+          "bottom": 1080,
+          "width": 1920,
+          "height": 1080
+        },
+        "overflow": {
+          "left": 202.88,
+          "right": 76.48,
+          "top": 70.71,
+          "bottom": 86.43
+        },
+        "dataAttributes": {},
+        "sourceFile": "compositions/claim.html",
+        "bbox": {
+          "x": -202.88,
+          "y": -70.71,
+          "width": 2199.36,
+          "height": 1237.14
+        },
+        "firstSeen": 25,
+        "lastSeen": 28.333,
+        "occurrences": 2,
+        "heldMs": 0,
+        "times": [
+          25,
+          28.333
+        ]
+      }
+    ],
+    "duration": 30,
+    "samples": [
+      1.667,
+      5,
+      8.333,
+      11.667,
+      15,
+      18.333,
+      21.667,
+      25,
+      28.333
+    ],
+    "transitionSamples": [],
+    "transitionSamplesDropped": 0,
+    "tolerance": 2,
+    "totalIssueCount": 4,
+    "truncated": false
+  },
+  "motion": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": [],
+    "enabled": false,
+    "samples": 0
+  },
+  "contrast": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 3,
+    "infoCount": 0,
+    "findings": [
+      {
+        "code": "contrast_aa_failure",
+        "severity": "warning",
+        "message": "Contrast is 1.47:1; WCAG AA requires 3:1.",
+        "text": "2021",
+        "fg": "rgb(237,227,209)",
+        "bg": "rgb(192,189,184)",
+        "ratio": 1.47,
+        "requiredRatio": 3,
+        "suggestedColor": "rgb(107,102,94)",
+        "large": true,
+        "selector": "#aletsch-y2021",
+        "dataAttributes": {
+          "data-start": "6.0",
+          "data-duration": "0.4",
+          "data-track-index": "3"
+        },
+        "sourceFile": "compositions/aletsch.html",
+        "bbox": {
+          "x": 96,
+          "y": 168,
+          "width": 408.015625,
+          "height": 246
+        },
+        "time": 15,
+        "times": [
+          15
+        ]
+      },
+      {
+        "code": "contrast_aa_failure",
+        "severity": "warning",
+        "message": "Contrast is 2.71:1; WCAG AA requires 3:1.",
+        "text": "Aletsch Glacier",
+        "fg": "rgb(237,227,209)",
+        "bg": "rgb(136,141,113)",
+        "ratio": 2.71,
+        "requiredRatio": 3,
+        "suggestedColor": "rgb(66,63,58)",
+        "large": true,
+        "selector": "#aletsch-title",
+        "dataAttributes": {},
+        "sourceFile": "compositions/aletsch.html",
+        "bbox": {
+          "x": 96,
+          "y": 709,
+          "width": 751.515625,
+          "height": 135
+        },
+        "time": 15,
+        "times": [
+          15
+        ]
+      },
+      {
+        "code": "contrast_aa_failure",
+        "severity": "warning",
+        "message": "Contrast is 2.93:1; WCAG AA requires 3:1.",
+        "text": "Topsoil moisture  falling, for real",
+        "fg": "rgb(237,227,209)",
+        "bg": "rgb(138,131,127)",
+        "ratio": 2.93,
+        "requiredRatio": 3,
+        "suggestedColor": "rgb(61,59,54)",
+        "large": true,
+        "selector": "#donana-fact",
+        "dataAttributes": {},
+        "sourceFile": "compositions/donana.html",
+        "bbox": {
+          "x": 100,
+          "y": 847,
+          "width": 662.328125,
+          "height": 51
+        },
+        "time": 21.667,
+        "times": [
+          21.667
+        ]
+      }
+    ],
+    "enabled": true,
+    "samples": [
+      1.667,
+      8.333,
+      15,
+      21.667,
+      28.333
+    ],
+    "checked": 15,
+    "passed": 12
+  },
+  "craft": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 2,
+    "infoCount": 0,
+    "findings": [
+      {
+        "code": "film_silent",
+        "severity": "warning",
+        "message": "This 30 s film has no sound source (no <audio>, no <video> with sound): add a music bed and sounds on the visible actions unless the person asked for silence; see references/sound.md.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0
+      },
+      {
+        "code": "line_unread",
+        "severity": "warning",
+        "message": "The film's last line \"EARTH TREND DETECTIVE\" (3 words) is on screen 1.57 s (±0.01 s), under the 2.00 s a closing line needs: hold it about 0.5 s + 0.3 s a word and at least 2 s before the film ends; see references/motion.md.",
+        "text": "EARTH TREND DETECTIVE",
+        "selector": "#claim-mark",
+        "dataAttributes": {},
+        "sourceFile": "compositions/claim.html",
+        "bbox": {
+          "x": 96,
+          "y": 765,
+          "width": 733.73,
+          "height": 115
+        },
+        "time": 28.438,
+        "words": 3,
+        "seconds": 1.566,
+        "floorSeconds": 2,
+        "measured": [
+          {
+            "time": 28.125,
+            "opacity": null,
+            "heightPx": null
+          },
+          {
+            "time": 28.25,
+            "opacity": null,
+            "heightPx": null
+          },
+          {
+            "time": 28.375,
+            "opacity": null,
+            "heightPx": null
+          },
+          {
+            "time": 28.5,
+            "opacity": 0.92,
+            "heightPx": 115
+          },
+          {
+            "time": 28.625,
+            "opacity": 1,
+            "heightPx": 115
+          },
+          {
+            "time": 28.75,
+            "opacity": 1,
+            "heightPx": 115
+          },
+          {
+            "time": 28.875,
+            "opacity": 1,
+            "heightPx": 115
+          },
+          {
+            "time": 29.5,
+            "opacity": 1,
+            "heightPx": 115
+          },
+          {
+            "time": 29.625,
+            "opacity": 1,
+            "heightPx": 115
+          },
+          {
+            "time": 29.75,
+            "opacity": 1,
+            "heightPx": 115
+          },
+          {
+            "time": 29.875,
+            "opacity": 1,
+            "heightPx": 115
+          }
+        ]
+      }
+    ],
+    "enabled": true,
+    "step": 0.125,
+    "samples": 240
+  },
+  "audio": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 1,
+    "findings": [
+      {
+        "code": "audio_none",
+        "severity": "info",
+        "message": "The film has no sound: no clip in it plays audio.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0
+      }
+    ]
+  },
+  "hdr": {
+    "autoPromotion": null,
+    "inspection": "available"
+  },
+  "snapshots": {
+    "enabled": false,
+    "files": [],
+    "times": [],
+    "findingFiles": []
+  }
+}

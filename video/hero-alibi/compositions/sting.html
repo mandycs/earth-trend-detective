@@ -1,0 +1,67 @@
+<template>
+<style>
+  @font-face { font-family: "Archivo"; src: url(assets/fonts/archivo.woff2) format("woff2"); font-weight: 100 900; font-stretch: 62% 125%; }
+  @font-face { font-family: "Manrope"; src: url(assets/fonts/manrope.woff2) format("woff2"); font-weight: 200 800; }
+  #sting-root { position: absolute; inset: 0; background: transparent; z-index: 50; }
+  #sting-bg { position: absolute; inset: 0; background: #0e1012; opacity: 0; }
+  #sting-root .lockup { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+            display: flex; align-items: center; gap: 56px; }
+  #mark { width: 400px; height: 400px; display: block; overflow: visible; }
+  #sting-root .text { display: flex; flex-direction: column; }
+  #word { font-family: "Archivo", sans-serif; font-stretch: 112%; font-weight: 800; font-size: 210px;
+          line-height: 0.9; letter-spacing: 0.04em; color: #e9ecee; clip-path: inset(0 100% 0 0); }
+  #tag { margin-top: 22px; font-family: "Manrope", sans-serif; font-weight: 300; font-size: 34px;
+         color: #aeb6bc; letter-spacing: 0.01em; opacity: 0; white-space: nowrap; }
+</style>
+<div id="sting-root" data-composition-id="sting" data-width="1920" data-height="1080">
+  <div id="sting-bg"></div>
+  <div class="lockup">
+    <svg id="mark" viewBox="0 0 200 200" role="img" aria-label="Alibi">
+      <g fill="none" stroke="#e9ecee">
+        <circle id="g-outline" cx="100" cy="100" r="74" stroke-width="6" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" transform="rotate(-90 100 100)"/>
+        <ellipse id="g-meridian" opacity="0" cx="100" cy="100" rx="34" ry="74" stroke-width="3.5" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/>
+        <line id="g-equator" opacity="0" x1="26" y1="100" x2="174" y2="100" stroke-width="3.5" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/>
+      </g>
+      <polyline id="thread" opacity="0" points="56,128 84,88 114,114 146,62" fill="none" stroke="#c8102e" stroke-width="7"
+                stroke-linecap="round" stroke-linejoin="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/>
+      <g class="pin" id="p1"><circle cx="56" cy="128" r="11" fill="#e9ecee"/><circle cx="56" cy="128" r="4" fill="#0e1012"/></g>
+      <g class="pin" id="p2"><circle cx="84" cy="88" r="11" fill="#e9ecee"/><circle cx="84" cy="88" r="4" fill="#0e1012"/></g>
+      <g class="pin" id="p3"><circle cx="114" cy="114" r="11" fill="#e9ecee"/><circle cx="114" cy="114" r="4" fill="#0e1012"/></g>
+      <g class="pin" id="p4"><circle cx="146" cy="62" r="11" fill="#e9ecee"/><circle cx="146" cy="62" r="4" fill="#0e1012"/></g>
+      <g class="pin" id="p5"><circle cx="134" cy="148" r="11" fill="#e9ecee"/><circle cx="134" cy="148" r="4" fill="#0e1012"/></g>
+    </svg>
+    <div class="text">
+      <div id="word">ALIBI</div>
+      <div id="tag">The satellites saw it all. Nobody told the story.</div>
+    </div>
+  </div>
+</div>
+<script>
+  const tl = gsap.timeline({ paused: true });
+  // 0. Transition: the evidence fades to the board while the globe starts drawing over it.
+  tl.to("#sting-bg", { opacity: 1, duration: 0.8, ease: "power2.inOut" }, 0);
+  // 1. The globe draws itself.
+  tl.to("#g-outline", { strokeDashoffset: 0, duration: 0.9, ease: "power2.inOut" }, 0.1);
+  tl.set(["#g-meridian", "#g-equator"], { opacity: 1 }, 0.45);
+  tl.to("#g-meridian", { strokeDashoffset: 0, duration: 0.7, ease: "power2.inOut" }, 0.45);
+  tl.to("#g-equator", { strokeDashoffset: 0, duration: 0.6, ease: "power2.inOut" }, 0.55);
+  tl.set("#g-outline", { strokeDasharray: "none" }, 1.01);
+  // 2. Pins drop onto data points, one by one.
+  ["#p1", "#p2", "#p3", "#p4"].forEach((id, i) => {
+    tl.fromTo(id, { opacity: 0, y: -26, scale: 1.5, transformOrigin: "50% 50%" },
+                  { opacity: 1, y: 0, scale: 1, duration: 0.32, ease: "back.out(2.2)" }, 1.15 + i * 0.17);
+  });
+  // 3. The red thread pulls through them.
+  tl.set("#thread", { opacity: 1 }, 1.95);
+  tl.to("#thread", { strokeDashoffset: 0, duration: 0.8, ease: "power3.inOut" }, 1.95);
+  // 4. The last pin lands and stays unconnected.
+  tl.fromTo("#p5", { opacity: 0, y: -26, scale: 1.5, transformOrigin: "50% 50%" },
+                   { opacity: 1, y: 0, scale: 1, duration: 0.36, ease: "back.out(2.2)" }, 2.95);
+  tl.fromTo("#p5", { rotation: 0 }, { rotation: 8, duration: 0.12, yoyo: true, repeat: 3, ease: "sine.inOut", svgOrigin: "134 148" }, 3.3);
+  // 5. The mark makes room; the wordmark and the line arrive.
+  tl.fromTo("#mark", { x: 385 }, { x: 0, duration: 0.7, ease: "power3.inOut" }, 3.35);
+  tl.fromTo("#word", { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 0.6, ease: "power3.out" }, 3.6);
+  tl.fromTo("#tag", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" }, 4.05);
+  window.__timelines["sting"] = tl;
+</script>
+</template>

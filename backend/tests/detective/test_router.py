@@ -158,7 +158,7 @@ def test_event_order(client_with, offline):
     assert kinds == [
         "place",
         "thinking", "tool_start", "tool_done",
-        "thinking", "tool_start", "tool_done",
+        "thinking", "tool_start", "tool_done", "board",  # the trend test changed the verdicts
         "board", "answer", "done",
     ]  # fmt: skip
     data = [d for _, d in events]
@@ -170,10 +170,12 @@ def test_event_order(client_with, offline):
     assert series_done["evidence_id"] == "e1" and series_done["summary"]
     trend_done = data[6]
     assert trend_done["result"]["verdict"] == "real" and trend_done["evidence_id"] == "e2"
-    assert data[7] == {"suspects": [], "n_tests": 1}
-    assert data[8] == {"text": GOOD_ANSWER, "checked": True, "figures": ["2003", "2024"], "source": "llm"}
-    done = data[9]
-    assert done["n_tests"] == 1 and done["n_tool_calls"] == 2 and done["thread_id"]
+    verdicts = {"t1": {"verdict": "real", "direction": "up"}}
+    assert data[7] == {"suspects": [], "n_tests": 1, "verdicts": verdicts}
+    assert data[8] == {"suspects": [], "n_tests": 1, "verdicts": verdicts}
+    assert data[9] == {"text": GOOD_ANSWER, "checked": True, "figures": ["2003", "2024"], "source": "llm"}
+    done = data[10]
+    assert done["n_tests"] == 1 and done["n_tests_branch"] == 1 and done["n_tool_calls"] == 2 and done["thread_id"]
     assert data[0]["thread_id"] == done["thread_id"]
 
 
@@ -194,7 +196,9 @@ def test_map_and_board_events(client_with, offline):
     maps = [d for k, d in events if k == "map"]
     assert maps == [{"op": "fly_to", "bbox": [-5.0, 36.0, -4.0, 37.0], "pitch": 40.0, "bearing": 0.0}]
     boards = [d for k, d in events if k == "board"]
-    assert len(boards) == 2  # once when the board changed, once with the final answer
+    assert len(boards) == 3  # after the test, when the board changed, and with the final answer
+    assert boards[0]["suspects"] == [] and boards[0]["verdicts"] == {"t1": {"verdict": "real", "direction": "up"}}
+    boards = boards[1:]
     suspect = boards[0]["suspects"][0]
     assert {k: suspect[k] for k in ("id", "status", "claimed", "evidence", "note", "downgraded")} == {
         "id": "warming",
@@ -292,7 +296,7 @@ def test_history_lists_steps(client_with, offline):
     assert client.get("/detective/nope/history").status_code == 404
 
 
-def test_fork_from_checkpoint_drops_later_tests(client_with, offline):
+def test_fork_keeps_all_tests_of_the_thread_in_the_correction(client_with, offline):
     messages = [
         _call("get_series", {"var_id": "t2m"}, "s1"),
         _call("trend_test", {"series_id": "t2m:2003-2024"}, "t1"),
@@ -303,6 +307,7 @@ def test_fork_from_checkpoint_drops_later_tests(client_with, offline):
         # the fork
         _call("get_series", {"var_id": "solar"}, "s3"),
         _call("trend_test", {"series_id": "solar:2003-2024"}, "t3"),
+        _call("trend_test", {"series_id": "t2m:2003-2024"}, "t4"),  # cached: not a new test
         AIMessage(content="Done."),
         AIMessage(content="Air temperature went up from 2003 to 2024."),
     ]
@@ -318,9 +323,12 @@ def test_fork_from_checkpoint_drops_later_tests(client_with, offline):
     )
     forked = _done(events)
     assert forked["thread_id"] == first["thread_id"]
-    # the t2m test up to the fork, plus the fork's own solar test; precip's test is dropped
-    assert forked["n_tests"] == 2  # a plain follow-up would count 3
-    assert forked["n_tool_calls"] == 2
+    # the branch holds t2m and solar; the family is every test the thread ever ran: t2m, precip, solar
+    assert forked["n_tests_branch"] == 2
+    assert forked["n_tests"] == 3
+    assert forked["n_tool_calls"] == 3
+    final_board = [d for k, d in events if k == "board"][-1]
+    assert final_board["n_tests"] == 3
 
 
 def test_fork_from_unknown_checkpoint(client_with, offline):
@@ -347,7 +355,7 @@ def test_get_case_reopens_an_investigation(client_with, offline):
         "figures": ["2003", "2024"],
         "source": "llm",
     }
-    assert case["board"] == {"suspects": [], "n_tests": 1}
+    assert case["board"] == {"suspects": [], "n_tests": 1, "verdicts": {"t1": {"verdict": "real", "direction": "up"}}}
     assert [op["op"] for op in case["map"]] == ["fly_to"]
     assert case["place"]["lat"] == 37.0 and case["question"] == "Is it getting warmer here?"
     assert client.get("/detective/nope").status_code == 404
@@ -424,3 +432,89 @@ def test_scrub_masks_links_keys_and_paths():
     for leak in ("example.com", "h.io", "XYZ", "abc", "eyJabc", "/home/user", "Users"):
         assert leak not in text
     assert "°C/decade" in text
+
+
+# --------------------------------------------------------------------------- final review fixes
+
+
+class StrictModel(FakeModel):
+    """Refuses a conversation with a tool call left without its result, as the providers do."""
+
+    def _generate(self, messages, *a, **kw):
+        from langchain_core.messages import ToolMessage
+
+        answered = {m.tool_call_id for m in messages if isinstance(m, ToolMessage)}
+        for m in messages:
+            for call in getattr(m, "tool_calls", None) or []:
+                if call["id"] not in answered:
+                    raise ValueError("tool_use ids were found without tool_result blocks")
+        return super()._generate(messages, *a, **kw)
+
+
+def test_a_stopped_run_does_not_break_the_follow_up(offline):
+    from app.detective.events import DetectiveRequest, prepare_run, stream_run
+    from app.detective.graph import build_graph
+
+    model = StrictModel(
+        messages=iter(
+            [
+                _call("get_series", {"var_id": "t2m"}, "s1", "Now the air temperature."),
+                # the follow-up
+                _call("get_series", {"var_id": "t2m"}, "s2"),
+                AIMessage(content="Done."),
+                AIMessage(content="Nothing was tested yet."),
+            ]
+        )
+    )
+    graph = build_graph(model, checkpointer=MemorySaver(), store=InMemoryStore())
+    run = prepare_run(graph, DetectiveRequest(question="Is it warmer?", **POINT))
+    stream = stream_run(graph, run)
+    for kind, _ in ((e["event"], e["data"]) for e in stream):
+        if kind == "tool_start":
+            break
+    stream.close()  # the user stopped the run (or the server died) before the tool ran
+    assert graph.get_state(run.config).next == ("tools",)
+
+    follow = prepare_run(graph, DetectiveRequest(question="And now?", thread_id=run.thread_id, **POINT))
+    events = [(e["event"], e["data"]) for e in stream_run(graph, follow)]
+    assert not [d for k, d in events if k == "tool_failed"], events  # the model answered
+    assert [d["tool"] for k, d in events if k == "tool_done"] == ["get_series"]
+    answer = next(d for k, d in events if k == "answer")
+    assert answer["source"] == "llm" and events[-1][0] == "done"
+
+
+def test_thinking_with_an_unchecked_figure_or_a_cause_is_replaced(client_with, offline):
+    probe = "Rain fell 47% since the dam was built, caused by farms."
+    messages = [
+        _call("get_series", {"var_id": "precip"}, "s1", probe),
+        _call(
+            "update_board",
+            {"suspect": "farms", "status": "open", "evidence_ids": [], "note": probe},
+            "b1",
+            "Writing the suspect down.",
+        ),
+        AIMessage(content="Done."),
+        AIMessage(content="Nothing was tested yet."),
+    ]
+    events = _post(client_with(messages), **POINT)
+    thinking = [d["text"] for k, d in events if k == "thinking"]
+    assert thinking == ["Next: get_series.", "Writing the suspect down."]
+    start = next(d for k, d in events if k == "tool_start" and d["tool"] == "update_board")
+    assert start["args"]["note"] == ""
+    board = [d for k, d in events if k == "board"][-1]
+    assert board["suspects"][0]["note"] == ""
+    shown = json.dumps([d for k, d in events if k != "place"])
+    assert "47%" not in shown and "caused by farms" not in shown
+
+
+def test_a_broken_database_does_not_take_the_api_down(monkeypatch):
+    def broken(*a, **kw):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(detective_router, "open_persistence", broken)
+    with TestClient(app) as client:  # the lifespan runs and must not raise
+        assert client.get("/health").status_code == 200
+        r = client.get("/detective/abc/history")
+        assert r.status_code == 503
+        assert "not ready" in r.json()["detail"]
+    assert detective_router._persistence is None

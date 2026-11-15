@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import json
 import logging
-import re
 from collections.abc import Mapping, Sequence
 from typing import Any
 
@@ -24,22 +23,20 @@ from app.detective.ledger import json_safe
 from app.detective.prompt import CONCLUDE_PROMPT, conclude_request, retry_request
 from app.detective.session import Session
 from app.detective.tools import TOOLS
-from app.detective.tools.analysis import refresh_verdicts
-from app.detective.tools.analysis import WORDING
+from app.detective.tools.analysis import WORDING, refresh_verdicts
+from app.detective.wording import answer_problems
 from app.explain.numbers import extract_numbers
-from app.explain.template import template_narrative
+from app.explain.template import NO_SPLIT_SENTENCE, template_narrative
 from app.explain.validator import MAX_QUESTION_SENTENCES, SENTENCE_SPLIT, validate_narrative
 
 logger = logging.getLogger(__name__)
 
 HIDDEN_KEYS = frozenset({"chart", "series", "transient"})
 MAX_REASON = 200
-# "this part is human", "it is man-made": the answer may only say "not explained by the climate we measured".
-HUMAN_CLAIM = re.compile(
-    r"\b(?:is|are|was|were)\s+(?:(?:mostly|largely|partly|all|clearly)\s+)?human\b"
-    r"|\b(?:hu)?man[- ]made\b|\bhuman[- ]caused\b",
-    re.IGNORECASE,
-)
+TOOL_ERROR_PREFIX = "the tool stopped with an error"  # events.py shows only its own sentence for these
+NOTHING_MEASURED = "Nothing could be measured here, so we can't say yet whether anything is changing."
+NO_SPLIT = "We have not split this change into the climate and the rest yet."
+MAX_NOT_MEASURED = 3
 
 
 class ToolFailure(Exception):
@@ -74,7 +71,7 @@ def run_call(session: Session, call: Mapping) -> dict:
         return spec.fn(session, **kwargs)
     except Exception as exc:  # noqa: BLE001 - a broken tool is a step result, never a crash
         logger.warning("tool %s raised %s: %s", name, type(exc).__name__, exc)
-        raise ToolFailure(f"the tool stopped with an error: {exc}"[:MAX_REASON]) from exc
+        raise ToolFailure(f"{TOOL_ERROR_PREFIX}: {exc}"[:MAX_REASON]) from exc
 
 
 def _hide(value: Any) -> Any:
@@ -106,19 +103,31 @@ def failed_message(call: Mapping, reason: str) -> ToolMessage:
 # --------------------------------------------------------------------------- conclude
 
 
-def check(text: str, report: Mapping) -> tuple[bool, list[str], list[str]]:
-    """(accepted, figures quoted, rejection details) for one candidate answer."""
+def check(text: str, report: Mapping, board: Sequence[Mapping] = ()) -> tuple[bool, list[str], list[str]]:
+    """(accepted, figures quoted, rejection details) for one candidate answer: the shared
+    validator, then the detective's own rules (`wording.answer_problems`)."""
     result = validate_narrative(text, report)
     rejected = [r.detail for r in result.rejected]
-    hit = HUMAN_CLAIM.search(text)
-    if hit:
-        rejected.append(f"'{hit.group(0)}': never say a part is human; say 'not explained by the climate we measured'")
+    rejected += answer_problems(text, report, board)
     return not rejected, list(result.checked_numbers), rejected
 
 
+def _nothing_measured(report: Mapping) -> str:
+    text = NOTHING_MEASURED
+    rows = list(report.get("not_measured") or [])[:MAX_NOT_MEASURED]
+    if rows:
+        text += " What stopped us: " + "; ".join(f"{r['label'].lower()} ({r['reason']})" for r in rows) + "."
+    return text
+
+
 def template_answer(report: Mapping) -> tuple[str, list[str]]:
-    sentences = [s for s in SENTENCE_SPLIT.split(template_narrative(report, residual_wording=WORDING).strip()) if s.strip()]
-    text = " ".join(sentences[:MAX_QUESTION_SENTENCES])
+    """The code's own answer from the report (no model). With no test that ran it says so."""
+    if not report.get("n_tests"):
+        text = _nothing_measured(report)
+    else:
+        narrative = template_narrative(report, residual_wording=WORDING).replace(NO_SPLIT_SENTENCE, NO_SPLIT)
+        sentences = [s for s in SENTENCE_SPLIT.split(narrative.strip()) if s.strip()]
+        text = " ".join(sentences[:MAX_QUESTION_SENTENCES])
     return text, [n.text for n in extract_numbers(text)]
 
 
@@ -137,7 +146,7 @@ def narrate(
         except Exception as exc:  # noqa: BLE001 - no model answer: the template still answers
             logger.warning("narrator failed: %s", type(exc).__name__)
             break
-        ok, figures, rejected = check(text, report)
+        ok, figures, rejected = check(text, report, board)
         if ok:
             return text, True, figures, "llm"
         logger.info("narrator answer rejected on %d point(s)", len(rejected))

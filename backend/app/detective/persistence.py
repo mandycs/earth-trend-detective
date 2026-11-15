@@ -4,6 +4,10 @@
   checkpoint (`SqliteSaver`), so a thread can be resumed, replayed step by step and forked.
 - The monthly series are too big for every checkpoint: they go in the LangGraph store
   (`SqliteStore`) under `("detective", thread_id, "series")`, one item per series id.
+- Every test the thread ever logged, in any branch, goes in the store under
+  `("detective", thread_id, "tests")`, append-only, keyed by a stable key (the tool call and
+  the test's position in it). The correction runs over all of them, so a fork from an
+  earlier step never drops a test from the family.
 """
 
 from __future__ import annotations
@@ -24,10 +28,34 @@ from app.detective.ledger import json_safe
 DEFAULT_DB = Path(__file__).resolve().parents[2] / "data" / "detective" / "detective.sqlite"
 MEMORY = ":memory:"
 SQLITE_TIMEOUT = 30.0
+PAGE = 200
 
 
 def series_namespace(thread_id: str) -> tuple[str, str, str]:
     return ("detective", thread_id, "series")
+
+
+def tests_namespace(thread_id: str) -> tuple[str, str, str]:
+    return ("detective", thread_id, "tests")
+
+
+def save_tests(store: BaseStore, thread_id: str, tests: dict[str, dict]) -> None:
+    """Append the thread's tests by stable key; a key already stored is never rewritten."""
+    ns = tests_namespace(thread_id)
+    for key, record in tests.items():
+        if store.get(ns, key) is None:
+            store.put(ns, key, json_safe(record))
+
+
+def load_tests(store: BaseStore, thread_id: str) -> dict[str, dict]:
+    """Every test the thread ever logged, in any branch (stable key -> record)."""
+    ns, out, offset = tests_namespace(thread_id), {}, 0
+    while True:
+        page = store.search(ns, limit=PAGE, offset=offset)
+        out |= {item.key: dict(item.value) for item in page}
+        if len(page) < PAGE:
+            return out
+        offset += PAGE
 
 
 def save_series(store: BaseStore, thread_id: str, series_id: str, s: pd.Series) -> None:

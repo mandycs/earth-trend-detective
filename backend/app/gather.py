@@ -94,7 +94,9 @@ def _fetch_power(
     upstream = [v for v in variables if v.id in UPSTREAM_DRIVERS]
     local = [v for v in variables if v.id not in UPSTREAM_DRIVERS]
     bands = {v.id: v.band for v in local}
-    out = dict(power.fetch_monthly(site.lat, site.lon, bands, start, end))
+    # Only upstream drivers asked (the detective fetches one variable at a time): no local call,
+    # since POWER answers an empty `parameters=` with a 422.
+    out = dict(power.fetch_monthly(site.lat, site.lon, bands, start, end)) if bands else {}
     for var_id, derive in SNOW_DERIVATIONS.items():
         if var_id in out:  # fetched as the raw POWER band, turned into the derived driver
             out[var_id] = derive(out[var_id])

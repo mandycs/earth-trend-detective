@@ -119,6 +119,25 @@ img {
   font-stretch: 112%;
 }
 
+/* Brand: the Alibi symbol next to the name (see DESIGN.md, Brand). */
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45em;
+}
+
+.brand-mark {
+  display: block;
+  flex: none;
+  width: 1.15em;
+  height: 1.15em;
+}
+
+.brand-name {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 .narrow {
   font-family: var(--font-display);
   font-stretch: 75%;

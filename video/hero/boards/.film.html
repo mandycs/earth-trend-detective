@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en" data-composition-variables='[{"id": "text-opacity", "type": "number", "label": "Text opacity (0 for the website loop)", "default": 1, "min": 0, "max": 1, "step": 1}]'>
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1920, height=1080" />
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #0B0907; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="30.0" data-width="1920" data-height="1080">
+  <div id="mead" data-composition-id="mead" data-composition-src="compositions/mead.html" data-start="0.0" data-duration="9.0" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+  <div id="aletsch" data-composition-id="aletsch" data-composition-src="compositions/aletsch.html" data-start="9.0" data-duration="8.5" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+  <div id="donana" data-composition-id="donana" data-composition-src="compositions/donana.html" data-start="17.5" data-duration="7.0" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+  <div id="claim" data-composition-id="claim" data-composition-src="compositions/claim.html" data-start="24.5" data-duration="5.5" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+  <!-- MUSIC -->
+</div>
+<script>
+  const tl = gsap.timeline({ paused: true });
+  window.__timelines["main"] = tl;
+  tl.seek(0);
+</script>
+</body>
+</html>

@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
+import { Wordmark } from '../../brand/Wordmark'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { fetchSites } from '../explore/api'
 import type { Site as ApiSite } from '../explore/types'
@@ -237,7 +238,7 @@ export default function InvestigateView({ initialSite }: { initialSite?: string 
     <div className={styles.shell}>
       <header className={styles.bar}>
         <Link href="/" className={`${styles.wordmark} wide`}>
-          Earth Trend Detective
+          <Wordmark />
         </Link>
         <nav className={styles.nav} aria-label="Main">
           <Link href="/story/lake_mead">Solved cases</Link>

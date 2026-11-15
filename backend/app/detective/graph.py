@@ -35,7 +35,7 @@ from app.catalog import Variable, load_catalog
 from app.detective import board as case_board
 from app.detective.ledger import Ledger, json_safe
 from app.detective.nodes import ToolFailure, failed_message, narrate, run_call, text_of, tool_message
-from app.detective.persistence import save_series
+from app.detective.persistence import save_series, save_tests
 from app.detective.place import Place
 from app.detective.prompt import SYSTEM_PROMPT
 from app.detective.report import ledger_report, n_finite_tests
@@ -127,7 +127,7 @@ def build_graph(
         return started is None or clock() - float(started) < max_seconds
 
     def session_of(case: dict, config: RunnableConfig, with_series: bool = True) -> Session:
-        return Session.from_state(case, catalog, store if with_series else None, _thread_id(config))
+        return Session.from_state(case, catalog, store, _thread_id(config), with_series=with_series)
 
     def agent(state: DetectiveState, config: RunnableConfig) -> dict:
         messages = state.get("messages") or []
@@ -161,10 +161,11 @@ def build_graph(
             except ToolFailure as exc:
                 failures.append({"tool": call.get("name"), "id": call["id"], "reason": str(exc)})
                 out.append(failed_message(call, str(exc)))
-        if store is not None:  # the store is the only place series live
+        if store is not None:  # the store is the only place series live, and holds every test of the thread
             for sid, series in session.series.items():
                 if sid not in known:
                     save_series(store, _thread_id(config), sid, series)
+            save_tests(store, _thread_id(config), session.ledger.keyed_tests())
         new_case = {**case, **session.to_state(), "failures": failures}
         return {"messages": out, "case": new_case, "tool_calls": made}
 

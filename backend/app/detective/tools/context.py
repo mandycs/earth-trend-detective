@@ -15,12 +15,13 @@ import re
 
 from app import layers
 from app.detective.session import Session
-from app.detective.tools import data
+from app.detective.tools import data, mapping
 from app.investigate import landcover, thennow
 from app.sites import load_sites
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_PICTURE_LAYER = "true_colour"
 LAND_COVER_CAVEAT = "At 500 m, orchards and tree crops may be classed as savanna or woody vegetation, not cropland."
 SITE_ID_RE = re.compile(r"^[a-z0-9_]+$")
 CASE_VARIABLE_FIELDS = (
@@ -76,6 +77,12 @@ def satellite_picture(session: Session, year_a: int = 2003, year_b: int = 2024) 
     )
 
 
+def _catalog_id(gibs_layer: object) -> str:
+    """The map catalog id of a GIBS layer name (the front only knows catalog ids)."""
+    rows = mapping.load_map_layers()
+    return next((k for k, row in rows.items() if row.get("gibs_layer") == gibs_layer), DEFAULT_PICTURE_LAYER)
+
+
 def _picture(session: Session, year_a: int, year_b: int) -> dict:
     p = session.place
     try:
@@ -84,11 +91,12 @@ def _picture(session: Session, year_a: int, year_b: int) -> dict:
         logger.warning("satellite picture failed: %s", exc)
         return _not_available("the satellite imagery source could not be reached", transient=True)
     before, after = pair.get("before"), pair.get("after")
+    layer_id = _catalog_id(pair.get("layer"))
     if before and after:
         session.map.append(
             {
                 "op": "show_before_after",
-                "layer_id": pair["layer"],
+                "layer_id": layer_id,
                 "year_a": year_a,
                 "year_b": year_b,
                 "before_url": before["url"],
@@ -96,7 +104,7 @@ def _picture(session: Session, year_a: int, year_b: int) -> dict:
                 "bbox": pair["bbox"],
             }
         )
-    out = {**pair, "status": "visual_only"}
+    out = {**pair, "layer_id": layer_id, "status": "visual_only"}
     out["note"] = "A picture to look at, not a measurement: no figure comes from it."
     return out
 
