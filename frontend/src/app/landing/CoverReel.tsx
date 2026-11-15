@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { Wordmark } from '../../brand/Wordmark'
 import { useEffect, useState } from 'react'
@@ -25,6 +26,14 @@ export function CoverReel({ cases, years }: { cases: ReelCase[]; years: string }
   const [index, setIndex] = useState(0)
   const [t, setT] = useState(0)
   const [playing, setPlaying] = useState(true)
+  // Only the picture on screen and the next one are fetched; the rest wait for their turn.
+  const [warm, setWarm] = useState<ReadonlySet<number>>(() => new Set([0, 1]))
+
+  useEffect(() => {
+    if (cases.length === 0) return
+    const next = (index + 1) % cases.length
+    setWarm((seen) => (seen.has(index) && seen.has(next) ? seen : new Set([...seen, index, next])))
+  }, [index, cases.length])
 
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) setPlaying(false)
@@ -56,16 +65,22 @@ export function CoverReel({ cases, years }: { cases: ReelCase[]; years: string }
 
   return (
     <section className={styles.reel} aria-label="Three solved cases">
-      {cases.map((c, i) => (
-        <img
-          key={c.id}
-          src={c.image}
-          alt={i === index ? `Satellite picture of ${c.name}` : ''}
-          aria-hidden={i === index ? undefined : true}
-          className={i === index ? `${styles.reelImage} ${styles.reelImageOn}` : styles.reelImage}
-          fetchPriority={i === 0 ? 'high' : 'low'}
-        />
-      ))}
+      {cases.map((c, i) =>
+        warm.has(i) || i === index ? (
+          // next/image serves a WebP sized to the screen instead of the 2-4k source JPEG.
+          <Image
+            key={c.id}
+            src={c.image}
+            alt={i === index ? `Satellite picture of ${c.name}` : ''}
+            aria-hidden={i === index ? undefined : true}
+            className={i === index ? `${styles.reelImage} ${styles.reelImageOn}` : styles.reelImage}
+            fill
+            sizes="100vw"
+            loading={i === 0 ? 'eager' : 'lazy'}
+            fetchPriority={i === 0 ? 'high' : 'low'}
+          />
+        ) : null,
+      )}
       <div className={styles.reelShade} aria-hidden="true" />
 
       <header className={styles.reelTop}>
