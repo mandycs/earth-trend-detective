@@ -36,6 +36,7 @@ BASE_IMAGERY: dict[str, BaseImagery] = {
     "lake_mead": BaseImagery(DEFAULT_LAYER, "2024-06-20"),
     "aletsch": BaseImagery(HLS_LANDSAT, "2024-08-31"),
     "donana": BaseImagery(HLS_LANDSAT, "2024-08-23"),
+    "great_barrier_reef": BaseImagery("MODIS_Aqua_CorrectedReflectance_TrueColor", "2024-09-01"),
 }
 
 
