@@ -1,0 +1,78 @@
+<template>
+<style>
+  @font-face { font-family: "Archivo"; src: url(assets/fonts/archivo.woff2) format("woff2"); font-weight: 100 900; font-stretch: 62% 125%; }
+  @font-face { font-family: "Manrope"; src: url(assets/fonts/manrope.woff2) format("woff2"); font-weight: 200 800; }
+  #watch-root { position: absolute; inset: 0; overflow: hidden; background: #0e1012; }
+  #w-cam { position: absolute; inset: 0; transform-origin: 60% 50%; }
+  #w-sat { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; object-fit: cover; object-position: 50% 45%; }
+  #w-dim { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(14,16,18,0.94) 0%, rgba(14,16,18,0.86) 42%, rgba(14,16,18,0.55) 100%); }
+  .tile { position: absolute; width: 184px; height: 143px; overflow: hidden; }
+  .tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .tile span { position: absolute; left: 8px; bottom: 6px; font-family: "Manrope", sans-serif; font-weight: 700; font-size: 28px;
+               color: #e9ecee; text-shadow: 0 1px 3px rgba(0,0,0,0.9); }
+  .h { position: absolute; left: 96px; font-family: "Archivo", sans-serif; font-stretch: 75%; font-weight: 800;
+        text-transform: uppercase; color: #e9ecee; line-height: 0.92; letter-spacing: 0.005em; }
+  #w-h1 { top: 190px; font-size: 118px; width: 740px; }
+  #w-h2 { top: 800px; font-size: 118px; width: 740px; }
+  #w-src { position: absolute; left: 880px; top: 922px; font-family: "Manrope", sans-serif; font-weight: 500; font-size: 28px; color: #aeb6bc; width: 960px; }
+</style>
+<div id="watch-root" data-composition-id="watch" data-width="1920" data-height="1080" data-layout-allow-overlap>
+  <div id="w-cam"><img id="w-sat" src="assets/sat/mead-hls.jpg" alt=""></div>
+  <div id="w-dim"></div>
+  <div id="w-t2003" class="tile" style="left:880px;top:150px"><img src="assets/years/2003.jpg" alt=""><span>2003</span></div>
+  <div id="w-t2004" class="tile" style="left:1072px;top:150px"><img src="assets/years/2004.jpg" alt=""><span>2004</span></div>
+  <div id="w-t2005" class="tile" style="left:1264px;top:150px"><img src="assets/years/2005.jpg" alt=""><span>2005</span></div>
+  <div id="w-t2006" class="tile" style="left:1456px;top:150px"><img src="assets/years/2006.jpg" alt=""><span>2006</span></div>
+  <div id="w-t2007" class="tile" style="left:1648px;top:150px"><img src="assets/years/2007.jpg" alt=""><span>2007</span></div>
+  <div id="w-t2008" class="tile" style="left:880px;top:301px"><img src="assets/years/2008.jpg" alt=""><span>2008</span></div>
+  <div id="w-t2009" class="tile" style="left:1072px;top:301px"><img src="assets/years/2009.jpg" alt=""><span>2009</span></div>
+  <div id="w-t2010" class="tile" style="left:1264px;top:301px"><img src="assets/years/2010.jpg" alt=""><span>2010</span></div>
+  <div id="w-t2011" class="tile" style="left:1456px;top:301px"><img src="assets/years/2011.jpg" alt=""><span>2011</span></div>
+  <div id="w-t2012" class="tile" style="left:1648px;top:301px"><img src="assets/years/2012.jpg" alt=""><span>2012</span></div>
+  <div id="w-t2013" class="tile" style="left:880px;top:452px"><img src="assets/years/2013.jpg" alt=""><span>2013</span></div>
+  <div id="w-t2014" class="tile" style="left:1072px;top:452px"><img src="assets/years/2014.jpg" alt=""><span>2014</span></div>
+  <div id="w-t2015" class="tile" style="left:1264px;top:452px"><img src="assets/years/2015.jpg" alt=""><span>2015</span></div>
+  <div id="w-t2016" class="tile" style="left:1456px;top:452px"><img src="assets/years/2016.jpg" alt=""><span>2016</span></div>
+  <div id="w-t2017" class="tile" style="left:1648px;top:452px"><img src="assets/years/2017.jpg" alt=""><span>2017</span></div>
+  <div id="w-t2018" class="tile" style="left:880px;top:603px"><img src="assets/years/2018.jpg" alt=""><span>2018</span></div>
+  <div id="w-t2019" class="tile" style="left:1072px;top:603px"><img src="assets/years/2019.jpg" alt=""><span>2019</span></div>
+  <div id="w-t2020" class="tile" style="left:1264px;top:603px"><img src="assets/years/2020.jpg" alt=""><span>2020</span></div>
+  <div id="w-t2021" class="tile" style="left:1456px;top:603px"><img src="assets/years/2021.jpg" alt=""><span>2021</span></div>
+  <div id="w-t2022" class="tile" style="left:1648px;top:603px"><img src="assets/years/2022.jpg" alt=""><span>2022</span></div>
+  <div id="w-t2023" class="tile" style="left:880px;top:754px"><img src="assets/years/2023.jpg" alt=""><span>2023</span></div>
+  <div id="w-t2024" class="tile" style="left:1072px;top:754px"><img src="assets/years/2024.jpg" alt=""><span>2024</span></div>
+  <h2 id="w-h1" class="h">NASA has watched every place on Earth for decades.</h2>
+  <h2 id="w-h2" class="h">The data is public.</h2>
+  <p id="w-src">Lake Mead, one daytime ground-temperature map per year, 2003–2024 · MODIS</p>
+</div>
+<script>
+  const tl = gsap.timeline({ paused: true });
+  tl.fromTo("#w-cam", {scale: 1.0}, {scale: 1.08, duration: 6.5, ease: "none"}, 0);
+  tl.fromTo("#w-h1", {opacity: 0, filter: "blur(10px)"}, {opacity: 1, filter: "blur(0px)", duration: 0.25, ease: "power4.out"}, 0.15);
+  tl.fromTo("#w-t2003", {opacity: 0}, {opacity: 1, duration: 0.08, ease: "none"}, 0.5);
+  tl.fromTo("#w-t2004", {opacity: 0}, {opacity: 1, duration: 0.08, ease: "none"}, 0.59);
+  tl.fromTo("#w-t2005", {opacity: 0}, {opacity: 1, duration: 0.08, ease: "none"}, 0.68);
+  tl.fromTo("#w-t2006", {opacity: 0}, {opacity: 1, duration: 0.08, ease: "none"}, 0.77);
+  tl.fromTo("#w-t2007", {opacity: 0}, {opacity: 1, duration: 0.08, ease: "none"}, 0.86);
+  tl.fromTo("#w-t2008", {opacity: 0}, {opacity: 1, duration: 0.08, ease: "none"}, 0.95);
+  tl.fromTo("#w-t2009", {opacity: 0}, {opacity: 1, duration: 0.08, ease: "none"}, 1.04);
+  tl.fromTo("#w-t2010", {opacity: 0}, {opacity: 1, duration: 0.08, ease: "none"}, 1.13);
+  tl.fromTo("#w-t2011", {opacity: 0}, {opacity: 1, duration: 0.08, ease: "none"}, 1.22);
+  tl.fromTo("#w-t2012", {opacity: 0}, {opacity: 1, duration: 0.08, ease: "none"}, 1.31);
+  tl.fromTo("#w-t2013", {opacity: 0}, {opacity: 1, duration: 0.08, ease: "none"}, 1.4);
+  tl.fromTo("#w-t2014", {opacity: 0}, {opacity: 1, duration: 0.08, ease: "none"}, 1.49);
+  tl.fromTo("#w-t2015", {opacity: 0}, {opacity: 1, duration: 0.08, ease: "none"}, 1.58);
+  tl.fromTo("#w-t2016", {opacity: 0}, {opacity: 1, duration: 0.08, ease: "none"}, 1.67);
+  tl.fromTo("#w-t2017", {opacity: 0}, {opacity: 1, duration: 0.08, ease: "none"}, 1.76);
+  tl.fromTo("#w-t2018", {opacity: 0}, {opacity: 1, duration: 0.08, ease: "none"}, 1.85);
+  tl.fromTo("#w-t2019", {opacity: 0}, {opacity: 1, duration: 0.08, ease: "none"}, 1.94);
+  tl.fromTo("#w-t2020", {opacity: 0}, {opacity: 1, duration: 0.08, ease: "none"}, 2.03);
+  tl.fromTo("#w-t2021", {opacity: 0}, {opacity: 1, duration: 0.08, ease: "none"}, 2.12);
+  tl.fromTo("#w-t2022", {opacity: 0}, {opacity: 1, duration: 0.08, ease: "none"}, 2.21);
+  tl.fromTo("#w-t2023", {opacity: 0}, {opacity: 1, duration: 0.08, ease: "none"}, 2.3);
+  tl.fromTo("#w-t2024", {opacity: 0}, {opacity: 1, duration: 0.08, ease: "none"}, 2.39);
+  tl.fromTo("#w-src", {opacity: 0}, {opacity: 1, duration: 0.3, ease: "power2.out"}, 2.6);
+  tl.fromTo("#w-h2", {opacity: 0, filter: "blur(10px)"}, {opacity: 1, filter: "blur(0px)", duration: 0.25, ease: "power4.out"}, 3.3);
+  window.__timelines["watch"] = tl;
+</script>
+</template>

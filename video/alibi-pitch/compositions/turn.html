@@ -1,0 +1,33 @@
+<template>
+<style>
+  @font-face { font-family: "Archivo"; src: url(assets/fonts/archivo.woff2) format("woff2"); font-weight: 100 900; font-stretch: 62% 125%; }
+  @font-face { font-family: "Manrope"; src: url(assets/fonts/manrope.woff2) format("woff2"); font-weight: 200 800; }
+  #turn-root { position: absolute; inset: 0; overflow: hidden; background: #0e1012; }
+  #turn-root .h { position: absolute; left: 96px; font-family: "Archivo", sans-serif; font-stretch: 75%; font-weight: 800;
+        text-transform: uppercase; color: #e9ecee; line-height: 0.92; }
+  #turn-root .lab { position: absolute; left: 100px; font-family: "Manrope", sans-serif; font-weight: 700; font-size: 30px;
+         letter-spacing: 0.12em; text-transform: uppercase; color: #aeb6bc; }
+  #turn-root .src { position: absolute; left: 100px; bottom: 48px; font-family: "Manrope", sans-serif; font-weight: 500;
+         font-size: 28px; color: #9aa2a8; }
+  #t-lock { position: absolute; left: 96px; top: 390px; display: flex; align-items: center; gap: 48px; }
+  #t-mark { width: 300px; height: 300px; display: block; }
+  #t-word { font-family: "Archivo", sans-serif; font-stretch: 112%; font-weight: 800; font-size: 260px; line-height: 0.9;
+            letter-spacing: 0.04em; color: #e9ecee; }
+</style>
+<div id="turn-root" data-composition-id="turn" data-width="1920" data-height="1080" data-layout-allow-overlap>
+  <p id="t-pre" class="lab" style="top:290px;font-size:56px">So we built</p>
+  <div id="t-lock"><svg id="t-mark" viewBox="0 0 200 200" aria-hidden="true">
+      <g fill="none" stroke="#e9ecee"><circle cx="100" cy="100" r="74" stroke-width="6"/><ellipse cx="100" cy="100" rx="34" ry="74" stroke-width="3.5"/><line x1="26" y1="100" x2="174" y2="100" stroke-width="3.5"/></g>
+      <polyline points="56,128 84,88 114,114 146,62" fill="none" stroke="#c8102e" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+      <g fill="#e9ecee"><circle cx="56" cy="128" r="11"/><circle cx="84" cy="88" r="11"/><circle cx="114" cy="114" r="11"/><circle cx="146" cy="62" r="11"/><circle cx="134" cy="148" r="11"/></g>
+      <g fill="#0e1012"><circle cx="56" cy="128" r="4"/><circle cx="84" cy="88" r="4"/><circle cx="114" cy="114" r="4"/><circle cx="146" cy="62" r="4"/><circle cx="134" cy="148" r="4"/></g>
+    </svg><div id="t-word">ALIBI</div></div>
+</div>
+<script>
+  const tl = gsap.timeline({ paused: true });
+  tl.fromTo("#t-pre", {opacity: 0, filter: "blur(10px)"}, {opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out"}, 0.1);
+  tl.fromTo("#t-mark", {opacity: 0, scale: 0.6, rotation: -20}, {opacity: 1, scale: 1, rotation: 0, duration: 0.5, ease: "back.out(1.6)"}, 0.35);
+  tl.fromTo("#t-word", {clipPath: "inset(0 100% 0 0)"}, {clipPath: "inset(0 0% 0 0)", duration: 0.5, ease: "power3.out"}, 0.6);
+  window.__timelines["turn"] = tl;
+</script>
+</template>

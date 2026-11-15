@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1920, height=1080" />
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+<style>
+  @font-face { font-family: "Archivo"; src: url(assets/fonts/archivo.woff2) format("woff2"); font-weight: 100 900; font-stretch: 62% 125%; }
+  @font-face { font-family: "Manrope"; src: url(assets/fonts/manrope.woff2) format("woff2"); font-weight: 200 800; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #0e1012; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="71.2" data-width="1920" data-height="1080">
+  <!-- 1. Cold open: real places changing over the years (look of video/hero-alibi) -->
+  <div id="mead" data-composition-id="mead" data-composition-src="compositions/mead.html" data-start="0.0" data-duration="5.0" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+  <div id="aletsch" data-composition-id="aletsch" data-composition-src="compositions/aletsch.html" data-start="5.0" data-duration="4.2" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+  <div id="donana" data-composition-id="donana" data-composition-src="compositions/donana.html" data-start="9.2" data-duration="3.8" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+  <div id="saw" data-composition-id="saw" data-composition-src="compositions/saw.html" data-start="13.0" data-duration="3.0" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+  <!-- 2. NASA has watched for decades; the data is public -->
+  <div id="watch" data-composition-id="watch" data-composition-src="compositions/watch.html" data-start="16.0" data-duration="6.5" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+  <!-- 3. The jargon wall; nobody told the story -->
+  <div id="jargon" data-composition-id="jargon" data-composition-src="compositions/jargon.html" data-start="22.5" data-duration="9.0" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+  <!-- 4. The turn: Alibi -->
+  <div id="turn" data-composition-id="turn" data-composition-src="compositions/turn.html" data-start="31.5" data-duration="2.6" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+  <div id="ask" data-composition-id="ask" data-composition-src="compositions/ask.html" data-start="34.1" data-duration="8.0" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+  <div id="stack" data-composition-id="stack" data-composition-src="compositions/stack.html" data-start="42.1" data-duration="5.0" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+  <div id="answer" data-composition-id="answer" data-composition-src="compositions/answer.html" data-start="47.1" data-duration="7.0" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+  <!-- 5. The promise -->
+  <div id="promise" data-composition-id="promise" data-composition-src="compositions/promise.html" data-start="54.1" data-duration="7.5" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+  <!-- 6. Close -->
+  <div id="close" data-composition-id="close" data-composition-src="compositions/close.html" data-start="61.6" data-duration="3.6" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+  <div id="sting" style="z-index:50" data-composition-id="sting" data-composition-src="compositions/sting.html" data-start="64.6" data-duration="6.6" data-track-index="4" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+  <!-- Music: the same track as video/hero-alibi (lyria-hero.mp3), first 71.2 s with a 3 s fade-out -->
+  <audio id="music" src="assets/music/pitch-71.mp3" data-start="0" data-duration="71.2" data-track-index="2" data-volume="0.9"></audio>
+</div>
+<script>
+  const tl = gsap.timeline({ paused: true });
+  window.__timelines["main"] = tl;
+  tl.seek(0);
+</script>
+</body>
+</html>

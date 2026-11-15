@@ -48,7 +48,7 @@ export function HeroFilm() {
         preload="metadata"
         onPlay={() => setPlaying(true)}
         onPause={() => setPlaying(false)}
-        aria-label="A 36-second film: what satellites saw at our solved cases"
+        aria-label="A 71-second film: satellites have watched Earth for decades, and Alibi turns their records into plain answers"
       />
       <div className={styles.shade} aria-hidden="true" />
       <p className={styles.brand}>
