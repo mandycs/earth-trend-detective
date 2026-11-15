@@ -1,0 +1,52 @@
+# Dokploy deploy of the two services (api + web), one Traefik domain each.
+# Domains, TLS and routing are managed by Dokploy (no ports, no traefik labels here).
+# Env comes from the Dokploy compose service (written to .env at deploy time), never from git:
+#   OPENROUTER_API_KEY, NASA_TOKEN, APPEEARS_TOKEN   (api runtime secrets)
+#   CORS_ORIGINS, CORS_ORIGIN_REGEX                  (api: exact web origin only)
+#   NEXT_PUBLIC_API_URL                              (web build arg, baked into the JS bundle)
+# Local runs keep using docker-compose.yml.
+services:
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DETECTIVE_DB: /app/backend/data/detective/detective.sqlite
+      LANGSMITH_TRACING: "false"
+      LANGCHAIN_TRACING_V2: "false"
+    expose:
+      - "8000"
+    volumes:
+      - alibi-cache:/app/backend/data/cache
+      - alibi-detective:/app/backend/data/detective
+    networks:
+      - dokploy-network
+
+  web:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+    restart: unless-stopped
+    expose:
+      - "3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - dokploy-network
+
+volumes:
+  alibi-cache:
+    driver: local
+  alibi-detective:
+    driver: local
+
+networks:
+  dokploy-network:
+    external: true
+    name: dokploy-network
