@@ -7,13 +7,12 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { fetchCaseLayers } from '../api'
 import type { Bbox } from '../events'
-import { stackForCase } from './stackModel'
+import { caseStackNote, stackForCase } from './stackModel'
 import type { StackModel } from './stackModel'
 
 const EvidenceStack = dynamic(() => import('./EvidenceStack'), { ssr: false })
 
 const LEDE = "Each slab is one of this case's data layers, over the same box. The year drawn is on each card."
-const NO_LAYERS = 'This case has no data layers to stack.'
 
 function useReducedMotion(): boolean {
   const [reduced, setReduced] = useState(false)
@@ -31,7 +30,7 @@ export function CaseLayersButton({ siteId, bbox, className }: { siteId: string; 
   const reducedMotion = useReducedMotion()
   const [model, setModel] = useState<StackModel | null>(null)
   const [busy, setBusy] = useState(false)
-  const [note, setNote] = useState<string | null>(null)
+  const [note, setNote] = useState<{ text: string; retry: boolean } | null>(null)
   const [exploded, setExploded] = useState(false)
   const explodedRef = useRef(false)
   const buttonRef = useRef<HTMLButtonElement>(null)
@@ -93,13 +92,16 @@ export function CaseLayersButton({ siteId, bbox, className }: { siteId: string; 
       .then((rows) => {
         if (c.signal.aborted) return
         const m = stackForCase({ siteId, bbox, rows })
-        if (m.slabs.length === 0) setNote(NO_LAYERS)
+        const text = caseStackNote({ slabs: m.slabs.length })
+        if (text) setNote({ text, retry: false })
         else {
           setExploded(false)
           setModel(m)
         }
       })
-      .catch(() => !c.signal.aborted && setNote(NO_LAYERS))
+      .catch(() => {
+        if (!c.signal.aborted) setNote({ text: caseStackNote({ failed: true }) ?? '', retry: true })
+      })
       .finally(() => !c.signal.aborted && setBusy(false))
   }
 
@@ -116,9 +118,19 @@ export function CaseLayersButton({ siteId, bbox, className }: { siteId: string; 
         <span>{busy ? 'Layer stack…' : 'Layer stack'}</span>
       </button>
       {note && (
-        <span className="sr-only" role="status">
-          {note}
-        </span>
+        <div className="st-stack-note" role="status">
+          <p>{note.text}</p>
+          <div className="st-stack-note-actions">
+            {note.retry && (
+              <button type="button" className="st-stack-note-btn" onClick={open}>
+                Try again
+              </button>
+            )}
+            <button type="button" className="st-stack-note-btn" onClick={() => setNote(null)}>
+              Dismiss
+            </button>
+          </div>
+        </div>
       )}
       {model &&
         createPortal(
@@ -131,6 +143,7 @@ export function CaseLayersButton({ siteId, bbox, className }: { siteId: string; 
             reducedMotion={reducedMotion}
             lede={LEDE}
             closeLabel="Close"
+            pickHint="Close the stack."
           />,
           document.body,
         )}

@@ -249,3 +249,11 @@ test("a solved case stacks its own layers: the trend map first, yearly layers at
   assert.deepEqual(m.slabs.map((s) => s.height), m.slabs.map((_, i) => m.slabs.length - i));
   assert.equal(stackForCase(cl, { max: 1 }).slabs.length, 1);
 });
+
+test("the story button says why no stack opened: a failed load is not an empty case", async () => {
+  const { caseStackNote, CASE_STACK_EMPTY, CASE_STACK_FAILED } = await import("../stack/stackModel.ts");
+  assert.equal(caseStackNote({ failed: true }), CASE_STACK_FAILED);
+  assert.equal(caseStackNote({ slabs: 0 }), CASE_STACK_EMPTY);
+  assert.equal(caseStackNote({ slabs: 3 }), null);
+  assert.notEqual(CASE_STACK_FAILED, CASE_STACK_EMPTY);
+});

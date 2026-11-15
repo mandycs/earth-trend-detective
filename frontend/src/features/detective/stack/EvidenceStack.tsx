@@ -31,6 +31,8 @@ export interface EvidenceStackProps {
   lede?: string
   /** The close button's words. Defaults to "Back to the map". */
   closeLabel?: string
+  /** What picking a card does, read out at the end of its accessible name. Defaults to "Show it on the map." */
+  pickHint?: string
 }
 
 /** Shown on screen with the relief (DESIGN: the vertical exaggeration is shown). */
@@ -416,10 +418,10 @@ function whenText(s: Slab): string | null {
 }
 
 function SlabCard({
-  slab, picture, active, onPick, onHover, cardRef,
+  slab, picture, active, onPick, onHover, cardRef, pickHint,
 }: {
   slab: Slab; picture: PictureStatus | undefined; active: boolean; onPick: (key: string) => void; onHover: (key: string | null) => void
-  cardRef: (el: HTMLButtonElement | null) => void
+  cardRef: (el: HTMLButtonElement | null) => void; pickHint: string
 }) {
   const when = whenText(slab)
   const st = slab.stamp ? (STATUS_WORDS[slab.stamp.status] ?? STATUS_WORDS.open) : null
@@ -435,7 +437,7 @@ function SlabCard({
       onMouseLeave={() => onHover(null)}
       onFocus={() => onHover(slab.key)}
       onBlur={() => onHover(null)}
-      aria-label={`${slab.title}${when ? `, ${when}` : ''}. Show it on the map.`}
+      aria-label={`${slab.title}${when ? `, ${when}` : ''}. ${pickHint}`}
     >
       <span className={styles.cardTitle}>{slab.title}</span>
       <span className={styles.cardLine}>
@@ -509,7 +511,7 @@ function layoutCards(want: number[], heights: number[], top: number, bottom: num
   return out
 }
 
-export default function EvidenceStack({ model, exploded, onPick, onClose, onCollapsed, reducedMotion, lede, closeLabel }: EvidenceStackProps) {
+export default function EvidenceStack({ model, exploded, onPick, onClose, onCollapsed, reducedMotion, lede, closeLabel, pickHint = 'Show it on the map.' }: EvidenceStackProps) {
   const box = model.bbox
   const depth = box ? boxAspect(box) : 1
   const [peak, setPeak] = useState(0)
@@ -722,6 +724,7 @@ export default function EvidenceStack({ model, exploded, onPick, onClose, onColl
               active={active === s.key}
               onPick={onPick}
               onHover={setActive}
+              pickHint={pickHint}
               cardRef={(el) => {
                 if (el) cards.current.set(s.key, el)
                 else cards.current.delete(s.key)

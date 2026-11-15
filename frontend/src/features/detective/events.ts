@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { Verdict, Direction } from "../../story/types";
 import type { SseMessage } from "./sse.ts";
+import { plainLegendLabels } from "./legendWords.ts";
 
 export type Bbox = [number, number, number, number]; // west, south, east, north
 
@@ -75,7 +76,7 @@ const overlayLegend = z
     const words = (xs: unknown[]): string[] => xs.filter((x): x is string => typeof x === "string" && x !== "");
     return {
       unit: o.unit,
-      labels: words(Array.isArray(o.labels) ? o.labels : Object.values(o.labels)),
+      labels: plainLegendLabels(words(Array.isArray(o.labels) ? o.labels : Object.values(o.labels))),
       stops: words(o.stops),
       range: o.range,
     };

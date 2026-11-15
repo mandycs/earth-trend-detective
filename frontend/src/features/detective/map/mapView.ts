@@ -4,6 +4,7 @@ import type { Bbox, MapOp, PlaceEvent } from "../events.ts";
 import type { Investigation } from "../scenes.ts";
 import type { CaseLayerRow, CatalogLayer } from "./types.ts";
 import { catalogLayer, dateFor, maxZoomOf, tileUrl } from "./catalog.ts";
+import { plainLegendLabels } from "../legendWords.ts";
 
 export type LayerRender = { type: "tiles"; url: string; maxzoom: number } | { type: "image"; url: string; bbox: Bbox };
 export type LayerRole = "context" | "evidence";
@@ -111,8 +112,8 @@ function rowLegend(row: CaseLayerRow): LayerLegend | null {
   const r = Array.isArray(lg.range) && lg.range.length === 2 ? lg.range : null;
   const n = (x: unknown): number | null => (typeof x === "number" ? x : null);
   const out: LayerLegend = { unit: lg.unit, min: r ? n(r[0]) : null, max: r ? n(r[1]) : null };
-  const labels = Array.isArray(lg.labels) ? strings(lg.labels)
-    : lg.labels && typeof lg.labels === "object" ? strings(Object.values(lg.labels)) : [];
+  const labels = plainLegendLabels(Array.isArray(lg.labels) ? strings(lg.labels)
+    : lg.labels && typeof lg.labels === "object" ? strings(Object.values(lg.labels)) : []);
   const stops = Array.isArray(lg.stops) ? strings(lg.stops) : [];
   return {
     ...out,

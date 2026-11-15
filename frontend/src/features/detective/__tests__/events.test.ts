@@ -106,7 +106,9 @@ test("an overlay op keeps the tool's legend words in order, its bounds and its p
   if (e?.kind !== "map" || e.data.op !== "overlay") return;
   assert.deepEqual(e.data.bounds, [-116, 35, -113, 37.5]);
   assert.deepEqual(e.data.period, [2001, 2024]);
-  assert.deepEqual(e.data.legend?.labels, Object.values(OVERLAY.legend.labels));
+  // Same order; the statistics wording of "faded" is said in plain words (UX checklist).
+  assert.deepEqual(e.data.legend?.labels, ["Wetter", "Drier", "Faded = could be chance at this pixel", "Transparent = not enough data"]);
+  assert.ok(!JSON.stringify(e.data.legend).includes("Mann-Kendall"));
   assert.deepEqual(e.data.legend?.range, [-12, 12]);
   assert.equal(e.data.resolution, "~5 km");
 });

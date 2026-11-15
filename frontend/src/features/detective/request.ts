@@ -68,7 +68,8 @@ export function requestBody(
 
 // Words that mean the text is a server internal, not a sentence for the person: stack traces, exceptions, paths,
 // URLs, OS errors and raw HTTP codes. A multi-line or long text is treated the same way.
-const UNSAFE = /traceback|exception|error \d{3}|http \d{3}|errno|:\/\/|\/|\n|\r/i;
+// A path is "/word/" (two slashes around a name), so "km/h" or "lat/lon" in a sentence survive.
+const UNSAFE = /traceback|exception|error \d{3}|http \d{3}|errno|:\/\/|\/[a-z0-9_.-]+\/|\n|\r/i;
 const MAX_MESSAGE = 200;
 
 const safe = (text: string): boolean => text.trim().length > 0 && text.length <= MAX_MESSAGE && !UNSAFE.test(text);

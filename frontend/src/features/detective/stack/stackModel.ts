@@ -298,3 +298,12 @@ export function stackForCase(cl: CaseLayers, opts: { max?: number; now?: string 
   const picked = drafts.slice(0, max);
   return { bbox, base: baseFor(bbox, ctx), slabs: picked.map((d, i): Slab => ({ ...d, height: picked.length - i })) };
 }
+
+export const CASE_STACK_EMPTY = "This case has no data layers to stack.";
+export const CASE_STACK_FAILED = "The layers could not be loaded. Try again.";
+
+/** What the story's "Layer stack" button says after a load: nothing when the stack opens, else why not. */
+export function caseStackNote(r: { failed: true } | { slabs: number }): string | null {
+  if ("failed" in r) return CASE_STACK_FAILED;
+  return r.slabs > 0 ? null : CASE_STACK_EMPTY;
+}

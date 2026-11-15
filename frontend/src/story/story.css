@@ -1990,3 +1990,40 @@
     max-width: min(520px, calc(100% - 340px));
   }
 }
+
+/* Why the layer stack did not open (no layers, or a failed load), under the header. */
+.st-stack-note {
+  position: fixed;
+  top: 64px;
+  right: 16px;
+  z-index: 30;
+  max-width: min(360px, calc(100vw - 32px));
+  padding: 12px 16px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-size: 1rem;
+}
+
+.st-stack-note p {
+  margin: 0 0 8px;
+}
+
+.st-stack-note-actions {
+  display: flex;
+  gap: 16px;
+}
+
+.st-stack-note-btn {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}

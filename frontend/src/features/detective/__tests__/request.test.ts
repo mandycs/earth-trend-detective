@@ -100,3 +100,8 @@ test("internals, structural Pydantic messages and long text never reach the scre
 test("a coordinate that rounds to zero has no sign", () => {
   assert.equal(targetLabel({ kind: "point", lat: -0.001, lon: 2 }), "Point 0.00, 2.00");
 });
+
+test("a slash in a sentence is not a path", () => {
+  assert.equal(messageForResponse(422, { detail: "Wind above 120 km/h is not modelled here." }), "Wind above 120 km/h is not modelled here.");
+  assert.equal(messageForResponse(404, { detail: "missing /srv/app/data" }), "This place or question could not be investigated. Pick another point and try again.");
+});

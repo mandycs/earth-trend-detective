@@ -210,7 +210,9 @@ test("case legends keep their labels and stops; trend maps carry their period", 
   const lg = v.evidence?.legend;
   assert.ok(lg);
   assert.deepEqual([lg.min, lg.max], [-1.634, 1.634]);
-  assert.ok(lg.labels?.includes("Faded = not statistically significant (Mann-Kendall p ≥ 0.05)"));
+  // layers.json says "Mann-Kendall p ≥ 0.05"; the screen says it in plain words.
+  assert.ok(lg.labels?.includes("Faded = could be chance at this pixel"));
+  assert.ok(!lg.labels?.some((l) => /mann|p ≥|significan/i.test(l)));
   assert.ok(lg.labels?.includes("Transparent = not enough data"));
   assert.equal(lg.stops?.length, 9);
   assert.equal(lg.stops?.[0], "#053061");
