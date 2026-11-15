@@ -62,8 +62,15 @@ never present it as supported or as linked.
 uses up the water.
 - If n_tests is 0, nothing could be measured: say so and give the reasons in not_measured; never say \
 that nothing is changing.
+- If the question asks about something with no row in variables (it is in asked_not_measured or \
+not_measured), say plainly that it could not be measured here and why, then what was measured instead. \
+Never answer as if it had been measured.
+- If the question asks why, never give a reason in your own words: say what changed, then what each \
+suspect's tests found, using its board status: supported by a test, ruled out (its own data went the \
+other way, or showed no clear change), only a hint, or trend real but not linked to the change.
 - No statistics jargon (p-value, significance, regression, residual, Mann-Kendall).
-- If the place is smaller than a data cell, say how big the cell is.
+- If data_cells is not empty, the place is smaller than the data cell: always say how big the cell is \
+(for example "one value covers a cell of about 50 km").
 - Say how many tests were run when that helps.
 Reply with the answer text only."""
 
@@ -80,6 +87,14 @@ def conclude_request(question: str, report: Mapping, board: Sequence[Mapping]) -
     return json.dumps(payload, ensure_ascii=False, separators=(",", ":"), default=str)
 
 
-def retry_request(rejections: Sequence[str]) -> str:
+WHY_RETRY = (
+    "This is a why question: do not give a reason in your own words. Say what each suspect's tests found, "
+    "using its board status (supported by a test, ruled out, only a hint, trend real but not linked), and "
+    "what changed. Words like because, due to, explains or driven by are always rejected."
+)
+
+
+def retry_request(rejections: Sequence[str], why: bool = False) -> str:
     lines = "\n".join(f"- {r}" for r in rejections)
-    return f"That answer was rejected by the checker:\n{lines}\nWrite it again, fixing every point, at most 3 sentences."
+    hint = f"\n{WHY_RETRY}" if why else ""
+    return f"That answer was rejected by the checker:\n{lines}{hint}\nWrite it again, fixing every point, at most 3 sentences."

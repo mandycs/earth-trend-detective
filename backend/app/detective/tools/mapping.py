@@ -22,13 +22,14 @@ from typing import Any
 import yaml
 
 from app import layers
+from app.detective.cells import CELL_KM
 from app.detective.session import Session
 
 MAP_LAYERS_PATH = Path(__file__).resolve().parents[3] / "catalog" / "map_layers.yaml"
 ZONES = frozenset({"any", "farmland", "water", "snow", "city", "fire", "sea"})
 DEFAULT_OPACITY = 0.8
 MAX_PITCH = 85.0  # MapLibre's limit
-FOOTPRINT_KM = {"grace": 300.0, "power": 50.0, "gldas": 25.0}
+FOOTPRINT_KM = CELL_KM
 FOOTPRINT_LABEL = {
     "grace": "GRACE water storage approximate data cell",
     "power": "NASA POWER weather approximate data cell",

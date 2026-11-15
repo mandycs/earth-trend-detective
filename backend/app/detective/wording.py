@@ -7,6 +7,9 @@ Everything here is detective-only; `/explain` keeps `app/explain/validator.py` a
 - `cause_problems`: cause claims, never excused by a hedge or a "not" in the clause.
 - `screen_problems`: figures not in the report, "proof", cause claims, "this part is human".
 - `screen_note` / `screen_thinking`: that check applied to a board note / a thinking line.
+- `answer_rejections` / `answer_problems`: the final answer's own rules: no cause claim, the residual
+  wording, the data cell when the place is smaller than it, and "could not be measured" when the
+  question's variable is missing.
 """
 
 from __future__ import annotations
@@ -147,19 +150,46 @@ def screen_thinking(text: str, tools: Iterable[str], session: Session) -> str:
     return text
 
 
-def answer_problems(text: str, report: Mapping, suspects: Iterable[Mapping] = ()) -> list[str]:
-    """The detective's own rules for the final answer, on top of the shared validator."""
-    problems = cause_problems(text, suspects)
+NOT_MEASURED_SAID = re.compile(
+    r"\b(?:could\s*(?:not|n'?t)|can\s*(?:not|'?t)|was\s*(?:not|n'?t)|were\s*(?:not|n'?t))\s+(?:be\s+)?"
+    r"(?:measured?|tested|checked|fetched)\b"
+    r"|\bnot\s+(?:be\s+)?measured\b|\bnot\s+available\s+here\b|\bno\s+data\b",
+    re.IGNORECASE,
+)
+
+
+def _cell_said(text: str, cells: Iterable[Mapping]) -> bool:
+    sizes = [float(c["size_km"]) for c in cells]
+    return any(abs(n.value - km) < 0.5 for n in extract_numbers(text) for km in sizes)
+
+
+def answer_rejections(text: str, report: Mapping, suspects: Iterable[Mapping] = ()) -> list[tuple[str, str]]:
+    """(kind, detail) of every detective rule the final answer breaks, on top of the shared validator."""
+    problems = [("cause", p) for p in cause_problems(text, suspects)]
     hit = HUMAN_CLAIM.search(text)
     if hit:
-        problems.append(f"'{hit.group(0)}': never say a part is human; say '{RESIDUAL_WORDING}'")
+        problems.append(("human", f"'{hit.group(0)}': never say a part is human; say '{RESIDUAL_WORDING}'"))
     if LEAD_NOT_PROOF.search(text):
-        problems.append(f"say '{RESIDUAL_WORDING} — a clue, not proof', not 'a lead, not proof'")
+        problems.append(("lead", f"say '{RESIDUAL_WORDING} — a clue, not proof', not 'a lead, not proof'"))
     has_share = any(row.get("residual_pct_non_climate") is not None for row in report.get("variables") or ())
     if has_share and RESIDUAL_WORDING not in text.lower():
-        problems.append(f"a share not explained by climate must be said as '{RESIDUAL_WORDING} — a clue, not proof'")
+        problems.append(
+            ("residual_wording", f"a share not explained by climate must be said as '{RESIDUAL_WORDING} — a clue, not proof'")
+        )
     if not report.get("n_tests"):
         hit = NO_CHANGE_CLAIM.search(text)
         if hit:
-            problems.append(f"'{hit.group(0)}': nothing was measured, so say that nothing could be measured here, not that nothing changes")
+            problems.append(("nothing_measured", f"'{hit.group(0)}': nothing was measured, so say that nothing could be measured here, not that nothing changes"))
+    cells = list(report.get("data_cells") or ())
+    if cells and not _cell_said(text, cells):
+        sizes = " or ".join(f"about {c['size_km']:.0f} km ({c['label'].lower()})" for c in cells)
+        problems.append(("cell", f"the place is smaller than the data cell: say how big the cell is, {sizes}"))
+    asked = list(report.get("asked_not_measured") or ())
+    if asked and not NOT_MEASURED_SAID.search(text):
+        problems.append(("not_measured", f"the question asks about {', '.join(a.lower() for a in asked)}: say it could not be measured here and why (see not_measured)"))
     return problems
+
+
+def answer_problems(text: str, report: Mapping, suspects: Iterable[Mapping] = ()) -> list[str]:
+    """The detective's own rules for the final answer, on top of the shared validator."""
+    return [detail for _, detail in answer_rejections(text, report, suspects)]

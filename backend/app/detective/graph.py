@@ -176,12 +176,13 @@ def build_graph(
         judged = case_board.evaluate(session.board, session.ledger, session.catalog)
         board_rows = case_board.as_json(judged)
         report = ledger_report(session, _question(state))
-        text, checked, figures, source = narrate(narrator, _question(state), report, board_rows)
+        text, checked, figures, source, rejected = narrate(narrator, _question(state), report, board_rows)
         answer = {
             "text": text,
             "checked": checked,
             "figures": figures,
             "source": source,
+            "rejected": rejected,
             "n_tests": n_finite_tests(session.ledger),
         }
         new_case = {**case, "board": json_safe({k: asdict(s) for k, s in judged.items()})}

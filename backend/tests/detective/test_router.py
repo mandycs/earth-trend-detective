@@ -20,7 +20,7 @@ from app.investigate.landcover import LandCover
 from app.main import app
 
 POINT = {"lat": 37.0, "lon": -4.5}
-GOOD_ANSWER = "From 2003 to 2024, air temperature here went up."
+GOOD_ANSWER = "From 2003 to 2024, air temperature here went up; one value covers a cell of about 50 km."
 
 
 class FakeModel(GenericFakeChatModel):
@@ -54,7 +54,7 @@ def _call(name, args, cid, thinking="Checking."):
     return AIMessage(content=thinking, tool_calls=[{"name": name, "args": args, "id": cid}])
 
 
-def _test_run(var, n, answer="Air temperature went up from 2003 to 2024."):
+def _test_run(var, n, answer="Air temperature went up from 2003 to 2024; one value covers a cell of about 50 km."):
     """Agent + narrator messages for: get_series var, trend_test var, stop, answer."""
     return [
         _call("get_series", {"var_id": var}, f"{var}-s{n}", f"Now the {var} series."),
@@ -173,7 +173,7 @@ def test_event_order(client_with, offline):
     verdicts = {"t1": {"verdict": "real", "direction": "up"}}
     assert data[7] == {"suspects": [], "n_tests": 1, "verdicts": verdicts}
     assert data[8] == {"suspects": [], "n_tests": 1, "verdicts": verdicts}
-    assert data[9] == {"text": GOOD_ANSWER, "checked": True, "figures": ["2003", "2024"], "source": "llm"}
+    assert data[9] == {"text": GOOD_ANSWER, "checked": True, "figures": ["2003", "2024", "50"], "source": "llm", "rejected": []}
     done = data[10]
     assert done["n_tests"] == 1 and done["n_tests_branch"] == 1 and done["n_tool_calls"] == 2 and done["thread_id"]
     assert data[0]["thread_id"] == done["thread_id"]
@@ -303,13 +303,13 @@ def test_fork_keeps_all_tests_of_the_thread_in_the_correction(client_with, offli
         _call("get_series", {"var_id": "precip"}, "s2"),
         _call("trend_test", {"series_id": "precip:2003-2024"}, "t2"),
         AIMessage(content="Done."),
-        AIMessage(content="Air temperature went up from 2003 to 2024."),
+        AIMessage(content="Air temperature went up from 2003 to 2024; one value covers a cell of about 50 km."),
         # the fork
         _call("get_series", {"var_id": "solar"}, "s3"),
         _call("trend_test", {"series_id": "solar:2003-2024"}, "t3"),
         _call("trend_test", {"series_id": "t2m:2003-2024"}, "t4"),  # cached: not a new test
         AIMessage(content="Done."),
-        AIMessage(content="Air temperature went up from 2003 to 2024."),
+        AIMessage(content="Air temperature went up from 2003 to 2024; one value covers a cell of about 50 km."),
     ]
     client = client_with(messages)
     first = _done(_post(client, **POINT))
@@ -350,10 +350,11 @@ def test_get_case_reopens_an_investigation(client_with, offline):
     case = r.json()
     assert case["thread_id"] == tid
     assert case["answer"] == {
-        "text": "Air temperature went up from 2003 to 2024.",
+        "text": "Air temperature went up from 2003 to 2024; one value covers a cell of about 50 km.",
         "checked": True,
-        "figures": ["2003", "2024"],
+        "figures": ["2003", "2024", "50"],
         "source": "llm",
+        "rejected": [],
     }
     assert case["board"] == {"suspects": [], "n_tests": 1, "verdicts": {"t1": {"verdict": "real", "direction": "up"}}}
     assert [op["op"] for op in case["map"]] == ["fly_to"]

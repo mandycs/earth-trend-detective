@@ -59,6 +59,18 @@ are listed in `final-fix-report.md` next to it. In short:
     against the catalog driver labels) is a climate driver.
 - `done {thread_id, n_tests, n_tests_branch, n_tool_calls}`. `n_tests` counts the thread's whole family;
   `n_tests_branch` counts the tests on this branch.
+- `answer {text, checked, figures, source, rejected}`. `rejected` is `[{try, kind, reason}]`: why each
+  narrator try was turned down (`kind` from the validator — `number`, `direction`, `certainty`, `causal`,
+  `proof`, `jargon`, `length` — or the detective's rules — `cause`, `human`, `lead`, `residual_wording`,
+  `nothing_measured`, `cell`, `not_measured`). Every quoted piece of the model's text is replaced by `…`,
+  so no unchecked figure travels in it; it is for diagnosis, not for display. A "why" question gets a
+  third try. The template (`source: "template"`) states what changed, the share not explained by the
+  climate (else whether the change is real), and one sentence with what could not be measured, the data
+  cell and the board statuses (suspect names with a figure or a cause word are left out).
+- The answer must state the data cell when the place is smaller than it (`report.data_cells`, from the
+  sources of the tested variables), and must say "could not be measured" when the question names a
+  variable that is in `report.not_measured` (`report.asked_not_measured`). `not_measured` also lists the
+  variables `list_variables` marked unavailable here.
 - `thinking {text}` and board notes are checked. A line with a figure no tool returned, a cause claim,
   "proof" or "this part is human" is shown as `Next: <tool>.` instead, and such a note is shown empty.
 - `map {op: "show_before_after", layer_id, year_a, year_b}` may also carry `before_url`, `after_url` and
