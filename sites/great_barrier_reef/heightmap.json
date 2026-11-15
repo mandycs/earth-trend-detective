@@ -1,0 +1,17 @@
+{
+  "min_m": -100.0,
+  "max_m": 800.0,
+  "raw_range_m": [
+    -1571.0,
+    1231.0
+  ],
+  "clipped_to": [
+    -100.0,
+    800.0
+  ],
+  "width": 1024,
+  "height": 911,
+  "source": "GEBCO_2020 (GEBCO Compilation Group)",
+  "source_id": "GEBCO_2020",
+  "note": "Heights clipped to −100…800 m so the shallow reef shelf stays visible; deeper sea and higher land are flattened."
+}
