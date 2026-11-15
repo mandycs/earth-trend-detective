@@ -438,6 +438,12 @@
   color: var(--ink-2);
   font-size: 1rem;
   line-height: 1.3;
+  /* a long footprint must not grow the timeline under the layer panel; full text in the title */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
 }
 
 /* ---------------------------------------------------------- case panel */
@@ -1840,7 +1846,7 @@
 }
 
 .sp-tabs {
-  background: transparent;
+  background: var(--ground); /* sticky: opaque so scrolled text never shows through */
   gap: 12px;
 }
 

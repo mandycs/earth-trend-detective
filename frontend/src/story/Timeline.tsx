@@ -45,6 +45,10 @@ function labelTops(fracs: number[]): number[] {
  */
 export function Timeline({ first, last, year, playing, variable, mapFollows, mapKm, onScrub, onToggle }: TimelineProps) {
   const fp = variable ? footprintOf(variable.id, variable.footprint) : null
+  const label =
+    (variable ? variable.label : 'No record selected') +
+    (fp ? ` · ${fp.perPixel ? 'average of the map' : `over ${fp.words}`}` : '') +
+    (mapFollows ? ' · the map follows the year' : '')
   const series = variable?.series ?? []
   const thresholds = variable?.thresholds ?? []
   // Thresholds join the y-domain so their lines are always on the chart.
@@ -140,10 +144,8 @@ export function Timeline({ first, last, year, playing, variable, mapFollows, map
 
       <div className="tl-readout">
         <span className="tl-value narrow">{readout}</span>
-        <span className="tl-label">
-          {variable ? variable.label : 'No record selected'}
-          {fp ? ` · ${fp.perPixel ? 'average of the map' : `over ${fp.words}`}` : ''}
-          {mapFollows ? ' · the map follows the year' : ''}
+        <span className="tl-label" title={label}>
+          {label}
         </span>
       </div>
     </div>
