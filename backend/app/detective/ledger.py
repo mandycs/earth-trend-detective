@@ -19,7 +19,8 @@ from app.stats.fdr import benjamini_hochberg
 from app.stats.trend import TrendResult
 from app.stats.verdict import Direction, Verdict, classify
 
-_NON_FIGURE_KEYS = frozenset({"chart", "series", "url", "bbox", "evidence_id"})
+# p and q values are never figures the answer may quote.
+_NON_FIGURE_KEYS = frozenset({"chart", "series", "url", "bbox", "evidence_id", "p_value", "p", "q_session", "q"})
 
 
 @dataclass(frozen=True)

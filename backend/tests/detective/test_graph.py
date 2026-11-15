@@ -40,6 +40,12 @@ def _synthetic(start=2003, end=2024, slope_per_year=0.05):
     return pd.Series(10 + seasonal + slope_per_year * t + rng.normal(0, 0.2, idx.size), index=idx)
 
 
+def _noisy(start, end, slope, seed):
+    idx = pd.date_range(f"{start}-01-01", f"{end}-12-01", freq="MS")
+    rng = np.random.default_rng(seed)
+    return pd.Series(10 + slope * np.arange(idx.size) / 12 + rng.normal(0, 1, idx.size), index=idx)
+
+
 @pytest.fixture
 def offline(monkeypatch):
     calls = []
@@ -286,3 +292,44 @@ def test_conclude_rejudges_the_board_into_the_case(offline):
     suspect = state["case"]["board"]["warming"]
     assert suspect["status"] == "supported" and suspect["evidence"] == ["e2"] and suspect["dropped"] == ["e9"]
     assert json.loads(_tool_messages(state)[-1].content)["status"] == "supported"
+
+
+def test_report_figures_exclude_p_and_q_and_the_answer_cannot_quote_them(offline, monkeypatch):
+    from app.detective.nodes import check
+
+    def weak(site, variables, catalog, start, end):  # a faint trend, so p and q are not 0
+        return {v.id: _noisy(start, end, 0.01, 3).rename(v.id) for v in variables}
+
+    monkeypatch.setattr(gather, "FETCHERS", {**gather.FETCHERS, "power": weak})
+    s = Session(ledger=Ledger(), place=PLACE, catalog=load_catalog())
+    got = data.get_series(s, var_id="t2m")
+    trend = data.trend_test(s, series_id=got["series_id"])
+    report = ledger_report(s, "Is it warmer?")
+    assert 0 < trend["p_value"] < 1 and 0 < trend["q_session"] < 1
+    assert trend["p_value"] not in report["figures"] and trend["q_session"] not in report["figures"]
+    assert all("q_session" not in row for row in report["variables"])
+    ok, _, rejected = check(f"The odds it is chance are {trend['p_value']}.", report)
+    assert not ok and rejected
+
+
+
+def test_ledger_report_carries_a_real_residual_row_and_the_template_uses_detective_wording(offline, monkeypatch):
+    from app.detective.nodes import template_answer
+    from app.detective.tools import analysis
+
+    def fake_grace(site, variables, catalog, start, end):
+        return {v.id: _noisy(start, end, -0.4, 1).rename(v.id) for v in variables}
+
+    def flat_climate(site, variables, catalog, start, end):
+        return {v.id: _noisy(start, end, 0.0, sum(map(ord, v.id))).rename(v.id) for v in variables}
+
+    monkeypatch.setattr(gather, "FETCHERS", {**gather.FETCHERS, "grace": fake_grace, "power": flat_climate})
+    s = Session(ledger=Ledger(), place=PLACE, catalog=load_catalog())
+    data.trend_test(s, series_id=data.get_series(s, var_id="grace_tws")["series_id"])
+    res = analysis.climate_residual(s, var_id="grace_tws")
+    assert res["pct_not_explained"] is not None, {k: v for k, v in res.items() if k not in ("label",)}
+    row = next(r for r in ledger_report(s)["variables"] if r["id"] == "grace_tws")
+    assert row["residual_pct_non_climate"] == res["pct_not_explained"]
+    assert row["residual_pct_range"] == res["pct_range"]
+    text, _ = template_answer(ledger_report(s, "Is the water going down?"))
+    assert "not explained by the climate we measured — a clue, not proof" in text, text

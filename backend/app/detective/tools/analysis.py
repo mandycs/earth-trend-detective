@@ -46,14 +46,14 @@ _num = data._num
 _not_available = data._not_available
 
 
-def _refresh(session: Session, value: Any, corrected: Mapping | None = None) -> Any:
+def refresh_verdicts(session: Session, value: Any, corrected: Mapping | None = None) -> Any:
     """Copy of `value` with q_session / verdict / direction re-read from the ledger now."""
     corrected = session.ledger.corrected() if corrected is None else corrected
     if isinstance(value, list):
-        return [_refresh(session, v, corrected) for v in value]
+        return [refresh_verdicts(session, v, corrected) for v in value]
     if not isinstance(value, Mapping):
         return value
-    out = {k: _refresh(session, v, corrected) for k, v in value.items()}
+    out = {k: refresh_verdicts(session, v, corrected) for k, v in value.items()}
     tid = out.get("test_id")
     if isinstance(tid, str) and tid in corrected:
         q, verdict, direction = corrected[tid]
@@ -62,7 +62,7 @@ def _refresh(session: Session, value: Any, corrected: Mapping | None = None) -> 
 
 
 def _cached_or_run(session: Session, tool: str, args: Mapping, compute) -> dict:
-    return _refresh(session, data._through_ledger(session, tool, args, compute))
+    return refresh_verdicts(session, data._through_ledger(session, tool, args, compute))
 
 
 def _log(session: Session, record: TestRecord) -> str:

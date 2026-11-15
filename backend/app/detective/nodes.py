@@ -24,10 +24,11 @@ from app.detective.ledger import json_safe
 from app.detective.prompt import CONCLUDE_PROMPT, conclude_request, retry_request
 from app.detective.session import Session
 from app.detective.tools import TOOLS
-from app.detective.tools.analysis import _refresh
+from app.detective.tools.analysis import refresh_verdicts
+from app.detective.tools.analysis import WORDING
 from app.explain.numbers import extract_numbers
 from app.explain.template import template_narrative
-from app.explain.validator import _SENTENCE_SPLIT, MAX_QUESTION_SENTENCES, validate_narrative
+from app.explain.validator import MAX_QUESTION_SENTENCES, SENTENCE_SPLIT, validate_narrative
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +90,7 @@ def compact(value: Any) -> str:
 
 
 def tool_message(session: Session, call: Mapping, result: dict) -> ToolMessage:
-    full = json_safe(_refresh(session, result))  # q / verdict as the correction stands now
+    full = json_safe(refresh_verdicts(session, result))  # q / verdict as the correction stands now
     return ToolMessage(compact(_hide(full)), tool_call_id=call["id"], name=call.get("name"), artifact=full)
 
 
@@ -116,7 +117,7 @@ def check(text: str, report: Mapping) -> tuple[bool, list[str], list[str]]:
 
 
 def template_answer(report: Mapping) -> tuple[str, list[str]]:
-    sentences = [s for s in _SENTENCE_SPLIT.split(template_narrative(report).strip()) if s.strip()]
+    sentences = [s for s in SENTENCE_SPLIT.split(template_narrative(report, residual_wording=WORDING).strip()) if s.strip()]
     text = " ".join(sentences[:MAX_QUESTION_SENTENCES])
     return text, [n.text for n in extract_numbers(text)]
 

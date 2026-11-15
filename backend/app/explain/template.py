@@ -11,6 +11,7 @@ from collections.abc import Mapping, Sequence
 from app.site_story import format_number
 
 _DIRECTIONS = frozenset({"up", "down"})
+RESIDUAL_WORDING = "not explained by climate, which is a lead, not proof"
 
 
 def _trend_rows(report: Mapping) -> list[Mapping]:
@@ -53,7 +54,7 @@ def _unknown_sentence(rows: Sequence[Mapping]) -> str | None:
     return None
 
 
-def _climate(row: Mapping) -> str:
+def _climate(row: Mapping, wording: str = RESIDUAL_WORDING) -> str:
     pct = row.get("residual_pct_non_climate")
     if pct is None:
         return "We can't yet tell how much of this change comes from the climate."
@@ -61,15 +62,18 @@ def _climate(row: Mapping) -> str:
     if pct_range and round(float(pct_range[0])) != round(float(pct_range[1])):
         lo, hi = (round(float(x)) for x in pct_range)
         share = f"Between {lo}% and {hi}%, depending on the climate model,"
-        return f"{share} of the change in {row['label'].lower()} is not explained by climate, which is a lead, not proof."
+        return f"{share} of the change in {row['label'].lower()} is {wording}."
     return (
-        f"About {round(float(pct))}% of the change in {row['label'].lower()} is not explained "
-        "by climate, which is a lead, not proof."
+        f"About {round(float(pct))}% of the change in {row['label'].lower()} is {wording}."
     )
 
 
 def _answer_parts(
-    rows: Sequence[Mapping], opening: list[str], focus: Mapping | None, unknown: str | None
+    rows: Sequence[Mapping],
+    opening: list[str],
+    focus: Mapping | None,
+    unknown: str | None,
+    wording: str = RESIDUAL_WORDING,
 ) -> list[str]:
     """Sentences for a question: the asked trend first, then the climate split of the
     top impact (a climate variable has no split of its own)."""
@@ -81,7 +85,7 @@ def _answer_parts(
     if not opening:  # a question paragraph holds 3 sentences; the climate one must stay
         parts.append(_reality(focus))
     if focus.get("residual_pct_non_climate") is not None:
-        parts.append(_climate(focus))
+        parts.append(_climate(focus, wording))
         return parts
     impact = next(
         (r for r in rows if r is not focus and _has_trend(r, frozenset({"real"}))
@@ -89,11 +93,11 @@ def _answer_parts(
         None,
     )
     if impact is not None:
-        parts.append(_climate(impact))  # names the impact variable itself
+        parts.append(_climate(impact, wording))  # names the impact variable itself
     return parts
 
 
-def template_narrative(report: Mapping) -> str:
+def template_narrative(report: Mapping, residual_wording: str = RESIDUAL_WORDING) -> str:
     """3-5 plain sentences: What's changing? Is it real? Is it the climate?
 
     With `focus_ids` in the report (the variables a user question is about), the first
@@ -113,12 +117,12 @@ def template_narrative(report: Mapping) -> str:
     focus = focus or _focus(rows)
     unknown = _unknown_sentence(rows)
     if asked:
-        return " ".join(_answer_parts(rows, opening, focus, unknown)[:3])
+        return " ".join(_answer_parts(rows, opening, focus, unknown, residual_wording)[:3])
     if focus is None:
         parts = ["Nothing here is changing in a clear way yet."]
         parts.append(unknown or "The changes we see are still too small to tell apart from chance.")
         return " ".join(parts)
-    parts = [_change(focus), _reality(focus), _climate(focus)]
+    parts = [_change(focus), _reality(focus), _climate(focus, residual_wording)]
     other = next((r for r in rows if r is not focus and _has_trend(r, frozenset({"real"}))), None)
     if other is not None:
         change = _change(other)

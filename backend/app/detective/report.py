@@ -51,7 +51,7 @@ def _trend_rows(session: Session, corrected: Mapping) -> dict[str, dict]:
         months = int(result.get("n_months") or 0)
         if record.var_id in best and best[record.var_id][0] >= months:
             continue
-        q, verdict, direction = corrected[record.id]
+        _, verdict, direction = corrected[record.id]
         var = _var(session, record.var_id)
         best[record.var_id] = (
             months,
@@ -62,7 +62,6 @@ def _trend_rows(session: Session, corrected: Mapping) -> dict[str, dict]:
                 "test_id": record.id,
                 "verdict": str(verdict),
                 "direction": str(direction),
-                "q_session": None if not math.isfinite(q) else q,
                 "sen_slope_per_decade": result.get("slope_per_decade"),
                 "ci_low": result.get("ci_low"),
                 "ci_high": result.get("ci_high"),

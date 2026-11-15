@@ -81,5 +81,3 @@ class Session:
             board={k: Suspect(**v) for k, v in (state.get("board") or {}).items()},
         )
 
-
-SESSIONS: dict[str, Session] = {}  # keyed by thread_id

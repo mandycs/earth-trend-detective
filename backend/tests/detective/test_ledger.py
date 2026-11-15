@@ -57,3 +57,10 @@ def test_missing_slope_is_flat_and_nan_p_is_unknown():
 
 def test_testrecord_not_collected_by_pytest():
     assert TestRecord.__test__ is False
+
+
+def test_figures_never_include_p_or_q_values():
+    led = Ledger()
+    led.remember("a", {"slope_per_decade": 0.4, "p_value": 0.0082, "q_session": 0.0164,
+                       "lags": [{"r": 0.61, "p": 0.031, "q": 0.05}]})
+    assert led.figures() == [0.4, 0.61]
