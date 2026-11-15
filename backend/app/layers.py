@@ -59,6 +59,10 @@ DATASETS: Mapping[str, Mapping[str, str]] = {
         "name": "MODIS Terra surface reflectance (MOD09A1 v061), via AppEEARS",
         "url": "https://lpdaac.usgs.gov/products/mod09a1v061/",
     },
+    "jplMURSST41mday": {
+        "name": "NASA JPL MUR sea surface temperature (GHRSST L4), via NOAA ERDDAP",
+        "url": "https://podaac.jpl.nasa.gov/dataset/MUR-JPL-L4-GLOB-v4.1",
+    },
 }
 _TREND_JSON_RE = re.compile(r"^trend_(?P<var>.+)\.json$")
 _YEAR_JSON_RE = re.compile(r"^year_(?P<var>[^\d].*)\.json$")
