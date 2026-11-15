@@ -8,7 +8,7 @@ import type { Bbox, MapOp } from "../events.ts";
 import type { Investigation, Scene } from "../scenes.ts";
 import { BLUE_MARBLE, blueMarbleUrl, catalogLayer, wmsUrl } from "../map/catalog.ts";
 import { applyMapOp, openingView } from "../map/mapView.ts";
-import type { FootprintView, LayerLegend, LayerView, MapContext, MapView } from "../map/mapView.ts";
+import type { CaseLayers, FootprintView, LayerLegend, LayerView, MapContext, MapView } from "../map/mapView.ts";
 
 export const STACK_MAX = 5;
 
@@ -262,4 +262,39 @@ export function stackFor(inv: Investigation, view: MapView, opts: { max?: number
   const picked = [...recentFirst.filter((s) => s.verdict), ...recentFirst.filter((s) => !s.verdict)].slice(0, max);
   const slabs = picked.map((s, i): Slab => ({ ...s, height: picked.length - i }));
   return { bbox, base: baseFor(bbox, ctx), slabs };
+}
+
+// ---- a solved case's own layers (story mode "Layers") ----
+
+/** Row kinds that are data layers a case ships, in the order they stack: the analysed trend first. */
+const CASE_SLAB_KINDS: readonly string[] = ["trend", "yearly"];
+
+/**
+ * A solved case's own data layers as a stack, with no investigation: each trend map over its period, each yearly
+ * layer at its last year (the year drawn is on the card). Pictures, relief and shading are the base, not slabs.
+ * No verdicts or stamps: nothing was tested in this view.
+ */
+export function stackForCase(cl: CaseLayers, opts: { max?: number; now?: string | null } = {}): StackModel {
+  const max = Math.max(0, Math.floor(opts.max ?? STACK_MAX));
+  const ctx: MapContext = { caseLayers: cl, now: opts.now ?? null };
+  const bbox = [...cl.bbox] as Bbox;
+  const rows = Object.values(cl.rows)
+    .filter((r) => CASE_SLAB_KINDS.includes(r.kind) && (r.file || r.file_pattern))
+    .sort((a, b) => CASE_SLAB_KINDS.indexOf(a.kind) - CASE_SLAB_KINDS.indexOf(b.kind));
+  const place = { lat: (bbox[1] + bbox[3]) / 2, lon: (bbox[0] + bbox[2]) / 2, bbox };
+  const empty: MapView = { place, context: null, evidence: null, curtain: null, footprints: [], camera: null, notes: [] };
+  const drafts: Draft[] = [];
+  for (const r of rows) {
+    const years = r.years ?? [];
+    const last = years.length > 0 ? years[years.length - 1] : null;
+    const v = applyMapOp(empty, { op: "show_layer", layer_id: r.id, date: null, year: last, opacity: 1 }, ctx);
+    const lv = v.evidence ?? v.context;
+    if (!lv) continue;
+    drafts.push({
+      key: lv.key, title: lv.title, source: lv.source, resolution: lv.resolution, year: lv.year, date: lv.date,
+      period: lv.period, legend: lv.legend, texture: textureOf(lv, bbox), show: { kind: "layer", layer: lv },
+    });
+  }
+  const picked = drafts.slice(0, max);
+  return { bbox, base: baseFor(bbox, ctx), slabs: picked.map((d, i): Slab => ({ ...d, height: picked.length - i })) };
 }

@@ -14,6 +14,7 @@ import { StoryPanel } from './StoryPanel'
 import { Timeline } from './Timeline'
 import type { SiteVariable } from './types'
 import { bboxWidthMeters } from './types'
+import { CaseLayersButton } from '../features/detective/stack/CaseLayersButton'
 import { CASE_IDS, fmt, leadVariable, shortName } from '../lib/cases'
 import { LayerPanel } from './layers/LayerPanel'
 import { Curtain } from './layers/Curtain'
@@ -467,6 +468,7 @@ export default function StoryApp({ caseId }: { caseId: string }) {
             Ask<span className="st-hide-sm"> the detective</span>
           </span>
         </Link>
+        {site && <CaseLayersButton siteId={caseId} bbox={site.bbox} className="st-explore st-stack-btn" />}
         <Link href="/explore" className="st-explore st-explore-last">
           <span>
             Explore<span className="st-hide-sm"> any point</span>

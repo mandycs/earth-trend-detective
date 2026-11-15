@@ -61,6 +61,11 @@ export function dateFor(
   else if (when.year != null) {
     const jan = step === 'annual' || (years?.length ?? 0) > 0
     d = `${when.year}-${jan ? '01-01' : '07-01'}`
+    // A year alone on an ongoing layer: mid-year of this year may not exist yet; the delayed safe date stands in.
+    if (ongoing && now) {
+      const safe = safeDefaultDate(step, now)
+      if (d > safe) d = safe
+    }
   } else if (ongoing) d = safeDefaultDate(step, now ?? end)
   else d = end
   if (d > end) return end

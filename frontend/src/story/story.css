@@ -63,6 +63,7 @@
 .st-explore {
   margin-left: auto;
   min-height: 44px;
+  min-width: 44px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -72,8 +73,20 @@
   white-space: nowrap;
 }
 
-.st-ask + .st-explore-last {
+.st-ask + .st-explore-last,
+.st-stack-btn + .st-explore-last {
   margin-left: 20px;
+}
+
+/* "Layer stack": a button dressed as the header's other quiet links. */
+.st-explore.st-stack-btn {
+  margin-left: 20px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .st-explore:hover {

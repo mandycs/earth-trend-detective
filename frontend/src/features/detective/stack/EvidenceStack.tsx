@@ -27,6 +27,10 @@ export interface EvidenceStackProps {
   /** The slabs are back on the ground after `exploded` went false (at once with reduced motion). */
   onCollapsed: () => void
   reducedMotion: boolean
+  /** The line under the title. Defaults to the investigation's wording. */
+  lede?: string
+  /** The close button's words. Defaults to "Back to the map". */
+  closeLabel?: string
 }
 
 /** Shown on screen with the relief (DESIGN: the vertical exaggeration is shown). */
@@ -505,7 +509,7 @@ function layoutCards(want: number[], heights: number[], top: number, bottom: num
   return out
 }
 
-export default function EvidenceStack({ model, exploded, onPick, onClose, onCollapsed, reducedMotion }: EvidenceStackProps) {
+export default function EvidenceStack({ model, exploded, onPick, onClose, onCollapsed, reducedMotion, lede, closeLabel }: EvidenceStackProps) {
   const box = model.bbox
   const depth = box ? boxAspect(box) : 1
   const [peak, setPeak] = useState(0)
@@ -631,10 +635,12 @@ export default function EvidenceStack({ model, exploded, onPick, onClose, onColl
           <h2 id="stack-title" className={styles.title}>
             The evidence, layer by layer
           </h2>
-          <p className={styles.lede}>Each slab is a layer drawn in this turn, over the same box. Pick one to see it on the map.</p>
+          <p className={styles.lede}>
+            {lede ?? 'Each slab is a layer drawn in this turn, over the same box. Pick one to see it on the map.'}
+          </p>
         </div>
         <button type="button" ref={closeRef} className="btn" onClick={onClose}>
-          Back to the map
+          {closeLabel ?? 'Back to the map'}
         </button>
       </div>
 

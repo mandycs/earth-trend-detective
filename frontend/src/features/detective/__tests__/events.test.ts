@@ -122,3 +122,11 @@ test("a done without a count keeps it null, never 0", () => {
   const d = parseEvent("done", { thread_id: "t" });
   assert.equal(d?.kind === "done" && d.data.n_tests, null);
 });
+
+test("newer payloads parse: unknown answer keys (rejected) are ignored, show_layer may carry only a year", () => {
+  const a = parseEvent("answer", { ...(fixtures.answer as object), rejected: [{ try: 1, kind: "figure", reason: "x" }] });
+  assert.equal(a?.kind, "answer");
+  assert.equal(a?.kind === "answer" && "rejected" in a.data, false);
+  const m = parseEvent("map", { op: "show_layer", layer_id: "true_colour", year: 2019 });
+  assert.ok(m?.kind === "map" && m.data.op === "show_layer" && m.data.date === null && m.data.year === 2019);
+});

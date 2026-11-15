@@ -233,3 +233,19 @@ test("picking a slab shows that one layer on the map", async () => {
   assert.ok(ndvi);
   assert.equal(showSlab(end, ndvi).evidence?.layerId, "ndvi");
 });
+
+test("a solved case stacks its own layers: the trend map first, yearly layers at their last year, relief base", async () => {
+  const { stackForCase } = await import("../stack/stackModel.ts");
+  const cl = lakeMeadCase();
+  const m = stackForCase(cl, { now: NOW });
+  assert.equal(m.base?.kind, "relief");
+  assert.ok(m.slabs.length >= 2 && m.slabs.length <= STACK_MAX);
+  assert.equal(m.slabs[0].title, cl.rows.trend_lst_day.title);
+  assert.deepEqual(m.slabs[0].period, [2003, 2024]);
+  const lst = m.slabs.find((s) => s.key.includes("lst_gibs"));
+  const ys = cl.rows.lst_gibs.years ?? [];
+  assert.equal(lst?.year, ys[ys.length - 1]);
+  assert.ok(m.slabs.every((s) => !s.verdict && !s.stamp));
+  assert.deepEqual(m.slabs.map((s) => s.height), m.slabs.map((_, i) => m.slabs.length - i));
+  assert.equal(stackForCase(cl, { max: 1 }).slabs.length, 1);
+});

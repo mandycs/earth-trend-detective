@@ -72,3 +72,11 @@ test('maxZoomOf', () => {
 test('catalogLayer unknown id', () => {
   assert.equal(catalogLayer('nope'), null)
 })
+
+test('a year alone on a daily ongoing layer draws mid-year, or the delayed safe date when mid-year is not out yet', () => {
+  const tc = get('true_colour')
+  assert.equal(dateFor(tc, { year: 2024 }, '2026-11-15'), '2024-07-01')
+  const d = dateFor(tc, { year: 2026 }, '2026-03-10')
+  assert.equal(d, safeDefaultDate(tc.dates.step, '2026-03-10'))
+  assert.ok(d < '2026-03-10')
+})
