@@ -186,3 +186,72 @@
     height: 72px;
   }
 }
+
+/* Sound toggle: an icon, square like the other controls. */
+.iconControl {
+  width: 44px;
+  padding: 0;
+  justify-content: center;
+}
+
+/* End of the film: one arrow, bottom center, nudging down. */
+.next {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--gutter) + 56px + env(safe-area-inset-bottom, 0px));
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  transform: translateX(-50%);
+  color: #fff;
+  font-weight: 650;
+  text-decoration: none;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.6); /* taste-skill-ignore: legibility over the last frame */
+  animation: next-in 500ms var(--ease) both;
+}
+
+.next svg {
+  animation: next-nudge 1.6s var(--ease) 500ms infinite;
+}
+
+.next:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.next:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 4px;
+}
+
+@keyframes next-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+}
+
+@keyframes next-nudge {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .next,
+  .next svg {
+    animation: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .next {
+    bottom: 12px;
+  }
+}
