@@ -81,6 +81,9 @@ export default function StoryApp({ caseId }: { caseId: string }) {
   const { site, error } = useSite(caseId)
   const detailInfo = useDetailInfo(caseId)
   const [drone, setDrone] = useState(false)
+  // Reading column and timeline can fold away to give the map the whole screen.
+  const [panelOpen, setPanelOpen] = useState(true)
+  const [timelineFolded, setTimelineFolded] = useState(false)
   const detail = useDetailAssets(caseId, detailInfo, drone)
   // The flying help shows for a few seconds on entering the drone, then leaves the view clean.
   const [droneHelp, setDroneHelp] = useState(false)
@@ -452,7 +455,16 @@ export default function StoryApp({ caseId }: { caseId: string }) {
     : { title: 'Satellite picture', note: 'one date, not per year', status: 'visual_only' as const }
 
   return (
-    <div className={mode === 'doc' ? 'st st-documentary' : drone ? 'st st-in-drone' : 'st'}>
+    <div
+      className={[
+        'st',
+        mode === 'doc' ? 'st-documentary' : drone ? 'st-in-drone' : '',
+        panelOpen ? '' : 'st-panel-closed',
+        timelineFolded ? 'st-tl-folded' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <header className="st-bar">
         <Link href="/" className="st-wordmark wide">
           <Wordmark />
@@ -784,8 +796,30 @@ export default function StoryApp({ caseId }: { caseId: string }) {
             mapKm={mapKm}
             onScrub={handleScrub}
             onToggle={() => setPlaying((value) => !value)}
+            folded={timelineFolded}
+            onFold={() => setTimelineFolded((value) => !value)}
           />
         </section>
+
+        {site && variable ? (
+          <button
+            type="button"
+            className="st-panel-toggle"
+            aria-expanded={panelOpen}
+            aria-controls="case-panel"
+            onClick={() => setPanelOpen((value) => !value)}
+          >
+            {panelOpen ? (
+              <>
+                <span aria-hidden="true">‹</span> Hide case
+              </>
+            ) : (
+              <>
+                Show case <span aria-hidden="true">›</span>
+              </>
+            )}
+          </button>
+        ) : null}
 
         {site && variable ? (
           <StoryPanel site={site} variable={variable} step={step} mapKm={mapKm} onSelectVariable={selectRecord} onStep={setStep} />

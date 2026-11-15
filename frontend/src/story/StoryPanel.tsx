@@ -342,7 +342,7 @@ export function StoryPanel({ site, variable, step, mapKm, onSelectVariable, onSt
   const sources = site.sources ?? []
 
   return (
-    <aside className="sp" aria-label={`Case: ${shortName(site.name)}`}>
+    <aside className="sp" id="case-panel" aria-label={`Case: ${shortName(site.name)}`}>
       <header className="sp-head">
         <h1 className="sp-title narrow">{shortName(site.name)}</h1>
         <p className="sp-where">

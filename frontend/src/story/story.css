@@ -2237,3 +2237,171 @@
     max-height: calc(100% - var(--tl-h) - 210px);
   }
 }
+
+/* ------------------------------------------- folding the panel and the timeline */
+
+.st-panel-toggle {
+  display: none;
+}
+
+@media (min-width: 1101px) {
+  .st:not(.st-documentary) .st-panel-toggle {
+    position: absolute;
+    top: 72px;
+    left: calc(min(max(38%, 420px), 600px) + 8px);
+    z-index: 4;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 14px;
+    border: 0;
+    background: var(--ground);
+    color: var(--ink-2);
+    font-weight: 650;
+    box-shadow: inset 0 0 0 1px var(--line); /* taste-skill-ignore: outline, not a shadow */
+  }
+
+  .st:not(.st-documentary) .st-panel-toggle:hover {
+    color: var(--ink);
+    background: var(--surface-2);
+  }
+
+  .st.st-panel-closed:not(.st-documentary) .st-panel-toggle {
+    left: 16px;
+  }
+
+  .st.st-panel-closed:not(.st-documentary) .sp {
+    display: none;
+  }
+
+  .st.st-panel-closed:not(.st-documentary) .st-canvas::after {
+    display: none;
+  }
+
+  .st.st-tl-folded:not(.st-documentary) .sp {
+    bottom: 64px;
+  }
+}
+
+.st-tl-folded .st-viewer {
+  --tl-h: 64px;
+}
+
+.tl-fold {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--ink-2);
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.tl-fold:hover {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.tl-fold span {
+  font-size: 1.2rem;
+  font-weight: 400;
+}
+
+@media (min-width: 721px) {
+  .tl {
+    grid-template-columns: 56px auto minmax(0, 1fr) minmax(170px, 230px) auto;
+  }
+
+  .tl.tl-folded {
+    min-height: 64px;
+    grid-template-columns: 40px auto minmax(0, 1fr) auto;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+}
+
+@media (max-width: 720px) {
+  .tl-fold {
+    grid-column: 1 / -1;
+    justify-self: end;
+    min-height: 36px;
+  }
+}
+
+.tl-folded .tl-play {
+  width: 40px;
+  height: 40px;
+}
+
+.tl-folded .tl-year {
+  font-size: 1.6rem;
+}
+
+.tl-folded .tl-readout {
+  display: none;
+}
+
+/* Folded: the chart becomes a thin scrubber track. */
+.tl-folded .tl-chart {
+  height: 24px;
+}
+
+.tl-folded .tl-chart svg,
+.tl-folded .tl-threshold-label,
+.tl-folded .tl-ends {
+  display: none;
+}
+
+.tl-folded .tl-chart input {
+  inset: 0;
+  height: 100%;
+  opacity: 1;
+  accent-color: var(--ink);
+}
+
+/* Top and bottom values of the chart, in the left edge of the plot. */
+.tl-axis {
+  position: absolute;
+  inset: 0 0 22px;
+  pointer-events: none;
+}
+
+.tl-axis span {
+  position: absolute;
+  left: 0;
+  transform: translateY(-50%);
+  padding-right: 6px;
+  background: var(--surface);
+  color: var(--ink-3);
+  font-size: 0.8rem;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The axis values get their own gutter left of the plot. */
+.tl-chart:has(.tl-axis) svg,
+.tl-chart:has(.tl-axis) input {
+  left: 64px;
+  width: calc(100% - 64px);
+}
+
+.tl-chart.tl-chart-gutter:has(.tl-axis) svg,
+.tl-chart.tl-chart-gutter:has(.tl-axis) input {
+  width: calc(100% - 160px);
+}
+
+.tl-chart:has(.tl-axis) .tl-ends {
+  left: 64px;
+}
+
+.tl-axis span {
+  width: 60px;
+  text-align: right;
+  padding-right: 0;
+  background: none;
+}
