@@ -13,6 +13,7 @@
 | `DETECTIVE_DB` | `backend/data/detective/detective.sqlite` | SQLite file for the checkpointer and the store (WAL). If it cannot be opened, the rest of the API still starts and `/detective` answers 503. |
 | `DETECTIVE_MAX_TOOL_CALLS` | `40` | Tool calls per run. |
 | `DETECTIVE_MAX_SECONDS` | unset (no limit) | Wall clock per run. |
+| `SSE_KEEPALIVE_SECONDS` | `15` | Seconds of silence on an open `/detective` or `/investigate` stream before an SSE comment line (`: keepalive`) is sent, so proxies (Traefik, Cloudflare ~100 s idle cut) do not drop a run while a slow source is fetching. Clients ignore comments. Non-positive or invalid values fall back to 15. |
 | `LANGSMITH_TRACING` / `LANGCHAIN_TRACING_V2` | unset | **Keep tracing off in production.** Traces would send prompts, tool results and place coordinates to a third party. |
 
 Model calls time out after 60 s and are retried twice (`model.py`).

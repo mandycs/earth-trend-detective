@@ -57,6 +57,7 @@ falta red compartida porque web y api son orígenes separados y el navegador hab
 | `LANGSMITH_TRACING`, `LANGCHAIN_TRACING_V2` | Fijadas a `false` en la imagen. **No activarlas**: mandarían prompts, resultados y coordenadas a un tercero. |
 | `NASA_TOKEN`, `APPEEARS_TOKEN` | Solo si hay que descargar datos que no estén ya en la caché (GRACE, GLDAS, NASADEM, AppEEARS). Los casos resueltos funcionan con la caché sembrada. |
 | `DETECTIVE_MAX_TOOL_CALLS`, `DETECTIVE_MAX_SECONDS` | Opcionales. |
+| `SSE_KEEPALIVE_SECONDS` | Opcional, por defecto `15`. Segundos de silencio en un stream SSE abierto antes de mandar un comentario `: keepalive` (los clientes lo ignoran). |
 
 Rutas que el código resuelve desde la "raíz del repo" (`Path(__file__).parents[...]`): en la imagen la raíz es
 `/app` y el proyecto `/app/backend`, así que `sites/` está en `/app/sites` y `catalog/` en `/app/backend/catalog`
@@ -136,10 +137,10 @@ Orden: primero la API (y sembrar la caché), luego la web.
 que **no** hay que poner en la API) y vacía los eventos según llegan: no hace falta configuración extra.
 
 Tiempos: en Traefik v3 el `readTimeout` del entrypoint (60 s por defecto) aplica a leer la *petición*, no a la
-respuesta; `writeTimeout` es 0 (sin límite) e `idleTimeout` 180 s. La API **no manda keepalives**: entre dos
-eventos puede haber silencio largo si una herramienta descarga datos (GRACE, AppEEARS) con la caché vacía. Con la
-caché sembrada los huecos son de segundos. Si hay Cloudflare con proxy delante, su límite es ~100 s sin datos:
-sembrar la caché o desactivar el proxy para el subdominio de la API.
+respuesta; `writeTimeout` es 0 (sin límite) e `idleTimeout` 180 s. Entre dos eventos puede haber silencio largo si una
+herramienta descarga datos (GRACE, AppEEARS) con la caché vacía, así que la API manda un comentario SSE
+`: keepalive` tras `SSE_KEEPALIVE_SECONDS` (15 por defecto) sin eventos. Con eso aguanta el límite de ~100 s sin
+datos de Cloudflare; mantener `SSE_KEEPALIVE_SECONDS` bien por debajo. Sembrar la caché sigue siendo lo ideal.
 
 ## Tamaños (build local, 2026-11-15)
 
