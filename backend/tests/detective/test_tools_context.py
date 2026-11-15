@@ -55,7 +55,7 @@ def test_satellite_picture_is_visual_only_and_maps(monkeypatch):
     assert out["status"] == "visual_only"
     assert seen["args"] == (37.0, -4.5, (2003, 2024), ("agriculture",))
     assert s.map == [{
-        "op": "show_before_after", "layer_id": "L", "year_a": 2003, "year_b": 2024,
+        "op": "show_before_after", "layer_id": "true_colour", "year_a": 2003, "year_b": 2024,
         "before_url": "http://b", "after_url": "http://a", "bbox": [1, 2, 3, 4],
     }]
 

@@ -9,20 +9,46 @@ state them, plus the number of tests.
 
 from __future__ import annotations
 
-import math
 import re
 from collections.abc import Iterable, Mapping
 from typing import Any
 
 from app.detective.ledger import Ledger
+from app.detective.scrub import scrub
 from app.detective.session import Session
 
 _SIZE = re.compile(r"~\s*(\d+(?:\.\d+)?)\s*(?:km|m)\b")
+_NOT_HERE = re.compile(r"^not_available_here:\s*", re.IGNORECASE)
+_FIRST_SENTENCE = re.compile(r"(?<=[.!?])\s+")
 
 
 def n_finite_tests(ledger: Ledger) -> int:
-    """Tests with a finite p (a test that could not run is not counted in the answer)."""
-    return sum(1 for tid in ledger.corrected() if math.isfinite(ledger.test(tid).p_value))
+    """Tests with a finite p over the thread's whole family (a test that could not run is not counted)."""
+    return ledger.n_finite()
+
+
+def _plain_reason(reason: Any) -> str:
+    text = _NOT_HERE.sub("", str(reason or "")).strip()
+    text = _FIRST_SENTENCE.split(text, maxsplit=1)[0].rstrip(".").strip()
+    return scrub(text)
+
+
+def _not_measured(session: Session) -> list[dict]:
+    """What the tools could not measure here, and why (from the `not_available` results)."""
+    out: list[dict] = []
+    for eid, result in session.ledger.results.items():
+        if result.get("status") != "not_available":
+            continue
+        reason = _plain_reason(result.get("reason"))
+        if not reason or reason.lower().startswith("unknown "):  # a call the model got wrong, not the place
+            continue
+        var = _var(session, str(result.get("var_id") or ""))
+        tool = session.ledger.tool_of(eid) or "a tool"
+        label = var.label if var else str(result.get("label") or result.get("var_id") or tool.replace("_", " "))
+        row = {"label": label, "reason": reason}
+        if row not in out:
+            out.append(row)
+    return out
 
 
 def _sizes(value: Any) -> Iterable[float]:
@@ -115,6 +141,7 @@ def ledger_report(session: Session, question: str | None = None) -> dict:
         "end": session.end,
         "figures": figures,
         "n_tests": n_tests,
+        "not_measured": _not_measured(session),
     }
     if question:
         report["question"] = question  # the validator then keeps the answer to 3 sentences

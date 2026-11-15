@@ -166,7 +166,7 @@ def _residual(session: Session, var_id: str) -> dict:
         "climate_slope_per_decade": _num(res.climate_slope_per_decade),
         "residual_slope_per_decade": _num(slope),
         "p_value": _num(p),
-        "n_tests_so_far": session.ledger.n_tests,
+        "n_tests_so_far": session.ledger.n_finite(),
         "caveat": res.caveat,
         "wording": WORDING,
     }
@@ -232,7 +232,7 @@ def _correlate(session: Session, series_a: str, series_b: str, max_lag: int) -> 
         "method": "Pearson r of year-on-year changes; lag k pairs a in year t with b in year t-k",
         "lags": lags,
         "test_ids": [row["test_id"] for row in lags],
-        "n_tests_so_far": session.ledger.n_tests,
+        "n_tests_so_far": session.ledger.n_finite(),
         "note": CORRELATION_NOTE,
     }
 
@@ -326,7 +326,7 @@ def _compare(session: Session, var_id: str, side_a: dict, side_b: dict) -> dict:
         "difference_per_decade": None if sa is None or sb is None else _num(sa - sb),
         "unit": a["unit"],
         "test_ids": [a["test_id"], b["test_id"]],
-        "n_tests_so_far": session.ledger.n_tests,
+        "n_tests_so_far": session.ledger.n_finite(),
     }
 
 

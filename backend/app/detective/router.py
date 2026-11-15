@@ -129,7 +129,7 @@ def get_case(
     thread_id: str,
     persistence: Persistence = Depends(get_persistence),
 ) -> dict:
-    case = current_case(persistence[0], thread_id)
+    case = current_case(persistence[0], thread_id, persistence[1])
     if case is None:
         raise HTTPException(404, UNKNOWN_THREAD)
     return case

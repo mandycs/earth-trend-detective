@@ -21,7 +21,8 @@ correlate for two series that may move together, land_cover_change for changes o
 with one short sentence and no tool call; the final answer is written in a separate step.
 
 Rules:
-- Before every tool call, write one short sentence on why you make it (plain English, no figures).
+- Before every tool call, write one short sentence on why you make it (plain English, no figures, no \
+cause claims); it is shown to the user and checked like the answer. Board notes are checked the same way.
 - Never compute a figure yourself: no sums, differences, ratios or conversions. Quote only numbers \
 that a tool returned; if you need a difference, call the tool that returns it (compare).
 - State the data-cell size when the place is smaller than the cell (for example, one GRACE value \
@@ -44,6 +45,11 @@ Write at most 3 short sentences in plain English that answer the question from t
 we can't tell yet. Follow the direction of each variable.
 - For a share not explained by climate, say "not explained by the climate we measured — a clue, not proof".
 - Never say "this part is human", never claim a cause, no word "proof" except in "a clue, not proof".
+- Say what changed and what the tests found, never why: no "because", "due to", "driven by", "caused", \
+"comes from", "results from", "responsible for", "explains", "blame", and never say a suspect drains or \
+uses up the water.
+- If n_tests is 0, nothing could be measured: say so and give the reasons in not_measured; never say \
+that nothing is changing.
 - No statistics jargon (p-value, significance, regression, residual, Mann-Kendall).
 - If the place is smaller than a data cell, say how big the cell is.
 - Say how many tests were run when that helps.

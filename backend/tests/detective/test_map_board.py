@@ -46,7 +46,7 @@ def test_supported_without_corrected_evidence_becomes_hint(ledger_with_one_weak_
                               "evidence_ids": ["t_weak"], "note": "x"}, ledger_with_one_weak_test)
     assert board["irrigation"].status == "hint"
     assert board["irrigation"].downgraded.startswith("fails correction over")
-    assert board["irrigation"].downgraded == "fails correction over 1 tests"
+    assert board["irrigation"].downgraded == "fails correction over 1 test"
 
 
 def test_supported_with_corrected_evidence_stays_supported():
@@ -132,7 +132,7 @@ def test_update_board_tool_writes_session_and_returns_n_tests():
     s.ledger = _ledger(_record("t1", 0.3))
     out = TOOLS["update_board"].fn(s, suspect="irrigation", status="supported", evidence_ids=["e1"], note="wells")
     assert out["status"] == "hint" and out["n_tests"] == 1
-    assert out["downgraded"] == "fails correction over 1 tests"
+    assert out["downgraded"] == "fails correction over 1 test"
     assert s.board["irrigation"].status == "hint"
     assert board_mod.as_json(s.board)[0]["id"] == "irrigation"
 

@@ -68,7 +68,9 @@ def _through_ledger(
     hit = session.ledger.cached(key)
     if hit is not None:
         return on_hit(hit) if on_hit else hit
+    before = set(session.ledger.test_ids())
     result = compute()
+    session.ledger.claim_tests(key, before)  # the tests this call logged get a key stable across branches
     if result.pop(_TRANSIENT, False):
         # A source failure: shown, never cached, so a retry can succeed. The public flag lets
         # tools built on top (residual, compare) also skip caching their own result.
@@ -282,7 +284,7 @@ def _corrected_fields(session: Session, test_id: str) -> dict:
         "q_session": _num(q),
         "verdict": str(verdict),
         "direction": str(direction),
-        "n_tests_so_far": session.ledger.n_tests,
+        "n_tests_so_far": session.ledger.n_finite(),
     }
 
 

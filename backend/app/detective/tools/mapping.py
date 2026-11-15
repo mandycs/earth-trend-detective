@@ -35,8 +35,8 @@ FOOTPRINT_LABEL = {
     "gldas": "GLDAS land model approximate data cell",
 }
 FOOTPRINT_NOTE = "One value covers this whole cell, not the exact point; the outline is approximate."
-_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
-_SITE_ID_RE = re.compile(r"^[a-z0-9_]+$")
+_DATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
+_SITE_ID_RE = re.compile(r"[a-z0-9_]+")
 _KM_PER_DEG = 111.32
 
 
@@ -57,7 +57,7 @@ def load_map_layers(path: Path = MAP_LAYERS_PATH) -> dict[str, dict]:
 
 def _case_layers(session: Session) -> dict[str, dict]:
     site_id = session.place.site_id
-    if not site_id or not _SITE_ID_RE.match(site_id):
+    if not site_id or not _SITE_ID_RE.fullmatch(site_id):
         return {}
     path = layers.SITES_DIR / site_id / "layers.json"
     try:
@@ -67,25 +67,26 @@ def _case_layers(session: Session) -> dict[str, dict]:
     return {str(r["id"]): r for r in rows if isinstance(r, dict) and r.get("id")}
 
 
-def _date_problem(row: dict, date: str | None, year: int | None) -> str | None:
+def _date_problem(row: dict, date: str | None, year: int | None, today: Date | None = None) -> str | None:
+    """Why this day or year is not on the layer (None: it is). An ongoing layer ends today."""
     dates = row.get("dates") or {}
-    start, end = str(dates["start"]), str(dates["end"])
+    start, end = Date.fromisoformat(str(dates["start"])), Date.fromisoformat(str(dates["end"]))
+    last = (today or Date.today()) if dates.get("ongoing") else end
+    covers = f"this layer covers {start.isoformat()} to {'now' if dates.get('ongoing') else end.isoformat()}"
+    if date is not None and year is not None:
+        return "give a date or a year, not both"
     if date is not None:
-        if not _DATE_RE.match(date):
+        if not _DATE_RE.fullmatch(date):
             return "date must be YYYY-MM-DD"
         try:
-            Date.fromisoformat(date)
+            day = Date.fromisoformat(date)
         except ValueError:
             return "date must be YYYY-MM-DD"
-        when, first, last = date, start, end
-    elif year is not None:
-        when, first, last = str(year), start[:4], end[:4]
+        return covers if not start <= day <= last else None
+    if year is not None:
         if dates.get("years") and int(year) not in dates["years"]:
             return f"this layer only has the years {', '.join(map(str, dates['years']))}"
-    else:
-        return None
-    if when < first or (not dates.get("ongoing") and when > last):
-        return f"this layer covers {start} to {'now' if dates.get('ongoing') else end}"
+        return covers if not start.year <= int(year) <= last.year else None
     return None
 
 
