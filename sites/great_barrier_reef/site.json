@@ -1,0 +1,1114 @@
+{
+  "id": "great_barrier_reef",
+  "name": "Great Barrier Reef (Australia)",
+  "country": "Australia",
+  "bbox": [
+    145.5,
+    -21.0,
+    150.0,
+    -17.0
+  ],
+  "vertical_exaggeration": 30,
+  "elevation_m": [
+    -100.0,
+    800.0
+  ],
+  "years": [
+    2003,
+    2024
+  ],
+  "assets": {
+    "heightmap": "heightmap.png",
+    "heightmap_range_m": [
+      -100.0,
+      800.0
+    ],
+    "base": "base.jpg",
+    "heightmap_rgb": "heightmap_rgb.png",
+    "hillshade": "hillshade.png",
+    "trend": {
+      "sst": "trend_sst.png"
+    },
+    "yearly": {
+      "sst": "year_sst_{YYYY}.png"
+    }
+  },
+  "variables": [
+    {
+      "id": "sst",
+      "label": "Sea surface temperature",
+      "unit": "°C",
+      "sen_slope_per_decade": 0.226,
+      "ci_low": 0.128,
+      "ci_high": 0.323,
+      "p_value": 9.03e-06,
+      "q_value": 1.81e-05,
+      "verdict": "real",
+      "direction": "up",
+      "years_needed": null,
+      "residual_pct_non_climate": null,
+      "residual_pct_range": null,
+      "badge": "↑ Real",
+      "series": [
+        {
+          "year": 2003,
+          "value": 26.5
+        },
+        {
+          "year": 2004,
+          "value": 26.5
+        },
+        {
+          "year": 2005,
+          "value": 26.6
+        },
+        {
+          "year": 2006,
+          "value": 25.9
+        },
+        {
+          "year": 2007,
+          "value": 26.0
+        },
+        {
+          "year": 2008,
+          "value": 26.0
+        },
+        {
+          "year": 2009,
+          "value": 26.6
+        },
+        {
+          "year": 2010,
+          "value": 26.8
+        },
+        {
+          "year": 2011,
+          "value": 26.1
+        },
+        {
+          "year": 2012,
+          "value": 26.2
+        },
+        {
+          "year": 2013,
+          "value": 26.4
+        },
+        {
+          "year": 2014,
+          "value": 26.1
+        },
+        {
+          "year": 2015,
+          "value": 26.4
+        },
+        {
+          "year": 2016,
+          "value": 27.0
+        },
+        {
+          "year": 2017,
+          "value": 26.6
+        },
+        {
+          "year": 2018,
+          "value": 26.4
+        },
+        {
+          "year": 2019,
+          "value": 26.1
+        },
+        {
+          "year": 2020,
+          "value": 26.7
+        },
+        {
+          "year": 2021,
+          "value": 26.8
+        },
+        {
+          "year": 2022,
+          "value": 27.1
+        },
+        {
+          "year": 2023,
+          "value": 26.8
+        },
+        {
+          "year": 2024,
+          "value": 26.8
+        }
+      ],
+      "kind": "trend",
+      "footprint": {
+        "km": 474,
+        "label": "the whole map, averaged (NASA JPL MUR, sampled about every 5 km)"
+      }
+    },
+    {
+      "id": "dhw",
+      "label": "Heat stress, worst of five reefs",
+      "unit": "°C-weeks",
+      "sen_slope_per_decade": null,
+      "ci_low": null,
+      "ci_high": null,
+      "p_value": null,
+      "q_value": null,
+      "verdict": "unknown",
+      "direction": "flat",
+      "years_needed": null,
+      "residual_pct_non_climate": null,
+      "residual_pct_range": null,
+      "kind": "events",
+      "series": [
+        {
+          "year": 2003,
+          "value": 1.93
+        },
+        {
+          "year": 2004,
+          "value": 3.55
+        },
+        {
+          "year": 2005,
+          "value": 2.28
+        },
+        {
+          "year": 2006,
+          "value": 2.55
+        },
+        {
+          "year": 2007,
+          "value": 1.13
+        },
+        {
+          "year": 2008,
+          "value": 0.75
+        },
+        {
+          "year": 2009,
+          "value": 5.67
+        },
+        {
+          "year": 2010,
+          "value": 2.74
+        },
+        {
+          "year": 2011,
+          "value": 2.5
+        },
+        {
+          "year": 2012,
+          "value": 2.58
+        },
+        {
+          "year": 2013,
+          "value": 3.15
+        },
+        {
+          "year": 2014,
+          "value": 0.0
+        },
+        {
+          "year": 2015,
+          "value": 3.46
+        },
+        {
+          "year": 2016,
+          "value": 11.36
+        },
+        {
+          "year": 2017,
+          "value": 9.2
+        },
+        {
+          "year": 2018,
+          "value": 0.14
+        },
+        {
+          "year": 2019,
+          "value": 0.47
+        },
+        {
+          "year": 2020,
+          "value": 10.5
+        },
+        {
+          "year": 2021,
+          "value": 3.6
+        },
+        {
+          "year": 2022,
+          "value": 8.89
+        },
+        {
+          "year": 2023,
+          "value": 2.81
+        },
+        {
+          "year": 2024,
+          "value": 11.59
+        }
+      ],
+      "thresholds": [
+        {
+          "value": 4.0,
+          "label": "NOAA Coral Reef Watch Alert Level 1"
+        },
+        {
+          "value": 8.0,
+          "label": "NOAA Coral Reef Watch Alert Level 2"
+        }
+      ],
+      "badge": "Heat-stress record",
+      "footprint": {
+        "km": 5,
+        "label": "five 5 km Coral Reef Watch pixels, north to south; two lie outside this map"
+      },
+      "note": "Not a trend test. Reef-years at or above 4 °C-weeks, five reefs: 1 in 2003–2013, 20 in 2014–2024."
+    },
+    {
+      "id": "chlorophyll",
+      "label": "Chlorophyll in the sea (log10)",
+      "unit": "log10(mg/m³)",
+      "sen_slope_per_decade": 0.0158,
+      "ci_low": -0.02,
+      "ci_high": 0.0506,
+      "p_value": 0.368,
+      "q_value": 0.368,
+      "verdict": "unknown",
+      "direction": "flat",
+      "years_needed": 23,
+      "residual_pct_non_climate": null,
+      "residual_pct_range": null,
+      "badge": "? Can't tell yet",
+      "series": [
+        {
+          "year": 2003,
+          "value": -0.519
+        },
+        {
+          "year": 2004,
+          "value": -0.518
+        },
+        {
+          "year": 2005,
+          "value": -0.48
+        },
+        {
+          "year": 2006,
+          "value": -0.57
+        },
+        {
+          "year": 2007,
+          "value": -0.552
+        },
+        {
+          "year": 2008,
+          "value": -0.399
+        },
+        {
+          "year": 2009,
+          "value": -0.34
+        },
+        {
+          "year": 2010,
+          "value": -0.445
+        },
+        {
+          "year": 2011,
+          "value": -0.312
+        },
+        {
+          "year": 2012,
+          "value": -0.423
+        },
+        {
+          "year": 2013,
+          "value": -0.41
+        },
+        {
+          "year": 2014,
+          "value": -0.558
+        },
+        {
+          "year": 2015,
+          "value": -0.584
+        },
+        {
+          "year": 2016,
+          "value": -0.49
+        },
+        {
+          "year": 2017,
+          "value": -0.496
+        },
+        {
+          "year": 2018,
+          "value": -0.504
+        },
+        {
+          "year": 2019,
+          "value": -0.447
+        },
+        {
+          "year": 2020,
+          "value": -0.529
+        },
+        {
+          "year": 2021,
+          "value": -0.54
+        },
+        {
+          "year": 2022,
+          "value": -0.397
+        },
+        {
+          "year": 2023,
+          "value": -0.423
+        },
+        {
+          "year": 2024,
+          "value": -0.502
+        }
+      ],
+      "kind": "trend",
+      "footprint": {
+        "km": 4,
+        "label": "one 4 km MODIS pixel off the Burdekin River mouth"
+      },
+      "note": "No trend detected. Read from water colour near the coast, where mud, river water and a shallow sea floor also change the colour."
+    }
+  ],
+  "missing": {},
+  "steps": [
+    "What is changing here?",
+    "Is it real, or is it chance?",
+    "Is it the climate?"
+  ],
+  "headline": "Sea temperature over the reef is going up for real (0.23 °C per decade). Heat stress at or above 4 °C-weeks: 1 reef-year in 2003–2013, 20 in 2014–2024.",
+  "narrative": null,
+  "validation": null,
+  "sources": [
+    {
+      "title": "NASA JPL MUR sea surface temperature (GHRSST L4, monthly), via NOAA CoastWatch ERDDAP",
+      "url": "https://coastwatch.pfeg.noaa.gov/erddap/griddap/jplMURSST41mday.html"
+    },
+    {
+      "title": "NASA MODIS Aqua chlorophyll-a (R2022), via NOAA CoastWatch ERDDAP",
+      "url": "https://coastwatch.pfeg.noaa.gov/erddap/griddap/erdMH1chlamday_R2022SQ.html"
+    },
+    {
+      "title": "NOAA Coral Reef Watch daily degree heating weeks (not NASA)",
+      "url": "https://coastwatch.noaa.gov/erddap/griddap/noaacrwdhwDaily.html"
+    },
+    {
+      "title": "GEBCO Compilation Group, GEBCO 2020 Grid (not NASA), via NOAA CoastWatch ERDDAP",
+      "url": "https://coastwatch.pfeg.noaa.gov/erddap/griddap/GEBCO_2020.html"
+    },
+    {
+      "title": "NASA GIBS (Global Imagery Browse Services)",
+      "url": "https://nasa-gibs.github.io/gibs-api-docs/"
+    }
+  ],
+  "caveats": [
+    "Sea temperature is itself part of the climate, so this place has no climate / non-climate split.",
+    "Degree heating weeks measure heat stress, not bleaching or coral death: this case does not count corals.",
+    "Heat stress comes from NOAA Coral Reef Watch (not NASA). Sea temperature comes from NASA JPL MUR. The two temperature records are never mixed in one verdict.",
+    "Seabed and land heights come from GEBCO (not NASA)."
+  ],
+  "generated_at": "2026-11-15",
+  "pipeline_version": "0.1",
+  "heat_stress": {
+    "label": "Heat stress (degree heating weeks)",
+    "unit": "°C-weeks",
+    "thresholds": [
+      {
+        "value": 4.0,
+        "label": "NOAA Coral Reef Watch Alert Level 1"
+      },
+      {
+        "value": 8.0,
+        "label": "NOAA Coral Reef Watch Alert Level 2"
+      }
+    ],
+    "points": [
+      {
+        "id": "north",
+        "name": "Northern reef (off Cooktown)",
+        "lat": -14.6,
+        "lon": 145.6,
+        "yearly_max": [
+          {
+            "year": 2003,
+            "value": 1.93,
+            "date": "2003-02-19"
+          },
+          {
+            "year": 2004,
+            "value": 2.54,
+            "date": "2004-03-09"
+          },
+          {
+            "year": 2005,
+            "value": 0.0,
+            "date": "2005-01-01"
+          },
+          {
+            "year": 2006,
+            "value": 0.14,
+            "date": "2006-02-11"
+          },
+          {
+            "year": 2007,
+            "value": 1.13,
+            "date": "2007-01-31"
+          },
+          {
+            "year": 2008,
+            "value": 0.75,
+            "date": "2008-02-10"
+          },
+          {
+            "year": 2009,
+            "value": 3.05,
+            "date": "2009-02-20"
+          },
+          {
+            "year": 2010,
+            "value": 2.74,
+            "date": "2010-03-10"
+          },
+          {
+            "year": 2011,
+            "value": 2.5,
+            "date": "2011-01-10"
+          },
+          {
+            "year": 2012,
+            "value": 0.15,
+            "date": "2012-01-23"
+          },
+          {
+            "year": 2013,
+            "value": 1.71,
+            "date": "2013-03-05"
+          },
+          {
+            "year": 2014,
+            "value": 0.0,
+            "date": "2014-01-01"
+          },
+          {
+            "year": 2015,
+            "value": 1.49,
+            "date": "2015-03-06"
+          },
+          {
+            "year": 2016,
+            "value": 11.36,
+            "date": "2016-03-30"
+          },
+          {
+            "year": 2017,
+            "value": 9.2,
+            "date": "2017-04-02"
+          },
+          {
+            "year": 2018,
+            "value": 0.14,
+            "date": "2018-02-25"
+          },
+          {
+            "year": 2019,
+            "value": 0.47,
+            "date": "2019-01-01"
+          },
+          {
+            "year": 2020,
+            "value": 7.87,
+            "date": "2020-03-14"
+          },
+          {
+            "year": 2021,
+            "value": 3.6,
+            "date": "2021-01-15"
+          },
+          {
+            "year": 2022,
+            "value": 4.32,
+            "date": "2022-03-17"
+          },
+          {
+            "year": 2023,
+            "value": 2.35,
+            "date": "2023-02-01"
+          },
+          {
+            "year": 2024,
+            "value": 7.61,
+            "date": "2024-03-29"
+          }
+        ],
+        "years_at_or_above": {
+          "4": [
+            2016,
+            2017,
+            2020,
+            2022,
+            2024
+          ],
+          "8": [
+            2016,
+            2017
+          ]
+        }
+      },
+      {
+        "id": "davies",
+        "name": "Davies Reef (central)",
+        "lat": -18.8,
+        "lon": 147.6,
+        "yearly_max": [
+          {
+            "year": 2003,
+            "value": 0.0,
+            "date": "2003-01-01"
+          },
+          {
+            "year": 2004,
+            "value": 2.45,
+            "date": "2004-03-02"
+          },
+          {
+            "year": 2005,
+            "value": 0.69,
+            "date": "2005-02-10"
+          },
+          {
+            "year": 2006,
+            "value": 0.0,
+            "date": "2006-01-01"
+          },
+          {
+            "year": 2007,
+            "value": 0.0,
+            "date": "2007-01-01"
+          },
+          {
+            "year": 2008,
+            "value": 0.0,
+            "date": "2008-01-01"
+          },
+          {
+            "year": 2009,
+            "value": 0.3,
+            "date": "2009-02-21"
+          },
+          {
+            "year": 2010,
+            "value": 0.68,
+            "date": "2010-03-08"
+          },
+          {
+            "year": 2011,
+            "value": 1.38,
+            "date": "2011-01-20"
+          },
+          {
+            "year": 2012,
+            "value": 0.95,
+            "date": "2012-02-12"
+          },
+          {
+            "year": 2013,
+            "value": 1.05,
+            "date": "2013-02-20"
+          },
+          {
+            "year": 2014,
+            "value": 0.0,
+            "date": "2014-01-01"
+          },
+          {
+            "year": 2015,
+            "value": 2.33,
+            "date": "2015-03-07"
+          },
+          {
+            "year": 2016,
+            "value": 2.79,
+            "date": "2016-03-23"
+          },
+          {
+            "year": 2017,
+            "value": 4.5,
+            "date": "2017-03-27"
+          },
+          {
+            "year": 2018,
+            "value": 0.0,
+            "date": "2018-01-01"
+          },
+          {
+            "year": 2019,
+            "value": 0.0,
+            "date": "2019-01-01"
+          },
+          {
+            "year": 2020,
+            "value": 5.36,
+            "date": "2020-03-12"
+          },
+          {
+            "year": 2021,
+            "value": 0.0,
+            "date": "2021-01-01"
+          },
+          {
+            "year": 2022,
+            "value": 5.06,
+            "date": "2022-03-16"
+          },
+          {
+            "year": 2023,
+            "value": 1.1,
+            "date": "2023-03-17"
+          },
+          {
+            "year": 2024,
+            "value": 4.75,
+            "date": "2024-02-16"
+          }
+        ],
+        "years_at_or_above": {
+          "4": [
+            2017,
+            2020,
+            2022,
+            2024
+          ],
+          "8": []
+        }
+      },
+      {
+        "id": "outer",
+        "name": "Outer shelf (central)",
+        "lat": -18.3,
+        "lon": 148.3,
+        "yearly_max": [
+          {
+            "year": 2003,
+            "value": 0.0,
+            "date": "2003-01-01"
+          },
+          {
+            "year": 2004,
+            "value": 3.55,
+            "date": "2004-03-02"
+          },
+          {
+            "year": 2005,
+            "value": 2.28,
+            "date": "2005-02-15"
+          },
+          {
+            "year": 2006,
+            "value": 0.14,
+            "date": "2006-02-03"
+          },
+          {
+            "year": 2007,
+            "value": 0.0,
+            "date": "2007-01-01"
+          },
+          {
+            "year": 2008,
+            "value": 0.0,
+            "date": "2008-01-01"
+          },
+          {
+            "year": 2009,
+            "value": 5.67,
+            "date": "2009-02-21"
+          },
+          {
+            "year": 2010,
+            "value": 1.68,
+            "date": "2010-03-10"
+          },
+          {
+            "year": 2011,
+            "value": 2.23,
+            "date": "2011-01-11"
+          },
+          {
+            "year": 2012,
+            "value": 1.39,
+            "date": "2012-02-13"
+          },
+          {
+            "year": 2013,
+            "value": 3.15,
+            "date": "2013-03-02"
+          },
+          {
+            "year": 2014,
+            "value": 0.0,
+            "date": "2014-01-01"
+          },
+          {
+            "year": 2015,
+            "value": 3.46,
+            "date": "2015-03-09"
+          },
+          {
+            "year": 2016,
+            "value": 6.16,
+            "date": "2016-03-24"
+          },
+          {
+            "year": 2017,
+            "value": 7.04,
+            "date": "2017-03-27"
+          },
+          {
+            "year": 2018,
+            "value": 0.14,
+            "date": "2018-02-03"
+          },
+          {
+            "year": 2019,
+            "value": 0.0,
+            "date": "2019-01-01"
+          },
+          {
+            "year": 2020,
+            "value": 10.5,
+            "date": "2020-03-14"
+          },
+          {
+            "year": 2021,
+            "value": 0.48,
+            "date": "2021-02-23"
+          },
+          {
+            "year": 2022,
+            "value": 8.89,
+            "date": "2022-03-14"
+          },
+          {
+            "year": 2023,
+            "value": 2.81,
+            "date": "2023-02-13"
+          },
+          {
+            "year": 2024,
+            "value": 9.46,
+            "date": "2024-03-08"
+          }
+        ],
+        "years_at_or_above": {
+          "4": [
+            2009,
+            2016,
+            2017,
+            2020,
+            2022,
+            2024
+          ],
+          "8": [
+            2020,
+            2022,
+            2024
+          ]
+        }
+      },
+      {
+        "id": "burdekin",
+        "name": "Inshore, off the Burdekin River",
+        "lat": -19.45,
+        "lon": 147.75,
+        "yearly_max": [
+          {
+            "year": 2003,
+            "value": 0.0,
+            "date": "2003-01-01"
+          },
+          {
+            "year": 2004,
+            "value": 2.03,
+            "date": "2004-02-26"
+          },
+          {
+            "year": 2005,
+            "value": 1.02,
+            "date": "2005-02-11"
+          },
+          {
+            "year": 2006,
+            "value": 0.0,
+            "date": "2006-01-01"
+          },
+          {
+            "year": 2007,
+            "value": 0.0,
+            "date": "2007-01-01"
+          },
+          {
+            "year": 2008,
+            "value": 0.32,
+            "date": "2008-02-24"
+          },
+          {
+            "year": 2009,
+            "value": 0.16,
+            "date": "2009-01-01"
+          },
+          {
+            "year": 2010,
+            "value": 1.31,
+            "date": "2010-03-09"
+          },
+          {
+            "year": 2011,
+            "value": 1.05,
+            "date": "2011-01-12"
+          },
+          {
+            "year": 2012,
+            "value": 2.58,
+            "date": "2012-03-06"
+          },
+          {
+            "year": 2013,
+            "value": 1.43,
+            "date": "2013-02-05"
+          },
+          {
+            "year": 2014,
+            "value": 0.0,
+            "date": "2014-01-01"
+          },
+          {
+            "year": 2015,
+            "value": 2.47,
+            "date": "2015-03-06"
+          },
+          {
+            "year": 2016,
+            "value": 3.56,
+            "date": "2016-03-02"
+          },
+          {
+            "year": 2017,
+            "value": 5.97,
+            "date": "2017-03-26"
+          },
+          {
+            "year": 2018,
+            "value": 0.0,
+            "date": "2018-01-01"
+          },
+          {
+            "year": 2019,
+            "value": 0.0,
+            "date": "2019-01-01"
+          },
+          {
+            "year": 2020,
+            "value": 7.17,
+            "date": "2020-03-11"
+          },
+          {
+            "year": 2021,
+            "value": 0.0,
+            "date": "2021-01-01"
+          },
+          {
+            "year": 2022,
+            "value": 6.51,
+            "date": "2022-03-16"
+          },
+          {
+            "year": 2023,
+            "value": 2.09,
+            "date": "2023-03-18"
+          },
+          {
+            "year": 2024,
+            "value": 7.03,
+            "date": "2024-02-20"
+          }
+        ],
+        "years_at_or_above": {
+          "4": [
+            2017,
+            2020,
+            2022,
+            2024
+          ],
+          "8": []
+        }
+      },
+      {
+        "id": "heron",
+        "name": "Heron Reef (south)",
+        "lat": -23.4,
+        "lon": 152.0,
+        "yearly_max": [
+          {
+            "year": 2003,
+            "value": 0.0,
+            "date": "2003-01-01"
+          },
+          {
+            "year": 2004,
+            "value": 2.75,
+            "date": "2004-03-01"
+          },
+          {
+            "year": 2005,
+            "value": 0.0,
+            "date": "2005-01-01"
+          },
+          {
+            "year": 2006,
+            "value": 2.55,
+            "date": "2006-01-27"
+          },
+          {
+            "year": 2007,
+            "value": 0.0,
+            "date": "2007-01-01"
+          },
+          {
+            "year": 2008,
+            "value": 0.0,
+            "date": "2008-01-01"
+          },
+          {
+            "year": 2009,
+            "value": 0.0,
+            "date": "2009-01-01"
+          },
+          {
+            "year": 2010,
+            "value": 0.34,
+            "date": "2010-02-24"
+          },
+          {
+            "year": 2011,
+            "value": 0.0,
+            "date": "2011-01-01"
+          },
+          {
+            "year": 2012,
+            "value": 0.0,
+            "date": "2012-01-01"
+          },
+          {
+            "year": 2013,
+            "value": 0.0,
+            "date": "2013-01-01"
+          },
+          {
+            "year": 2014,
+            "value": 0.0,
+            "date": "2014-01-01"
+          },
+          {
+            "year": 2015,
+            "value": 1.34,
+            "date": "2015-02-02"
+          },
+          {
+            "year": 2016,
+            "value": 0.0,
+            "date": "2016-01-01"
+          },
+          {
+            "year": 2017,
+            "value": 2.69,
+            "date": "2017-03-25"
+          },
+          {
+            "year": 2018,
+            "value": 0.0,
+            "date": "2018-01-01"
+          },
+          {
+            "year": 2019,
+            "value": 0.0,
+            "date": "2019-01-01"
+          },
+          {
+            "year": 2020,
+            "value": 5.8,
+            "date": "2020-03-09"
+          },
+          {
+            "year": 2021,
+            "value": 0.0,
+            "date": "2021-01-01"
+          },
+          {
+            "year": 2022,
+            "value": 0.33,
+            "date": "2022-03-09"
+          },
+          {
+            "year": 2023,
+            "value": 1.27,
+            "date": "2023-03-17"
+          },
+          {
+            "year": 2024,
+            "value": 11.59,
+            "date": "2024-03-08"
+          }
+        ],
+        "years_at_or_above": {
+          "4": [
+            2020,
+            2024
+          ],
+          "8": [
+            2024
+          ]
+        }
+      }
+    ],
+    "periods": [
+      {
+        "years": [
+          2003,
+          2013
+        ],
+        "reef_years_at_or_above": {
+          "4": 1,
+          "8": 0
+        },
+        "reef_years_measured": 55,
+        "reef_years_missing": 0
+      },
+      {
+        "years": [
+          2014,
+          2024
+        ],
+        "reef_years_at_or_above": {
+          "4": 20,
+          "8": 6
+        },
+        "reef_years_measured": 55,
+        "reef_years_missing": 0
+      }
+    ],
+    "method": "Yearly maximum of the daily degree heating weeks, January to June, at each reef point.",
+    "source": {
+      "name": "NOAA Coral Reef Watch daily degree heating weeks (not NASA)",
+      "url": "https://coastwatch.noaa.gov/erddap/griddap/noaacrwdhwDaily.html"
+    }
+  }
+}

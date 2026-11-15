@@ -58,7 +58,7 @@ purpose — an honest incomplete case beats a broken complete one.
 ## Routes
 
 - `/` cover page (server component, reads `public/sites/*/site.json` and `layers.json` at build time)
-- `/story/<id>` story mode for `lake_mead`, `aletsch`, `donana` (`/story` redirects to Lake Mead)
+- `/story/<id>` story mode for `lake_mead`, `aletsch`, `donana`, `great_barrier_reef` (`/story` redirects to Lake Mead)
 - `/explore` click any point, calls the API's `/sweep`
 
 ## Code map

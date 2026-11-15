@@ -20,6 +20,23 @@ export interface TimelineProps {
 const W = 1000
 const H = 120
 const PAD_Y = 14
+/** Smallest gap between two threshold labels, as a share of the plot height (16 px text in a ~62 px plot). */
+const LABEL_GAP = 0.28
+
+/**
+ * Label positions (share of plot height, 0 = top) for the threshold lines, nudged
+ * apart so two close thresholds never print on top of each other.
+ */
+function labelTops(fracs: number[]): number[] {
+  const order = fracs.map((f, i) => ({ f, i })).sort((a, b) => a.f - b.f)
+  const tops = order.map((o) => o.f)
+  for (let k = 1; k < tops.length; k++) tops[k] = Math.max(tops[k], tops[k - 1] + LABEL_GAP)
+  const over = tops.length ? tops[tops.length - 1] - 1 : 0
+  if (over > 0) for (let k = 0; k < tops.length; k++) tops[k] -= over
+  const out = new Array<number>(fracs.length)
+  order.forEach((o, k) => (out[o.i] = tops[k]))
+  return out
+}
 
 /**
  * The year scrubber is the chart: the selected record, year by year, with the
@@ -28,8 +45,15 @@ const PAD_Y = 14
  */
 export function Timeline({ first, last, year, playing, variable, mapFollows, mapKm, onScrub, onToggle }: TimelineProps) {
   const fp = variable ? footprintOf(variable.id, variable.footprint) : null
+  const label =
+    (variable ? variable.label : 'No record selected') +
+    (fp ? ` · ${fp.perPixel ? 'average of the map' : `over ${fp.words}`}` : '') +
+    (mapFollows ? ' · the map follows the year' : '')
   const series = variable?.series ?? []
-  const values = series.map((p) => p.value)
+  const thresholds = variable?.thresholds ?? []
+  // Thresholds join the y-domain so their lines are always on the chart.
+  const showThresholds = series.length > 0 && thresholds.length > 0
+  const values = [...series.map((p) => p.value), ...(series.length ? thresholds.map((t) => t.value) : [])]
   const min = values.length ? Math.min(...values) : 0
   const max = values.length ? Math.max(...values) : 1
   const span = max - min || 1
@@ -73,10 +97,15 @@ export function Timeline({ first, last, year, playing, variable, mapFollows, map
         {year}
       </output>
 
-      <div className="tl-chart">
+      <div className={showThresholds ? 'tl-chart tl-chart-gutter' : 'tl-chart'}>
         <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" aria-hidden="true">
           {crossesZero ? <line x1={0} x2={W} y1={y(0)} y2={y(0)} className="tl-zero" /> : null}
           {area ? <path d={area} className="tl-area" /> : null}
+          {series.length
+            ? thresholds.map((t) => (
+                <line key={t.value} x1={0} x2={W} y1={y(t.value)} y2={y(t.value)} className="tl-threshold" />
+              ))
+            : null}
           {line ? <path d={line} className="tl-line" /> : null}
           <line x1={x(year)} x2={x(year)} y1={0} y2={H} className="tl-cursor" />
           {point ? <circle cx={x(point.year)} cy={y(point.value)} r={7} className="tl-dot" /> : null}
@@ -91,6 +120,22 @@ export function Timeline({ first, last, year, playing, variable, mapFollows, map
           aria-valuetext={`${year}${point ? `, ${variable?.label}: ${readout}` : ''}`}
           onChange={(event) => onScrub(Number(event.target.value))}
         />
+        {/* Labels sit in a gutter right of the plot, so they never cover the series. */}
+        {showThresholds
+          ? (() => {
+              const tops = labelTops(thresholds.map((t) => y(t.value) / H))
+              return thresholds.map((t, i) => (
+                <span
+                  key={t.value}
+                  className="tl-threshold-label"
+                  style={{ top: `calc((100% - 22px) * ${tops[i].toFixed(4)})` }}
+                  aria-hidden="true"
+                >
+                  {t.value} {variable?.unit}
+                </span>
+              ))
+            })()
+          : null}
         <div className="tl-ends" aria-hidden="true">
           <span>{first}</span>
           <span>{last}</span>
@@ -99,10 +144,8 @@ export function Timeline({ first, last, year, playing, variable, mapFollows, map
 
       <div className="tl-readout">
         <span className="tl-value narrow">{readout}</span>
-        <span className="tl-label">
-          {variable ? variable.label : 'No record selected'}
-          {fp ? ` · ${fp.perPixel ? 'average of the map' : `over ${fp.words}`}` : ''}
-          {mapFollows ? ' · the map follows the year' : ''}
+        <span className="tl-label" title={label}>
+          {label}
         </span>
       </div>
     </div>

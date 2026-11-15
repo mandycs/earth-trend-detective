@@ -6,10 +6,19 @@ export interface SeriesPoint {
   value: number
 }
 
+export interface Threshold {
+  value: number
+  label: string
+}
+
 export interface SiteVariable {
   id: string
+  /** "events" rows (heat-stress record) are counts, never a trend test: no verdict stamp. */
+  kind?: 'trend' | 'events'
   label: string
   unit: string
+  /** Reference lines drawn on the timeline, e.g. NOAA Coral Reef Watch alert levels. */
+  thresholds?: Threshold[]
   /** Sen's slope, units per decade. null when the series is too short. */
   sen_slope_per_decade: number | null
   p_value: number | null
@@ -41,6 +50,30 @@ export interface SiteStep {
 export interface SiteSource {
   title: string
   url: string
+}
+
+/** The reef heat-stress record (NOAA Coral Reef Watch degree heating weeks), as written by the pipeline. */
+export interface HeatStress {
+  label: string
+  unit: string
+  thresholds: Threshold[]
+  points: Array<{
+    id: string
+    name: string
+    lat: number
+    lon: number
+    yearly_max: Array<{ year: number; value: number | null; date: string | null }>
+    /** Threshold key ("4", "8") -> years at or above it. */
+    years_at_or_above: Record<string, number[]>
+  }>
+  periods: Array<{
+    years: [number, number]
+    reef_years_at_or_above: Record<string, number>
+    reef_years_measured: number
+    reef_years_missing: number
+  }>
+  method: string
+  source: SiteSource | { name: string; url: string }
 }
 
 export interface SiteAssets {
@@ -81,6 +114,7 @@ export interface Site {
   /** Variables the pipeline could not fetch, with a reason. */
   missing?: Record<string, string>
   validation?: SiteValidation | null
+  heat_stress?: HeatStress | null
 }
 
 export interface SiteValidation {

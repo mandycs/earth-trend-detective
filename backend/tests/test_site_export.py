@@ -150,6 +150,12 @@ def test_assets_only_listed_when_files_exist(tmp_path):
     assert find_assets(tmp_path / "nope")["trend"] == {}
 
 
+def test_trend_sidecar_pngs_are_not_variables(tmp_path):
+    for name in ("trend_sst.png", "trend_sst_values.png", "trend_sst_significant.png"):
+        (tmp_path / name).write_bytes(b"x")
+    assert find_assets(tmp_path)["trend"] == {"sst": "trend_sst.png"}
+
+
 def test_written_file_is_utf8_without_fake_or_nan(lake, tmp_path):
     doc = build(lake, tmp_path)
     path = write_site_json(doc, tmp_path)
