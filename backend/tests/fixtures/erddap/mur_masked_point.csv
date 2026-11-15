@@ -1,0 +1,5 @@
+time,latitude,longitude,sst
+UTC,degrees_north,degrees_east,degree_C
+2010-01-16T00:00:00Z,-19.25,146.8,NaN
+2010-02-16T00:00:00Z,-19.25,146.8,NaN
+2010-03-16T00:00:00Z,-19.25,146.8,NaN

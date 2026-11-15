@@ -1,0 +1,310 @@
+// GENERATED from backend/catalog/map_layers.yaml. Do not edit: regenerate (see docs/superpowers/plans/2026-11-15-detective-front.md, Task 6).
+import type { CatalogLayer } from './types.ts'
+
+export const LAYER_CATALOG: CatalogLayer[] = [
+  {
+    "id": "true_colour",
+    "title": "True colour (MODIS Terra)",
+    "gibs_layer": "MODIS_Terra_CorrectedReflectance_TrueColor",
+    "kind": "wmts",
+    "format": "image/jpeg",
+    "tile_matrix_set": "GoogleMapsCompatible_Level9",
+    "legend": {
+      "unit": "true colour picture",
+      "min": null,
+      "max": null
+    },
+    "dates": {
+      "start": "2000-02-24",
+      "end": "2026-11-15",
+      "step": "daily",
+      "ongoing": true
+    },
+    "zones": [
+      "any",
+      "water"
+    ],
+    "source": "NASA MODIS Terra Corrected Reflectance, via GIBS",
+    "resolution": "~250 m"
+  },
+  {
+    "id": "true_colour_viirs",
+    "title": "True colour (VIIRS Suomi NPP)",
+    "gibs_layer": "VIIRS_SNPP_CorrectedReflectance_TrueColor",
+    "kind": "wmts",
+    "format": "image/jpeg",
+    "tile_matrix_set": "GoogleMapsCompatible_Level9",
+    "legend": {
+      "unit": "true colour picture",
+      "min": null,
+      "max": null
+    },
+    "dates": {
+      "start": "2015-11-24",
+      "end": "2026-11-02",
+      "step": "daily",
+      "ongoing": true
+    },
+    "zones": [
+      "any",
+      "water"
+    ],
+    "source": "NASA VIIRS Suomi NPP Corrected Reflectance, via GIBS",
+    "resolution": "~375 m"
+  },
+  {
+    "id": "land_cover",
+    "title": "Land cover (MODIS, IGBP classes, yearly)",
+    "gibs_layer": "MODIS_Combined_L3_IGBP_Land_Cover_Type_Annual",
+    "kind": "wmts",
+    "format": "image/png",
+    "tile_matrix_set": "GoogleMapsCompatible_Level8",
+    "legend": {
+      "unit": "IGBP land cover class",
+      "min": null,
+      "max": null,
+      "colormap": "https://gibs.earthdata.nasa.gov/colormaps/v1.3/MODIS_IGBP_Land_Cover_Type.xml"
+    },
+    "dates": {
+      "start": "2001-01-01",
+      "end": "2024-01-01",
+      "step": "annual",
+      "ongoing": false
+    },
+    "zones": [
+      "any",
+      "city"
+    ],
+    "source": "NASA MODIS MCD12Q1 Land Cover Type (Aqua+Terra), via GIBS",
+    "resolution": "~500 m"
+  },
+  {
+    "id": "precipitation",
+    "title": "Precipitation rate (GPM IMERG)",
+    "gibs_layer": "IMERG_Precipitation_Rate",
+    "kind": "wmts",
+    "format": "image/png",
+    "tile_matrix_set": "GoogleMapsCompatible_Level6",
+    "legend": {
+      "unit": "mm/hr",
+      "min": 0.1,
+      "max": 53.0884,
+      "colormap": "https://gibs.earthdata.nasa.gov/colormaps/v1.3/GPM_Precipitation_Rate.xml"
+    },
+    "dates": {
+      "start": "2000-06-01",
+      "end": "2026-11-13",
+      "step": "daily",
+      "ongoing": true
+    },
+    "zones": [
+      "any"
+    ],
+    "source": "NASA GPM IMERG, via GIBS",
+    "resolution": "~10 km"
+  },
+  {
+    "id": "ndvi",
+    "title": "Vegetation greenness (NDVI, MODIS Terra, monthly)",
+    "gibs_layer": "MODIS_Terra_L3_NDVI_Monthly",
+    "kind": "wmts",
+    "format": "image/png",
+    "tile_matrix_set": "GoogleMapsCompatible_Level7",
+    "legend": {
+      "unit": "NDVI (no unit)",
+      "min": 0.0,
+      "max": 1.0,
+      "colormap": "https://gibs.earthdata.nasa.gov/colormaps/v1.3/MODIS_L3_NDVI.xml"
+    },
+    "dates": {
+      "start": "2000-03-01",
+      "end": "2026-10-01",
+      "step": "monthly",
+      "ongoing": true
+    },
+    "zones": [
+      "farmland"
+    ],
+    "source": "NASA MODIS Terra MOD13A3 Vegetation Indices, via GIBS",
+    "resolution": "~1 km"
+  },
+  {
+    "id": "lst_day",
+    "title": "Ground temperature by day (MODIS Terra, 8-day)",
+    "gibs_layer": "MODIS_Terra_L3_Land_Surface_Temp_8Day_Day",
+    "kind": "wmts",
+    "format": "image/png",
+    "tile_matrix_set": "GoogleMapsCompatible_Level7",
+    "legend": {
+      "unit": "K",
+      "min": 200.0,
+      "max": 350.0,
+      "colormap": "https://gibs.earthdata.nasa.gov/colormaps/v1.3/MODIS_Land_Surface_Temp.xml"
+    },
+    "dates": {
+      "start": "2000-02-26",
+      "end": "2026-11-01",
+      "step": "8day",
+      "ongoing": true
+    },
+    "zones": [
+      "farmland",
+      "snow",
+      "city"
+    ],
+    "source": "NASA MODIS Terra MOD11A2 Land Surface Temperature, via GIBS",
+    "resolution": "~1 km"
+  },
+  {
+    "id": "soil_moisture",
+    "title": "Root-zone soil moisture (SMAP L4)",
+    "gibs_layer": "SMAP_L4_Analyzed_Root_Zone_Soil_Moisture",
+    "kind": "wmts",
+    "format": "image/png",
+    "tile_matrix_set": "GoogleMapsCompatible_Level6",
+    "legend": {
+      "unit": "m³/m³",
+      "min": 0.0,
+      "max": 0.7,
+      "colormap": "https://gibs.earthdata.nasa.gov/colormaps/v1.3/SMAP_Analyzed_Soil_Moisture.xml"
+    },
+    "dates": {
+      "start": "2015-03-31",
+      "end": "2026-11-10",
+      "step": "daily",
+      "ongoing": true
+    },
+    "zones": [
+      "farmland"
+    ],
+    "source": "NASA SMAP L4 Soil Moisture (model value-added), via GIBS",
+    "resolution": "~9 km"
+  },
+  {
+    "id": "snow_cover",
+    "title": "Snow cover (NDSI, MODIS Terra)",
+    "gibs_layer": "MODIS_Terra_NDSI_Snow_Cover",
+    "kind": "wmts",
+    "format": "image/png",
+    "tile_matrix_set": "GoogleMapsCompatible_Level8",
+    "legend": {
+      "unit": "NDSI snow cover (0-100)",
+      "min": 0,
+      "max": 100,
+      "colormap": "https://gibs.earthdata.nasa.gov/colormaps/v1.3/MODIS_NDSI_Snow_Cover.xml"
+    },
+    "dates": {
+      "start": "2000-02-24",
+      "end": "2026-11-15",
+      "step": "daily",
+      "ongoing": true
+    },
+    "zones": [
+      "snow"
+    ],
+    "source": "NASA MODIS Terra MOD10A1 Snow Cover, via GIBS",
+    "resolution": "~500 m"
+  },
+  {
+    "id": "night_lights",
+    "title": "Night lights (Black Marble, VIIRS)",
+    "gibs_layer": "VIIRS_Black_Marble",
+    "kind": "wmts",
+    "format": "image/png",
+    "tile_matrix_set": "GoogleMapsCompatible_Level8",
+    "legend": {
+      "unit": "night-time lights picture",
+      "min": null,
+      "max": null
+    },
+    "dates": {
+      "start": "2012-01-01",
+      "end": "2016-01-01",
+      "step": "annual",
+      "ongoing": false,
+      "years": [
+        2012,
+        2016
+      ]
+    },
+    "zones": [
+      "city"
+    ],
+    "source": "NASA Black Marble (VIIRS Suomi NPP), via GIBS",
+    "resolution": "~500 m"
+  },
+  {
+    "id": "active_fires",
+    "title": "Active fires and thermal anomalies (MODIS Aqua+Terra)",
+    "gibs_layer": "MODIS_Combined_Thermal_Anomalies_All",
+    "kind": "wmts",
+    "format": "application/vnd.mapbox-vector-tile",
+    "tile_matrix_set": "GoogleMapsCompatible_Level7",
+    "legend": {
+      "unit": "fire / thermal anomaly detections",
+      "min": null,
+      "max": null
+    },
+    "dates": {
+      "start": "2002-07-04",
+      "end": "2026-11-14",
+      "step": "daily",
+      "ongoing": true
+    },
+    "zones": [
+      "fire"
+    ],
+    "source": "NASA MODIS MCD14 Thermal Anomalies and Fires, via GIBS",
+    "resolution": "~1 km"
+  },
+  {
+    "id": "sst",
+    "title": "Sea surface temperature (MUR)",
+    "gibs_layer": "GHRSST_L4_MUR_Sea_Surface_Temperature",
+    "kind": "wmts",
+    "format": "image/png",
+    "tile_matrix_set": "GoogleMapsCompatible_Level7",
+    "legend": {
+      "unit": "°C",
+      "min": 0.0,
+      "max": 32.0,
+      "colormap": "https://gibs.earthdata.nasa.gov/colormaps/v1.3/GHRSST_Sea_Surface_Temperature.xml"
+    },
+    "dates": {
+      "start": "2002-06-01",
+      "end": "2026-11-13",
+      "step": "daily",
+      "ongoing": true
+    },
+    "zones": [
+      "sea"
+    ],
+    "source": "NASA JPL MUR GHRSST L4 Sea Surface Temperature, via GIBS",
+    "resolution": "~1 km"
+  },
+  {
+    "id": "chlorophyll",
+    "title": "Chlorophyll-a (MODIS Aqua)",
+    "gibs_layer": "MODIS_Aqua_L2_Chlorophyll_A",
+    "kind": "wmts",
+    "format": "image/png",
+    "tile_matrix_set": "GoogleMapsCompatible_Level7",
+    "legend": {
+      "unit": "mg/m³",
+      "min": 0.01,
+      "max": 20.0,
+      "colormap": "https://gibs.earthdata.nasa.gov/colormaps/v1.3/MODIS_Chlorophyll.xml"
+    },
+    "dates": {
+      "start": "2002-07-04",
+      "end": "2026-11-12",
+      "step": "daily",
+      "ongoing": true
+    },
+    "zones": [
+      "sea"
+    ],
+    "source": "NASA MODIS Aqua L2 Ocean Color Chlorophyll-a, via GIBS",
+    "resolution": "~1 km"
+  }
+]

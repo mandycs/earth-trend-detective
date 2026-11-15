@@ -12,6 +12,10 @@ Method (standard trend-detection formula, Weatherhead et al. 1998, JGR 103:17149
   T_needed = (Z * sigma / (|slope| * sqrt(k)))^(2/3).
 - years_needed = ceil(T_needed - current span), at least 0.
 
+One value per year (`per_year=1`, the annual path): the slope error grows by sqrt(12 / per_year)
+for the same noise, since sum((t - mean t)^2) is about per_year * T^3 / 12, and rho is the
+year-to-year autocorrelation.
+
 Assumes the current rate continues and the noise stays the same. Returns None when there
 is no slope, too few data, or the answer is beyond MAX_YEARS (no trend in sight).
 """
@@ -27,15 +31,19 @@ Z = 1.96
 MAX_RHO = 0.95
 MAX_YEARS = 50
 MIN_POINTS = 24
+MIN_ANNUAL_POINTS = 5
 DAYS_PER_YEAR = 365.25
 
 
-def years_needed(anomalies: pd.Series, slope_per_decade: float | None) -> int | None:
-    """Extra years of monthly data needed to detect `slope_per_decade` in these anomalies."""
+def years_needed(anomalies: pd.Series, slope_per_decade: float | None, per_year: int = 12) -> int | None:
+    """Extra years of data needed to detect `slope_per_decade` in these anomalies.
+
+    `per_year` = 12 for monthly anomalies (the default), 1 for one value per year.
+    """
     if slope_per_decade is None or not math.isfinite(slope_per_decade) or slope_per_decade == 0:
         return None
     valid = anomalies.dropna()
-    if len(valid) < MIN_POINTS:
+    if len(valid) < (MIN_POINTS if per_year == 12 else MIN_ANNUAL_POINTS):
         return None
 
     t_years = (valid.index - valid.index[0]).days.to_numpy() / DAYS_PER_YEAR
@@ -46,12 +54,12 @@ def years_needed(anomalies: pd.Series, slope_per_decade: float | None) -> int | 
     if not math.isfinite(sigma) or sigma == 0:
         return 0
 
-    noise = pd.Series(detrended, index=valid.index).asfreq("MS")
+    noise = pd.Series(detrended, index=valid.index).asfreq("MS" if per_year == 12 else "YS")
     rho = noise.autocorr(lag=1)
     rho = 0.0 if not math.isfinite(rho) else min(max(rho, 0.0), MAX_RHO)
     k = (1 - rho) / (1 + rho)
 
-    t_needed = (Z * sigma / (abs(slope_per_year) * math.sqrt(k))) ** (2 / 3)
+    t_needed = (Z * sigma * math.sqrt(12 / per_year) / (abs(slope_per_year) * math.sqrt(k))) ** (2 / 3)
     span = float(t_years[-1])
     extra = max(0, math.ceil(t_needed - span))
     return extra if extra <= MAX_YEARS else None

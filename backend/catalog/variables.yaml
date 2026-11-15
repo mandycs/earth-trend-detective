@@ -119,6 +119,97 @@ variables:
     applies_to: [snow, glacier, mountain]
     drivers: [t2m, precip]
 
+  # --- Yearly values at any point (MODIS monthly layers on NASA GIBS, no auth) ---
+  # Off-case twins of the AppEEARS variables above (app/extractors/gibs_values.py):
+  # dataset = GIBS layer; every month of a year read back from the GIBS colormap (interval
+  # midpoints), averaged, then the box mean. One value per year: trend-tested on the annual
+  # path only; drivers as the twin's, but no climate split on yearly values (it needs months).
+  # Status "observed", precision one palette step.
+  - id: ndvi_gibs
+    label: Plant greenness (annual mean of monthly values)
+    definition: "How green and leafy the land looks from space, as the annual mean of monthly values from NASA's MODIS satellite pictures; higher means more plant growth."
+    role: impact
+    source: gibs
+    dataset: MODIS_Terra_L3_NDVI_Monthly   # MOD13A3, colormap MODIS_L3_NDVI
+    band: MODIS_L3_NDVI
+    units: "NDVI"
+    scale: 1.0
+    offset: 0.0
+    temporal: annual
+    resolution: "~1 km"
+    tags: [vegetation, land]
+    applies_to: [vegetated, wetland, forest, agriculture]
+    drivers: [precip, t2m, solar]
+
+  - id: lst_gibs
+    label: Daytime ground temperature (annual mean of monthly values)
+    definition: "How hot the ground surface itself is in the daytime, as the annual mean of monthly values from NASA's MODIS satellite pictures. It is not the air temperature."
+    role: impact
+    source: gibs
+    dataset: MODIS_Terra_L3_Land_Surface_Temp_Monthly_Day   # MOD11C3, colormap MODIS_Land_Surface_Temp
+    band: MODIS_Land_Surface_Temp
+    units: "°C"
+    scale: 1.0
+    offset: 0.0
+    temporal: annual
+    resolution: "~5.6 km"
+    tags: [temperature, land]
+    applies_to: [any]
+    drivers: [t2m, solar]
+
+  - id: snow_gibs
+    label: Snow cover (annual mean of monthly values)
+    definition: "The share of the ground covered by snow, as the annual mean of monthly values from NASA's MODIS pictures; unseen months are left out."
+    role: impact
+    source: gibs
+    dataset: MODIS_Terra_L3_Snow_Cover_Monthly_Average_Pct   # MOD10CM, colormap MODIS_NDSI_Snow_Cover
+    band: MODIS_NDSI_Snow_Cover
+    units: "%"
+    scale: 1.0
+    offset: 0.0
+    temporal: annual
+    resolution: "~5.6 km"
+    tags: [snow, ice]
+    applies_to: [snow, glacier, mountain]
+    drivers: [t2m, precip]
+
+  # --- Air over cities (NASA GIBS, no auth; app/extractors/gibs_values.py) ---
+  # OMI NO2 has no monthly layer on GIBS (nor a monthly product at GES DISC): the daily
+  # layer is read on 4 days a month: each month's seen days averaged, then the months
+  # (each weighs the same); a year needs 10 of 12 months with a seen day.
+  # AIRS carbon monoxide is a monthly layer; a year needs all 12 months.
+  - id: no2_omi
+    label: Nitrogen dioxide in the lower air (annual mean of daily values on 4 days a month, each month weighted equally)
+    definition: "Nitrogen dioxide, a gas given off when fuel is burned, in the air from the ground to about 10 km up, seen by NASA's OMI satellite instrument on cloud-free days."
+    role: impact
+    source: gibs
+    dataset: OMI_Nitrogen_Dioxide_Tropo_Column   # OMNO2d v004 daily, colormap OMI_Nitrogen_Dioxide_Tropo_Column
+    band: OMI_Nitrogen_Dioxide_Tropo_Column
+    units: "10^15 molecules/cm²"
+    scale: 1.0e-15
+    offset: 0.0
+    temporal: annual
+    resolution: "~25 km"
+    tags: [air, atmosphere]
+    applies_to: [city, atmosphere]
+    drivers: [precip, t2m]
+
+  - id: co_airs
+    label: Carbon monoxide in the mid air (annual mean of monthly values)
+    definition: "Carbon monoxide, a gas given off by fires and burning fuel, about 5 km up, seen by NASA's AIRS satellite; one value covers ~100 km: the region, not one city."
+    role: impact
+    source: gibs
+    dataset: AIRS_L3_Carbon_Monoxide_500hPa_Volume_Mixing_Ratio_Monthly_Day   # AIRS3STM v006, colormap AIRS_Carbon_Monoxide_Volume_Mixing_Ratio
+    band: AIRS_Carbon_Monoxide_Volume_Mixing_Ratio
+    units: "ppbv"
+    scale: 1.0
+    offset: 0.0
+    temporal: annual
+    resolution: "~100 km"
+    tags: [air, atmosphere]
+    applies_to: [city, atmosphere]
+    drivers: [precip, t2m]
+
   # --- Impact variables (GLDAS Noah monthly via Earthdata Cloud OPeNDAP, Earthdata Login) ---
   # Hydrology Data Rods and on-prem GES DISC OPeNDAP are retired (HTTP 410).
   - id: soil_moisture
@@ -246,4 +337,64 @@ variables:
     temporal: monthly
     tags: [climate, snow, water]
     applies_to: []
+    drivers: []
+
+  # --- Sea variables (NOAA CoastWatch ERDDAP griddap, no auth; app/extractors/erddap.py) ---
+  # dataset = ERDDAP dataset id, band = ERDDAP variable. One request per year, sequential.
+  # Dataset ids checked live on 2026-11-15 with the ERDDAP search:
+  #   coastwatch.pfeg.noaa.gov/erddap/search/index.csv?searchFor=chlorophyll+aqua+monthly
+  #   coastwatch.noaa.gov/erddap/search/index.csv?searchFor=degree+heating
+  - id: sst
+    label: Sea surface temperature
+    definition: "How warm the top of the sea is, averaged over each month, from NASA JPL's MUR map built from several satellites."
+    role: driver
+    source: erddap
+    dataset: jplMURSST41mday    # NASA JPL MUR SST (GHRSST L4) monthly: the primary SST product
+    band: sst
+    units: "°C"
+    scale: 1.0
+    offset: 0.0
+    temporal: monthly
+    resolution: "~1 km"
+    tags: [climate, temperature, sea]
+    applies_to: [ocean, coast, reef]
+    drivers: []
+
+  - id: chlorophyll
+    label: Chlorophyll in the sea (log10)
+    definition: "How much green algae colours the sea, from NASA's MODIS Aqua satellite; shown as a log10 value, so +1 means ten times more."
+    role: impact
+    source: erddap
+    # query "chlorophyll aqua monthly": erdMH1chlamday_R2022SQ = MODIS Aqua L3SMI 4 km, R2022
+    # science quality, monthly composite. Trend on log10 (transform); clipped to the study period.
+    dataset: erdMH1chlamday_R2022SQ
+    band: chlor_a
+    units: "log10(mg/m³)"
+    scale: 1.0
+    offset: 0.0
+    transform: log10
+    temporal: monthly
+    resolution: "~4 km"
+    tags: [sea, water_quality]
+    applies_to: [ocean, coast, reef]
+    drivers: [sst, precip, solar]
+
+  # Heat stress: yearly maximum of NOAA Coral Reef Watch daily degree heating weeks at the
+  # point over the warm half of the year (January-June south of the equator, July-December
+  # north; query "degree heating" -> noaacrwdhwDaily, the only match; NOAA_DHW_monthly has no
+  # DHW). One value per year: trend-tested on the annual path only, offered on reefs.
+  - id: dhw
+    label: Heat stress on corals (degree heating weeks, NOAA, not NASA)
+    definition: "How much heat has built up in the sea over the last 12 weeks, the yearly peak from NOAA Coral Reef Watch; 4 or more stresses corals."
+    role: driver
+    source: erddap
+    dataset: noaacrwdhwDaily
+    band: degree_heating_week
+    units: "°C-weeks"
+    scale: 1.0
+    offset: 0.0
+    temporal: annual
+    resolution: "~5 km"
+    tags: [sea, temperature, heat_stress]
+    applies_to: [reef]
     drivers: []

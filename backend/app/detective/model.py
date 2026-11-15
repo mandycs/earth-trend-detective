@@ -36,6 +36,6 @@ def make_chat_model() -> BaseChatModel | None:
             api_key=or_key,
             timeout=TIMEOUT_S,
             max_retries=MAX_RETRIES,
-            default_headers={"X-Title": "Earth Trend Detective"},
+            default_headers={"X-Title": "Alibi"},
         )
     return None

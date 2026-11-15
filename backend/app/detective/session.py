@@ -66,6 +66,7 @@ class Session:
             bbox=tuple(float(v) for v in p["bbox"]),
             tags=tuple(p.get("tags") or ()),
             site_id=p.get("site_id"),
+            water_share=p.get("water_share"),
         )
         series: dict[str, pd.Series] = {}
         ledger = Ledger.from_state(state["ledger"])

@@ -11,7 +11,8 @@ from typing import Literal, NamedTuple
 
 from pydantic import BaseModel, Field
 
-from app.detective.tools import analysis, case_board, context, data, mapping
+from app.detective.tools import analysis, case_board, context, data, mapping, water, where
+from app.extractors import water_extent as wx
 
 
 class ToolSpec(NamedTuple):
@@ -71,6 +72,15 @@ class SatellitePictureArgs(BaseModel):
 
 class SolvedCaseArgs(BaseModel):
     site_id: str = Field(description="Id of a solved case, e.g. 'lake_mead'.")
+
+
+class TrendMapArgs(BaseModel):
+    var_id: str = Field(description="Variable id from list_variables with a gridded source (sea temperature, chlorophyll, GIBS yearly layers).")
+
+
+class WaterExtentArgs(BaseModel):
+    year_a: int | None = Field(default=None, description=f"First year (default: {wx.FIRST_YEAR}, the start of the water maps).")
+    year_b: int | None = Field(default=None, description="Last year (default: the end of the investigation period).")
 
 
 class YearsNeededArgs(BaseModel):
@@ -238,6 +248,24 @@ TOOLS: dict[str, ToolSpec] = {
         "by the climate we measured, plus the case caveats. Already corrected inside the case; it logs "
         "no new tests. Use it to compare with a similar place, not as evidence about this place.",
         SolvedCaseArgs,
+    ),
+    "trend_map": ToolSpec(
+        where.trend_map,
+        "Shows WHERE a variable changes around this place: a map of the trend per pixel (slope per decade), "
+        "put on the map with its legend. Pixels without a clear trend on their own are faded; that is a picture, "
+        "not a test. Returns share_significant (quote it only as the 'share of the area with a clear trend'), "
+        "median_slope_per_decade and ONE trend test on the median over the map area, corrected like every test "
+        "(it counts as one test). Only for variables with a gridded source; others answer not_available.",
+        TrendMapArgs,
+    ),
+    "water_extent": ToolSpec(
+        water.water_extent,
+        f"Measures the open-water area (km²) in this place's box for each year, at {wx.RESOLUTION}, from NASA "
+        f"OPERA water maps of Landsat and Sentinel-2 scenes (one clear scene a month, yearly median; from "
+        f"{wx.FIRST_YEAR}, with a gap in the record that the caveat names). Use it for a reservoir or lake. Returns the yearly areas and a "
+        "series_id to pass to trend_test (one value per year). Counts every water body in the box; refused "
+        "when the box reaches the sea. Not a test; always repeat the returned caveat.",
+        WaterExtentArgs,
     ),
     "show_layer": ToolSpec(
         mapping.show_layer,

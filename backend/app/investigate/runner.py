@@ -86,7 +86,7 @@ def _land_cover(lat: float, lon: float) -> dict:
         "before": before.to_dict(),
         "after": after.to_dict(),
         "changes": landcover.share_changes(before, after),
-        "tags": list(landcover.tags_for(after.shares)),
+        "tags": list(landcover.tags_for(after.shares, lat=lat)),
         "source": landcover.SOURCE,
         "status": "analysed",
         "layer": {
