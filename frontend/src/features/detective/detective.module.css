@@ -1433,3 +1433,67 @@
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
+
+/* Suspect status is a label, not a button: small tracked key text with its icon, no box.
+   Strength reads from the icon and the ink step (supported brightest, open faintest). */
+.suspectStamp,
+.suspectSupported,
+.suspectHint,
+.suspectRuledOut,
+.suspectTrendOnly,
+.suspectOpen {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  font-stretch: normal;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.suspectSupported {
+  color: var(--ink);
+}
+
+.suspectHint {
+  color: var(--ink-2);
+}
+
+.suspectRuledOut,
+.suspectTrendOnly {
+  color: var(--ink-3);
+}
+
+.suspectOpen {
+  color: var(--ink-3);
+  font-weight: 600;
+}
+
+.suspect {
+  gap: 4px;
+}
+
+.suspectLabel {
+  font-size: 1.1rem;
+}
+
+/* "Layer and source" sits under the help link with the same quiet glass look. */
+.legendToggle {
+  min-height: 40px;
+  padding: 0 12px;
+  background: var(--glass-bg, rgba(14, 16, 18, 0.72));
+  -webkit-backdrop-filter: var(--glass-blur, blur(14px) saturate(1.3));
+  backdrop-filter: var(--glass-blur, blur(14px) saturate(1.3));
+  color: var(--ink-2);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.legendToggle:hover {
+  background: var(--glass-bg, rgba(14, 16, 18, 0.72));
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
