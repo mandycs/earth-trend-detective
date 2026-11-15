@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import json
 
 import numpy as np
@@ -175,3 +176,26 @@ def test_cli_parses_flags(monkeypatch, tmp_path):
     monkeypatch.setattr(build, "build_reef", lambda **kw: seen.update(kw) or [])
     assert build.main(["--offline", "--refresh-base", "--cache-dir", str(tmp_path)]) == 0
     assert seen == {"offline": True, "refresh_base": True, "cache_dir": tmp_path}
+
+
+def test_failed_years_reach_site_json(tmp_path):
+    from app.extractors import erddap
+
+    fakes = Fakes()
+    mur, chl = fakes.mur_year, fakes.chlorophyll_point
+
+    def mur_year(dataset, variable, bbox, start, end, stride):
+        if start == 2011:
+            raise erddap.ErddapError("502 after retries")
+        return mur(dataset, variable, bbox, start, end, stride)
+
+    def chlorophyll_point(*args):
+        series, cell = chl(*args)
+        series.attrs["missing_years"] = [2019]
+        return series, cell
+
+    fetchers = dataclasses.replace(fakes.fetchers(), mur_year=mur_year, chlorophyll_point=chlorophyll_point)
+    _build(tmp_path, fetchers)
+    doc = json.loads((tmp_path / "sites" / SITE_ID / "site.json").read_text(encoding="utf-8"))
+    assert "2011" in doc["missing"]["sst"]
+    assert "2019" in doc["missing"]["chlorophyll"]

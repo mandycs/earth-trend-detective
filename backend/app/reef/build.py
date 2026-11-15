@@ -340,7 +340,7 @@ def _run(
         written += sst.write_sst_maps(by_id[sst.SST_VAR_ID], grid, site_dir, site.bbox, start, end)
         sea = sst.box_mean_series(grid)
     with _step(5, f"chlorophyll at {CHLOROPHYLL_POINT}"):
-        chl, _chl_missing = _chlorophyll(by_id[reef_export.CHLOROPHYLL_ID], start, end, cache_dir, fetchers, offline)
+        chl, chl_missing = _chlorophyll(by_id[reef_export.CHLOROPHYLL_ID], start, end, cache_dir, fetchers, offline)
     with _step(6, f"heat stress at {len(REEF_POINTS)} reefs x {end - start + 1} years"):
         yearly = {p.id: _point_heat(p, start, end, cache_dir, fetchers, offline) for p in REEF_POINTS}
         heat = dhw.heat_stress_summary(yearly, list(REEF_POINTS), start, end)
@@ -349,7 +349,12 @@ def _run(
             heat, site.bbox, site_dir, cache_dir, None, offline=offline, fetch_day=_day_fetch(fetchers, offline)
         )
     with _step(8, "site.json"):
-        series = reef_export.ReefSeries(sst=sea, chlorophyll_log10=chl)
+        series = reef_export.ReefSeries(
+            sst=sea,
+            chlorophyll_log10=chl,
+            sst_missing_years=tuple(grid.missing_years),
+            chlorophyll_missing_years=tuple(chl_missing),
+        )
         doc = reef_export.build_reef_site_json(site, catalog, start, end, site_dir, series, heat)
         written.append(site_export.write_site_json(doc, site_dir))
     with _step(9, "layers.json"):
