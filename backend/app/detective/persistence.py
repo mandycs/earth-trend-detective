@@ -23,6 +23,7 @@ from app.detective.ledger import json_safe
 
 DEFAULT_DB = Path(__file__).resolve().parents[2] / "data" / "detective" / "detective.sqlite"
 MEMORY = ":memory:"
+SQLITE_TIMEOUT = 30.0
 
 
 def series_namespace(thread_id: str) -> tuple[str, str, str]:
@@ -73,8 +74,24 @@ def open_persistence(path: Path | str | None = None) -> tuple[BaseCheckpointSave
     With `":memory:"` (tests) the two are separate in-memory databases.
     """
     db = _db_path(path)
-    saver = SqliteSaver(sqlite3.connect(db, check_same_thread=False))
+    saver = SqliteSaver(_connect(db))
     saver.setup()
-    store = SqliteStore(sqlite3.connect(db, check_same_thread=False, isolation_level=None))
+    store = SqliteStore(_connect(db, isolation_level=None))
     store.setup()
     return saver, store
+
+
+def _connect(db: str, **kw) -> sqlite3.Connection:
+    """A connection that waits for a busy file (30 s) and, on a file, uses WAL so readers never block."""
+    conn = sqlite3.connect(db, check_same_thread=False, timeout=SQLITE_TIMEOUT, **kw)
+    if db != MEMORY:
+        conn.execute("PRAGMA journal_mode=WAL")
+    return conn
+
+
+def close_persistence(saver: BaseCheckpointSaver, store: BaseStore) -> None:
+    """Close the connections `open_persistence` opened (other savers / stores are left alone)."""
+    for holder in (saver, store):
+        conn = getattr(holder, "conn", None)
+        if isinstance(conn, sqlite3.Connection):
+            conn.close()
