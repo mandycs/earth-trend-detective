@@ -6,10 +6,11 @@ import type { MapView } from './map/mapView'
 import styles from './detective.module.css'
 
 /** Legend, source and resolution of every drawn layer. Folded by default (DESIGN: "Panels start folded"). */
-export function LayerLegend({ view }: { view: MapView }) {
+/** `flat`: the relief failed to load, so the legend drops the "Heights ×N" claim. */
+export function LayerLegend({ view, flat = false }: { view: MapView; flat?: boolean }) {
   const [open, setOpen] = useState(false)
   const panelId = useId()
-  const model = legendModel(view)
+  const model = legendModel(view, { flat })
   if (!model) return null
   return (
     <section className={styles.legend} aria-label="Layer and source">

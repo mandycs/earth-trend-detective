@@ -38,6 +38,22 @@
   color: var(--ink-2);
 }
 
+.mapWrap :global(.maplibregl-ctrl-attrib.maplibregl-compact) {
+  min-height: 44px;
+  padding-right: 44px;
+}
+
+.mapWrap :global(.maplibregl-ctrl-attrib-button) {
+  width: 44px;
+  height: 44px;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.mapWrap :global(.maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-inner) {
+  padding: 10px 0 10px 8px;
+}
+
 .mapWrap :global(.maplibregl-ctrl-attrib a) {
   color: var(--ink-2);
 }
@@ -112,7 +128,7 @@
 .legend {
   position: absolute;
   right: 76px;
-  bottom: 40px; /* clear of the attribution line */
+  bottom: 60px; /* clear of the 44 px attribution line */
   width: min(380px, calc(100% - 92px));
   display: flex;
   flex-direction: column-reverse;
@@ -234,6 +250,22 @@
   width: 3px;
   margin-left: -1.5px;
   background: var(--ink);
+}
+
+.curtainGrip {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 48px;
+  height: 48px;
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-items: center;
+  background: var(--ink);
+  color: var(--ground);
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1;
 }
 
 .curtainYear {

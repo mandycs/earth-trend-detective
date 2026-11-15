@@ -6,7 +6,7 @@ import { STYLE } from '../explore/mapStyle'
 import { curtainAriaLabel, curtainYears, drawSpecs, initialSplit } from './map/draw'
 import type { DrawSpec } from './map/draw'
 import type { CurtainView, MapView } from './map/mapView'
-import { syncSpecs } from './mapSync'
+import { addRelief, demErrorHandler, syncSpecs } from './mapSync'
 import styles from './detective.module.css'
 
 export interface CurtainCamera {
@@ -16,11 +16,18 @@ export interface CurtainCamera {
   bearing: number
 }
 
+/** Filled by CurtainMap with a function that moves its camera; the main map calls it on every `move`. */
+export type CurtainSync = { current: ((camera: CurtainCamera) => void) | null }
+
 interface Props {
   curtain: CurtainView
+  /** The camera to open on. Later moves arrive through `sync`, without a React render per frame. */
   camera: CurtainCamera
-  /** Footprints and the picked box, so they stay visible on the right of the divider too. */
+  /** Footprints and the picked box or point, so they stay visible on the right of the divider too. */
   overlays?: DrawSpec[]
+  sync?: CurtainSync
+  /** The main map lost its relief: drop it here too so both halves still line up. */
+  flat?: boolean
 }
 
 const curtainOnly = (curtain: CurtainView): MapView => ({
@@ -28,10 +35,10 @@ const curtainOnly = (curtain: CurtainView): MapView => ({
 })
 
 /**
- * The right-hand picture of a comparison: a second, non-interactive map (same style, no terrain) over the main
- * one, clipped at the divider. The main map drives its camera through `camera`.
+ * The right-hand picture of a comparison: a second, non-interactive map over the main one, clipped at the divider.
+ * Same style and the same relief as the main map, so the two halves line up at any pitch.
  */
-export function CurtainMap({ curtain, camera, overlays = [] }: Props) {
+export function CurtainMap({ curtain, camera, overlays = [], sync, flat = false }: Props) {
   const container = useRef<HTMLDivElement>(null)
   const map = useRef<MlMap | null>(null)
   const registry = useRef(new Map<string, string>())
@@ -43,6 +50,14 @@ export function CurtainMap({ curtain, camera, overlays = [] }: Props) {
     cameraRef.current = camera
     map.current?.jumpTo(camera)
   }, [camera])
+
+  useEffect(() => {
+    if (!sync) return
+    sync.current = (c) => map.current?.jumpTo(c)
+    return () => {
+      sync.current = null
+    }
+  }, [sync])
 
   useEffect(() => {
     let cancelled = false
@@ -57,7 +72,15 @@ export function CurtainMap({ curtain, camera, overlays = [] }: Props) {
         maxPitch: 85,
         ...cameraRef.current,
       })
-      m.on('load', () => !cancelled && setReady(true))
+      const onDem = demErrorHandler(m, () => {})
+      m.on('error', (e) => {
+        onDem((e as { sourceId?: string }).sourceId)
+      })
+      m.on('load', () => {
+        if (cancelled) return
+        addRelief(m)
+        setReady(true)
+      })
       map.current = m
     })().catch(() => {
       // The main map reports load failures; a missing curtain leaves the left picture readable.
@@ -74,6 +97,11 @@ export function CurtainMap({ curtain, camera, overlays = [] }: Props) {
 
   useEffect(() => {
     const m = map.current
+    if (m && ready && flat && m.getTerrain()) m.setTerrain(null)
+  }, [flat, ready])
+
+  useEffect(() => {
+    const m = map.current
     if (!m || !ready) return
     syncSpecs(m, [...drawSpecs(curtainOnly(curtain), 'curtain', null), ...overlays], registry.current)
   }, [curtain, overlays, ready])
@@ -82,7 +110,9 @@ export function CurtainMap({ curtain, camera, overlays = [] }: Props) {
   return (
     <div className={styles.curtain}>
       <div ref={container} className={styles.curtainMap} style={{ clipPath: `inset(0 0 0 ${split}%)` }} aria-hidden="true" />
-      <div className={styles.curtainDivider} style={{ left: `${split}%` }} aria-hidden="true" />
+      <div className={styles.curtainDivider} style={{ left: `${split}%` }} aria-hidden="true">
+        <span className={styles.curtainGrip}>↔</span>
+      </div>
       <p className={`${styles.curtainYear} ${styles.curtainYearLeft}`}>
         <span aria-hidden="true">◀ </span>
         {yearA}

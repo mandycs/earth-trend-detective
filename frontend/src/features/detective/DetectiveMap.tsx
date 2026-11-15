@@ -1,18 +1,17 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Map as MlMap, Marker } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { STYLE } from '../explore/mapStyle'
-import { TERRAIN } from './map/catalog'
-import { OPPOSITE_CORNER_HINT, drawSpecs, fitPadding, overlaySpecs, pickStep } from './map/draw'
+import { OPPOSITE_CORNER_HINT, drawSpecs, fitPadding, mapLabel, overlaySpecs, pickStep } from './map/draw'
 import type { Corner, PickMode, PickResult } from './map/draw'
 import type { MapView } from './map/mapView'
 import type { Target } from './request'
 import { CurtainMap } from './CurtainMap'
-import type { CurtainCamera } from './CurtainMap'
+import type { CurtainCamera, CurtainSync } from './CurtainMap'
 import { LayerLegend } from './LayerLegend'
-import { syncSpecs } from './mapSync'
+import { addRelief, demErrorHandler, syncSpecs } from './mapSync'
 import styles from './detective.module.css'
 
 export type { PickMode } from './map/draw'
@@ -26,7 +25,7 @@ export interface DetectiveMapProps {
   reducedMotion: boolean
 }
 
-const DEM = 'det-dem'
+const BASE = 'earth'
 const FLY_MS = 2200
 const MAX_FIT_ZOOM = 12
 export const FLAT_NOTE = 'Relief could not load; the map is flat.'
@@ -44,25 +43,27 @@ export default function DetectiveMap({ view, target, pickMode, pickEnabled, onPi
   const cornerMarker = useRef<Marker | null>(null)
   const registry = useRef(new Map<string, string>())
   const loaded = useRef(false)
+  const baseTileSeen = useRef(false)
   const lastSeq = useRef<number | null>(null)
   const pending = useRef<Corner | null>(null)
+  const curtainSync: CurtainSync = useRef<((c: CurtainCamera) => void) | null>(null)
   // Read inside maplibre handlers, which are bound once.
-  const live = useRef({ onPick, pickMode, pickEnabled, curtain: view.curtain !== null })
+  const live = useRef({ onPick, pickMode, pickEnabled })
   const [ready, setReady] = useState(false)
   const [failed, setFailed] = useState(false)
   const [flat, setFlat] = useState(false)
   const [waitingCorner, setWaitingCorner] = useState(false)
-  const [camera, setCamera] = useState<CurtainCamera | null>(null)
+  const [curtainCamera, setCurtainCamera] = useState<CurtainCamera | null>(null)
 
   useEffect(() => {
-    live.current = { onPick, pickMode, pickEnabled, curtain: view.curtain !== null }
-  }, [onPick, pickMode, pickEnabled, view.curtain])
+    live.current = { onPick, pickMode, pickEnabled }
+  }, [onPick, pickMode, pickEnabled])
 
-  const clearPending = () => {
+  const clearPending = useCallback(() => {
     pending.current = null
     cornerMarker.current?.remove()
     setWaitingCorner(false)
-  }
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -76,28 +77,27 @@ export default function DetectiveMap({ view, target, pickMode, pickEnabled, onPi
         zoom: 1.6,
         maxPitch: 85,
         attributionControl: { compact: true },
+        locale: { 'Map.Title': mapLabel(live.current.pickEnabled, live.current.pickMode) },
       })
       m.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'bottom-right')
+      const onDem = demErrorHandler(m, () => !cancelled && setFlat(true))
       m.on('load', () => {
         if (cancelled) return
         loaded.current = true
-        m.addSource(DEM, {
-          type: 'raster-dem', tiles: [TERRAIN.url], encoding: TERRAIN.encoding, maxzoom: TERRAIN.maxzoom, tileSize: 256,
-          attribution: TERRAIN.attribution,
-        })
-        m.setTerrain({ source: DEM, exaggeration: TERRAIN.exaggeration })
+        addRelief(m)
         setReady(true)
+      })
+      m.on('data', (e) => {
+        const ev = e as { sourceId?: string; tile?: unknown }
+        if (ev.sourceId === BASE && ev.tile) baseTileSeen.current = true
       })
       m.on('error', (e) => {
         const sourceId = (e as { sourceId?: string }).sourceId
-        if (sourceId === DEM) {
-          if (m.getTerrain()) m.setTerrain(null)
-          setFlat(true)
-          return
-        }
-        // A data layer's missing tile is not a broken map; the style or the base picture is.
-        if (sourceId?.startsWith('det-')) return
-        if (!loaded.current || sourceId === 'earth') setFailed(true)
+        if (onDem(sourceId)) return
+        // Fatal only when the style never loaded, or the base picture has never shown a single tile.
+        // Missing data tiles (det-*) and a stray base tile after the first one are not a broken map.
+        if (!sourceId && !loaded.current) setFailed(true)
+        else if (sourceId === BASE && !baseTileSeen.current) setFailed(true)
       })
       m.on('click', (e) => {
         const { onPick: pick, pickMode: mode, pickEnabled: enabled } = live.current
@@ -113,9 +113,8 @@ export default function DetectiveMap({ view, target, pickMode, pickEnabled, onPi
         }
         if (step.result) pick(step.result)
       })
-      m.on('move', () => {
-        if (live.current.curtain) setCamera(cameraOf(m))
-      })
+      // The curtain follows imperatively, in the same frame, with no React render per move.
+      m.on('move', () => curtainSync.current?.(cameraOf(m)))
       marker.current = new maplibregl.Marker({ color: '#e9ecee' })
       const dot = document.createElement('div')
       dot.className = styles.cornerDot
@@ -128,18 +127,23 @@ export default function DetectiveMap({ view, target, pickMode, pickEnabled, onPi
       map.current?.remove()
       map.current = null
       loaded.current = false
+      baseTileSeen.current = false
       lastSeq.current = null
       reg.clear()
       setReady(false)
     }
   }, [])
 
-  // Cursor, and a half-drawn box is dropped when picking stops or the mode changes.
+  // Cursor and accessible name; a half-drawn box is dropped when picking stops or the mode changes.
   useEffect(() => {
     const m = map.current
-    if (m && ready) m.getCanvas().style.cursor = pickEnabled ? 'crosshair' : 'default'
+    if (m && ready) {
+      const canvas = m.getCanvas()
+      canvas.style.cursor = pickEnabled ? 'crosshair' : 'default'
+      canvas.setAttribute('aria-label', mapLabel(pickEnabled, pickMode))
+    }
     clearPending()
-  }, [pickEnabled, pickMode, ready])
+  }, [pickEnabled, pickMode, ready, clearPending])
 
   useEffect(() => {
     if (!waitingCorner) return
@@ -148,7 +152,7 @@ export default function DetectiveMap({ view, target, pickMode, pickEnabled, onPi
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [waitingCorner])
+  }, [waitingCorner, clearPending])
 
   // Data layers, footprints and the picked box.
   useEffect(() => {
@@ -185,24 +189,21 @@ export default function DetectiveMap({ view, target, pickMode, pickEnabled, onPi
     )
   }, [cam, ready, reducedMotion])
 
-  // The curtain follows the main camera from the moment it opens.
+  // The camera the curtain opens on; after that it follows through `curtainSync`.
   const curtainOn = view.curtain !== null
   useEffect(() => {
     const m = map.current
-    setCamera(curtainOn && m && ready ? cameraOf(m) : null)
+    setCurtainCamera(curtainOn && m && ready ? cameraOf(m) : null)
   }, [curtainOn, ready])
 
-  const overlays = useMemo(() => overlaySpecs(view, target), [view, target])
+  const overlays = useMemo(() => overlaySpecs(view, target, { point: true }), [view, target])
 
   return (
     <div className={styles.mapWrap}>
-      <div
-        ref={container}
-        className={styles.map}
-        role="application"
-        aria-label={pickEnabled ? (pickMode === 'box' ? 'Globe. Tap two corners to draw a box.' : 'Globe. Tap a place to investigate it.') : 'Globe showing the investigation.'}
-      />
-      {view.curtain && camera ? <CurtainMap curtain={view.curtain} camera={camera} overlays={overlays} /> : null}
+      <div ref={container} className={styles.map} />
+      {view.curtain && curtainCamera ? (
+        <CurtainMap curtain={view.curtain} camera={curtainCamera} overlays={overlays} sync={curtainSync} flat={flat} />
+      ) : null}
       <div className={styles.mapNotes} aria-live="polite">
         {waitingCorner ? (
           <p className={styles.mapHint}>
@@ -217,7 +218,7 @@ export default function DetectiveMap({ view, target, pickMode, pickEnabled, onPi
           </p>
         ))}
       </div>
-      {!failed ? <LayerLegend view={view} /> : null}
+      <LayerLegend view={view} flat={flat} />
       {failed ? (
         <p className={styles.mapError} role="alert">
           {MAP_FAILED}

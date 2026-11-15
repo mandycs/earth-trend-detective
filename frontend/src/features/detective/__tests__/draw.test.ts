@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   TERRAIN_LINE, curtainAriaLabel, drawSpecs, drawnWhen, fitPadding, footprintData, imageCoordinates, initialSplit,
-  legendModel, pickStep, specLayerIds, specSignature,
+  contextDrawn, legendModel, mapLabel, overlaySpecs, pickStep, specLayerIds, specSignature,
 } from "../map/draw.ts";
 import { applyMapOp, openingView } from "../map/mapView.ts";
 import type { MapView } from "../map/mapView.ts";
@@ -15,10 +15,16 @@ const show = (layer_id: string, year: number | null = null): MapOp => ({ op: "sh
 const compare: MapOp = { op: "show_before_after", layer_id: "ndvi", year_a: 2003, year_b: 2024, before_url: null, after_url: null, bbox: null };
 const footprint: MapOp = { op: "show_footprint", source: "grace", label: "GRACE cell", size: "~300 km", bbox: [-116, 35, -113, 38], approximate: true };
 
-test("main map draws context then evidence; terrain lives elsewhere", () => {
-  const specs = drawSpecs(fold([show("ndvi", 2020)]), "main", null);
-  assert.deepEqual(specs.map((s) => s.id), ["det-context", "det-evidence"]);
-  const ev = specs[1];
+test("one coloured layer at a time: land cover is drawn alone, and leaves when evidence arrives", () => {
+  const opening = openingView(PLACE, NOW.now);
+  assert.equal(opening.context?.layerId, "land_cover");
+  assert.deepEqual(drawSpecs(opening, "main", null).map((s) => s.id), ["det-context"]);
+  assert.ok(contextDrawn(opening));
+  const withEvidence = fold([show("ndvi", 2020)]);
+  assert.equal(contextDrawn(withEvidence), false);
+  const specs = drawSpecs(withEvidence, "main", null);
+  assert.deepEqual(specs.map((s) => s.id), ["det-evidence"]);
+  const ev = specs[0];
   assert.equal(ev.kind, "raster");
   if (ev.kind === "raster") {
     assert.equal(ev.attribution, "NASA GIBS");
@@ -27,13 +33,20 @@ test("main map draws context then evidence; terrain lives elsewhere", () => {
   }
 });
 
+test("a photograph context stays under the evidence", () => {
+  const v = fold([show("true_colour"), show("ndvi", 2020)]);
+  assert.ok(contextDrawn(v));
+  assert.deepEqual(drawSpecs(v, "main", null).map((s) => s.id), ["det-context", "det-evidence"]);
+  assert.deepEqual(legendModel(v)?.entries.map((e) => e.role), ["Evidence", "Context"]);
+});
+
 test("a curtain puts its left side on the main map and only its right side on the curtain map", () => {
   const v = fold([show("ndvi", 2020), compare]);
   const main = drawSpecs(v, "main", null);
   const side = drawSpecs(v, "curtain", null);
-  assert.deepEqual(main.map((s) => s.id), ["det-context", "det-evidence"]);
+  assert.deepEqual(main.map((s) => s.id), ["det-evidence"]);
   assert.deepEqual(side.map((s) => s.id), ["det-evidence"]);
-  assert.notEqual(specSignature(main[1]), specSignature(side[0]));
+  assert.notEqual(specSignature(main[0]), specSignature(side[0]));
   assert.deepEqual(drawSpecs(fold([show("ndvi")]), "curtain", null), []);
 });
 
@@ -45,11 +58,23 @@ test("footprints are labelled approximate and the picked box is an outline; a po
   if (fp.kind === "footprint") assert.equal(fp.text, "GRACE cell · approximate");
   assert.deepEqual(specLayerIds(fp), ["det-fp-grace-edge", "det-fp-grace-label"]);
   const point = drawSpecs(v, "main", { kind: "point", lat: 1, lon: 2 });
-  assert.equal(point.filter((s) => s.kind === "outline").length, 0);
+  assert.equal(point.filter((s) => s.kind === "outline" || s.kind === "point").length, 0);
+});
+
+test("the curtain map draws a picked point as a layer", () => {
+  const specs = overlaySpecs(fold([]), { kind: "point", lat: 1, lon: 2 }, { point: true });
+  assert.deepEqual(specs, [{ id: "det-target", kind: "point", lat: 1, lon: 2 }]);
+  assert.deepEqual(specLayerIds(specs[0]), ["det-target-dot"]);
+});
+
+test("the map names what a tap does", () => {
+  assert.equal(mapLabel(false, "box"), "Globe showing the investigation.");
+  assert.equal(mapLabel(true, "box"), "Globe. Tap two corners to draw a box.");
+  assert.equal(mapLabel(true, "point"), "Globe. Tap a place to investigate it.");
 });
 
 test("signature ignores opacity", () => {
-  const a = drawSpecs(fold([show("ndvi", 2020)]), "main", null)[1];
+  const a = drawSpecs(fold([show("ndvi", 2020)]), "main", null)[0];
   const b = { ...a, opacity: 0.2 };
   assert.equal(specSignature(a), specSignature(b));
 });
@@ -106,7 +131,7 @@ test("legend lists every drawn layer with source, resolution and range from the 
   const m = legendModel(fold([show("ndvi", 2020), footprint]));
   assert.ok(m);
   if (!m) return;
-  assert.deepEqual(m.entries.map((e) => e.role), ["Evidence", "Context"]);
+  assert.deepEqual(m.entries.map((e) => e.role), ["Evidence"]);
   const ev = m.entries[0];
   assert.equal(ev.range, "0–1");
   assert.equal(ev.unit, "NDVI (no unit)");
@@ -116,6 +141,8 @@ test("legend lists every drawn layer with source, resolution and range from the 
   assert.equal(m.terrain, "Relief: AWS Terrain Tiles (Mapzen), not a NASA product · Heights ×1.5");
   assert.equal(TERRAIN_LINE, m.terrain);
   assert.equal(m.curtain, null);
+  assert.equal(legendModel(fold([show("ndvi", 2020)]), { flat: true })?.terrain, "Relief: AWS Terrain Tiles (Mapzen), not a NASA product");
+  assert.deepEqual(legendModel(openingView(PLACE, NOW.now))?.entries.map((e) => e.role), ["Context"]);
 });
 
 test("legend shows the curtain's two years and no range when a bound is missing", () => {

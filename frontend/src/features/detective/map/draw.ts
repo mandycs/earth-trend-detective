@@ -13,7 +13,8 @@ export type DrawSpec =
   | { id: string; kind: "raster"; tiles: string[]; maxzoom: number; opacity: number; attribution: string }
   | { id: string; kind: "image"; url: string; bbox: Bbox; opacity: number; attribution: string }
   | { id: string; kind: "footprint"; bbox: Bbox; text: string }
-  | { id: string; kind: "outline"; bbox: Bbox };
+  | { id: string; kind: "outline"; bbox: Bbox }
+  | { id: string; kind: "point"; lat: number; lon: number };
 
 export type MapSide = "main" | "curtain";
 
@@ -26,14 +27,33 @@ function layerSpec(id: string, lv: LayerView): DrawSpec {
   return { id, kind: "image", url: lv.render.url, bbox: [...lv.render.bbox] as Bbox, opacity: lv.opacity, attribution: lv.source };
 }
 
-/** The vectors drawn on both maps: data-cell footprints, then the picked box. */
-export function overlaySpecs(view: MapView, target: Target | null): DrawSpec[] {
+/**
+ * The vectors drawn on both maps: data-cell footprints, then the picked box. The main map shows a picked point as a
+ * DOM marker; the curtain map asks for it as a layer (`point: true`) so it stays visible right of the divider.
+ */
+export function overlaySpecs(view: MapView, target: Target | null, opts: { point?: boolean } = {}): DrawSpec[] {
   const out: DrawSpec[] = view.footprints.map((fp) => ({
     id: `${DRAW_PREFIX}fp-${slug(fp.source)}`, kind: "footprint" as const, bbox: [...fp.bbox] as Bbox,
     text: `${fp.label} · approximate`,
   }));
   if (target && target.kind !== "point") out.push({ id: `${DRAW_PREFIX}target`, kind: "outline", bbox: [...target.bbox] as Bbox });
+  if (target && target.kind === "point" && opts.point) {
+    out.push({ id: `${DRAW_PREFIX}target`, kind: "point", lat: target.lat, lon: target.lon });
+  }
   return out;
+}
+
+/** Context layers that are pictures, not coloured data: they may sit under one evidence layer. */
+const PICTURE_CONTEXT: ReadonlySet<string> = new Set(["true_colour", "true_colour_viirs", "base", "base_hq", "hillshade"]);
+
+/**
+ * One coloured layer at a time (DESIGN.md): a coloured context (land cover) is drawn only while nothing else is;
+ * a photograph or relief context stays under the evidence or the curtain.
+ */
+export function contextDrawn(view: MapView): boolean {
+  if (!view.context) return false;
+  if (PICTURE_CONTEXT.has(view.context.layerId)) return true;
+  return !view.evidence && !view.curtain;
 }
 
 /**
@@ -43,7 +63,7 @@ export function overlaySpecs(view: MapView, target: Target | null): DrawSpec[] {
 export function drawSpecs(view: MapView, side: MapSide, target: Target | null): DrawSpec[] {
   const out: DrawSpec[] = [];
   if (side === "main") {
-    if (view.context) out.push(layerSpec(`${DRAW_PREFIX}context`, view.context));
+    if (view.context && contextDrawn(view)) out.push(layerSpec(`${DRAW_PREFIX}context`, view.context));
     const top = view.curtain ? view.curtain.left : view.evidence;
     if (top) out.push(layerSpec(`${DRAW_PREFIX}evidence`, top));
   } else if (view.curtain) {
@@ -63,6 +83,8 @@ export function specSignature(spec: DrawSpec): string {
       return `fp:${spec.bbox.join(",")}:${spec.text}`;
     case "outline":
       return `box:${spec.bbox.join(",")}`;
+    case "point":
+      return `pt:${spec.lon},${spec.lat}`;
   }
 }
 
@@ -77,6 +99,8 @@ export function specLayerIds(spec: DrawSpec): string[] {
       return [`${spec.id}-edge`, `${spec.id}-label`];
     case "outline":
       return [`${spec.id}-edge`];
+    case "point":
+      return [`${spec.id}-dot`];
   }
 }
 
@@ -177,6 +201,8 @@ function entryFor(lv: LayerView, role: string, when: string | null): LegendEntry
     key: `${role}:${lv.key}`, role, title: lv.title, when,
     unit: lg?.unit ?? null,
     range: lg && lg.min != null && lg.max != null ? `${lg.min}–${lg.max}` : null,
+    // TODO(catalog): GIBS catalog legends carry only a `colormap` XML URL (layerCatalog.generated.ts), no stops, so
+    // they get no ramp here. Copy the stops into the catalog at generation time; never invent them on the front.
     ramp: lg?.stops ?? [], labels: lg?.labels ?? [],
     source: lv.source,
     resolution: lv.resolution ? `${lv.resolution} pixels, smoothed for display` : null,
@@ -191,8 +217,17 @@ export interface LegendModel {
 
 export const TERRAIN_LINE = `${TERRAIN.attribution} · Heights ×${TERRAIN.exaggeration}`;
 
+/** DEM tile errors tolerated before the relief is dropped and the map goes flat. */
+export const DEM_ERRORS_BEFORE_FLAT = 3;
+
+/** The map's accessible name, which says what a tap does. */
+export function mapLabel(pickEnabled: boolean, mode: PickMode): string {
+  if (!pickEnabled) return "Globe showing the investigation.";
+  return mode === "box" ? "Globe. Tap two corners to draw a box." : "Globe. Tap a place to investigate it.";
+}
+
 /** Every drawn layer, top first: the evidence (or the curtain's sides), the context, then the footprints. */
-export function legendModel(view: MapView): LegendModel | null {
+export function legendModel(view: MapView, opts: { flat?: boolean } = {}): LegendModel | null {
   const entries: LegendEntry[] = [];
   let curtain: string | null = null;
   if (view.curtain) {
@@ -202,10 +237,10 @@ export function legendModel(view: MapView): LegendModel | null {
   } else if (view.evidence) {
     entries.push(entryFor(view.evidence, "Evidence", drawnWhen(view.evidence)));
   }
-  if (view.context) entries.push(entryFor(view.context, "Context", drawnWhen(view.context)));
+  if (view.context && contextDrawn(view)) entries.push(entryFor(view.context, "Context", drawnWhen(view.context)));
   const footprints = view.footprints.map((fp) => ({
     key: fp.source, text: `${fp.label} · approximate`, size: fp.size, source: fp.source,
   }));
   if (entries.length === 0 && footprints.length === 0) return null;
-  return { entries, footprints, curtain, terrain: TERRAIN_LINE };
+  return { entries, footprints, curtain, terrain: opts.flat ? TERRAIN.attribution : TERRAIN_LINE };
 }

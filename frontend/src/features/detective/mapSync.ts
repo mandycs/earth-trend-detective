@@ -1,8 +1,37 @@
 // Turns DrawSpecs into maplibre sources and layers, shared by the main map and the curtain map.
 // Same registry + signature diffing as features/investigate/InvestigateMap.tsx.
 import type { Map as MlMap } from 'maplibre-gl'
-import { bboxPolygon, footprintData, imageCoordinates, specLayerIds, specSignature } from './map/draw'
+import { TERRAIN } from './map/catalog'
+import { DEM_ERRORS_BEFORE_FLAT, bboxPolygon, footprintData, imageCoordinates, specLayerIds, specSignature } from './map/draw'
 import type { DrawSpec } from './map/draw'
+
+export const DEM = 'det-dem'
+
+/** The 3D relief: the same DEM and exaggeration on the main map and the curtain map, so both halves line up. */
+export function addRelief(m: MlMap) {
+  m.addSource(DEM, {
+    type: 'raster-dem', tiles: [TERRAIN.url], encoding: TERRAIN.encoding, maxzoom: TERRAIN.maxzoom, tileSize: 256,
+    attribution: TERRAIN.attribution,
+  })
+  m.setTerrain({ source: DEM, exaggeration: TERRAIN.exaggeration })
+}
+
+/**
+ * Counts DEM tile errors on one map. After `DEM_ERRORS_BEFORE_FLAT` the relief is dropped and `onFlat` runs once.
+ * Returns true when the error was a DEM error (handled here).
+ */
+export function demErrorHandler(m: MlMap, onFlat: () => void): (sourceId: string | undefined) => boolean {
+  let errors = 0
+  return (sourceId) => {
+    if (sourceId !== DEM) return false
+    errors += 1
+    if (errors === DEM_ERRORS_BEFORE_FLAT) {
+      if (m.getTerrain()) m.setTerrain(null)
+      onFlat()
+    }
+    return true
+  }
+}
 
 /** Below the borders and names, so labels stay on top of every data layer. */
 export const BEFORE = 'borders'
@@ -53,6 +82,19 @@ function add(m: MlMap, spec: DrawSpec, anchor: string | undefined) {
     case 'outline':
       m.addSource(spec.id, { type: 'geojson', data: bboxPolygon(spec.bbox) })
       m.addLayer({ id: `${spec.id}-edge`, type: 'line', source: spec.id, paint: { 'line-color': INK, 'line-width': 3 } }, anchor)
+      return
+    case 'point':
+      m.addSource(spec.id, {
+        type: 'geojson',
+        data: { type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [spec.lon, spec.lat] } },
+      })
+      m.addLayer(
+        {
+          id: `${spec.id}-dot`, type: 'circle', source: spec.id,
+          paint: { 'circle-radius': 9, 'circle-color': INK, 'circle-stroke-color': '#0e1012', 'circle-stroke-width': 3 },
+        },
+        anchor,
+      )
   }
 }
 
