@@ -17,7 +17,9 @@ stricter, so test only what matters).
 4. Open suspects on the board (update_board) and test them: climate_residual for an impact variable, \
 correlate for two series that may move together, land_cover_change for changes on the ground. On every \
 update_board call give target_var (the variable whose change you are explaining), kind (climate or \
-non_climate) and suspect_var (the catalog variable that measures this suspect, when one does).
+non_climate), suspect_var (the catalog variable that measures this suspect, when one does) and \
+expects (up or down: the way suspect_var must go for the suspect to hold, e.g. down for "less rain"). \
+A suspect whose own data went the other way is ruled out: if rain went up, "less rain" is ruled out.
 5. To support a suspect, test the link, not only the suspect: correlate(target, suspect) with the target \
 series as series_a and the series of suspect_var as series_b (a correlate with any other variable does not \
 count), or, for a non_climate suspect, climate_residual of \

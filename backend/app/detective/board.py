@@ -15,7 +15,14 @@ The model asks for a status; the code decides what it may show:
     but is not about the suspect, `"no test links it to <target>"` (`"no test links its own
     data to <target>"` when the suspect's own variable is unknown).
 - `ruled_out` needs an evidence test with no clear trend (verdict `unknown`) that had
-  enough years (`too_short is False`); otherwise it is shown as `open`.
+  enough years (`too_short is False`), or a trend test of the suspect's own variable going the
+  other way from the one the suspect `expects` (verdict `real` or `likely`); otherwise it is
+  shown as `open`.
+- Whatever was claimed, a suspect whose own variable has a `real` trend (corrected, enough
+  years) opposite to what it `expects` is shown as `ruled_out`, flagged
+  `downgraded = "its own data went <up|down>, not <down|up>"` ("less rain" while rain went up).
+  `expects` (up / down) is what the model gave, else read from the suspect's name ("less",
+  "lower"... -> down; "more", "warming"... -> up; none or both -> no direction rule).
 
 The target, the suspect's own variable and its kind (climate / non_climate) come from the
 model's call; when a call or a stored board has none, they are inferred: the target from the
@@ -42,6 +49,8 @@ from app.stats.verdict import REAL_Q, Verdict
 STATUSES = ("open", "supported", "hint", "ruled_out")  # what the model may ask for
 SHOWN_STATUSES = (*STATUSES, "trend_only")  # what the board may show
 KINDS = ("climate", "non_climate")
+DIRECTIONS = ("up", "down")
+OPPOSITE = "its own data went {went}, not {expected}"
 RULED_OUT_DOWNGRADE = "needs a test with enough years and no clear trend"
 NO_LINK = "no test links it to {target}"
 NO_OWN_DATA = "no test links its own data to {target}"
@@ -63,6 +72,7 @@ class Suspect:
     target_var: str | None = None  # variable whose change the suspect would explain (None: inferred)
     kind: str | None = None  # "climate" | "non_climate" (None: inferred)
     suspect_var: str | None = None  # catalog variable that measures this suspect (None: inferred)
+    expects: str | None = None  # "up" | "down": the way suspect_var must go for the suspect to hold (None: from the name)
 
 
 @cache
@@ -152,6 +162,44 @@ def _infer_kind(
     return "climate" if _label_is_climate(suspect, drivers) else "non_climate"
 
 
+_DOWN_WORDS = frozenset({
+    "less", "lower", "fewer", "drop", "drops", "dropping", "decline", "declining", "falling", "loss", "losing",
+    "shrinking", "drier", "cooler", "cooling", "reduced", "decrease", "decreasing",
+})
+_UP_WORDS = frozenset({
+    "more", "higher", "rising", "rise", "rises", "increase", "increased", "increasing", "warmer", "warming",
+    "hotter", "wetter", "gain", "gains", "growing", "extra",
+})
+
+
+def expected_direction(name: str) -> str | None:
+    """The way the suspect's own variable must go, read from its name ('less rain' -> down)."""
+    words = set(re.findall(r"[a-z]+", str(name or "").lower()))
+    down, up = bool(words & _DOWN_WORDS), bool(words & _UP_WORDS)
+    if down == up:
+        return None
+    return "down" if down else "up"
+
+
+def _contradiction(suspect: Suspect, records: Mapping[str, TestRecord], corrected: Mapping,
+                   suspect_var: str | None, target: str | None) -> tuple[str, str, str] | None:
+    """(verdict, went, expected) when a trend test of the suspect's own variable, with enough
+    years, goes against `expects`; the verdict is the strongest found ('real' before 'likely')."""
+    expected = suspect.expects if suspect.expects in DIRECTIONS else expected_direction(f"{suspect.id} {suspect.label}")
+    if expected is None or suspect_var is None or suspect_var == target:
+        return None
+    opposite = "up" if expected == "down" else "down"
+    hits = [
+        str(corrected[t][1])
+        for t, r in records.items()
+        if r.kind == "trend" and r.var_id == suspect_var and not r.too_short and str(corrected[t][2]) == opposite
+        and corrected[t][1] in (Verdict.REAL, Verdict.LIKELY)
+    ]
+    if not hits:
+        return None
+    return ("real" if "real" in hits else "likely"), opposite, expected
+
+
 def _target_label(target: str | None, ledger: Ledger, catalog: Iterable[Variable]) -> str:
     if target is None:
         return UNKNOWN_TARGET
@@ -180,11 +228,11 @@ def _link_holds(record: TestRecord, corrected_row: tuple) -> bool:
 
 # TODO: when annual-basis tests (GIBS yearly values) land, a link and the suspect's own trend
 # must share a basis (monthly anomalies vs annual means) before one may back the other.
-def _judge_supported(suspect: Suspect, tests: list[str], ledger: Ledger, corrected: Mapping, catalog) -> tuple[str, str | None]:
-    records = {t: ledger.test(t) for t in tests}
-    records = {t: r for t, r in records.items() if r is not None}
-    target = _var_id(suspect.target_var) or infer_target(ledger)
-    suspect_var = _var_id(suspect.suspect_var) or infer_suspect_var(records.values(), target)
+def _judge_supported(
+    suspect: Suspect, records: Mapping[str, TestRecord], ledger: Ledger, corrected: Mapping, catalog,
+    target: str | None, suspect_var: str | None,
+) -> tuple[str, str | None]:
+    tests = list(records)
     kind = suspect.kind if suspect.kind in KINDS else _infer_kind(suspect, records.values(), target, suspect_var, catalog)
     if any(_is_link(r, target, suspect_var, kind) and _link_holds(r, corrected[t]) for t, r in records.items()):
         return "supported", None
@@ -201,11 +249,18 @@ def _judge_supported(suspect: Suspect, tests: list[str], ledger: Ledger, correct
 
 def _judge(suspect: Suspect, ledger: Ledger, corrected: Mapping, catalog: tuple[Variable, ...]) -> Suspect:
     tests = [t for e in suspect.evidence for t in (_test_ids(e, ledger, corrected) or []) if t in corrected]
+    records = {t: r for t in dict.fromkeys(tests) if (r := ledger.test(t)) is not None}
+    target = _var_id(suspect.target_var) or infer_target(ledger)
+    suspect_var = _var_id(suspect.suspect_var) or infer_suspect_var(records.values(), target)
+    against = _contradiction(suspect, records, corrected, suspect_var, target)
     status, downgraded = suspect.claimed, None
-    if suspect.claimed == "supported":
-        status, downgraded = _judge_supported(suspect, tests, ledger, corrected, catalog)
+    if against is not None and against[0] == "real" and suspect.claimed != "ruled_out":
+        status, downgraded = "ruled_out", OPPOSITE.format(went=against[1], expected=against[2])
+    elif suspect.claimed == "supported":
+        status, downgraded = _judge_supported(suspect, records, ledger, corrected, catalog, target, suspect_var)
     elif suspect.claimed == "ruled_out":
-        if not any(corrected[t][1] == Verdict.UNKNOWN and not _too_short(ledger, t) for t in tests):
+        flat = any(corrected[t][1] == Verdict.UNKNOWN and not _too_short(ledger, t) for t in tests)
+        if not flat and against is None:
             status, downgraded = "open", RULED_OUT_DOWNGRADE
     return replace(suspect, status=status, downgraded=downgraded)
 
@@ -227,7 +282,7 @@ def _clean_ids(ids: Iterable[str] | None) -> list[str]:
 def apply_update(
     board: Mapping[str, Suspect], update: Mapping, ledger: Ledger, catalog: Iterable[Variable] | None = None
 ) -> dict[str, Suspect]:
-    """New board with `update` ({suspect, status, evidence_ids, note, label?, target_var?, kind?, suspect_var?})
+    """New board with `update` ({suspect, status, evidence_ids, note, label?, target_var?, kind?, suspect_var?, expects?})
     applied and judged."""
     suspect_id = str(update.get("suspect") or "").strip()
     if not suspect_id:
@@ -236,6 +291,7 @@ def apply_update(
     if claimed not in STATUSES:
         raise ValueError(f"unknown status {claimed!r}; use one of {', '.join(STATUSES)}")
     kind = str(update.get("kind") or "").strip() or None
+    expects = str(update.get("expects") or "").strip().lower() or None
     corrected = ledger.corrected()
     requested = _clean_ids(update.get("evidence_ids"))
     evidence = [e for e in requested if _test_ids(e, ledger, corrected) is not None]
@@ -252,6 +308,7 @@ def apply_update(
         target_var=_var_id(update.get("target_var")),
         kind=kind if kind in KINDS else None,
         suspect_var=_var_id(update.get("suspect_var")),
+        expects=expects if expects in DIRECTIONS else None,
     )
     return {**board, suspect_id: _judge(suspect, ledger, corrected, _catalog(catalog))}
 

@@ -34,7 +34,7 @@ are listed in `final-fix-report.md` next to it. In short:
 - `board {suspects, n_tests, verdicts}`. `verdicts` is `{test_id: {verdict, direction}}`, corrected over the
   whole family. A board event is also sent after every tools step that changed a verdict or added a test.
 - Each suspect in `board.suspects` is `{id, label, status, claimed, evidence, dropped, note, downgraded,
-  target_var, kind, suspect_var}`. `status` is one of `open`, `supported`, `hint`, `ruled_out` or
+  target_var, kind, suspect_var, expects}`. `status` is one of `open`, `supported`, `hint`, `ruled_out` or
   **`trend_only`** (shown as "TREND REAL · NOT LINKED"). The model can only ask for the first four; the
   code decides what is shown (`board.py`). `supported` needs an evidence test that links the suspect to the
   variable under investigation and survives the correction: a `correlate` test between the target and the
@@ -44,6 +44,12 @@ are listed in `final-fix-report.md` next to it. In short:
   `"its own trend is real, but no test links it to <target label>"`. Other `hint` reasons:
   `"fails correction over N tests"`, `"no test links it to <target label>"`, and
   `"no test links its own data to <target label>"` (when `suspect_var` is unknown).
+- **Opposite direction rules out.** `expects` (`up` / `down`, or `null`) is the way `suspect_var` must go
+  for the suspect to hold; when the model gives none it is read from the name ("less", "lower"... -> down;
+  "more", "warming"... -> up). A `trend` test of `suspect_var` in the evidence that is `real` (corrected,
+  enough years) and goes the other way shows the suspect as `ruled_out` whatever was claimed, with
+  `downgraded = "its own data went up, not down"`. A claimed `ruled_out` is also kept on a `likely`
+  opposite trend.
 - `target_var`, `kind` (`climate` / `non_climate`) and `suspect_var` are what the model gave, or `null` on
   older calls and boards. When they are `null`, the code infers them:
   - the target from the residual test, else the first trend-tested series, else `series_a` of the

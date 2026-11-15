@@ -140,6 +140,12 @@ class UpdateBoardArgs(BaseModel):
         "whenever one exists: a correlate test counts as a link only when it pairs target_var with this variable. "
         "Omit it for a suspect no catalog variable measures (it can then only be supported by the residual).",
     )
+    expects: Literal["up", "down"] | None = Field(
+        default=None,
+        description="Always give it when suspect_var is given: the way suspect_var must go for this suspect to "
+        "hold, e.g. 'down' for 'less rain', 'up' for 'warmer air'. If the suspect's own trend is real and goes "
+        "the other way, the board rules the suspect out.",
+    )
 
 
 TOOLS: dict[str, ToolSpec] = {
@@ -273,8 +279,9 @@ TOOLS: dict[str, ToolSpec] = {
         "(non_climate suspects only) a real "
         "climate_residual of target_var. A suspect whose own trend is real but has no such link is shown as "
         "'trend_only' (TREND REAL, NOT LINKED); otherwise it is shown as 'hint' with the reason. 'ruled_out' "
-        "needs a test with no clear trend and enough years, otherwise 'open'. Report the status the board "
-        "returns, not the one you asked for.",
+        "needs a test with no clear trend and enough years, or its own data going the other way from 'expects', "
+        "otherwise 'open'; a suspect whose own data really went the other way is ruled out whatever you ask. "
+        "Report the status the board returns, not the one you asked for.",
         UpdateBoardArgs,
     ),
 }
