@@ -9,8 +9,8 @@
 
 | Slot | Where | What to do |
 |---|---|---|
-| `[DEMO_URL]` | §3 | Public link to the deck at `[LIVE_URL]/deck.html` (7 slides, no login), or the 30-second video if it is recorded. PDF copy of the deck: `docs/submission/deck.pdf` (if exported). |
-| `[LIVE_URL]` / `[REPO_URL]` | §4, deck slide 7 | Deployed app and the GitHub repository (`https://github.com/mandycs/earth-trend-detective`), made public at freeze. Test both in a private window. The deployed web app must be built with `NEXT_PUBLIC_API_URL` pointing at the public API, and the API must list the web origin in `CORS_ORIGINS`. |
+| `[DEMO_URL]` | §3 | Public link to the deck at `https://alibi.sphyrnasolutions.com/deck.html` (7 slides, no login), or the 30-second video if it is recorded. PDF copy of the deck: `docs/submission/deck.pdf` (if exported). |
+| `https://alibi.sphyrnasolutions.com` / `[REPO_URL]` | §4, deck slide 7 | Deployed app and the GitHub repository (`https://github.com/mandycs/earth-trend-detective`), made public at freeze. Test both in a private window. The deployed web app must be built with `NEXT_PUBLIC_API_URL` pointing at the public API, and the API must list the web origin in `CORS_ORIGINS`. |
 | `43Segfault` | §6, deck slides 1 and 7 | Team name and member names, as registered on the Space Apps site. |
 
 ---
@@ -37,14 +37,14 @@ It stays honest by design. A checker compares every figure in the answer with th
 
 `[DEMO_URL]`
 
-Format: 7-slide deck (`frontend/public/deck.html`, served at `[LIVE_URL]/deck.html`; title and team on slide 1). Works on desktop and phone, no login.
+Format: 7-slide deck (`frontend/public/deck.html`, served at `https://alibi.sphyrnasolutions.com/deck.html`; title and team on slide 1). Works on desktop and phone, no login.
 
 ---
 
 ## 4. Link to Final Project
 
-Live app: `[LIVE_URL]`
-Recorded detective run (no API key needed): `[LIVE_URL]/detective?replay=mead`
+Live app: `https://alibi.sphyrnasolutions.com`
+Recorded detective run (no API key needed): `https://alibi.sphyrnasolutions.com/detective?replay=mead`
 Source code (Apache-2.0): `[REPO_URL]`
 
 ---
