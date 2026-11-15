@@ -83,6 +83,19 @@ REEF_SOURCES: tuple[Mapping[str, str], ...] = (
 class ReefSeries:
     sst: pd.Series  # monthly box mean, °C
     chlorophyll_log10: pd.Series  # monthly, log10(mg/m³)
+    sst_missing_years: tuple[int, ...] = ()  # MUR years whose fetch failed
+    chlorophyll_missing_years: tuple[int, ...] = ()  # chlorophyll years whose fetch failed
+
+
+def missing_text(years: Sequence[int]) -> str:
+    """Plain sentence for `site.json` `missing`: the years that could not be loaded."""
+    return f"no data for {', '.join(str(y) for y in sorted(years))} (fetch failed)"
+
+
+def reef_missing(series: ReefSeries) -> dict[str, str]:
+    """Variables with failed years -> their `missing` text; a variable without any is left out."""
+    failed = {sst.SST_VAR_ID: series.sst_missing_years, CHLOROPHYLL_ID: series.chlorophyll_missing_years}
+    return {var: missing_text(years) for var, years in failed.items() if years}
 
 
 def reef_catalog(catalog: Sequence[Variable]) -> tuple[Variable, ...]:
@@ -98,7 +111,7 @@ def reef_gather(series: ReefSeries) -> GatherFn:
     def gather(_site: Site, _catalog: Sequence[Variable], _start: int, _end: int) -> GatherResult:
         return GatherResult(
             series={sst.SST_VAR_ID: series.sst, CHLOROPHYLL_ID: series.chlorophyll_log10},
-            missing={},
+            missing=reef_missing(series),
             sources=("erddap",),
         )
 
@@ -112,20 +125,33 @@ def bbox_width_km(bbox: Sequence[float]) -> int:
     return round((east - west) * KM_PER_DEGREE * math.cos(mid))
 
 
+def _first_threshold(heat: Mapping) -> tuple[str, str]:
+    """The lower threshold as its `reef_years_at_or_above` key ("4") and as shown ("4 °C-weeks")."""
+    value = float(heat["thresholds"][0]["value"])
+    key = str(int(value)) if value.is_integer() else str(value)
+    return key, f"{value:g} {heat['unit']}"
+
+
 def _counts(heat: Mapping) -> tuple[int, list[int], int, list[int]]:
+    key, _shown = _first_threshold(heat)
     first, second = heat["periods"]
     return (
-        first["reef_years_at_or_above"]["4"],
+        first["reef_years_at_or_above"][key],
         first["years"],
-        second["reef_years_at_or_above"]["4"],
+        second["reef_years_at_or_above"][key],
         second["years"],
     )
 
 
+def _reef_years(n: int) -> str:
+    return f"{n} reef-year" if n == 1 else f"{n} reef-years"
+
+
 def dhw_note(heat: Mapping) -> str:
     a, (p0, p1), b, (q0, q1) = _counts(heat)
+    _key, shown = _first_threshold(heat)
     return (
-        "Not a trend test. Reef-years at or above 4 °C-weeks, five reefs: "
+        f"Not a trend test. Reef-years at or above {shown}, five reefs: "
         f"{a} in {p0}–{p1}, {b} in {q0}–{q1}."
     )
 
@@ -135,10 +161,11 @@ def reef_headline(sst_row: Mapping | None, heat: Mapping) -> str | None:
     if not sst_row or sst_row.get("verdict") != "real" or sst_row.get("sen_slope_per_decade") is None:
         return None
     a, (p0, p1), b, (q0, q1) = _counts(heat)
+    _key, shown = _first_threshold(heat)
     slope = format_number(sst_row["sen_slope_per_decade"])
     return (
         f"Sea temperature over the reef is going up for real ({slope} °C per decade). "
-        f"Heat stress at or above 4 °C-weeks: {a} reef-years in {p0}–{p1}, {b} in {q0}–{q1}."
+        f"Heat stress at or above {shown}: {_reef_years(a)} in {p0}–{p1}, {b} in {q0}–{q1}."
     )
 
 
@@ -231,7 +258,12 @@ def load_series(site: Site, start: int, end: int, cache_dir: Path, offline: bool
     values = raw * var.scale + var.offset
     chl = np.log10(values.where(values > 0)).astype(float)
     chl = chl[(chl.index.year >= start) & (chl.index.year <= end)].rename(CHLOROPHYLL_ID)
-    return ReefSeries(sst=sea, chlorophyll_log10=chl)
+    return ReefSeries(
+        sst=sea,
+        chlorophyll_log10=chl,
+        sst_missing_years=tuple(grid.missing_years),
+        chlorophyll_missing_years=tuple(raw.attrs.get("missing_years", ())),
+    )
 
 
 def load_heat(start: int, end: int, cache_dir: Path, offline: bool) -> dict:

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import datetime as dt
 import json
 import re
@@ -135,12 +136,62 @@ def test_headline_from_figures(tmp_path):
     doc = _doc(tmp_path)
     slope = format_number(doc["variables"][0]["sen_slope_per_decade"])
     assert f"({slope} °C per decade)" in doc["headline"]
-    assert "1 reef-years in 2003–2013, 20 in 2014–2024" in doc["headline"]
+    assert "Heat stress at or above 4 °C-weeks: 1 reef-year in 2003–2013, 20 in 2014–2024." in doc["headline"]
     assert doc["heat_stress"] == _heat()
     assert doc["vertical_exaggeration"] == 30
     assert doc["country"] == "Australia"
     assert doc["missing"] == {}
     json.dumps(doc, allow_nan=False)
+
+
+def test_headline_and_note_plural_and_threshold_from_heat():
+    heat = copy.deepcopy(_heat())
+    heat["periods"][0]["reef_years_at_or_above"]["4"] = 3
+    row = {"id": "sst", "verdict": "real", "sen_slope_per_decade": 0.25}
+    assert "at or above 4 °C-weeks: 3 reef-years in 2003–2013, 20 in 2014–2024." in reef_export.reef_headline(row, heat)
+    assert reef_export.dhw_note(_heat()) == (
+        "Not a trend test. Reef-years at or above 4 °C-weeks, five reefs: 1 in 2003–2013, 20 in 2014–2024."
+    )
+    heat["thresholds"][0]["value"] = 8.0  # the counts follow the first threshold's key
+    assert "at or above 8 °C-weeks: 0 reef-years in 2003–2013, 6 in 2014–2024." in reef_export.reef_headline(row, heat)
+
+
+def test_failed_years_are_listed_in_missing(tmp_path):
+    site = load_sites().get(SITE_ID)
+    series = reef_export.ReefSeries(
+        sst=_sst(), chlorophyll_log10=_chl(), sst_missing_years=(2019, 2011), chlorophyll_missing_years=(2007,)
+    )
+    doc = reef_export.build_reef_site_json(
+        site, load_catalog(), START, END, tmp_path / SITE_ID, series, _heat(), today=TODAY
+    )
+    assert doc["missing"] == {
+        "sst": "no data for 2011, 2019 (fetch failed)",
+        "chlorophyll": "no data for 2007 (fetch failed)",
+    }
+    only_sst = reef_export.ReefSeries(sst=_sst(), chlorophyll_log10=_chl(), sst_missing_years=(2011,))
+    assert reef_export.reef_missing(only_sst) == {"sst": "no data for 2011 (fetch failed)"}
+
+
+def test_load_series_keeps_failed_years(monkeypatch, tmp_path):
+    from app.extractors import erddap
+    from app.reef import sst
+
+    grid = sst.MurGrid(
+        times=_months(), monthly=_sst().to_numpy().reshape(-1, 1, 1), lat=np.array([-19.0]), lon=np.array([147.0]),
+        years=tuple(range(START, END + 1)), missing_years=(2011,),
+    )
+    monkeypatch.setattr(sst, "mur_grid", lambda *a, **k: grid)
+
+    def fake_point(*a, **k):
+        raw = (10 ** _chl()).rename("chlor_a")
+        raw.attrs["missing_years"] = [2019]
+        return raw, (-19.45, 147.75)
+
+    monkeypatch.setattr(erddap, "fetch_point_monthly", fake_point)
+    site = load_sites().get(SITE_ID)
+    series = reef_export.load_series(site, START, END, tmp_path, offline=True)
+    assert series.sst_missing_years == (2011,)
+    assert series.chlorophyll_missing_years == (2019,)
 
 
 def test_headline_is_none_when_sst_not_real():
