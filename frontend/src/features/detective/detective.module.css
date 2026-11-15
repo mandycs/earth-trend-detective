@@ -135,14 +135,26 @@
 
 /* legend: folded behind one text button, bottom right beside the map controls */
 
-.legend {
+.mapKeys {
   position: absolute;
   right: calc(var(--gutter) + 60px); /* beside the 48 px map controls */
   bottom: calc(var(--gutter) + 44px); /* clear of the 44 px attribution line */
   width: min(380px, calc(100% - var(--gutter) * 2 - 60px));
   display: flex;
-  flex-direction: column-reverse;
+  flex-direction: column-reverse; /* the legend at the bottom, the guide chip above it */
+  align-items: stretch;
+  gap: 8px;
   z-index: 3;
+  pointer-events: none;
+}
+
+.mapKeys > * {
+  pointer-events: auto;
+}
+
+.legend {
+  display: flex;
+  flex-direction: column-reverse;
 }
 
 .legendToggle {
@@ -1175,7 +1187,7 @@
     max-width: calc(52vw - 32px);
   }
   /* Desktop opens the attribution expanded (two lines): the legend sits above it, not on it. */
-  .legend {
+  .mapKeys {
     bottom: calc(var(--gutter) + 76px);
   }
 }
