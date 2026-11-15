@@ -2164,7 +2164,7 @@
   outline-offset: 2px;
 }
 
-.sp-fold > ul {
+.sp-fold > ul:not(.sp-vars) {
   margin: 0 0 14px;
   padding-left: 1.1em;
   display: flex;
@@ -2404,4 +2404,8 @@
   text-align: right;
   padding-right: 0;
   background: none;
+}
+
+.sp-unsettled > .sp-vars {
+  margin-bottom: 14px;
 }
