@@ -28,8 +28,8 @@ test("tool sets", () => {
 test("opening then one scene per non-map tool", () => {
   const inv = groupScenes(RUN_EVENTS);
   assert.deepEqual(inv.scenes.map((s) => s.kind), ["opening", "context", "evidence", "evidence", "ending"]);
-  assert.equal(inv.scenes[0].key, "opening");
-  assert.equal(inv.scenes[4].key, "ending");
+  assert.equal(inv.scenes[0].key, "opening-0");
+  assert.equal(inv.scenes[4].key, "ending-0");
   assert.deepEqual(inv.place, PLACE);
   assert.equal(inv.finished, true);
   assert.ok(inv.done);
@@ -37,7 +37,7 @@ test("opening then one scene per non-map tool", () => {
   assert.equal(inv.error, null);
 
   const [, ctx, ev1, ev2] = inv.scenes;
-  assert.equal(ctx.key, "toolu_a");
+  assert.equal(ctx.key, "toolu_a-0");
   assert.equal(ctx.question, "What kind of place is this?");
   assert.equal(ctx.tool?.state, "done");
   assert.equal(ctx.tool?.summary, "Done.");
@@ -82,25 +82,79 @@ test("map tool results are not shown", () => {
 });
 
 test("map-only step with a question becomes a note scene", () => {
-  const inv = groupScenes([
-    place, think("Let me look closer."), start("f", "fly_to"), flyTo,
-    think("And the board."), start("u", "update_board"), start("s", "solved_case"),
-  ]);
+  const evs = [
+    place, think("Let me look closer."), start("f", "fly_to"), start("g", "show_layer"), flyTo,
+    think("And the board."), start("u", "update_board"), doneTool("u", "update_board"),
+  ];
+  const inv = groupScenes(evs);
   assert.deepEqual(inv.scenes.map((s) => [s.key, s.kind]), [
-    ["opening", "opening"], ["note-1", "note"], ["note-2", "note"], ["s", "context"],
+    ["opening-0", "opening"], ["note-1-0", "note"], ["note-2-0", "note"],
   ]);
   assert.equal(inv.scenes[1].question, "Let me look closer.");
   assert.equal(inv.scenes[1].tool, null);
   assert.equal(inv.scenes[1].complete, true);
   assert.deepEqual(inv.scenes[1].mapOps, [flyTo.data]);
   assert.equal(inv.scenes[2].question, "And the board.");
-  assert.equal(inv.scenes[3].question, null);
+  // While the batch is still open the note is not made yet; the end of the stream closes it.
+  const open = evs.slice(0, 4);
+  assert.equal(groupScenes(open).scenes.length, 1);
+  assert.deepEqual(groupScenes(open, { ended: true }).scenes.map((s) => s.key), ["opening-0", "note-1-0"]);
+});
+
+test("a mixed batch gives the question to the real tool, with no note", () => {
+  // Lake Mead: "I'll record the two suspects on the board and read the solved case" ->
+  // update_board, update_board, solved_case.
+  const inv = groupScenes([
+    place, think("Record the suspects and read the solved case."),
+    start("u1", "update_board"), start("u2", "update_board"), start("s", "solved_case"),
+    doneTool("u1", "update_board"), doneTool("u2", "update_board"), doneTool("s", "solved_case"),
+  ]);
+  assert.deepEqual(inv.scenes.map((s) => [s.key, s.kind]), [["opening-0", "opening"], ["s-0", "context"]]);
+  assert.equal(inv.scenes[1].question, "Record the suspects and read the solved case.");
+  assert.equal(inv.scenes[1].tool?.state, "done");
+});
+
+test("two turns in one array", () => {
+  const followUp: DetEvent = { kind: "place", data: { ...PLACE, follow_up: true } };
+  const evs: DetEvent[] = [
+    ...RUN_EVENTS,
+    followUp, think("And the rain upstream?"), start("toolu_a", "get_series"), doneTool("toolu_a", "get_series"),
+    { kind: "answer", data: { text: "No clear trend.", checked: true, figures: [], source: "llm", not_measured: [] } },
+  ];
+  const inv = groupScenes(evs);
+  const keys = inv.scenes.map((s) => s.key);
+  assert.equal(new Set(keys).size, keys.length);
+  assert.deepEqual(keys.slice(5), ["opening-1", "toolu_a-1", "ending-1"]);
+  assert.deepEqual(keys.slice(0, 5), groupScenes(RUN_EVENTS).scenes.map((s) => s.key));
+  // The second turn has an answer but no done yet: it is not finished.
+  assert.equal(inv.finished, false);
+  assert.equal(inv.answer?.text, "No clear trend.");
+  // A tool left running in an earlier turn did not finish.
+  const cut = groupScenes([place, start("x", "get_series"), followUp]);
+  assert.equal(cut.scenes[1].tool?.state, "unfinished");
+});
+
+test("complete means the tool stopped; only the last scene can still change", () => {
+  const full = groupScenes(RUN_EVENTS).scenes;
+  for (let n = 1; n <= RUN_EVENTS.length; n++) {
+    const pre = groupScenes(RUN_EVENTS.slice(0, n)).scenes;
+    pre.forEach((s, i) => {
+      assert.equal(s.key, full[i].key, `prefix ${n} scene ${i} key`);
+      if (s.complete && i < pre.length - 1) assert.deepEqual(s, full[i], `prefix ${n} scene ${s.key}`);
+    });
+  }
+  // The last scene is complete once its tool is done, yet still gains the footprint op that follows.
+  const beforeOp = groupScenes(RUN_EVENTS.slice(0, 11)).scenes;
+  const lastBefore = beforeOp[beforeOp.length - 1];
+  assert.equal(lastBefore.complete, true);
+  assert.deepEqual(lastBefore.mapOps, []);
+  assert.equal(full[3].mapOps.length, 1);
 });
 
 test("agent failure becomes a note", () => {
   const inv = groupScenes([place, { kind: "tool_failed", data: { id: null, tool: "agent", reason: "The model did not answer." } }]);
   assert.equal(inv.scenes[1].kind, "note");
-  assert.equal(inv.scenes[1].key, "note-1");
+  assert.equal(inv.scenes[1].key, "note-1-0");
   assert.equal(inv.scenes[1].note, "The model did not answer.");
   assert.equal(inv.scenes[1].complete, true);
 });
@@ -119,7 +173,7 @@ test("ended stream marks running tools unfinished", () => {
 test("error ends the investigation", () => {
   const inv = groupScenes([place, start("a", "get_series"), { kind: "error", data: { message: "Lost the line." } }]);
   const last = inv.scenes[inv.scenes.length - 1];
-  assert.deepEqual([last.key, last.kind, last.note], ["error", "error", "Lost the line."]);
+  assert.deepEqual([last.key, last.kind, last.note], ["error-0", "error", "Lost the line."]);
   assert.equal(inv.error, "Lost the line.");
   assert.equal(inv.finished, true);
   assert.equal(inv.scenes[1].tool?.state, "unfinished");

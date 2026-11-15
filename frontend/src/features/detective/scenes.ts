@@ -12,7 +12,13 @@ export interface SceneTool {
 }
 export interface Scene {
   key: string; kind: SceneKind; question: string | null; tool: SceneTool | null; mapOps: MapOp[];
-  stamps: StampBeat[]; note: string | null; complete: boolean;
+  stamps: StampBeat[]; note: string | null;
+  /**
+   * The scene's tool is no longer running (or it has no tool). It does NOT mean the content is final:
+   * the last scene can still gain map ops and stamps after it is complete. Every scene before the last
+   * one that is complete never changes again.
+   */
+  complete: boolean;
 }
 export interface Investigation {
   place: PlaceEvent | null; scenes: Scene[]; board: BoardEvent | null; answer: AnswerEvent | null;
@@ -32,6 +38,15 @@ const scene = (key: string, kind: SceneKind, extra: Partial<Scene> = {}): Scene 
   key, kind, question: null, tool: null, mapOps: [], stamps: [], note: null, complete: true, ...extra,
 });
 
+/**
+ * Scene keys carry the turn index (counted from `place` events, first turn = 0), so the several turns
+ * of one thread can share one array: `opening-0`, `<tool id>-0`, `note-1-0`, `ending-1`, ...
+ *
+ * A thinking line followed by a batch of map/board tools only (no tested variable) becomes a `note`
+ * scene. The batch is the run of consecutive `tool_start`s; the note is made at the first event that is
+ * not a `tool_start` (or when the stream has ended), so a non-map tool later in the same batch takes the
+ * question instead. Once made, a note keeps its identity.
+ */
 export function groupScenes(events: readonly DetEvent[], opts: { ended?: boolean } = {}): Investigation {
   // Local, freshly built state; nothing from `events` is written to.
   const scenes: Scene[] = [];
@@ -40,8 +55,11 @@ export function groupScenes(events: readonly DetEvent[], opts: { ended?: boolean
   let answer: AnswerEvent | null = null;
   let done: DoneEvent | null = null;
   let error: string | null = null;
-  let pending: string | null = null;
+  let pending: string | null = null; // thinking text not yet given to a scene
+  let held: string | null = null; // question held by a map/board tool_start until the batch ends
   let notes = 0;
+  let turn = 0;
+  let places = 0;
 
   const last = (): Scene | undefined => scenes[scenes.length - 1];
   const findTool = (id: string): Scene | undefined => {
@@ -50,14 +68,28 @@ export function groupScenes(events: readonly DetEvent[], opts: { ended?: boolean
   };
   const note = (extra: Partial<Scene>): void => {
     notes += 1;
-    scenes.push(scene(`note-${notes}`, "note", extra));
+    scenes.push(scene(`note-${notes}-${turn}`, "note", extra));
+  };
+  const flushHeld = (): void => {
+    if (held !== null) note({ question: held });
+    held = null;
   };
 
   for (const ev of events) {
+    if (ev.kind !== "tool_start") flushHeld(); // any other event ends the batch of parallel calls
     switch (ev.kind) {
       case "place":
+        // A new turn (follow-up). The per-turn outcome fields restart; the board carries over.
+        // A new turn means the previous stream is over: its running tools did not finish.
+        for (const s of scenes) if (s.tool?.state === "running") s.tool = { ...s.tool, state: "unfinished" };
+        turn = places;
+        places += 1;
         place = ev.data;
-        scenes.push(scene("opening", "opening"));
+        answer = null;
+        done = null;
+        error = null;
+        pending = null;
+        scenes.push(scene(`opening-${turn}`, "opening"));
         break;
       case "thinking":
         pending = ev.data.text;
@@ -65,12 +97,13 @@ export function groupScenes(events: readonly DetEvent[], opts: { ended?: boolean
       case "tool_start": {
         const { id, tool, args } = ev.data;
         if (MAP_TOOLS.has(tool)) {
-          if (pending !== null) note({ question: pending });
+          if (pending !== null) held = pending;
         } else {
-          scenes.push(scene(id, CONTEXT_TOOLS.has(tool) ? "context" : "evidence", {
-            question: pending,
+          scenes.push(scene(`${id}-${turn}`, CONTEXT_TOOLS.has(tool) ? "context" : "evidence", {
+            question: pending ?? held,
             tool: { id, tool, args, state: "running", summary: null, result: null, evidenceId: null, reason: null },
           }));
+          held = null;
         }
         pending = null;
         break;
@@ -92,6 +125,8 @@ export function groupScenes(events: readonly DetEvent[], opts: { ended?: boolean
         break;
       }
       case "map": {
+        // Rule 6: a map op goes to the last scene created, even when it arrives after an earlier
+        // tool's tool_done (parallel calls); it is not matched to the tool that produced it.
         const s = last();
         if (s) s.mapOps = [...s.mapOps, ev.data];
         break;
@@ -105,20 +140,21 @@ export function groupScenes(events: readonly DetEvent[], opts: { ended?: boolean
       case "answer":
         answer = ev.data;
         pending = null;
-        scenes.push(scene("ending", "ending"));
+        scenes.push(scene(`ending-${turn}`, "ending"));
         break;
       case "done":
         done = ev.data;
         break;
       case "error":
         error = ev.data.message;
-        scenes.push(scene("error", "error", { note: ev.data.message }));
+        scenes.push(scene(`error-${turn}`, "error", { note: ev.data.message }));
         break;
     }
   }
 
   const finished = done !== null || error !== null;
   const stopped = finished || opts.ended === true;
+  if (opts.ended === true) flushHeld(); // the end of the stream also ends the last batch
   const out = scenes.map((s): Scene => {
     if (!s.tool || s.tool.state !== "running") return { ...s, complete: true };
     if (stopped) return { ...s, tool: { ...s.tool, state: "unfinished" }, complete: true };
