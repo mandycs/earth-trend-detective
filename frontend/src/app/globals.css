@@ -18,6 +18,10 @@
   --accent-press: #ffffff;
   --on-accent: var(--ground);
   --focus: var(--ink);
+  /* Nav bars only (DESIGN.md, Glass): a frosted strip that keeps text at AA over whatever passes under it. */
+  --glass-bg: rgba(14, 16, 18, 0.72);
+  --glass-blur: blur(14px) saturate(1.3);
+  --glass-line: rgba(233, 236, 238, 0.12);
 
   /* Data colours, from the pipeline's RdBu_r map: never used alone, always with words or arrows. */
   --warm: #e48066;

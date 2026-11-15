@@ -104,7 +104,11 @@ link to the challenge ("Be an Earth System Trend Detective").
 - Instrument: reading column on the left over the scrim (about 38 % wide on desktop); map controls
   bottom right; stepper or timeline along the bottom. Below 1100 px the map sits on top and the
   reading column follows.
-- No eyebrows, gradients (other than scrims), glass or decorative shadows.
+- No eyebrows, gradients (other than scrims) or decorative shadows.
+- Glass only on navigation chrome that sits over imagery or the map: nav bars, the case strip on the
+  cover, the film's play button and its small controls. Tokens `--glass-bg` (ground at 72 %),
+  `--glass-blur`, `--glass-line`. The tint carries the contrast (text ≥ 4.5:1 on it even with no
+  blur); the blur is decoration on top. Never on panels, cards or reading text.
 
 ## Map layers
 

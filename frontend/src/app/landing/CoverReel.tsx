@@ -4,6 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Wordmark } from '../../brand/Wordmark'
 import { useEffect, useRef, useState } from 'react'
+import { useSpaceToggle } from './useSpaceToggle'
 import styles from './cover.module.css'
 
 export interface ReelCase {
@@ -19,7 +20,7 @@ const SECONDS = 7
 
 /**
  * Documentary cover: the three real cases, one at a time, full screen.
- * Case names sit top centre like chapters; one subtitle; a progress line.
+ * Case names sit top center like chapters; one subtitle; a progress line.
  * Everything on screen comes from each case's site.json.
  */
 export function CoverReel({ cases, years }: { cases: ReelCase[]; years: string }) {
@@ -31,6 +32,7 @@ export function CoverReel({ cases, years }: { cases: ReelCase[]; years: string }
   const section = useRef<HTMLElement>(null)
   const [visible, setVisible] = useState(true)
   const [playing, setPlaying] = useState(true)
+  useSpaceToggle(section, () => setPlaying((p) => !p))
   // Only the picture on screen and the next one are fetched; the rest wait for their turn.
   const [warm, setWarm] = useState<ReadonlySet<number>>(() => new Set([0, 1]))
 

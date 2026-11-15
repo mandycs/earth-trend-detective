@@ -56,14 +56,20 @@
   font-size: 1rem;
   color: #fff;
   text-decoration: none;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.6); /* taste-skill-ignore: legibility over bright imagery */
 }
 
 .reelCases {
   display: flex;
   gap: 4px;
   margin: 0;
-  padding: 0;
+  padding: 4px;
   list-style: none;
+  /* Frosted strip: the case names must stay readable over a bright desert or a white glacier. */
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid rgba(255, 255, 255, 0.16);
 }
 
 .reelCase {
@@ -76,8 +82,13 @@
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase; /* taste-skill-ignore: chapter names and keys, uppercase by DESIGN.md */
-  color: rgba(255, 255, 255, 0.62);
-  transition: color 200ms var(--ease);
+  color: rgba(255, 255, 255, 0.84);
+  transition: color 200ms var(--ease), background 200ms var(--ease);
+}
+
+.reelCase:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
 }
 
 .reelCase:hover,
@@ -86,6 +97,7 @@
 }
 
 .reelCaseOn {
+  background: rgba(255, 255, 255, 0.16);
   box-shadow: inset 0 -2px 0 #fff; /* taste-skill-ignore: underline marker, not a shadow */
 }
 

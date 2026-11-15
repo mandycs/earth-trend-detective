@@ -6,13 +6,18 @@
 }
 
 .topbar {
+  position: relative;
+  z-index: 6;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
   padding: 6px var(--gutter);
   min-height: 56px;
-  background: var(--ground);
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid var(--glass-line);
 }
 
 .homeLink {
