@@ -12,8 +12,9 @@ from pathlib import Path
 
 import httpx
 import pandas as pd
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 
 from app.catalog import load_catalog
 from app.extractors.power import DEFAULT_CACHE_DIR, fetch_monthly
@@ -96,13 +97,22 @@ app.add_middleware(
 )
 
 
+# JSON answers (sweeps carry decades of monthly series) shrink several times over gzip. Starlette leaves
+# text/event-stream alone by default, so the detective's and investigator's live streams are not buffered.
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+# Lists that only change with a redeploy: a short public cache saves the round trip on every page view.
+STATIC_LIST_CACHE = "public, max-age=300"
+
+
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
 @app.get("/variables")
-def variables() -> list[dict]:
+def variables(response: Response) -> list[dict]:
+    response.headers["Cache-Control"] = STATIC_LIST_CACHE
     return [
         {"id": v.id, "label": v.label, "role": v.role, "units": v.units, "dataset": v.dataset}
         for v in load_catalog()
@@ -194,8 +204,9 @@ def sweep(
 
 
 @app.get("/sites")
-def sites() -> list[dict]:
+def sites(response: Response) -> list[dict]:
     """Story-mode sites."""
+    response.headers["Cache-Control"] = STATIC_LIST_CACHE
     return [
         {"id": s.id, "name": s.name, "bbox": list(s.bbox), "point": list(s.point), "tags": list(s.tags)}
         for s in load_sites().sites

@@ -1,5 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import Image from 'next/image'
 import Link from 'next/link'
 import { Wordmark } from '../brand/Wordmark'
 import { readCases } from '../lib/readSites'
@@ -51,7 +52,7 @@ export default function HomePage() {
         </div>
 
         <section className={styles.own} aria-labelledby="own-title">
-          <img src="/img/blue-marble.jpg" alt="" className={styles.ownImage} loading="lazy" />
+          <Image src="/img/blue-marble.jpg" alt="" className={styles.ownImage} fill sizes="100vw" />
           <div className={styles.ownShade} aria-hidden="true" />
           <div className={styles.ownText}>
             <h2 id="own-title" className={`${styles.ownTitle} narrow`}>

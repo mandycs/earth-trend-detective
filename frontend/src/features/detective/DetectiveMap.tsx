@@ -88,9 +88,19 @@ export default function DetectiveMap({ view, target, pickMode, pickEnabled, onPi
       const onResize = () => !cancelled && m.setPadding(restPadding(m.getContainer().clientWidth))
       m.on('resize', onResize)
       // Narrow screens open with the attribution folded to its button; maplibre opens it expanded.
-      m.once('idle', () => {
+      // Folding it on the same tick maplibre fills it in (not on the first idle) keeps the zoom buttons
+      // above it from jumping down after the first paint, which was most of the page's layout shift.
+      const fold = () => {
         if (cancelled || m.getContainer().clientWidth >= READING_BREAKPOINT) return
         m.getContainer().querySelector('.maplibregl-ctrl-attrib.maplibregl-compact')?.classList.remove('maplibregl-compact-show')
+      }
+      fold()
+      m.on('styledata', fold)
+      m.on('sourcedata', fold)
+      m.once('idle', () => {
+        fold()
+        m.off('styledata', fold)
+        m.off('sourcedata', fold)
       })
       const onDem = demErrorHandler(m, () => !cancelled && setFlat(true))
       m.on('load', () => {

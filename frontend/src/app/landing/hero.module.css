@@ -84,6 +84,7 @@
   .film {
     position: relative;
     height: auto;
+    aspect-ratio: 16 / 9; /* holds the film's box before the poster arrives: no jump below it */
     object-fit: contain;
   }
   .skip {
