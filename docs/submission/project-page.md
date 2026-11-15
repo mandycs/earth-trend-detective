@@ -11,8 +11,7 @@
 |---|---|---|
 | `[DEMO_URL]` | §3 | Public link to the deck at `[LIVE_URL]/deck.html` (7 slides, no login), or the 30-second video if it is recorded. PDF copy of the deck: `docs/submission/deck.pdf` (if exported). |
 | `[LIVE_URL]` / `[REPO_URL]` | §4, deck slide 7 | Deployed app and the GitHub repository (`https://github.com/mandycs/earth-trend-detective`), made public at freeze. Test both in a private window. The deployed web app must be built with `NEXT_PUBLIC_API_URL` pointing at the public API, and the API must list the web origin in `CORS_ORIGINS`. |
-| `[TEAM NAME]` | §6, deck slides 1 and 7 | Team name and member names, as registered on the Space Apps site. |
-| **Music (TODO Mandy)** | §7 and the film credits | See the TODO in §7: confirm where `video/hero-alibi/assets/music/lyria-hero.mp3` comes from and adjust the disclosure before submitting. |
+| `43Segfault` | §6, deck slides 1 and 7 | Team name and member names, as registered on the Space Apps site. |
 
 ---
 
@@ -218,9 +217,5 @@ No Space Agency Partner data was used beyond NASA's own.
 >
 > **(2) Inside the product.** A language model (Claude) runs Alibi's detective: it turns a plain question into the records that exist for a place, picks tools from a fixed menu, and turns computed values into a plain-language answer. It does not compute, does not decide significance and cannot assign a cause. A validator compares every figure in its output with the source values; on a mismatch the text is replaced by a fixed template. The interface labels model-written text.
 >
-> No image or video in this project is SI-generated. [AUDIO — see TODO below before submitting.] Model output is attributed to the model, never to NASA, and no NASA branding appears alongside it.
+> No image or video in this project is SI-generated. The background music of the films (the landing film and the web pitch film) was generated with Google Lyria (SI) and is labelled as such in the video descriptions and in the files' metadata. The 30-second submission video carries no SI music. Model output is attributed to the model, never to NASA, and no NASA branding appears alongside it.
 
-> **TODO (Mandy) — music disclosure.** The landing and pitch films use `video/hero-alibi/assets/music/lyria-hero.mp3` (the pitch cuts its first 71.2 s into `video/alibi-pitch/assets/music/pitch-71.mp3`). Its provenance is **not documented in the repo**; the file name suggests Google Lyria, i.e. possibly AI-generated. Confirm where it came from, then replace the bracket above with one of:
-> - if SI-generated: "The background music of the films was generated with Google Lyria (SI) and is labelled as such in the video description and metadata." (the rules: SI audio "must acknowledge SI generation in descriptive text and metadata", see `rules.md`);
-> - if not: "No audio in this project is SI-generated; the music is <source and licence>."
-> Do not submit with the bracket in place.
