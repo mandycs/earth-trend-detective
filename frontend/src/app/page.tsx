@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import Link from 'next/link'
+import { Wordmark } from '../brand/Wordmark'
 import { readCases } from '../lib/readSites'
 import { shortName } from '../lib/cases'
 import { chaptersFor } from '../lib/chapters'
@@ -68,7 +69,9 @@ export default function HomePage() {
       </main>
 
       <footer className={styles.footer}>
-        <p className={`${styles.footerName} wide`}>Earth Trend Detective</p>
+        <p className={`${styles.footerName} wide`}>
+          <Wordmark full />
+        </p>
         <div className={styles.footerCols}>
           <div>
             <h2>Data</h2>

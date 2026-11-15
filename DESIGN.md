@@ -1,4 +1,4 @@
-# Earth Trend Detective — design system
+# Alibi (Earth Trend Detective) — design system
 
 Accepted on 14 Nov 2026 (evening), replacing the yellow case-file direction. One system with two
 modes: **Documentary** to tell a case, **Instrument** to explore it. Visual reference for both:
@@ -53,6 +53,27 @@ instead of showing every control at once.
 
 Icon + words + fill strength, never colour alone, all in ink:
 `↓ Real` (solid ink, dark text) · `↑ Likely` (ink outline) · `? Can't tell yet` (tertiary dashed outline).
+
+## Brand
+
+Accepted on 15 Nov 2026. The product is **Alibi**; "an Earth trend detective" is its descriptor and the
+link to the challenge ("Be an Earth System Trend Detective").
+
+- **Idea.** The satellites are witnesses that saw everything; nobody told the story. Alibi checks the
+  climate's alibi for a change: is it explained by the climate we measured, or not? The answer is still
+  *a clue, not proof*.
+- **Line.** "The satellites saw it all. Nobody told the story."
+- **Symbol.** A globe used as an evidence board: pins on data points joined by a red thread that draws a
+  trend, and one pin left unconnected (the missing clue). Files in `frontend/public/brand/`:
+  `alibi-mark.svg` (full, with meridian and equator; 48 px and up), `alibi-favicon.svg` (simple, bolder;
+  below 48 px), and `-light` versions of both for light grounds. The browser icon is `src/app/icon.svg`.
+- **Wordmark.** `<Wordmark />` from `src/brand/Wordmark.tsx`: the symbol at 1.15em next to "ALIBI" in
+  Archivo wide (112 %), weight 800, uppercase, 0.04em tracking. `<Wordmark full />` where it is large.
+- **Colour.** Ink `#e9ecee` on ground `#0e1012`, thread red `#c8102e`. The red lives in the symbol only:
+  it is not an interface accent, and the "no accent colour" rule above still holds.
+- **Motion.** The sting (`video/sting`) draws the globe, drops the pins, pulls the thread and leaves the
+  last pin loose, then reveals the wordmark and the line. Silent.
+- **Never.** No NASA name or logo in the brand, no "proof" or "cause" in brand copy.
 
 ## Type
 
