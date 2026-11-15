@@ -15,6 +15,7 @@ class Place:
     bbox: tuple[float, float, float, float]  # [min_lon, min_lat, max_lon, max_lat]
     tags: tuple[str, ...] = ()
     site_id: str | None = None
+    water_share: float | None = None  # share of the land-cover box that is water; None = not profiled
 
     def as_site(self) -> Site:
         """The `Site` the fetchers expect: the solved case as configured, or a point site."""

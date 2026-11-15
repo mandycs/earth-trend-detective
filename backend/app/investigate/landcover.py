@@ -31,6 +31,15 @@ HALF_BOX_DEG = 0.1  # ~20 km box around the point
 GRID_PX = 32
 TIMEOUT_S = 20.0
 TAG_MIN_SHARE = 0.15
+WATER_CLASS = "Water"
+URBAN_CLASS = "Urban and built-up land"
+ICE_CLASS = "Permanent snow and ice"
+ICE_NEIGHBOUR_SHARE = 0.05  # Barren with at least this much ice beside it is not a desert
+POLAR_LAT = 60.0  # Open shrubland poleward of this is tundra, not desert
+ZONE_OCEAN_SHARE = 0.5
+ZONE_COAST_SHARE = 0.05
+ZONE_CITY_SHARE = 0.15
+REEF_MAX_LAT = 30.0
 
 # GIBS colormap MODIS_IGBP_Land_Cover_Type (v1.3): rgb -> (IGBP class name, catalog tags).
 CLASSES: Mapping[tuple[int, int, int], tuple[str, tuple[str, ...]]] = {
@@ -88,13 +97,46 @@ def class_shares(rgba: np.ndarray) -> dict[str, float]:
     return {name: round(n / total, 3) for name, n in counts.most_common()}
 
 
-def tags_for(shares: Mapping[str, float], min_share: float = TAG_MIN_SHARE) -> tuple[str, ...]:
-    """Catalog tags of every class covering at least `min_share` (in first-seen order)."""
+def tags_for(
+    shares: Mapping[str, float], min_share: float = TAG_MIN_SHARE, lat: float | None = None
+) -> tuple[str, ...]:
+    """Catalog tags of every class covering at least `min_share` (in first-seen order).
+
+    `desert` is withheld where it would be wrong: Barren beside permanent snow or ice is bare
+    rock around a glacier, and Open shrubland poleward of 60 degrees is tundra (Greenland, Siberia).
+    """
     by_name = {name: tags for name, tags in CLASSES.values()}
+    icy = shares.get(ICE_CLASS, 0.0) >= ICE_NEIGHBOUR_SHARE
+    polar = lat is not None and abs(lat) > POLAR_LAT
     out: list[str] = []
     for name, share in shares.items():
-        if share >= min_share:
-            out.extend(t for t in by_name.get(name, ()) if t not in out)
+        if share < min_share:
+            continue
+        for tag in by_name.get(name, ()):
+            if tag == "desert" and ((name == "Barren" and icy) or (name == "Open shrubland" and polar)):
+                continue
+            if tag not in out:
+                out.append(tag)
+    return tuple(out)
+
+
+def zone_tags(shares: Mapping[str, float], lat: float) -> tuple[str, ...]:
+    """Sea, coast, reef and city tags from the land-cover shares (see `ZONE_*` thresholds).
+
+    `ocean`: Water is at least half, or no pixel was classified (open sea has none). `coast`:
+    some water but under half. `reef`: sea or coast within 30 degrees of the equator. `city`
+    (with `atmosphere`): built-up land is at least 15 %.
+    """
+    water = shares.get(WATER_CLASS, 0.0)
+    out: list[str] = []
+    if not shares or water >= ZONE_OCEAN_SHARE:
+        out.append("ocean")
+    elif water >= ZONE_COAST_SHARE:
+        out.append("coast")
+    if out and abs(lat) <= REEF_MAX_LAT:
+        out.append("reef")
+    if shares.get(URBAN_CLASS, 0.0) >= ZONE_CITY_SHARE:
+        out += ["city", "atmosphere"]
     return tuple(out)
 
 

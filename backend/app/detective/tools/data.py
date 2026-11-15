@@ -33,6 +33,10 @@ EXTRA_DRIVER_REASON = "not_available_here: only set up for the solved cases that
 UNKNOWN_CASE_REASON = "not_available_here: this solved case is not in the site list"
 SOURCE_DOWN_REASON = "The data source did not answer. Try again in a few minutes."
 ANNUAL_PENDING_REASON = "not_available_here: one value per year; the yearly trend test is not connected yet"
+NOT_SEA_REASON = "not_available_here: a sea variable; this place is on land"
+GRACE_AT_SEA_REASON = "measures water stored on land; over open sea it is not meaningful"
+OPEN_SEA_WATER_SHARE = 0.95  # at least this much water: land-only sources are hidden
+LAND_ONLY_SOURCES = APPEEARS_SOURCES | {"gldas"}
 # Native grid of each catalog dataset (matched on the `dataset` prefix in variables.yaml).
 DATASET_RESOLUTION: tuple[tuple[str, str], ...] = (
     ("NASA POWER", "~50 km"),
@@ -125,7 +129,8 @@ def _profile(session: Session) -> dict:
     place = session.place
     try:
         cover = landcover.fetch_land_cover(place.lat, place.lon, LAND_COVER_YEARS[-1])
-        new_tags = tuple(landcover.tags_for(cover.shares))
+        new_tags = tuple(dict.fromkeys(landcover.tags_for(cover.shares, lat=place.lat) + landcover.zone_tags(cover.shares, place.lat)))
+        water_share = float(cover.shares.get(landcover.WATER_CLASS, 0.0)) if cover.shares else 1.0  # no pixels: open sea
     except Exception as exc:  # noqa: BLE001 - the place can still be investigated without land cover
         logger.warning("land cover failed at %s,%s: %s: %s", place.lat, place.lon, type(exc).__name__, exc)
         return {
@@ -137,7 +142,7 @@ def _profile(session: Session) -> dict:
             _TRANSIENT: True,
         }
     tags = tuple(dict.fromkeys(place.tags + new_tags))
-    session.place = replace(place, tags=tags)
+    session.place = replace(place, tags=tags, water_share=water_share)
     return {
         "tags": list(tags),
         "land_cover": {k: _num(v, 3) for k, v in cover.shares.items()},
@@ -151,7 +156,7 @@ def _profile(session: Session) -> dict:
 
 
 def list_variables(session: Session) -> dict:
-    args = {"tags": list(session.place.tags), "site_id": session.place.site_id}
+    args = {"tags": list(session.place.tags), "site_id": session.place.site_id, "open_sea": _open_sea(session)}
     return _through_ledger(session, "list_variables", args, lambda: _list(session))
 
 
@@ -166,13 +171,26 @@ def _list(session: Session) -> dict:
         return _not_available(SOURCE_DOWN_REASON, transient=True)
 
 
+def _open_sea(session: Session) -> bool:
+    share = session.place.water_share
+    return share is not None and share >= OPEN_SEA_WATER_SHARE
+
+
 def _rows(session: Session) -> list[dict]:
     extra_ids = _extra_driver_ids(session)
+    open_sea = _open_sea(session)
     applicable = variables_for_site(session.catalog, session.place.tags)
     opt_in = tuple(v for v in session.catalog if _is_opt_in(v) and v not in applicable)
+    off_sea = tuple(v for v in session.catalog if v.source == "erddap" and v.applies_to and v not in applicable)
     rows = []
-    for var in applicable + opt_in:
+    for var in applicable + opt_in + off_sea:
+        if open_sea and var.source in LAND_ONLY_SOURCES:
+            continue  # land models and land sensors say nothing over open sea
         reason = _unavailable_reason(session, var, extra_ids)
+        if var in off_sea:
+            reason = NOT_SEA_REASON
+        elif open_sea and var.source == "grace":
+            reason = GRACE_AT_SEA_REASON
         row = {
             "id": var.id,
             "label": var.label,
