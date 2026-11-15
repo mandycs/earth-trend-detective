@@ -134,6 +134,12 @@ class UpdateBoardArgs(BaseModel):
         "measure. A climate suspect can only be supported by a correlate test with target_var; a non_climate one "
         "also by a real climate_residual of target_var.",
     )
+    suspect_var: str | None = Field(
+        default=None,
+        description="The catalog variable that measures this suspect, e.g. 'precip' for 'less rain'. Give it "
+        "whenever one exists: a correlate test counts as a link only when it pairs target_var with this variable. "
+        "Omit it for a suspect no catalog variable measures (it can then only be supported by the residual).",
+    )
 
 
 TOOLS: dict[str, ToolSpec] = {
@@ -263,7 +269,8 @@ TOOLS: dict[str, ToolSpec] = {
         "evidence_ids that back it, a short note, the target_var under investigation and the suspect's kind "
         "(climate / non_climate). The code keeps the board honest: 'supported' needs an evidence test that LINKS "
         "the suspect to target_var and survives the correction over every test of this investigation: a "
-        "correlate test between target_var and the suspect's series, or (non_climate suspects only) a real "
+        "correlate test between target_var and suspect_var (the variable that measures the suspect), or "
+        "(non_climate suspects only) a real "
         "climate_residual of target_var. A suspect whose own trend is real but has no such link is shown as "
         "'trend_only' (TREND REAL, NOT LINKED); otherwise it is shown as 'hint' with the reason. 'ruled_out' "
         "needs a test with no clear trend and enough years, otherwise 'open'. Report the status the board "

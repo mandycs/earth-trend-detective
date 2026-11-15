@@ -24,6 +24,7 @@ def update_board(
     note: str,
     target_var: str | None = None,
     kind: str | None = None,
+    suspect_var: str | None = None,
 ) -> dict:
     shown_note = screen_note(note, session)
     update = {
@@ -33,6 +34,7 @@ def update_board(
         "note": shown_note,
         "target_var": target_var,
         "kind": kind,
+        "suspect_var": suspect_var,
     }
     try:
         new_board = board.apply_update(session.board, update, session.ledger, session.catalog)

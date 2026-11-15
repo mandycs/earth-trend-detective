@@ -41,15 +41,17 @@ CAUSE_WORDS = re.compile(
     re.IGNORECASE,
 )
 # A cause word about the DATA, not the world ("because the record is short") is not a cause claim.
-_DATA_SUBJECT = (
-    r"(?:records?|series|data(?:\s+cells?)?|dataset|samples?|window|tests?|correction|gaps?|cells?|"
-    r"(?:too\s+)?few\s+years|missing\s+(?:years|months))"
+# Anchored to data predicates only: a bare "because the cells ..." or "due to gaps in the rain" stays a claim.
+_DATA_PREDICATE = (
+    r"(?:the|this|our|its)\s+(?:data\s+)?record\s+(?:is|was)\s+(?:still\s+|too\s+)?short"
+    r"|(?:the|a|this|its)\s+short(?:er)?\s+record"
+    r"|(?:the\s+)?missing\s+data"
+    r"|(?:there\s+are\s+)?too\s+few\s+years\s+of\s+data"
+    r"|the\s+data\s+(?:only\s+)?covers?"
+    r"|(?:one|each|a|the)\s+data\s+cell\s+covers"
 )
 DATA_CAUSE = re.compile(
-    r"\b(?:because(?:\s+of)?|due\s+to|owing\s+to)\s+"
-    r"(?:(?:the|this|that|our|its|a|an|one|each)\s+)?"
-    r"(?:(?:short|shorter|limited|small|coarse|noisy|patchy|missing|few|too|big|large)\s+)*"
-    rf"{_DATA_SUBJECT}\b",
+    rf"\b(?:because(?:\s+of)?|due\s+to|owing\s+to)\s+(?:{_DATA_PREDICATE})\b",
     re.IGNORECASE,
 )
 # Who may not be the subject of a drain verb ("irrigation is draining the aquifer").
@@ -84,8 +86,13 @@ NO_CHANGE_CLAIM = re.compile(
 
 
 def _actors(suspects: Iterable[Mapping]) -> tuple[str, ...]:
-    words = {w for s in suspects for k in ("id", "label") for w in _WORD.findall(str(s.get(k) or "").lower())}
-    return tuple(sorted(set(ACTORS) | {w for w in words if len(w) > 2 and w not in _NOT_ACTORS}))
+    """Actor phrases: the fixed list, every multi-word suspect name as a whole phrase ("water use"),
+    and every word of a suspect name that is not a place or a plain word."""
+    names = [_WORD.findall(str(s.get(k) or "").lower()) for s in suspects for k in ("id", "label")]
+    phrases = {" ".join(words) for words in names if len(words) > 1}
+    words = {w for ws in names for w in ws if len(w) > 2 and w not in _NOT_ACTORS}
+    # longest first, so the alternation tries a whole phrase before one of its words
+    return tuple(sorted(set(ACTORS) | phrases | words, key=lambda a: (-len(a), a)))
 
 
 def cause_problems(text: str, suspects: Iterable[Mapping] = ()) -> list[str]:
@@ -96,7 +103,7 @@ def cause_problems(text: str, suspects: Iterable[Mapping] = ()) -> list[str]:
         f"'{hit.group(0)}' claims a cause; say what changed and what the tests found, never why"
         for hit in CAUSE_WORDS.finditer(about_world)
     ]
-    actors = "|".join(re.escape(a) for a in _actors(suspects))
+    actors = "|".join(r"\s+".join(map(re.escape, a.split())) for a in _actors(suspects))
     drain = re.compile(rf"\b(?:{actors})\b(?:\s+\w+){{0,2}}?\s+{_DRAIN_VERBS}\b", re.IGNORECASE)
     out += [f"'{hit.group(0)}' claims a cause; never say a suspect drains or uses up the water" for hit in drain.finditer(text)]
     return out

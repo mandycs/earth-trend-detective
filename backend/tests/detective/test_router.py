@@ -206,7 +206,7 @@ def test_map_and_board_events(client_with, offline):
         "claimed": "supported",
         "evidence": ["e2"],
         "note": "The trend is real.",
-        "downgraded": "no test links it to Air temperature",
+        "downgraded": "no test links its own data to Air temperature",
     }
     assert boards[0]["n_tests"] == 1
 

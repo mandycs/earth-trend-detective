@@ -31,11 +31,16 @@ def test_link_words_claim_a_cause(sentence):
         "Its own trend is real, but no test links it to Total water stored.",
         "Rainfall: TREND REAL · NOT LINKED.",
         "Rainfall is not linked to the change by any test we ran.",
+        "Rainfall isn't linked to the change by any test we ran.",
+        "Rainfall was never linked to the change by a test.",
+        "The reservoir behind the dam shrank.",
         "The reservoir behind the dam dried up.",
         "The lake is behind the dam.",
         "We can't tell yet because the record is short.",
         "We can't tell yet because of the short record.",
         "The trend is unclear due to missing data.",
+        "We can't tell yet because there are too few years of data.",
+        "We can't say more because the data cover only 2003 to 2024.",
         "We can't say because one data cell covers about 300 km.",
     ],
 )
@@ -66,6 +71,34 @@ def test_words_from_suspect_labels_are_not_actors_when_they_are_places_or_plain_
     ],
 )
 def test_cause_claims_about_the_world_are_still_rejected(sentence):
+    assert cause_problems(sentence), sentence
+
+
+@pytest.mark.parametrize(
+    ("sentence", "suspects"),
+    [
+        ("Water use is draining the aquifer.", WATER_USE),
+        ("Water use drains the basin.", WATER_USE),
+        ("Reservoir releases emptied the lake.", RESERVOIR),
+    ],
+)
+def test_a_multi_word_suspect_name_stays_an_actor_as_a_phrase(sentence, suspects):
+    assert cause_problems(sentence, suspects), sentence
+
+
+def test_a_place_in_a_suspect_name_alone_is_not_an_actor():
+    assert cause_problems("The reservoir behind the dam shrank.", RESERVOIR) == []
+
+
+@pytest.mark.parametrize(
+    "sentence",
+    [
+        "Water stored fell because a few years were dry.",
+        "Water stored fell due to gaps in the rain.",
+        "The drop happened because the cells dried.",
+    ],
+)
+def test_cause_words_not_about_the_data_are_still_rejected(sentence):
     assert cause_problems(sentence), sentence
 
 

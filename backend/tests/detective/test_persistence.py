@@ -81,7 +81,7 @@ def test_board_works_on_a_restored_ledger_without_trend_results():
     back = Ledger.from_state(_json_round_trip(led.to_state()))
     assert all(back.test(t).result is None for t in ("t1", "t2"))
 
-    board = apply_update({}, {"suspect": "heat", "status": "supported", "evidence_ids": ["e3"], "note": ""}, back)
+    board = apply_update({}, {"suspect": "heat", "status": "supported", "evidence_ids": ["e3"], "note": "", "suspect_var": "t2m", "target_var": "grace_tws"}, back)
     board = apply_update(board, {"suspect": "rain", "status": "ruled_out", "evidence_ids": ["e2"], "note": ""}, back)
     board = evaluate(board, back)
     assert board["heat"].status == "supported" and board["rain"].status == "ruled_out"

@@ -4,21 +4,25 @@ The model asks for a status; the code decides what it may show:
 
 - `supported` needs at least one evidence test that LINKS the suspect to the variable under
   investigation (the target) and whose Benjamini-Hochberg q (over every test of the thread)
-  is below 0.05. A link is a `correlate` test between the target and another series (any
-  lag), or, for a non-climate suspect only, the `residual` test of the target with a real
-  corrected verdict (the share not explained by the climate we measured is a real trend).
+  is below 0.05. A link is a `correlate` test between the target and the suspect's own
+  variable (`suspect_var`, any lag), or, for a non-climate suspect only, the `residual` test
+  of the target with a real corrected verdict (the share not explained by the climate we
+  measured is a real trend). With no `suspect_var`, no correlate is a link.
   Otherwise:
-  - `trend_only` when the suspect's own trend survives the correction but no link does,
+  - `trend_only` when the trend of `suspect_var` survives the correction but no link does,
     flagged `downgraded = "its own trend is real, but no test links it to <target>"`;
-  - `hint` otherwise, flagged `"fails correction over N tests"` (or `"no test links it to
-    <target>"` when the only test that survives is not about the suspect at all).
+  - `hint` otherwise, flagged `"fails correction over N tests"`, or, when a test survives
+    but is not about the suspect, `"no test links it to <target>"` (`"no test links its own
+    data to <target>"` when the suspect's own variable is unknown).
 - `ruled_out` needs an evidence test with no clear trend (verdict `unknown`) that had
   enough years (`too_short is False`); otherwise it is shown as `open`.
 
-The target and the suspect's kind (climate / non_climate) come from the model's call; when
-a call or a stored board has none, they are inferred: the target from the thread's residual
-test, else its first trend-tested series (else series_a of its first correlate); the kind from whether the suspect's evidence
-variables are climate drivers in the catalog.
+The target, the suspect's own variable and its kind (climate / non_climate) come from the
+model's call; when a call or a stored board has none, they are inferred: the target from the
+thread's residual test, else its first trend-tested series, else series_a of its first
+correlate; `suspect_var` from the first non-target variable of the suspect's non-correlate
+evidence; the kind from whether that variable (else the evidence variables, else the
+suspect's name) is a climate driver in the catalog.
 
 Later tests change the correction, so `evaluate` re-judges the whole board from the
 status each suspect was claimed with. Every function returns a new board.
@@ -26,6 +30,7 @@ status each suspect was claimed with. Every function returns a new board.
 
 from __future__ import annotations
 
+import re
 from collections.abc import Iterable, Mapping
 from dataclasses import asdict, dataclass, field, replace
 from functools import cache
@@ -39,6 +44,7 @@ SHOWN_STATUSES = (*STATUSES, "trend_only")  # what the board may show
 KINDS = ("climate", "non_climate")
 RULED_OUT_DOWNGRADE = "needs a test with enough years and no clear trend"
 NO_LINK = "no test links it to {target}"
+NO_OWN_DATA = "no test links its own data to {target}"
 TREND_NOT_LINKED = "its own trend is real, but no test links it to {target}"
 UNKNOWN_TARGET = "the change under investigation"
 _OWN_TREND_KINDS = ("trend", "compare", "residual")
@@ -56,6 +62,7 @@ class Suspect:
     dropped: list[str] = field(default_factory=list)  # evidence ids that did not exist
     target_var: str | None = None  # variable whose change the suspect would explain (None: inferred)
     kind: str | None = None  # "climate" | "non_climate" (None: inferred)
+    suspect_var: str | None = None  # catalog variable that measures this suspect (None: inferred)
 
 
 @cache
@@ -104,13 +111,45 @@ def infer_target(ledger: Ledger) -> str | None:
     return None
 
 
-def _infer_kind(records: Iterable[TestRecord], target: str | None, catalog: Iterable[Variable]) -> str:
+_LABEL_STOPWORDS = frozenset({"air", "the", "at", "and", "so", "far", "surface", "upstream", "less", "more"})
+
+
+def _label_words(text: str) -> set[str]:
+    return {w for w in re.findall(r"[a-z]+", text.lower()) if len(w) >= 4 and w not in _LABEL_STOPWORDS}
+
+
+def _label_is_climate(suspect: Suspect, drivers: Iterable[Variable]) -> bool:
+    """Whether the suspect's name reads as a climate driver ('less rain' ~ 'Rainfall')."""
+    own = _label_words(f"{suspect.id} {suspect.label}")
+    for var in drivers:
+        for word in _label_words(var.label):
+            if any(word.startswith(w) or w.startswith(word) for w in own):
+                return True
+    return False
+
+
+def infer_suspect_var(records: Iterable[TestRecord], target: str | None) -> str | None:
+    """The suspect's own variable when the model gave none: the first variable, other than the
+    target, of its non-correlate evidence. A correlate never names it: that would let any
+    correlate with the target vouch for itself."""
+    return next((r.var_id for r in records if r.kind in _OWN_TREND_KINDS and r.var_id != target), None)
+
+
+def _infer_kind(
+    suspect: Suspect, records: Iterable[TestRecord], target: str | None, suspect_var: str | None, catalog
+) -> str:
+    catalog = tuple(catalog)
     by_id = {v.id: v for v in catalog}
-    climate = {v.id for v in by_id.values() if v.role == "driver"}
+    climate = {v.id for v in catalog if v.role == "driver"}
     if target in by_id:
         climate |= set(by_id[target].drivers)
+    if suspect_var is not None:
+        return "climate" if suspect_var in climate else "non_climate"
     own = {side for r in records for side in _sides(r) if side != target}
-    return "climate" if own & climate else "non_climate"
+    if own:
+        return "climate" if own & climate else "non_climate"
+    drivers = [by_id[v] for v in sorted(climate) if v in by_id]
+    return "climate" if _label_is_climate(suspect, drivers) else "non_climate"
 
 
 def _target_label(target: str | None, ledger: Ledger, catalog: Iterable[Variable]) -> str:
@@ -123,12 +162,12 @@ def _target_label(target: str | None, ledger: Ledger, catalog: Iterable[Variable
     return record.label if record is not None else target
 
 
-def _is_link(record: TestRecord, target: str | None, kind: str) -> bool:
+def _is_link(record: TestRecord, target: str | None, suspect_var: str | None, kind: str) -> bool:
+    """A correlate of the target with the suspect's own variable, or (non-climate only) the target's residual."""
     if target is None:
         return False
     if record.kind == "correlate":
-        sides = _sides(record)
-        return target in sides and any(s != target for s in sides)
+        return suspect_var is not None and suspect_var != target and set(_sides(record)) == {target, suspect_var}
     return record.kind == "residual" and record.var_id == target and kind == "non_climate"
 
 
@@ -139,23 +178,23 @@ def _link_holds(record: TestRecord, corrected_row: tuple) -> bool:
     return q < REAL_Q  # NaN q compares False
 
 
+# TODO: when annual-basis tests (GIBS yearly values) land, a link and the suspect's own trend
+# must share a basis (monthly anomalies vs annual means) before one may back the other.
 def _judge_supported(suspect: Suspect, tests: list[str], ledger: Ledger, corrected: Mapping, catalog) -> tuple[str, str | None]:
     records = {t: ledger.test(t) for t in tests}
     records = {t: r for t, r in records.items() if r is not None}
     target = _var_id(suspect.target_var) or infer_target(ledger)
-    kind = suspect.kind if suspect.kind in KINDS else _infer_kind(records.values(), target, catalog)
-    if any(_is_link(r, target, kind) and _link_holds(r, corrected[t]) for t, r in records.items()):
+    suspect_var = _var_id(suspect.suspect_var) or infer_suspect_var(records.values(), target)
+    kind = suspect.kind if suspect.kind in KINDS else _infer_kind(suspect, records.values(), target, suspect_var, catalog)
+    if any(_is_link(r, target, suspect_var, kind) and _link_holds(r, corrected[t]) for t, r in records.items()):
         return "supported", None
     passes = {t for t in tests if corrected[t][0] < REAL_Q}
     label = _target_label(target, ledger, catalog)
-    own = [
-        t for t, r in records.items()
-        if t in passes and r.kind in _OWN_TREND_KINDS and r.var_id != target and not _is_link(r, target, kind)
-    ]
-    if own:
+    own = [t for t, r in records.items() if t in passes and r.kind in _OWN_TREND_KINDS and r.var_id == suspect_var]
+    if own and suspect_var != target:
         return "trend_only", TREND_NOT_LINKED.format(target=label)
     if passes:
-        return "hint", NO_LINK.format(target=label)
+        return "hint", (NO_LINK if suspect_var is not None else NO_OWN_DATA).format(target=label)
     n = ledger.n_finite()  # every test of the thread that ran, not only this branch
     return "hint", f"fails correction over {n} {'test' if n == 1 else 'tests'}"
 
@@ -188,7 +227,8 @@ def _clean_ids(ids: Iterable[str] | None) -> list[str]:
 def apply_update(
     board: Mapping[str, Suspect], update: Mapping, ledger: Ledger, catalog: Iterable[Variable] | None = None
 ) -> dict[str, Suspect]:
-    """New board with `update` ({suspect, status, evidence_ids, note, label?, target_var?, kind?}) applied and judged."""
+    """New board with `update` ({suspect, status, evidence_ids, note, label?, target_var?, kind?, suspect_var?})
+    applied and judged."""
     suspect_id = str(update.get("suspect") or "").strip()
     if not suspect_id:
         raise ValueError("a suspect name is needed")
@@ -211,6 +251,7 @@ def apply_update(
         dropped=dropped,
         target_var=_var_id(update.get("target_var")),
         kind=kind if kind in KINDS else None,
+        suspect_var=_var_id(update.get("suspect_var")),
     )
     return {**board, suspect_id: _judge(suspect, ledger, corrected, _catalog(catalog))}
 

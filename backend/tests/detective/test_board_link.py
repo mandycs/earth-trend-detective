@@ -30,12 +30,14 @@ def _ledger(*records: TestRecord) -> Ledger:
     return ledger
 
 
-def _update(suspect, evidence, target="grace_tws", kind="climate", status="supported"):
+def _update(suspect, evidence, target="grace_tws", kind="climate", status="supported", suspect_var=None):
     out = {"suspect": suspect, "status": status, "evidence_ids": evidence, "note": ""}
     if target is not None:
         out["target_var"] = target
     if kind is not None:
         out["kind"] = kind
+    if suspect_var is not None:
+        out["suspect_var"] = suspect_var
     return out
 
 
@@ -53,21 +55,21 @@ def test_climate_suspect_with_only_its_own_real_trend_is_trend_only():
 
 def test_climate_suspect_with_a_corrected_link_is_supported():
     ledger = _ledger(_rec("t1", "grace_tws", "trend", 0.001), _rec("t2", "grace_tws~precip", "correlate", 0.0001, 0.8))
-    board = apply_update({}, _update("less rain", ["e2"]), ledger, CATALOG)
+    board = apply_update({}, _update("less rain", ["e2"], suspect_var="precip"), ledger, CATALOG)
     assert board["less rain"].status == "supported" and board["less rain"].downgraded is None
 
 
 def test_a_correlate_link_at_any_lag_and_either_order_counts():
     ledger = _ledger(_rec("t1", "precip~grace_tws", "correlate", 0.6, 0.1),
                      _rec("t2", "precip~grace_tws", "correlate", 0.0001, 0.8))
-    board = apply_update({}, _update("less rain", ["e1", "e2"]), ledger, CATALOG)
+    board = apply_update({}, _update("less rain", ["e1", "e2"], suspect_var="precip"), ledger, CATALOG)
     assert board["less rain"].status == "supported"
 
 
 def test_climate_link_failing_correction_is_hint():
     weak = [_rec(f"t{i}", "ndvi", "trend", 0.9) for i in range(3, 13)]
     ledger = _ledger(_rec("t1", "grace_tws", "trend", 0.2), _rec("t2", "grace_tws~precip", "correlate", 0.04, 0.8), *weak)
-    board = apply_update({}, _update("less rain", ["e2"]), ledger, CATALOG)
+    board = apply_update({}, _update("less rain", ["e2"], suspect_var="precip"), ledger, CATALOG)
     assert board["less rain"].status == "hint"
     assert board["less rain"].downgraded == "fails correction over 12 tests"
 
@@ -80,9 +82,50 @@ def test_climate_suspect_is_never_supported_by_the_residual():
 
 def test_a_correlate_between_two_other_series_is_not_a_link():
     ledger = _ledger(_rec("t1", "grace_tws", "trend", 0.001), _rec("t2", "ndvi~precip", "correlate", 0.0001, 0.8))
-    board = apply_update({}, _update("less rain", ["e2"]), ledger, CATALOG)
+    board = apply_update({}, _update("less rain", ["e2"], suspect_var="precip"), ledger, CATALOG)
     assert board["less rain"].status == "hint"
     assert board["less rain"].downgraded == f"no test links it to {TARGET_LABEL}"
+
+
+def test_a_target_correlate_with_a_different_variable_does_not_support():
+    ledger = _ledger(_rec("t1", "grace_tws", "trend", 0.001), _rec("t2", "grace_tws~t2m", "correlate", 0.0001, 0.8))
+    board = apply_update({}, _update("irrigation", ["e2"], kind="non_climate", suspect_var="ndvi"), ledger, CATALOG)
+    assert board["irrigation"].status == "hint"
+    assert board["irrigation"].downgraded == f"no test links it to {TARGET_LABEL}"
+    rain = apply_update({}, _update("less rain", ["e2"], suspect_var="precip"), ledger, CATALOG)
+    assert rain["less rain"].status == "hint"
+
+
+def test_no_suspect_var_means_no_correlate_link():
+    ledger = _ledger(_rec("t1", "grace_tws", "trend", 0.001), _rec("t2", "grace_tws~t2m", "correlate", 0.0001, 0.8))
+    board = apply_update({}, _update("irrigation", ["e2"], kind="non_climate"), ledger, CATALOG)
+    assert board["irrigation"].status == "hint"
+    assert board["irrigation"].suspect_var is None
+    assert board["irrigation"].downgraded == f"no test links its own data to {TARGET_LABEL}"
+
+
+def test_trend_only_counts_only_the_suspects_own_variable():
+    ledger = _ledger(_rec("t1", "grace_tws", "trend", 0.001), _rec("t2", "ndvi", "trend", 0.001))
+    board = apply_update({}, _update("less rain", ["e2"], suspect_var="precip"), ledger, CATALOG)
+    assert board["less rain"].status == "hint"
+    assert board["less rain"].downgraded == f"no test links it to {TARGET_LABEL}"
+
+
+def test_suspect_var_is_inferred_from_non_correlate_evidence():
+    ledger = _ledger(_rec("t1", "precip", "trend", 0.001), _rec("t2", "grace_tws~precip", "correlate", 0.0001, 0.8),
+                     _rec("t3", "grace_tws~t2m", "correlate", 0.0001, 0.8))
+    ok = apply_update({}, _update("less rain", ["e1", "e2"]), ledger, CATALOG)
+    assert ok["less rain"].status == "supported"
+    other = apply_update({}, _update("less rain", ["e1", "e3"]), ledger, CATALOG)
+    assert other["less rain"].status == "trend_only"
+
+
+def test_residual_only_kind_is_inferred_from_the_suspect_name():
+    ledger = _ledger(_rec("t1", "grace_tws", "residual", 0.0001))
+    rain = apply_update({}, _update("less rain", ["e1"], target=None, kind=None), ledger, CATALOG)
+    assert rain["less rain"].status == "hint"  # 'rain' reads as 'Rainfall': climate, so no residual link
+    farms = apply_update({}, _update("irrigation", ["e1"], target=None, kind=None), ledger, CATALOG)
+    assert farms["irrigation"].status == "supported"
 
 
 # --------------------------------------------------------------------------- non-climate suspects
@@ -111,7 +154,7 @@ def test_non_climate_suspect_citing_only_the_target_trend_is_not_supported():
     ledger = _ledger(_rec("t1", "grace_tws", "trend", 0.001))
     board = apply_update({}, _update("irrigation", ["e1"], kind="non_climate"), ledger, CATALOG)
     assert board["irrigation"].status == "hint"
-    assert board["irrigation"].downgraded == f"no test links it to {TARGET_LABEL}"
+    assert board["irrigation"].downgraded == f"no test links its own data to {TARGET_LABEL}"
 
 
 def test_a_residual_of_another_variable_is_not_a_link():
@@ -140,7 +183,7 @@ def test_legacy_update_without_target_or_kind_is_still_judged():
     rain = apply_update({}, _update("less rain", ["e2"], target=None, kind=None), ledger, CATALOG)
     assert rain["less rain"].status == "trend_only"  # target from the residual, climate from precip
     assert rain["less rain"].target_var is None and rain["less rain"].kind is None
-    linked = apply_update({}, _update("less rain", ["e4"], target=None, kind=None), ledger, CATALOG)
+    linked = apply_update({}, _update("less rain", ["e2", "e4"], target=None, kind=None), ledger, CATALOG)
     assert linked["less rain"].status == "supported"
     farms = apply_update({}, _update("irrigation", ["e3"], target=None, kind=None), ledger, CATALOG)
     assert farms["irrigation"].status == "supported"  # non-climate: no climate driver in its evidence
@@ -226,7 +269,9 @@ def test_update_board_tool_records_target_and_kind():
     s = Session(ledger=_ledger(_rec("t1", "grace_tws", "trend", 0.001), _rec("t2", "precip", "trend", 0.001)),
                 place=place, catalog=CATALOG)
     out = TOOLS["update_board"].fn(s, suspect="less rain", status="supported", evidence_ids=["e2"], note="",
-                                   target_var="grace_tws", kind="climate")
+                                   target_var="grace_tws", kind="climate", suspect_var="precip")
     assert out["status"] == "trend_only" and out["downgraded"] == NOT_LINKED
-    assert out["target_var"] == "grace_tws" and out["kind"] == "climate"
+    assert out["target_var"] == "grace_tws" and out["kind"] == "climate" and out["suspect_var"] == "precip"
+    assert "suspect_var" in UpdateBoardArgs.model_fields
+    assert "measures this suspect" in UpdateBoardArgs.model_fields["suspect_var"].description
     assert board_mod.as_json(s.board)[0]["status"] == "trend_only"

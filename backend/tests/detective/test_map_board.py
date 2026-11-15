@@ -60,7 +60,7 @@ def test_supported_without_corrected_evidence_becomes_hint(ledger_with_one_weak_
 def test_supported_with_corrected_evidence_stays_supported():
     ledger = _ledger(_link("t1", 0.001))  # evidence e1 -> test t1, a link to the target
     board = apply_update({}, {"suspect": "irrigation", "status": "supported",
-                              "evidence_ids": ["e1"], "note": "x"}, ledger)
+                              "evidence_ids": ["e1"], "note": "x", "suspect_var": "t2m"}, ledger)
     assert board["irrigation"].status == "supported"
     assert board["irrigation"].downgraded is None
     assert board["irrigation"].evidence == ["e1"]
@@ -71,7 +71,7 @@ def test_evidence_with_several_test_ids_uses_any_of_them():
     ledger.add_test(_link("t1", 0.5))
     ledger.add_test(_link("t2", 0.0001))
     ledger.remember("correlate:x", {"test_ids": ["t1", "t2"], "status": "ok"})
-    board = apply_update({}, {"suspect": "dams", "status": "supported", "evidence_ids": ["e1"], "note": ""}, ledger)
+    board = apply_update({}, {"suspect": "dams", "status": "supported", "evidence_ids": ["e1"], "note": "", "suspect_var": "t2m"}, ledger)
     assert board["dams"].status == "supported"
 
 
@@ -125,7 +125,7 @@ def test_unknown_status_raises():
 
 def test_evaluate_rejudges_after_later_tests_change_the_correction():
     ledger = _ledger(_link("t1", 0.01))
-    board = apply_update({}, {"suspect": "s", "status": "supported", "evidence_ids": ["e1"], "note": ""}, ledger)
+    board = apply_update({}, {"suspect": "s", "status": "supported", "evidence_ids": ["e1"], "note": "", "suspect_var": "t2m"}, ledger)
     assert board["s"].status == "supported"
     for i in range(2, 12):
         ledger.add_test(_record(f"t{i}", 0.9))

@@ -292,7 +292,7 @@ def test_conclude_rejudges_the_board_into_the_case(offline):
     suspect = state["case"]["board"]["warming"]
     # the only test is the trend of the variable itself: real, but nothing links the suspect to it
     assert suspect["status"] == "hint" and suspect["evidence"] == ["e2"] and suspect["dropped"] == ["e9"]
-    assert suspect["claimed"] == "supported" and suspect["downgraded"] == "no test links it to Air temperature"
+    assert suspect["claimed"] == "supported" and suspect["downgraded"] == "no test links its own data to Air temperature"
     assert json.loads(_tool_messages(state)[-1].content)["status"] == "hint"
 
 

@@ -16,10 +16,11 @@ Investigate like a detective, one step at a time, and look at each result before
 stricter, so test only what matters).
 4. Open suspects on the board (update_board) and test them: climate_residual for an impact variable, \
 correlate for two series that may move together, land_cover_change for changes on the ground. On every \
-update_board call give target_var (the variable whose change you are explaining) and kind (climate or \
-non_climate).
+update_board call give target_var (the variable whose change you are explaining), kind (climate or \
+non_climate) and suspect_var (the catalog variable that measures this suspect, when one does).
 5. To support a suspect, test the link, not only the suspect: correlate(target, suspect) with the target \
-series as series_a and the suspect's series as series_b, or, for a non_climate suspect, climate_residual of \
+series as series_a and the series of suspect_var as series_b (a correlate with any other variable does not \
+count), or, for a non_climate suspect, climate_residual of \
 the target. A suspect whose own trend is real but has no linking test is only "trend only" (trend real, \
 not linked) on the board.
 6. compare when it helps: the same variable in two places or two periods.
