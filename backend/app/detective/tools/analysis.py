@@ -29,6 +29,7 @@ from app.detective.session import Session
 from app.detective.tools import data
 from app.investigate.landcover import box_around
 from app.site_report import residual_withheld_reason
+from app.stats.annual import annual_trend, annual_years_needed
 from app.stats.deseason import monthly_anomalies
 from app.stats.lineup import MIN_PAIRS, _pairs, annualize, year_changes
 from app.stats.residual import CANDIDATE_MODELS, residual_for
@@ -40,6 +41,7 @@ logger = logging.getLogger(__name__)
 WORDING = "not explained by the climate we measured — a clue, not proof"
 CORRELATION_NOTE = "Moving together is a clue, not proof that one drives the other."
 PCT_NOTE = "The total change is not clear enough to split, so no share is given."
+ANNUAL_RESIDUAL_REASON = "one value per year; the climate split needs monthly values (use trend_test)"
 MAX_LAG = 5
 
 _num = data._num
@@ -101,6 +103,8 @@ def _residual(session: Session, var_id: str) -> dict:
     var = data._variable(session, var_id)
     if var is None:
         return _not_available(f"unknown variable {var_id!r}; call list_variables", var_id=var_id, wording=WORDING)
+    if var.temporal == "annual":
+        return _not_available(ANNUAL_RESIDUAL_REASON, var_id=var_id, wording=WORDING)
     if var.role != "impact" or not var.drivers:
         return _not_available(
             f"{var.label} is a climate driver, not an impact; there is nothing to split", var_id=var_id, wording=WORDING
@@ -338,11 +342,18 @@ def years_needed_for(session: Session, series_id: str) -> dict:
     if series is None:
         return _not_available(f"unknown series_id {series_id!r}; call get_series first")
     return data._through_ledger(
-        session, "years_needed_for", {"series_id": series_id}, lambda: _years(series, series_id)
+        session, "years_needed_for", {"series_id": series_id}, lambda: _years(session, series, series_id)
     )
 
 
-def _years(series: pd.Series, series_id: str) -> dict:
+def _years(session: Session, series: pd.Series, series_id: str) -> dict:
+    if data.is_annual(session, series, series_id):  # one value per year: the annual formula
+        return {
+            "series_id": series_id,
+            "basis": "annual",
+            "years": [int(series.index.year.min()), int(series.index.year.max())],
+            "years_needed": annual_years_needed(series, annual_trend(series)),
+        }
     anomalies = monthly_anomalies(series)
     res = mk_trend_test(anomalies)  # only feeds the formula; not a counted test, nothing is logged
     slope = None if res.too_short else res.sen_slope_per_decade

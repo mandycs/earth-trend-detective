@@ -245,7 +245,7 @@ def test_sea_variables_in_the_catalog():
     assert (chl.source, chl.dataset, chl.band) == ("erddap", "erdMH1chlamday_R2022SQ", "chlor_a")
     assert (dhw.source, dhw.dataset, dhw.band) == ("erddap", "noaacrwdhwDaily", "degree_heating_week")
     assert chl.transform == "log10" and chl.units == "log10(mg/m³)"
-    assert dhw.temporal == "annual" and dhw.applies_to == ()  # not offered until the annual path
+    assert dhw.temporal == "annual" and dhw.applies_to == ("reef",)  # yearly peaks, on the annual path
     assert "not NASA" in dhw.label
     for var in (sst, chl, dhw):
         assert var.definition and var.units and var.resolution
@@ -484,3 +484,21 @@ def test_min_elevation_is_the_lowest_cell_and_is_cached(tmp_path):
 def test_min_elevation_error_page_raises(tmp_path):
     with pytest.raises(erddap.ErddapError):
         erddap.fetch_min_elevation((0, 0, 1, 1), client=_client(lambda r: httpx.Response(200, text="<html>x")), cache_dir=tmp_path)
+
+
+def test_min_elevation_scales_the_stride_on_a_big_box(tmp_path):
+    """GEBCO is 1/240 degree: past 2 degrees a side the stride grows so a request stays <= ~200 x 200."""
+    csv = "latitude,longitude,elevation\ndegrees_north,degrees_east,m\n36.0,-10.0,-250.0\n"
+    calls = []
+
+    def handler(request):
+        calls.append(str(request.url))
+        return httpx.Response(200, text=csv)
+
+    erddap.fetch_min_elevation((-10.0, 35.0, -5.0, 40.0), client=_client(handler), cache_dir=tmp_path)
+    erddap.fetch_min_elevation((-10.1, 35.9, -9.9, 36.1), client=_client(handler), cache_dir=tmp_path)
+    big, small = (_axes(u) for u in calls)
+    assert big[0].split(":")[1] == "6" and big[1].split(":")[1] == "6"  # 5 deg * 240 / 200
+    assert small[0].split(":")[1] == "4"  # the default for a small box
+    lo, step, hi = big[0].split(":")
+    assert (float(hi.strip("()")) - float(lo.strip("()"))) * 240 / int(step) <= 200

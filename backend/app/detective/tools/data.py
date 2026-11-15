@@ -23,6 +23,7 @@ from app.detective.session import Session
 from app.extractors import erddap
 from app.investigate import landcover
 from app.investigate.runner import LAND_COVER_YEARS
+from app.stats.annual import annual_trend, annual_years_needed, n_years, to_annual
 from app.stats.deseason import monthly_anomalies
 from app.stats.trend import trend_test as mk_trend_test
 from app.stats.years import years_needed
@@ -34,13 +35,19 @@ OFF_CASE_REASON = "not_available_here: only precomputed for the solved cases"
 EXTRA_DRIVER_REASON = "not_available_here: only set up for the solved cases that need it"
 UNKNOWN_CASE_REASON = "not_available_here: this solved case is not in the site list"
 SOURCE_DOWN_REASON = "The data source did not answer. Try again in a few minutes."
-ANNUAL_PENDING_REASON = "not_available_here: one value per year; the yearly trend test is not connected yet"
 NOT_SEA_REASON = "not_available_here: a sea variable; this place is on land"
+NOT_REEF_REASON = "not_available_here: heat stress on corals; only offered on reef coasts (within 30° of the equator)"
+ON_CASE_TWIN_REASON = "not_available_here: this solved case has the monthly series of this variable"
+# AppEEARS variables (solved cases only) and their GIBS yearly twin, offered everywhere else.
+GIBS_TWINS: Mapping[str, str] = {"ndvi": "ndvi_gibs", "lst_day": "lst_gibs", "snow_cover": "snow_gibs"}
+TWIN_OF: Mapping[str, str] = {twin: base for base, twin in GIBS_TWINS.items()}
+SEA_TAGS = frozenset({"ocean", "coast", "reef"})
+ANNUAL = "annual"
 GRACE_AT_SEA_REASON = "measures water stored on land; over open sea it is not meaningful"
 LAND_AT_SEA_REASON = "not_available_here: a land-only source; this place is open sea"
 SEA_MAX_ELEVATION_M = -5.0  # a box whose lowest point is at or below this is sea; lakes sit above it
 OPEN_SEA_WATER_SHARE = 0.95  # at least this much water: land-only sources are hidden
-LAND_ONLY_SOURCES = APPEEARS_SOURCES | {"gldas"}
+LAND_ONLY_SOURCES = APPEEARS_SOURCES | {"gldas", "gibs"}
 # Native grid of each catalog dataset (matched on the `dataset` prefix in variables.yaml).
 DATASET_RESOLUTION: tuple[tuple[str, str], ...] = (
     ("NASA POWER", "~50 km"),
@@ -122,12 +129,30 @@ def _open_sea_reason(session: Session, var: Variable) -> str | None:
     return None
 
 
+def _sea_reason(session: Session, var: Variable) -> str | None:
+    """A sea variable whose zone tags the place lacks: on land, or at sea but off a reef."""
+    if var.source != "erddap" or not var.applies_to or set(var.applies_to) & set(session.place.tags):
+        return None
+    return NOT_REEF_REASON if SEA_TAGS & set(session.place.tags) else NOT_SEA_REASON
+
+
+def _hidden_twin(session: Session, var: Variable) -> bool:
+    """One of a pair is never listed: the GIBS twin inside a solved case, the AppEEARS
+    variable outside one."""
+    if session.place.site_id is not None:
+        return var.id in TWIN_OF
+    return var.id in GIBS_TWINS
+
+
 def _unavailable_reason(session: Session, var: Variable, extra_ids: frozenset[str]) -> str | None:
     at_sea = _open_sea_reason(session, var)
     if at_sea is not None:
         return at_sea
-    if var.temporal == "annual":  # not on the monthly-anomaly trend path
-        return ANNUAL_PENDING_REASON
+    sea = _sea_reason(session, var)
+    if sea is not None:
+        return sea
+    if var.id in TWIN_OF and session.place.site_id is not None:
+        return ON_CASE_TWIN_REASON
     if var.source in APPEEARS_SOURCES and session.place.site_id is None:
         return OFF_CASE_REASON
     if _is_opt_in(var) and var.id not in extra_ids:
@@ -222,7 +247,9 @@ def _rows(session: Session) -> list[dict]:
     for var in applicable + opt_in + off_sea:
         if open_sea and var.source in LAND_ONLY_SOURCES:
             continue  # land models and land sensors say nothing over open sea
-        reason = NOT_SEA_REASON if var in off_sea else _unavailable_reason(session, var, extra_ids)
+        if _hidden_twin(session, var):
+            continue  # the other one of the pair is listed instead (get_series refuses this one)
+        reason = _unavailable_reason(session, var, extra_ids)
         row = {
             "id": var.id,
             "label": var.label,
@@ -283,7 +310,8 @@ def _fetch(session: Session, var_id: str, start: int, end: int) -> dict:
         return _not_available(SOURCE_DOWN_REASON, transient=True, var_id=var_id)
     reason = _unavailable_reason(session, var, extra_ids)
     if reason is not None:
-        return _not_available(reason, var_id=var_id)
+        twin = GIBS_TWINS.get(var_id) if reason == OFF_CASE_REASON else None
+        return _not_available(reason, var_id=var_id, **({"use_instead": twin} if twin else {}))
     fetcher = gather.FETCHERS.get(var.source)
     if fetcher is None:
         return _not_available(f"source {var.source!r} is not supported", var_id=var_id)
@@ -291,8 +319,11 @@ def _fetch(session: Session, var_id: str, start: int, end: int) -> dict:
         raw = fetcher(session.place.as_site(), (var,), session.catalog, start, end)
         series = raw.get(var_id) if isinstance(raw, Mapping) else None
         attrs = dict(series.attrs) if isinstance(series, pd.Series) else {}
+        yearly = var.temporal == ANNUAL or attrs.get("temporal") == ANNUAL
         if series is not None:
-            series = gather.conform(series, start, end).rename(var_id)
+            series = (to_annual(series, start, end) if yearly else gather.conform(series, start, end)).rename(var_id)
+            if yearly:  # kept with the series (and its store copy) for the annual trend path
+                series.attrs = {"temporal": ANNUAL, **{k: attrs[k] for k in ("precision", "caveat") if attrs.get(k)}}
     except Exception as exc:  # noqa: BLE001 - a failing source is a result, not a crash
         logger.warning("get_series %s failed: %s: %s", var_id, type(exc).__name__, exc)
         source = gather.SOURCES.get(var.source)
@@ -302,7 +333,12 @@ def _fetch(session: Session, var_id: str, start: int, end: int) -> dict:
     series_id = f"{var_id}:{start}-{end}"
     session.series[series_id] = series
     annual = series.groupby(series.index.year).mean().dropna()
-    extra = {}
+    extra: dict = {}
+    if yearly:
+        extra["basis"] = ANNUAL
+        extra |= {k: attrs[k] for k in ("precision", "caveat") if attrs.get(k)}
+        if attrs.get("dropped_years"):  # years GIBS showed no clear picture for
+            extra["dropped_years"] = [int(y) for y in attrs["dropped_years"]]
     if attrs.get("cell") is not None:  # the grid cell actually used (ERDDAP may move a masked one)
         extra["cell"] = [_num(c) for c in attrs["cell"]]
     if attrs.get("missing_years"):  # years the source failed on, kept as gaps
@@ -313,7 +349,7 @@ def _fetch(session: Session, var_id: str, start: int, end: int) -> dict:
         "var_id": var_id,
         "label": var.label,
         "unit": var.units,
-        "n_months": int(series.notna().sum()),
+        **({"n_years": n_years(series)} if yearly else {"n_months": int(series.notna().sum())}),
         "years": [start, end],
         "chart": [{"year": int(y), "value": _num(v)} for y, v in annual.items()],
         **extra,
@@ -366,11 +402,19 @@ def _trend_safe(session: Session, series: pd.Series, series_id: str, start: int,
         return _not_available("the trend test could not run on this series", transient=True)
 
 
+def is_annual(session: Session, series: pd.Series, series_id: str) -> bool:
+    """One value per year: the catalog says so, or the stored series does."""
+    var = _variable(session, str(series.name or series_id.split(":")[0]))
+    return (var is not None and var.temporal == ANNUAL) or series.attrs.get("temporal") == ANNUAL
+
+
 def _trend(session: Session, series: pd.Series, series_id: str, start: int, end: int) -> dict:
     if start > end:
         return _not_available("start year is after end year")
     var_id = str(series.name or series_id.split(":")[0])
     var = _variable(session, var_id)
+    if is_annual(session, series, series_id):
+        return _annual_trend(session, series, series_id, start, end, var_id, var)
     window = series.loc[f"{start}-01-01":f"{end}-12-01"]
     anomalies = monthly_anomalies(window)
     res = mk_trend_test(anomalies)
@@ -393,6 +437,7 @@ def _trend(session: Session, series: pd.Series, series_id: str, start: int, end:
         "test_id": test_id,
         "series_id": series_id,
         "var_id": var_id,
+        "basis": "monthly",
         "years": [start, end],
         "n_months": res.n_months,
         "too_short": res.too_short,
@@ -402,5 +447,48 @@ def _trend(session: Session, series: pd.Series, series_id: str, start: int, end:
         "unit": f"{var.units} per decade" if var else "per decade",
         "p_value": _num(res.p_value),
         "years_needed": needed,
+        **_corrected_fields(session, test_id),
+    }
+
+
+def _annual_trend(
+    session: Session, series: pd.Series, series_id: str, start: int, end: int, var_id: str, var: Variable | None
+) -> dict:
+    """Plain MK + Sen on one value per year. Counted in the session family like every test;
+    marked `basis: "annual"` so it is never read together with monthly-anomaly tests."""
+    window = series.loc[f"{start}-01-01":f"{end}-12-31"]
+    res = annual_trend(window)
+    slope = None if res.too_short else res.sen_slope_per_decade
+    label = var.label if var else var_id
+    test_id = f"t{session.ledger.n_tests + 1}"
+    session.ledger.add_test(
+        TestRecord(
+            id=test_id,
+            var_id=var_id,
+            label=label if "yearly values" in label else f"{label} (yearly values)",
+            kind="trend",
+            p_value=res.p_value,
+            slope=slope,
+            too_short=res.too_short,
+            result=res,
+        )
+    )
+    extra = {k: series.attrs[k] for k in ("precision", "caveat") if series.attrs.get(k)}
+    return {
+        "test_id": test_id,
+        "series_id": series_id,
+        "var_id": var_id,
+        "basis": ANNUAL,
+        "status": "observed",
+        "years": [start, end],
+        "n_years": n_years(window),
+        "too_short": res.too_short,
+        "slope_per_decade": _num(slope),
+        "ci_low": _num(res.ci_low),
+        "ci_high": _num(res.ci_high),
+        "unit": f"{var.units} per decade" if var else "per decade",
+        "p_value": _num(res.p_value),
+        "years_needed": annual_years_needed(window, res),
+        **extra,
         **_corrected_fields(session, test_id),
     }

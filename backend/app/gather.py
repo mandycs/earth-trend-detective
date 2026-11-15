@@ -18,7 +18,7 @@ import numpy as np
 import pandas as pd
 
 from app.catalog import Variable, variables_for_site
-from app.extractors import appeears, erddap, gldas, grace, power, water
+from app.extractors import appeears, erddap, gibs_values, gldas, grace, power, water
 from app.sites import Site
 from app.stats.residual import SNOW_DRIVERS, UPSTREAM_DRIVERS, degree_days, winter_precip
 
@@ -64,6 +64,11 @@ SOURCES: Mapping[str, SourceInfo] = MappingProxyType(
             "chlorophyll, NOAA Coral Reef Watch heat stress)",
             "https://coastwatch.pfeg.noaa.gov/erddap/",
             "The NOAA CoastWatch ERDDAP server (sea data) did not answer. Try again in a few minutes.",
+        ),
+        "gibs": SourceInfo(
+            "MODIS monthly NDVI, land surface temperature and snow cover via NASA GIBS (values read from colours)",
+            "https://www.earthdata.nasa.gov/engage/open-data-services-software/earthdata-developer-portal/gibs-api",
+            "NASA GIBS (satellite pictures) gave no usable picture here. Try again in a few minutes.",
         ),
     }
 )
@@ -193,17 +198,42 @@ def _fetch_erddap(
     end: int,
 ) -> dict[str, pd.Series]:
     """Sea variables at the site point, one variable after another (ERDDAP answers 408 to
-    parallel calls). Annual variables (DHW) come as the yearly maximum; `attrs["cell"]` keeps
-    the grid cell actually used."""
+    parallel calls). Annual variables (DHW) come as the yearly maximum over the warm half of
+    the year (`erddap.warm_season`); `attrs["cell"]` keeps the grid cell actually used."""
     out: dict[str, pd.Series] = {}
     for var in variables:
-        fetch = erddap.fetch_point_yearly_max if var.temporal == "annual" else erddap.fetch_point_monthly
-        raw, cell = fetch(var.dataset, var.band, site.lat, site.lon, start, end)
+        if var.temporal == "annual":
+            raw, cell = erddap.fetch_point_yearly_max(
+                var.dataset, var.band, site.lat, site.lon, start, end, months=erddap.warm_season(site.lat)
+            )
+        else:
+            raw, cell = erddap.fetch_point_monthly(var.dataset, var.band, site.lat, site.lon, start, end)
         values = raw * var.scale + var.offset
         if var.transform == "log10":
             values = np.log10(values.where(values > 0))
         series = values.astype(float).rename(var.id)
         series.attrs = {**raw.attrs, "cell": cell}
+        out[var.id] = series
+    return out
+
+
+def _fetch_gibs(
+    site: Site,
+    variables: Sequence[Variable],
+    _: Sequence[Variable],
+    start: int,
+    end: int,
+) -> dict[str, pd.Series]:
+    """Yearly box means from GIBS colour maps (one value per year, Jan 1 index), in catalog
+    units; `attrs["precision"]` is one palette step. Not for `conform` (monthly)."""
+    out: dict[str, pd.Series] = {}
+    for var in variables:
+        raw = gibs_values.fetch_annual(gibs_values.layer_for(var), site.bbox, start, end)
+        series = (raw * var.scale + var.offset).astype(float).rename(var.id)
+        step = raw.attrs.get("palette_step")
+        series.attrs = {**raw.attrs, "temporal": "annual"}
+        if step is not None and np.isfinite(step):
+            series.attrs["precision"] = f"palette step ≈ {step:.2g} {var.units}"
         out[var.id] = series
     return out
 
@@ -216,6 +246,7 @@ FETCHERS: Mapping[str, Fetcher] = MappingProxyType(
         "appeears": _fetch_appeears,
         "appeears_water": _fetch_appeears_water,
         "erddap": _fetch_erddap,
+        "gibs": _fetch_gibs,
     }
 )
 
@@ -308,8 +339,13 @@ def site_extra_drivers(site: Site, catalog: Sequence[Variable]) -> tuple[Variabl
 def gather_site_series(
     site: Site, catalog: Sequence[Variable], start: int, end: int
 ) -> GatherResult:
-    """Every applicable variable for `site` over [start, end], from all NASA sources in parallel."""
-    applicable = variables_for_site(catalog, site.tags) + site_extra_drivers(site, catalog)
+    """Every applicable variable for `site` over [start, end], from all NASA sources in parallel.
+
+    Monthly variables only: one-value-a-year variables (GIBS yearly means, heat-stress peaks)
+    live on the detective's annual trend path, not in the monthly sweep."""
+    applicable = tuple(
+        v for v in variables_for_site(catalog, site.tags) + site_extra_drivers(site, catalog) if v.temporal != "annual"
+    )
     by_source: dict[str, list[Variable]] = {}
     for var in applicable:
         by_source.setdefault(var.source, []).append(var)

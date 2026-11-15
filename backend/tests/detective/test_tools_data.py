@@ -92,8 +92,9 @@ def test_get_series_unknown_variable():
 def test_appeears_variables_not_available_off_case():
     got = tools.list_variables(_session(tags=("vegetated",)))
     rows = {r["id"]: r for r in got["variables"]}
-    assert rows["ndvi"]["available"] is False
-    assert rows["ndvi"]["reason"].startswith("not_available_here")
+    assert "ndvi" not in rows and rows["ndvi_gibs"]["available"] is True  # swapped for its GIBS twin
+    assert rows["et"]["available"] is False  # no twin: listed as not available here
+    assert rows["et"]["reason"].startswith("not_available_here")
     assert rows["t2m"]["available"] is True
     assert rows["t2m"]["definition"]
     assert rows["t2m"]["resolution"]
@@ -254,6 +255,9 @@ def test_resolution_comes_from_the_dataset():
     assert rows["t2m"]["resolution"] == "~50 km"
     assert rows["grace_tws"]["resolution"] == "~300 km"
     assert rows["soil_moisture"]["resolution"] == "~25 km"
-    assert rows["lst_day"]["resolution"] == "~1 km"
-    assert rows["snow_cover"]["resolution"] == "~500 m"
+    assert rows["lst_gibs"]["resolution"] == "~5.6 km"  # off-case: the GIBS yearly twins
+    assert rows["snow_gibs"]["resolution"] == "~5.6 km"
+    in_case = {r["id"]: r for r in tools.list_variables(_session(tags=("vegetated", "snow"), site_id="donana"))["variables"]}
+    assert in_case["lst_day"]["resolution"] == "~1 km"
+    assert in_case["snow_cover"]["resolution"] == "~500 m"
     assert rows["et"]["resolution"] == "dataset native resolution"

@@ -48,6 +48,9 @@ PAUSE_S = 5.0
 FAIL_FAST_YEARS = 3  # the first N requested years all failing = the source is down
 MAX_CELL_OFFSET = 0.1  # degrees: how far a masked coastal cell may move to a valid one
 YEARLY_MAX_MONTHS = (1, 6)  # DHW: January to June (a whole year in one call answers 502)
+NORTH_WARM_MONTHS = (7, 12)  # the warm half of the year north of the equator
+GEBCO_CELLS_PER_DEGREE = 240  # GEBCO 2020: 15 arc-second grid
+GEBCO_MAX_SIDE = 200  # points per side of one bathymetry request
 NO_RESULTS = "Your query produced no matching results"
 # ERDDAP's 404 names the real axis bound: "... axis maximum=<asked> (and even <bound>)."
 _AXIS_BOUND = re.compile(r"axis (maximum|minimum)=\S+ \(and even (\d{4}-\d\d-\d\dT[\d:]+Z)\)")
@@ -235,6 +238,12 @@ class _YearFailures:
             raise ErddapError(f"ERDDAP {self.dataset}: the first {len(head)} years all failed") from exc
 
 
+def warm_season(lat: float) -> tuple[int, int]:
+    """Months of the sea's warm half of the year: January-June south of the equator,
+    July-December north of it (heat stress on corals peaks there)."""
+    return YEARLY_MAX_MONTHS if lat < 0 else NORTH_WARM_MONTHS
+
+
 # --------------------------------------------------------------------------- point series
 
 
@@ -392,8 +401,12 @@ def fetch_min_elevation(
     """Lowest GEBCO_2020 elevation (m, negative below sea level) in bbox (west, south, east, north).
 
     Static data, so the answer is cached forever. Raises `ErddapError` if it cannot be read.
+    A box wider than about 2° gets a larger stride, so one request stays under about
+    GEBCO_MAX_SIDE x GEBCO_MAX_SIDE points.
     """
     west, south, east, north = bbox
+    side = max(abs(east - west), abs(north - south))
+    stride = max(stride, math.ceil(side * GEBCO_CELLS_PER_DEGREE / GEBCO_MAX_SIDE))
     url = griddap_url("GEBCO_2020", "elevation", [_axis(south, north, stride), _axis(west, east, stride)])
     path = _cache_path(cache_dir_default if cache_dir is None else cache_dir, "GEBCO_2020", url)
     text = None

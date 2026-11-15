@@ -40,14 +40,3 @@ def test_get_series_sst_at_sea_goes_through_the_erddap_fetcher(monkeypatch):
     assert tools.trend_test(s, series_id=got["series_id"])["test_id"] == "t1"
 
 
-def test_heat_stress_is_not_offered_on_the_monthly_path(monkeypatch):
-    def boom(*a, **k):
-        raise AssertionError("must not fetch")
-
-    monkeypatch.setattr(erddap, "fetch_point_yearly_max", boom)
-    s = _sea_session()
-    got = tools.get_series(s, var_id="dhw")
-    assert got["status"] == "not_available"
-    assert got["reason"] == tools.ANNUAL_PENDING_REASON
-    row = next(r for r in tools.list_variables(s)["variables"] if r["id"] == "dhw")
-    assert row["available"] is False and row["reason"] == tools.ANNUAL_PENDING_REASON

@@ -119,6 +119,60 @@ variables:
     applies_to: [snow, glacier, mountain]
     drivers: [t2m, precip]
 
+  # --- Yearly values at any point (MODIS monthly layers on NASA GIBS, no auth) ---
+  # Off-case twins of the AppEEARS variables above (app/extractors/gibs_values.py):
+  # dataset = GIBS layer; every month of a year read back from the GIBS colormap (interval
+  # midpoints), averaged, then the box mean. One value per year: trend-tested on the annual
+  # path only; drivers as the twin's, but no climate split on yearly values (it needs months).
+  # Status "observed", precision one palette step.
+  - id: ndvi_gibs
+    label: Plant greenness (yearly values)
+    definition: "How green and leafy the land looks from space, averaged over each year from NASA's MODIS satellite pictures; higher means more plant growth."
+    role: impact
+    source: gibs
+    dataset: MODIS_Terra_L3_NDVI_Monthly   # MOD13A3, colormap MODIS_L3_NDVI
+    band: MODIS_L3_NDVI
+    units: "NDVI"
+    scale: 1.0
+    offset: 0.0
+    temporal: annual
+    resolution: "~1 km"
+    tags: [vegetation, land]
+    applies_to: [vegetated, wetland, forest, agriculture]
+    drivers: [precip, t2m, solar]
+
+  - id: lst_gibs
+    label: Daytime ground temperature (yearly values)
+    definition: "How hot the ground surface itself is in the daytime, averaged over each year from NASA's MODIS satellite pictures. It is not the air temperature."
+    role: impact
+    source: gibs
+    dataset: MODIS_Terra_L3_Land_Surface_Temp_Monthly_Day   # MOD11C3, colormap MODIS_Land_Surface_Temp
+    band: MODIS_Land_Surface_Temp
+    units: "°C"
+    scale: 1.0
+    offset: 0.0
+    temporal: annual
+    resolution: "~5.6 km"
+    tags: [temperature, land]
+    applies_to: [any]
+    drivers: [t2m, solar]
+
+  - id: snow_gibs
+    label: Snow cover (yearly values)
+    definition: "The share of the ground covered by snow, averaged over each year from NASA's MODIS satellite pictures."
+    role: impact
+    source: gibs
+    dataset: MODIS_Terra_L3_Snow_Cover_Monthly_Average_Pct   # MOD10CM, colormap MODIS_NDSI_Snow_Cover
+    band: MODIS_NDSI_Snow_Cover
+    units: "%"
+    scale: 1.0
+    offset: 0.0
+    temporal: annual
+    resolution: "~5.6 km"
+    tags: [snow, ice]
+    applies_to: [snow, glacier, mountain]
+    drivers: [t2m, precip]
+
   # --- Impact variables (GLDAS Noah monthly via Earthdata Cloud OPeNDAP, Earthdata Login) ---
   # Hydrology Data Rods and on-prem GES DISC OPeNDAP are retired (HTTP 410).
   - id: soil_moisture
@@ -288,10 +342,10 @@ variables:
     applies_to: [ocean, coast, reef]
     drivers: [sst, precip, solar]
 
-  # Heat stress: yearly maximum, January-June, of NOAA Coral Reef Watch daily degree heating
-  # weeks at the point (query "degree heating" -> noaacrwdhwDaily, the only match;
-  # NOAA_DHW_monthly has no DHW). One value per year: NOT trend-tested on the monthly path,
-  # so applies_to stays empty (not offered) until the annual path exists.
+  # Heat stress: yearly maximum of NOAA Coral Reef Watch daily degree heating weeks at the
+  # point over the warm half of the year (January-June south of the equator, July-December
+  # north; query "degree heating" -> noaacrwdhwDaily, the only match; NOAA_DHW_monthly has no
+  # DHW). One value per year: trend-tested on the annual path only, offered on reefs.
   - id: dhw
     label: Heat stress on corals (degree heating weeks, NOAA, not NASA)
     definition: "How much heat has built up in the sea over the last 12 weeks, the yearly peak from NOAA Coral Reef Watch; 4 or more stresses corals."
@@ -305,5 +359,5 @@ variables:
     temporal: annual
     resolution: "~5 km"
     tags: [sea, temperature, heat_stress]
-    applies_to: []
+    applies_to: [reef]
     drivers: []

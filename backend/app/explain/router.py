@@ -65,7 +65,8 @@ def explain_route(body: RouteRequest, llm: LLM | None = Depends(get_llm)) -> dic
     if body.site_id is None:
         variables = catalog
     else:
-        variables = variables_for_site(catalog, _known_site(body.site_id).tags)
+        # the site report holds monthly variables only (yearly ones live in the detective)
+        variables = tuple(v for v in variables_for_site(catalog, _known_site(body.site_id).tags) if v.temporal != "annual")
     choices = {v.id: v.label for v in variables}
     result = route_question(body.question, choices, llm)
     return result.to_dict() | {"allowed_ids": list(choices)}

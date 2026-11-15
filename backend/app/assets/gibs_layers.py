@@ -9,8 +9,10 @@ resolution, turn colours back into values (interval midpoints: NDVI to 0.01, LST
 - layers/<id>/<YYYY>_values.png  16-bit values: value = offset + scale * pixel, 0 = no data
 - layers/<id>/meta.json          legend, unit, range, months, scale/offset, source
 
-These are measured values (status "observed") but not trend-tested. Pixels stay at their
-real size: no smoothing into detail that is not there.
+These are measured values (status "observed"); the site layers are not trend-tested. The
+detective reads the same values at any point (`yearly_values`, via `extractors/gibs_values`)
+and tests them on the annual path. Pixels stay at their real size: no smoothing into detail
+that is not there.
 
 Usage (from backend/, venv active):
     python -m app.assets.gibs_layers [site_id ...]
@@ -23,7 +25,8 @@ import json
 import logging
 import re
 import sys
-from collections.abc import Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -44,6 +47,7 @@ COLORMAP_URL = "https://gibs.earthdata.nasa.gov/colormaps/v1.3/{name}.xml"
 YEARS = range(2003, 2025)
 TIMEOUT_S = 60.0
 MIN_PX = 64
+MIN_VALID_SHARE = 0.2  # a year needs at least this share of pixels with a value, else it is dropped
 _ENTRY_RE = re.compile(r"<ColorMapEntry\s+([^>]*)/>")
 _ATTR_RE = re.compile(r'(\w+)="([^"]*)"')
 
@@ -63,6 +67,9 @@ class GibsLayer:
     legend: Mapping[str, str]
     source: Mapping[str, str]
     seasons: Mapping[str, tuple[int, ...]]  # site id -> months averaged each year
+    # Value of a transparent pixel when GIBS paints a real value transparent (snow: 0 % is
+    # transparent); None = transparent means no data.
+    transparent_value: float | None = None
 
 
 LAYERS: tuple[GibsLayer, ...] = (
@@ -157,6 +164,71 @@ def _fetch(client: httpx.Client, layer: GibsLayer, bbox: Sequence[float], date: 
     return np.asarray(Image.open(io.BytesIO(r.content)).convert("RGBA"))
 
 
+def layer_size(bbox: Sequence[float], layer: GibsLayer) -> tuple[int, int]:
+    """(width, height) in pixels: about the product's own resolution, metric aspect."""
+    width = max(MIN_PX, native_width(bbox, layer.native_m))
+    dx, dy = pixel_size_m(bbox, (1, 1))  # metric aspect, like the other overlays
+    return width, max(1, round(width * dy / dx))
+
+
+def load_colormap(client: httpx.Client, layer: GibsLayer) -> dict[tuple[int, int, int], float]:
+    return parse_colormap(client.get(COLORMAP_URL.format(name=layer.colormap)).text)
+
+
+def _decode_tile(rgba: np.ndarray, table: Mapping[tuple[int, int, int], float], layer: GibsLayer) -> np.ndarray:
+    vals = decode(rgba, table)
+    if layer.transparent_value is not None and rgba.shape[-1] == 4:
+        vals = np.where(rgba[..., 3] == 0, layer.transparent_value, vals)
+    return vals + layer.to_unit
+
+
+def yearly_values(
+    layer: GibsLayer,
+    bbox: Sequence[float],
+    years: Iterable[int],
+    client: httpx.Client,
+    months: Sequence[int],
+    size: tuple[int, int] | None = None,
+    table: Mapping[tuple[int, int, int], float] | None = None,
+    workers: int = 1,
+) -> dict[int, np.ndarray]:
+    """Season mean grid (display units) per year over `bbox`, for the years with enough pixels.
+
+    One GetMap per month; a month GIBS does not serve is skipped. A year keeps its grid when
+    at least MIN_VALID_SHARE of the pixels have a value (transparent years are dropped). With
+    `layer.transparent_value` set, a year also needs one coloured pixel in some month.
+    """
+    size = layer_size(bbox, layer) if size is None else size
+    table = load_colormap(client, layer) if table is None else table
+    jobs = [(year, m) for year in years for m in months]
+
+    def get(job: tuple[int, int]) -> np.ndarray | None:
+        year, m = job
+        return _fetch(client, layer, bbox, f"{year}-{m:02d}-01", size)
+
+    if workers > 1:
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            tiles = list(pool.map(get, jobs))
+    else:
+        tiles = [get(job) for job in jobs]
+    by_year: dict[int, list[np.ndarray]] = {}
+    seen: set[int] = set()
+    for (year, _), rgba in zip(jobs, tiles):
+        if rgba is None:
+            continue
+        if rgba.shape[-1] < 4 or (rgba[..., 3] > 0).any():
+            seen.add(year)
+        by_year.setdefault(year, []).append(_decode_tile(rgba, table, layer))
+    yearly: dict[int, np.ndarray] = {}
+    for year, grids in by_year.items():
+        if layer.transparent_value is not None and year not in seen:
+            continue
+        vals = season_mean(grids)
+        if np.isfinite(vals).mean() >= MIN_VALID_SHARE:
+            yearly[year] = vals
+    return yearly
+
+
 def build_layer(site_id: str, layer: GibsLayer, sites_dir: Path = SITES_DIR) -> dict | None:
     site = load_sites().get(site_id)
     months = layer.seasons.get(site_id)
@@ -164,22 +236,9 @@ def build_layer(site_id: str, layer: GibsLayer, sites_dir: Path = SITES_DIR) -> 
         return None
     out = sites_dir / site_id / "layers" / layer.id
     out.mkdir(parents=True, exist_ok=True)
-    width = max(MIN_PX, native_width(site.bbox, layer.native_m))
-    dx, dy = pixel_size_m(site.bbox, (1, 1))  # metric aspect, like the other overlays
-    height = max(1, round(width * dy / dx))
+    width, height = layer_size(site.bbox, layer)
     with httpx.Client(timeout=TIMEOUT_S) as client:
-        table = parse_colormap(client.get(COLORMAP_URL.format(name=layer.colormap)).text)
-        yearly: dict[int, np.ndarray] = {}
-        for year in YEARS:
-            grids = []
-            for m in months:
-                rgba = _fetch(client, layer, site.bbox, f"{year}-{m:02d}-01", (width, height))
-                if rgba is not None:
-                    grids.append(decode(rgba, table) + layer.to_unit)
-            if grids:
-                vals = season_mean(grids)
-                if np.isfinite(vals).mean() >= 0.2:
-                    yearly[year] = vals
+        yearly = yearly_values(layer, site.bbox, YEARS, client, months, size=(width, height))
     if not yearly:
         logger.warning("%s/%s: no usable months", site_id, layer.id)
         return None

@@ -11,7 +11,7 @@ import yaml
 CATALOG_PATH = Path(__file__).resolve().parent.parent / "catalog" / "variables.yaml"
 
 ROLES = frozenset({"driver", "impact"})
-SOURCES = frozenset({"power", "appeears", "appeears_water", "datarods", "gldas", "grace", "erddap"})
+SOURCES = frozenset({"power", "appeears", "appeears_water", "datarods", "gldas", "grace", "erddap", "gibs"})
 TRANSFORMS = frozenset({"", "log10"})
 
 
