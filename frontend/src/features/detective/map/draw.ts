@@ -1,6 +1,8 @@
 // Pure helpers behind DetectiveMap and CurtainMap: what to draw, the legend lines, the camera padding and the
 // point/box picking steps. No DOM, no maplibre: the components turn these into map calls.
 import type { Bbox } from "../events.ts";
+import { landCoverClasses } from "./landCover.ts";
+import type { LandCoverClass } from "./landCover.ts";
 import type { Target } from "../request.ts";
 import { boxFromCorners, wrapLon } from "../request.ts";
 import { GIBS_ATTRIBUTION, TERRAIN, catalogLayer } from "./catalog.ts";
@@ -217,6 +219,8 @@ const signed = (n: number): string => String(n).replace("-", "−");
 export interface LegendEntry {
   key: string; role: string; title: string; when: string | null; unit: string | null; range: string | null;
   ramp: string[]; labels: string[]; source: string; resolution: string | null;
+  /** Named colour classes (land cover): swatches with plain names, colours copied from the GIBS colormap. */
+  classes: readonly LandCoverClass[];
 }
 
 function entryFor(lv: LayerView, role: string, when: string | null): LegendEntry {
@@ -231,6 +235,7 @@ function entryFor(lv: LayerView, role: string, when: string | null): LegendEntry
     ramp: lg?.stops ?? [], labels: lg?.labels ?? [],
     source: lv.source,
     resolution: lv.resolution ? `${lv.resolution} pixels, ${lv.crisp ? "drawn as they are" : "smoothed for display"}` : null,
+    classes: landCoverClasses(lv.layerId),
   };
 }
 

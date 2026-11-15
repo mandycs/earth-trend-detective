@@ -1,3 +1,5 @@
+import { useMemo } from 'react'
+import { toolLine, varCatalog } from './instruments'
 import { stepRow } from './panels'
 import type { Investigation } from './scenes'
 import styles from './detective.module.css'
@@ -12,6 +14,7 @@ export interface StepListProps {
 
 /** Every scene as one row; the user can look back at any of them. */
 export function StepList({ inv, index, pinned, onGoto, onLive }: StepListProps) {
+  const vars = useMemo(() => varCatalog(inv.scenes), [inv.scenes])
   if (inv.scenes.length === 0) return null
   const current = Math.min(index, inv.scenes.length - 1)
   return (
@@ -19,6 +22,7 @@ export function StepList({ inv, index, pinned, onGoto, onLive }: StepListProps) 
       <ol>
         {inv.scenes.map((s, i) => {
           const r = stepRow(s)
+          const tech = toolLine(s, vars)
           return (
             <li key={s.key}>
               <button
@@ -30,7 +34,10 @@ export function StepList({ inv, index, pinned, onGoto, onLive }: StepListProps) 
                 <span className={styles.stepIcon} aria-hidden="true">
                   {r.icon}
                 </span>
-                <span>{r.label}</span>
+                <span className={styles.stepText}>
+                  <span>{r.label}</span>
+                  {tech && <span className={styles.stepTool}>{tech}</span>}
+                </span>
                 <span className="sr-only">, {r.state}</span>
               </button>
             </li>

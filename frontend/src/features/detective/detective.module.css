@@ -889,6 +889,7 @@
 }
 
 .stepIcon {
+  flex: none;
   display: inline-block;
   width: 1.5ch;
   text-align: center;
@@ -1186,4 +1187,122 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 8px;
+}
+
+/* natural language → technical tools: the instrument under each plain step name */
+
+.sceneInstrument {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin: 0;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+.sceneInstrumentKey {
+  color: var(--ink-3);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.stepText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 0;
+  text-align: left;
+}
+
+.stepTool {
+  color: var(--ink-3);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+/* "How Alibi read your question": the words, then the records chosen */
+
+.reading {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  border-left: 3px solid var(--ink);
+  background: var(--surface);
+}
+
+.readingTitle {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.readingArrow {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 0.9375rem;
+}
+
+.readingRecords {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 8px;
+}
+
+.readingRecord {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+}
+
+.readingLabel {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.readingInstrument {
+  color: var(--ink-2);
+  font-size: 0.875rem;
+  line-height: 1.35;
+}
+
+.readingMethods {
+  color: var(--ink-2);
+  font-size: 0.9375rem;
+}
+
+.readingMethods summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.readingMethods ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  line-height: 1.45;
 }
