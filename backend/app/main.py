@@ -1,4 +1,4 @@
-"""Earth Trend Detective API."""
+"""Alibi API."""
 
 from __future__ import annotations
 
@@ -44,7 +44,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         shutdown_persistence()
 
 
-app = FastAPI(title="Earth Trend Detective API", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="Alibi API", version="0.1.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

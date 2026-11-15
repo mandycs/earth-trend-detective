@@ -16,13 +16,13 @@
 
 ## 1. Project Name
 
-**Earth Trend Detective**
+**Alibi — an Earth trend detective**
 
 ---
 
 ## 2. High-Level Project Summary
 
-Earth Trend Detective answers three questions about a place on Earth: what is changing here, is the change real, and how much of it does the climate not explain?
+Alibi answers three questions about a place on Earth: what is changing here, is the change real, and how much of it does the climate not explain?
 
 For each place, the tool takes the NASA records that apply there (GRACE water storage, MODIS land surface temperature and vegetation, GLDAS soil moisture, NASA POWER climate), removes the seasonal cycle and runs a Mann–Kendall trend test with Sen's slope, corrected for autocorrelation and for testing many variables at once. Each record gets a plain verdict: real, likely, or can't tell yet. Then it models each impact variable on its climate drivers and reports the share of the trend the climate leaves unexplained, as a range across climate models. That share is a clue, not an attribution.
 

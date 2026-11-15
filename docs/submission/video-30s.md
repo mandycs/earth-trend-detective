@@ -19,7 +19,7 @@ third-party music (the T&Cs require that we hold the rights to every element).
 |---|---|---|---|---|
 | **0.0–3.0** | Lake Mead case, 3D terrain, strong oblique angle. Timeline scrubs 2003 → 2024 in one continuous move; the annual anomaly texture over the basin deepens from neutral to deep red as storage falls. | `Lake Mead, 2003 → 2024` (top left, small) then `Is it the climate — or is it us?` (centre, appears at 0:01) | "This reservoir has been shrinking for twenty years." | Open on motion, not on a logo or a title card. The first frame must already be the product. |
 | **3.0–8.0** | Hard cut to the verdict panel. Two rows highlight in sequence: `Total water storage ↓ Real change`, then `Rainfall — Can't tell yet`. Cursor moves once, deliberately. | `Rainfall: no clear trend` then `So what is draining it?` | "Rainfall shows no trend. So what is draining it?" | This is the whole argument of the project in five seconds. Do not rush the cut; let the two labels be readable. |
-| **8.0–14.0** | Pull back to the globe / explore map. A click lands on a coastal city. The sweep runs: a column of variable names resolves one by one into verdict chips. Team lower-third appears. | `Earth Trend Detective` + one-line tagline `What is changing here — and is it real?` · lower third: `[TEAM NAME] · Málaga, Spain` | "Earth Trend Detective: pick any place, and we test every NASA variable that applies." | The lower third covers NASA's "introduce yourself and your team" beat without spending voice-over time on it. |
+| **8.0–14.0** | Pull back to the globe / explore map. A click lands on a coastal city. The sweep runs: a column of variable names resolves one by one into verdict chips. Team lower-third appears. | `Alibi` + `an Earth trend detective` + one-line tagline `What is changing here — and is it real?` · lower third: `[TEAM NAME] · Málaga, Spain` | "Alibi, an Earth trend detective: pick any place, and we test every NASA variable that applies." | The lower third covers NASA's "introduce yourself and your team" beat without spending voice-over time on it. |
 | **14.0–21.0** | Split screen. Left: the variable's time series with the Sen slope drawn. Right: the residual panel with the share climate does not explain. One annotation arrow draws to the residual. | `Climate explains part of it.` → `The rest is the lead.` | "Then we remove what the climate explains. What is left is the part it does not." | Both panels must be legible at 720p. Zoom the UI to 125 % before recording. |
 | **21.0–26.0** | The explanation paragraph types in under its label. Then the validator line flashes green: `12 figures checked · 0 mismatches`. | `Written by a language model.` / `Every figure checked against the data.` | "A language model writes it. A validator checks every number." | This is the answer to "another LLM wrapper". Show the check, not the claim. |
 | **26.0–30.0** | Cut back to the full 3D scene, slow pull-back, verdict chip still on screen. End card over the terrain. | `Pick a place.` / `[LIVE_URL]` + `github.com/[org]/earth-trend-detective` | "Pick a place. Find out what is really changing." | Hold the end card for at least 1.5 s. No fade to black before 29.5 s. |
@@ -35,7 +35,7 @@ third-party music (the T&Cs require that we hold the rights to every element).
 >
 > Rainfall shows no trend. So what is draining it?
 >
-> Earth Trend Detective: pick any place, and we test every NASA variable that applies.
+> Alibi, an Earth trend detective: pick any place, and we test every NASA variable that applies.
 >
 > Then we remove what the climate explains. What is left is the part it does not.
 >
@@ -76,7 +76,7 @@ The rules allow either format, never both. If the video falls through, the same 
 
 | Slide | Content | Beat from the script |
 |---|---|---|
-| 1 | Title: Earth Trend Detective, team name, challenge | — |
+| 1 | Title: Alibi (an Earth trend detective), team name, challenge | — |
 | 2 | The problem: satellites measure it, nobody explains it | 0–3 s |
 | 3 | Lake Mead: storage falls, rainfall flat — the question | 3–8 s |
 | 4 | How it works: sweep → significance → residual → explanation | 8–21 s |

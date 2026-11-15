@@ -12,7 +12,7 @@
 > Somebody else: it's us. **Nobody shows you the numbers.**"
 
 **[0:12 – 0:28] — Qué es**
-> "This is Earth Trend Detective. You pick a place. It tells you what is changing there, whether that
+> "This is Alibi, an Earth trend detective. You pick a place. It tells you what is changing there, whether that
 > change is real or just noise, and how much of it the climate does **not** explain. Built on NASA
 > satellite data, in plain language."
 
@@ -34,7 +34,7 @@
 
 ## Versión de 30 s (si el formato aprieta)
 
-> "Every lake and river is changing, and everyone has an opinion about why. Earth Trend Detective gives
+> "Every lake and river is changing, and everyone has an opinion about why. Alibi gives
 > you the evidence: what is changing, whether it is real, and how much the climate does not explain.
 > Three steps, 22 years of NASA data (2003–2024), plain language. And when the data can't answer, it says so.
 > Pick a place. See for yourself."
