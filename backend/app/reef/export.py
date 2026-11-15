@@ -115,7 +115,7 @@ def heat_missing(heat: Mapping) -> dict[str, str]:
         return {}
     n = sum(len(years) for _name, years in gaps)
     where = "; ".join(f"{name} {', '.join(str(y) for y in years)}" for name, years in gaps)
-    return {"dhw": f"no data for {_reef_years(n)} (fetch failed): {where}"}
+    return {"dhw": f"no data for {_reef_years(n)} (no valid reading or fetch failed): {where}"}
 
 
 def _uncounted_text(heat: Mapping) -> str:

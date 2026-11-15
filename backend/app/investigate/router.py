@@ -41,7 +41,6 @@ def sse(events: Iterator[Event]) -> AsyncIterator[str]:
     return sse_stream(events)
 
 
-# TODO(reef Task 7/9): this resolves the sea site great_barrier_reef with land logic; decide there.
 @router.post("/investigate")
 def post_investigate(
     body: InvestigateRequest,
@@ -52,6 +51,8 @@ def post_investigate(
     if body.site_id is not None and load_sites().get(body.site_id) is None:
         known = ", ".join(s.id for s in load_sites().sites)
         raise HTTPException(404, f"We don't know a site called '{body.site_id}'. Pick one of: {known}.")
+    if body.site_id is not None and load_sites().get(body.site_id).pipeline == "sea":
+        raise HTTPException(409, "This sea case is precomputed; open it in story mode.")
     events = run(body.question, lat=body.lat, lon=body.lon, site_id=body.site_id, llm=llm)
     return StreamingResponse(
         sse(events),

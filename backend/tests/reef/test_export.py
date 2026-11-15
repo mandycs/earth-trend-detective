@@ -257,7 +257,7 @@ def test_reef_years_without_data_are_listed_and_said(tmp_path):
     series = reef_export.ReefSeries(sst=_sst(), chlorophyll_log10=_chl())
     doc = reef_export.build_reef_site_json(site, load_catalog(), START, END, tmp_path / SITE_ID, series, heat, today=TODAY)
     assert doc["missing"]["dhw"] == (
-        "no data for 4 reef-years (fetch failed): Outer shelf (central) 2012, 2013, 2014; Heron Reef (south) 2022"
+        "no data for 4 reef-years (no valid reading or fetch failed): Outer shelf (central) 2012, 2013, 2014; Heron Reef (south) 2022"
     )
     assert doc["headline"].endswith("(4 reef-years without data are not counted).")
     dhw_row = next(v for v in doc["variables"] if v["id"] == "dhw")
@@ -265,3 +265,12 @@ def test_reef_years_without_data_are_listed_and_said(tmp_path):
     # no gaps: nothing listed, nothing added
     assert "dhw" not in _doc(tmp_path)["missing"]
     assert "without data" not in _doc(tmp_path)["headline"]
+
+
+def test_investigate_refuses_the_sea_case():
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+
+    res = TestClient(app).post("/investigate", json={"question": "Is the reef warming?", "site_id": SITE_ID})
+    assert res.status_code == 409
