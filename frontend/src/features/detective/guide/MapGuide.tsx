@@ -21,7 +21,7 @@ export interface MapGuideProps {
 
 type Tier = 'plain' | 'tech'
 
-/** "How to read this map": a chip that opens a drawer with two tiers, plain words first. Closed by default. */
+/** "What am I looking at?": a chip that opens a drawer with two tiers, plain words first. Closed by default. */
 export function MapGuide({ view, target, inv, events, variant = 'map' }: MapGuideProps) {
   const dialog = useRef<HTMLDialogElement>(null)
   const [open, setOpen] = useState(false)
@@ -71,7 +71,7 @@ export function MapGuide({ view, target, inv, events, variant = 'map' }: MapGuid
           <div className={styles.sheet}>
             <div className={styles.head}>
               <h2 id={titleId} className={styles.title}>
-                {stack ? 'How to read the stack' : 'How to read this map'}
+                {stack ? 'How to read the stack' : 'What am I looking at?'}
               </h2>
               <button type="button" className={styles.close} onClick={() => setOpen(false)} aria-label="Close the guide">
                 ✕

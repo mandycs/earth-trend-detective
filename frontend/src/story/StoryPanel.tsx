@@ -9,7 +9,7 @@ import { RangeBar, SplitBar } from '../lib/Evidence'
 import { fmt, isEvents, leadVariable, shortName, slopeText, stampFor } from '../lib/cases'
 import { EventsTag, HeatStressRecord } from './HeatStress'
 import { API_URL } from '../features/explore/api'
-import { FootprintGlyph, footprintOf, footprintVsMap } from '../lib/footprint'
+import { footprintOf, footprintVsMap } from '../lib/footprint'
 
 export interface StoryPanelProps {
   site: Site
@@ -64,6 +64,8 @@ function Changing({ site, variable, mapKm, onSelectVariable }: { site: Site; var
   const settled = site.variables.filter((v) => !isUnsettled(v))
   const unsettled = site.variables.filter(isUnsettled)
   const unsettledOpen = unsettled.some((v) => v.id === variable.id)
+  // The trend line is drawn only where there is a verdict to back it.
+  const trendShown = (v: SiteVariable) => !isEvents(v) && !isUnsettled(v) && v.sen_slope_per_decade != null
   const row = (entry: SiteVariable) => {
     const slope = slopeText(entry)
     const selected = entry.id === variable.id
@@ -83,10 +85,11 @@ function Changing({ site, variable, mapKm, onSelectVariable }: { site: Site; var
             <SeriesLine
               series={entry.series}
               years={site.years}
-              width={96}
-              height={34}
+              width={132}
+              height={40}
               className="sp-var-line"
-              label={`${entry.label}, yearly`}
+              label={`${entry.label}, yearly${trendShown(entry) ? ', with its trend' : ''}`}
+              slopePerDecade={trendShown(entry) ? entry.sen_slope_per_decade : null}
             />
           ) : (
             <span className="sp-var-line" />
@@ -100,10 +103,7 @@ function Changing({ site, variable, mapKm, onSelectVariable }: { site: Site; var
               list stays a list to scan and not a wall of explanations. */}
           {selected ? (
             <span className="sp-var-area">
-              <FootprintGlyph fp={footprintOf(entry.id, entry.footprint)} mapKm={mapKm} className="sp-var-glyph" />
-              <span>
-                Over {footprintOf(entry.id, entry.footprint).words}: {footprintVsMap(footprintOf(entry.id, entry.footprint), mapKm)}
-              </span>
+              Measured over {footprintOf(entry.id, entry.footprint).words}: {footprintVsMap(footprintOf(entry.id, entry.footprint), mapKm)}
             </span>
           ) : null}
         </button>
