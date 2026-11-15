@@ -34,6 +34,14 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     # The detective's checkpointer and store: one SQLite pair per process.
     from app.detective.router import shutdown_persistence, startup_persistence
 
+    from app.detective.maps import cleanup_old
+
+    try:
+        removed = cleanup_old()  # trend maps older than 7 days
+        if removed:
+            logger.info("detective maps: removed %d old files", removed)
+    except Exception as exc:  # noqa: BLE001 - a stale map folder must not stop the API
+        logger.warning("detective maps cleanup failed: %s", type(exc).__name__)
     try:
         startup_persistence()
     except Exception as exc:  # noqa: BLE001 - the rest of the API must still start; /detective answers 503
@@ -204,8 +212,10 @@ from app.investigate.router import router as investigate_router  # noqa: E402
 app.include_router(investigate_router)
 
 # /detective: the LangGraph investigator streamed as Server-Sent Events (app/detective/).
+from app.detective.maps import router as detective_maps_router  # noqa: E402
 from app.detective.router import router as detective_router  # noqa: E402
 
+app.include_router(detective_maps_router)  # GET /detective/maps/<uuid>.png (trend_map overlays)
 app.include_router(detective_router)
 
 # /layers/suggest: LLM-picked map layer stack for a question (app/layer_suggest.py).

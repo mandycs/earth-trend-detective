@@ -82,7 +82,12 @@ def _date_problem(row: dict, date: str | None, year: int | None, today: Date | N
             day = Date.fromisoformat(date)
         except ValueError:
             return "date must be YYYY-MM-DD"
-        return covers if not start <= day <= last else None
+        if not start <= day <= last:
+            return covers
+        for gap_start, gap_end in dates.get("gaps") or ():  # months GIBS has no picture for
+            if Date.fromisoformat(str(gap_start)) <= day <= Date.fromisoformat(str(gap_end)):
+                return f"this layer has no pictures from {gap_start} to {gap_end}"
+        return None
     if year is not None:
         if dates.get("years") and int(year) not in dates["years"]:
             return f"this layer only has the years {', '.join(map(str, dates['years']))}"

@@ -20,7 +20,10 @@ from app.stats.trend import TrendResult
 from app.stats.verdict import Direction, Verdict, classify
 
 # p and q values are never figures the answer may quote.
-_NON_FIGURE_KEYS = frozenset({"chart", "series", "url", "bbox", "evidence_id", "p_value", "p", "q_session", "q"})
+# `map` / `legend`: a trend map's drawing data (bounds, colour range, pixel counts), never quoted.
+_NON_FIGURE_KEYS = frozenset(
+    {"chart", "series", "url", "bbox", "evidence_id", "p_value", "p", "q_session", "q", "map", "legend"}
+)
 
 
 @dataclass(frozen=True)
