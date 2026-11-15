@@ -1,4 +1,4 @@
-/* "How to read this map": a chip by the legend, and a drawer from the right. Ink on ground, no accent colour;
+/* "What am I looking at?": a chip by the legend, and a drawer from the right. Ink on ground, no accent colour;
    colour only where it is the data's own (ramps, land cover swatches). */
 
 .chip {
@@ -467,4 +467,30 @@
   color: currentColor;
   box-shadow: inset 0 0 0 1.5px currentColor; /* taste-skill-ignore: outlined mark, not a shadow */
   font-size: 0.8rem;
+}
+
+/* Inside the guide, the stamp keys and step numbers are labels, not controls: no boxes. */
+.stamp {
+  padding: 0;
+  border: 0;
+  color: var(--ink);
+}
+
+.stepNo {
+  width: auto;
+  height: auto;
+  min-width: 1.4em;
+  place-items: start;
+  border: 0;
+  color: var(--ink-3);
+  font-size: 1.4rem;
+  font-weight: 300;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 521px) {
+  .stamps li {
+    grid-template-columns: 12.5rem 1fr;
+  }
 }
