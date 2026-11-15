@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
 import type { Map as MlMap, Marker } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { STYLE } from '../explore/mapStyle'
@@ -23,6 +24,8 @@ export interface DetectiveMapProps {
   pickEnabled: boolean
   onPick: (result: PickResult) => void
   reducedMotion: boolean
+  /** The "What am I looking at?" guide, shown above the legend. */
+  guide?: ReactNode
 }
 
 const BASE = 'earth'
@@ -36,7 +39,7 @@ function cameraOf(m: MlMap): CurtainCamera {
   return { center: [c.lng, c.lat], zoom: m.getZoom(), pitch: m.getPitch(), bearing: m.getBearing(), padding: m.getPadding() }
 }
 
-export default function DetectiveMap({ view, target, pickMode, pickEnabled, onPick, reducedMotion }: DetectiveMapProps) {
+export default function DetectiveMap({ view, target, pickMode, pickEnabled, onPick, reducedMotion, guide }: DetectiveMapProps) {
   const container = useRef<HTMLDivElement>(null)
   const map = useRef<MlMap | null>(null)
   const marker = useRef<Marker | null>(null)
@@ -231,7 +234,10 @@ export default function DetectiveMap({ view, target, pickMode, pickEnabled, onPi
           </p>
         ))}
       </div>
-      <LayerLegend view={view} flat={flat} />
+      <div className={styles.mapKeys}>
+        <LayerLegend view={view} flat={flat} />
+        {guide}
+      </div>
       {failed ? (
         <p className={styles.mapError} role="alert">
           {MAP_FAILED}

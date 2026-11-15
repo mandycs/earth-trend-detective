@@ -32,6 +32,7 @@ import {
   ANSWER_READY, COORDS_HINT, COORDS_PLACEHOLDER, focusTargetFor, forkKeepTurns, localDate, parseLatLon, previewCamera,
 } from './viewModel'
 import type { FocusTarget } from './viewModel'
+import { MapGuide } from './guide/MapGuide'
 import styles from './detective.module.css'
 
 const DetectiveMap = dynamic(() => import('./DetectiveMap'), {
@@ -394,6 +395,7 @@ export default function DetectiveView({ cases, recordings, initialSite, initialP
             pickEnabled={canPick}
             onPick={onPick}
             reducedMotion={reducedMotion}
+            guide={<MapGuide view={view} target={mapTarget} inv={inv} events={det.events} />}
           />
         </div>
         <div className={styles.scrim} aria-hidden="true" />
@@ -521,6 +523,7 @@ export default function DetectiveView({ cases, recordings, initialSite, initialP
           onClose={closeStack}
           onCollapsed={onStackCollapsed}
           reducedMotion={reducedMotion}
+          guide={<MapGuide variant="stack" view={view} target={mapTarget} inv={inv} events={det.events} />}
         />
       )}
     </div>
