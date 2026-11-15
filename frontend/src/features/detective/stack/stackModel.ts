@@ -7,7 +7,7 @@ import { verdictFor } from "../board.ts";
 import type { Bbox, MapOp } from "../events.ts";
 import type { Investigation, Scene } from "../scenes.ts";
 import { BLUE_MARBLE, blueMarbleUrl, catalogLayer, wmsUrl } from "../map/catalog.ts";
-import { applyMapOp, openingView } from "../map/mapView.ts";
+import { applyMapOp, openingView, pulledOut } from "../map/mapView.ts";
 import type { CaseLayers, FootprintView, LayerLegend, LayerView, MapContext, MapView } from "../map/mapView.ts";
 
 export const STACK_MAX = 5;
@@ -290,7 +290,9 @@ export function stackFor(inv: Investigation, view: MapView, opts: { max?: number
   if (!place) return EMPTY_STACK;
   const ctx = opts.ctx;
   const max = Math.max(0, Math.floor(opts.max ?? STACK_MAX));
-  const bbox = [...(ctx.caseLayers?.bbox ?? view.place?.bbox ?? place.bbox)] as Bbox;
+  // A solved case: its own box. Else the box the ending frames (the place grown 4×): a point's own 0.2° box is
+  // too small for a 500 m layer to read as anything but a few blocks.
+  const bbox = ctx.caseLayers ? ([...ctx.caseLayers.bbox] as Bbox) : pulledOut(view.place?.bbox ?? place.bbox);
   const from = turnStart(inv.scenes);
 
   // Replay the whole thread (set_year depends on what is on the map), collecting only the current turn.

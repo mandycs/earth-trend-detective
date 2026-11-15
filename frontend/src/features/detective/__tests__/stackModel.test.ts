@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { groupScenes } from "../scenes.ts";
 import type { BoardEvent, DetEvent, MapOp, PlaceEvent } from "../events.ts";
-import { EMPTY_VIEW, mapViewAt } from "../map/mapView.ts";
+import { EMPTY_VIEW, mapViewAt, pulledOut } from "../map/mapView.ts";
 import type { CaseLayers, MapContext } from "../map/mapView.ts";
 import type { CaseLayerRow } from "../map/types.ts";
 import { catalogLayer, dateFor } from "../map/catalog.ts";
@@ -60,7 +60,7 @@ test("the recorded Lake Mead run: the GRACE footprint is an outlined cell on the
   assert.equal(c.size, "~300 km");
   assert.equal(c.label, "GRACE data cell (~300 km)");
   assert.equal(c.verdict, undefined);
-  assert.equal(c.coversBox, true); // a ~300 km cell over a small box: its edge is the box edge
+  assert.equal(c.coversBox, false); // no case layers here: the box is the ending frame, wider than the cell
   assert.equal(m.note, NO_MAP_NOTE);
   assert.ok(hasStack(m));
 });
@@ -177,16 +177,18 @@ test("catalog layers become one WMS GetMap for the exact box and the drawn date"
   const url = new URL(t.kind === "wms" ? t.url : "");
   assert.equal(url.searchParams.get("REQUEST"), "GetMap");
   assert.equal(url.searchParams.get("CRS"), "EPSG:4326");
-  assert.equal(url.searchParams.get("BBOX"), "44.9,59.4,45.1,59.6");
+  const box = pulledOut(POINT.bbox); // the ending frame, not the point's own 0.2° box
+  const wms = [box[1], box[0], box[3], box[2]].join(",");
+  assert.equal(url.searchParams.get("BBOX"), wms);
   assert.equal(url.searchParams.get("TIME"), m.slabs[0].date);
   assert.equal(m.slabs[0].year, 2024);
-  assert.deepEqual(m.bbox, POINT.bbox);
+  assert.deepEqual(m.bbox, box);
   // A free point has no relief model: a flat base with a cloud-free picture (never a cloudy day's true colour).
   assert.equal(m.base?.kind, "flat");
   assert.equal(m.base?.heightmap, null);
   const pic = new URL(m.base?.picture?.url ?? "");
   assert.equal(pic.searchParams.get("LAYERS"), "BlueMarble_ShadedRelief_Bathymetry");
-  assert.equal(pic.searchParams.get("BBOX"), "44.9,59.4,45.1,59.6");
+  assert.equal(pic.searchParams.get("BBOX"), wms);
   assert.equal(pic.searchParams.get("TIME"), null);
 });
 

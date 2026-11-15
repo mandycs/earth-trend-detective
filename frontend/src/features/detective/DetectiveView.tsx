@@ -17,6 +17,7 @@ import { EMPTY_VIEW, mapViewAt } from './map/mapView'
 import type { CaseLayers } from './map/mapView'
 import { historyEnabled, isActiveRun, recordedDate } from './panels'
 import { QuestionBox } from './QuestionBox'
+import { QuestionReading } from './QuestionReading'
 import type { RecordingChip } from './replay'
 import type { Target } from './request'
 import { ScenePanel } from './ScenePanel'
@@ -459,6 +460,8 @@ export default function DetectiveView({ cases, recordings, initialSite, initialP
               {run.message}
             </p>
           )}
+
+          <QuestionReading inv={inv} question={replaying ? (recording?.question ?? '') : lastQuestion} />
 
           {scene && (
             <ScenePanel
