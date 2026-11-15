@@ -161,7 +161,8 @@ class UpdateBoardArgs(BaseModel):
 TOOLS: dict[str, ToolSpec] = {
     "profile_place": ToolSpec(
         data.profile_place,
-        "Call this first. Profiles the picked place: land-cover shares and the dominant class "
+        "Call this first. Profiles the picked place: land-cover shares in percent of the box "
+        "(land_cover_pct) and the dominant class "
         "(MODIS, ~20 km box), the tags that decide which variables apply, and the size of the data "
         "cells. It also flies the map to the place and, in a solved case, lists the case's own map layers "
         "(case_layers). Coarse sources average over big cells (GRACE ~300 km, POWER ~50 km), so a single "
@@ -232,7 +233,8 @@ TOOLS: dict[str, ToolSpec] = {
     "land_cover_change": ToolSpec(
         context.land_cover_change,
         "Shows how the land cover around this place changed between two years (MODIS, 500 m): the "
-        "classes whose share moved most, with before and after shares, and shows the land cover layer "
+        "classes whose share moved most, with before_pct and after_pct (percent of the box) and "
+        "change_points (the move in percentage points, not a percent change), and shows the land cover layer "
         "on the map. Always repeat the returned caveat: at 500 m, orchards and tree crops can be "
         "classed as savanna or woody vegetation. Not a statistical test.",
         LandCoverArgs,

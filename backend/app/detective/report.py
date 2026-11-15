@@ -222,6 +222,7 @@ def ledger_report(session: Session, question: str | None = None) -> dict:
         "start": session.start,
         "end": session.end,
         "figures": figures,
+        "percent_figures": list(session.ledger.percent_figures()),
         "n_tests": n_tests,
         "not_measured": [row for _, row in missing],
         "asked_not_measured": _asked_not_measured(question, missing, rows),

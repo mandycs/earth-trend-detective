@@ -227,7 +227,7 @@ def _profile(session: Session) -> dict:
         logger.warning("land cover failed at %s,%s: %s: %s", place.lat, place.lon, type(exc).__name__, exc)
         return {
             "tags": list(place.tags),
-            "land_cover": {},
+            "land_cover_pct": {},
             "dominant": None,
             "data_cells": dict(DATA_CELLS),
             "land_cover_status": "not_available",
@@ -237,7 +237,7 @@ def _profile(session: Session) -> dict:
     session.place = replace(place, tags=tags, water_share=water_share)
     return {
         "tags": list(tags),
-        "land_cover": {k: _num(v, 3) for k, v in cover.shares.items()},
+        "land_cover_pct": {k: _num(100.0 * v, 1) for k, v in cover.shares.items()},
         "dominant": cover.dominant,
         "land_cover_year": cover.year,
         "data_cells": dict(DATA_CELLS),
