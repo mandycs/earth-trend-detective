@@ -117,12 +117,12 @@ The figures below are copied from each case's `site.json`.
 | Case | Headline from the data |
 | --- | --- |
 | [**Lake Mead**](sites/lake_mead/site.json) (USA) | Total water stored is going down for real (−6.5 cm per decade). Between 54% and 84% of that change is not explained by climate, depending on the climate model. |
-| [**Aletsch Glacier**](sites/aletsch/site.json) (Swiss Alps) | Air temperature is going up for real (+1.0 °C per decade), and total water stored is going down for real (−6.92 cm per decade). |
+| [**Aletsch Glacier**](sites/aletsch/site.json) (Swiss Alps) | Daytime ground temperature is going up for real (0.49 °C per decade). The climate we measured explains nearly all of that change — what a glacier should show. |
 | [**Doñana wetlands**](sites/donana/site.json) (Spain) | Topsoil moisture is going down for real (−1.15 kg/m² per decade); total water stored is likely going down (−8.55 cm per decade). |
 | [**Great Barrier Reef**](sites/great_barrier_reef/site.json) (Australia) | Sea temperature over the reef is going up for real (0.23 °C per decade). Heat stress at or above 4 °C-weeks: 1 reef-year in 2003–2013, 20 in 2014–2024. |
 
-Lake Mead and the Great Barrier Reef headlines are the `headline` field verbatim; Aletsch and Doñana have no
-headline field, so their lines are built from the `variables` entries (verdict and Sen slope per decade).
+Lake Mead, Aletsch and the Great Barrier Reef lines are the `headline` field verbatim (Aletsch adds a short gloss); Doñana has no
+headline field, so its line is built from the `variables` entries (verdict and Sen slope per decade).
 
 ---
 

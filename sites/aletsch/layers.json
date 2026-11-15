@@ -313,6 +313,224 @@
         "name": "MODIS Terra monthly NDVI (MOD13A3), via NASA GIBS",
         "url": "https://lpdaac.usgs.gov/products/mod13a3v061/"
       }
+    },
+    {
+      "id": "trend_lst_day",
+      "kind": "trend",
+      "var": "lst_day",
+      "title": "Daytime ground temperature: trend",
+      "file": "trend_lst_day.png",
+      "status": "analysed",
+      "years": [
+        2003,
+        2024
+      ],
+      "legend": {
+        "unit": "°C per decade",
+        "labels": {
+          "more": "↑ more heat (warmer ground)",
+          "less": "↓ less heat (cooler ground)",
+          "faded": "Faded = could be chance at this pixel",
+          "transparent": "Transparent = not enough data"
+        },
+        "stops": [
+          "#053061",
+          "#2a71b2",
+          "#6bacd1",
+          "#c2ddec",
+          "#f7f6f6",
+          "#fbccb4",
+          "#e48066",
+          "#ba2832",
+          "#67001f"
+        ],
+        "range": [
+          -0.9908,
+          0.9908
+        ]
+      },
+      "method": "Per pixel: Sen slope and Mann-Kendall S on annual means of deseasonalized monthly anomalies.",
+      "source": {
+        "name": "MODIS Terra land surface temperature (MOD11A2 v061), via AppEEARS",
+        "url": "https://lpdaac.usgs.gov/products/mod11a2v061/"
+      },
+      "value_offset": -1.1483585858585856,
+      "value_scale": 3.504619238436798e-05,
+      "value_file": "trend_lst_day_values.png",
+      "significance_file": "trend_lst_day_significant.png"
+    },
+    {
+      "id": "trend_snow_cover",
+      "kind": "trend",
+      "var": "snow_cover",
+      "title": "Snow cover: trend",
+      "file": "trend_snow_cover.png",
+      "status": "analysed",
+      "years": [
+        2003,
+        2024
+      ],
+      "legend": {
+        "unit": "% per decade",
+        "labels": {
+          "more": "↑ more snow cover",
+          "less": "↓ less snow cover",
+          "faded": "Faded = could be chance at this pixel",
+          "transparent": "Transparent = not enough data"
+        },
+        "stops": [
+          "#67001f",
+          "#bb2a34",
+          "#e58368",
+          "#fbceb7",
+          "#f6f7f7",
+          "#c0dceb",
+          "#68abd0",
+          "#2870b1",
+          "#053061"
+        ],
+        "range": [
+          -4.728,
+          4.728
+        ]
+      },
+      "method": "Per pixel: Sen slope and Mann-Kendall S on annual means of deseasonalized monthly anomalies.",
+      "source": {
+        "name": "MODIS Terra snow cover (MOD10A1 v061), via AppEEARS",
+        "url": "https://nsidc.org/data/mod10a1/versions/61"
+      },
+      "value_offset": -9.301429544628677,
+      "value_scale": 0.00028386576569807055,
+      "value_file": "trend_snow_cover_values.png",
+      "significance_file": "trend_snow_cover_significant.png"
+    },
+    {
+      "id": "year_lst_day",
+      "kind": "yearly",
+      "var": "lst_day",
+      "title": "Daytime ground temperature: year by year",
+      "file_pattern": "year_lst_day_{YYYY}.png",
+      "status": "analysed",
+      "years": [
+        2003,
+        2004,
+        2005,
+        2006,
+        2007,
+        2008,
+        2009,
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024
+      ],
+      "legend": {
+        "unit": "°C",
+        "labels": {
+          "more": "↑ more heat (warmer ground) than usual",
+          "less": "↓ less heat (cooler ground) than usual",
+          "transparent": "Transparent = not enough data that year"
+        },
+        "stops": [
+          "#053061",
+          "#2a71b2",
+          "#6bacd1",
+          "#c2ddec",
+          "#f7f6f6",
+          "#fbccb4",
+          "#e48066",
+          "#ba2832",
+          "#67001f"
+        ],
+        "range": [
+          -2.145,
+          2.145
+        ]
+      },
+      "method": null,
+      "source": {
+        "name": "MODIS Terra land surface temperature (MOD11A2 v061), via AppEEARS",
+        "url": "https://lpdaac.usgs.gov/products/mod11a2v061/"
+      },
+      "value_offset": -3.6195202020202024,
+      "value_scale": 0.00011046236158391682,
+      "value_pattern": "value_lst_day_{YYYY}.png",
+      "baseline": "2003-2024 average for each calendar month"
+    },
+    {
+      "id": "year_snow_cover",
+      "kind": "yearly",
+      "var": "snow_cover",
+      "title": "Snow cover: year by year",
+      "file_pattern": "year_snow_cover_{YYYY}.png",
+      "status": "analysed",
+      "years": [
+        2003,
+        2004,
+        2005,
+        2006,
+        2007,
+        2008,
+        2009,
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024
+      ],
+      "legend": {
+        "unit": "%",
+        "labels": {
+          "more": "↑ more snow cover than usual",
+          "less": "↓ less snow cover than usual",
+          "transparent": "Transparent = not enough data that year"
+        },
+        "stops": [
+          "#67001f",
+          "#bb2a34",
+          "#e58368",
+          "#fbceb7",
+          "#f6f7f7",
+          "#c0dceb",
+          "#68abd0",
+          "#2870b1",
+          "#053061"
+        ],
+        "range": [
+          -8.179,
+          8.179
+        ]
+      },
+      "method": null,
+      "source": {
+        "name": "MODIS Terra snow cover (MOD10A1 v061), via AppEEARS",
+        "url": "https://nsidc.org/data/mod10a1/versions/61"
+      },
+      "value_offset": -14.895340003489116,
+      "value_scale": 0.0004545835750446826,
+      "value_pattern": "value_snow_cover_{YYYY}.png",
+      "baseline": "2003-2024 average for each calendar month"
     }
   ],
   "timeline": {
@@ -454,6 +672,74 @@
           2023,
           2024
         ]
+      },
+      "trend_lst_day": {
+        "mode": "span",
+        "years": [
+          2003,
+          2024
+        ]
+      },
+      "trend_snow_cover": {
+        "mode": "span",
+        "years": [
+          2003,
+          2024
+        ]
+      },
+      "year_lst_day": {
+        "mode": "yearly",
+        "years": [
+          2003,
+          2004,
+          2005,
+          2006,
+          2007,
+          2008,
+          2009,
+          2010,
+          2011,
+          2012,
+          2013,
+          2014,
+          2015,
+          2016,
+          2017,
+          2018,
+          2019,
+          2020,
+          2021,
+          2022,
+          2023,
+          2024
+        ]
+      },
+      "year_snow_cover": {
+        "mode": "yearly",
+        "years": [
+          2003,
+          2004,
+          2005,
+          2006,
+          2007,
+          2008,
+          2009,
+          2010,
+          2011,
+          2012,
+          2013,
+          2014,
+          2015,
+          2016,
+          2017,
+          2018,
+          2019,
+          2020,
+          2021,
+          2022,
+          2023,
+          2024
+        ]
       }
     },
     "records": {
@@ -526,7 +812,55 @@
         2023,
         2024
       ],
+      "lst_day": [
+        2003,
+        2004,
+        2005,
+        2006,
+        2007,
+        2008,
+        2009,
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024
+      ],
       "precip": [
+        2003,
+        2004,
+        2005,
+        2006,
+        2007,
+        2008,
+        2009,
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024
+      ],
+      "snow_cover": [
         2003,
         2004,
         2005,
@@ -651,7 +985,9 @@
       "grace_tws": null,
       "winter_precip": null,
       "t2m": null,
+      "lst_day": "year_lst_day",
       "precip": null,
+      "snow_cover": "year_snow_cover",
       "degree_days": null,
       "runoff": null,
       "soil_moisture": null,

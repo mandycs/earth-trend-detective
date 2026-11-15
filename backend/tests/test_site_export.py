@@ -200,3 +200,14 @@ def test_rows_carry_their_footprint():
 
     assert FOOTPRINTS["grace"]["km"] == 300
     assert set(FOOTPRINTS) >= {"grace", "power", "gldas", "appeears"}
+
+
+def test_headline_never_says_about_zero_percent():
+    rows = [
+        {"id": "lst_day", "label": "Daytime ground temperature", "unit": "°C", "verdict": "real", "direction": "up",
+         "sen_slope_per_decade": 0.49, "residual_pct_non_climate": 0.0, "residual_pct_range": None},
+    ]
+    assert headline(rows, frozenset({"lst_day"})) == (
+        "Daytime ground temperature is going up for real (0.49 °C per decade). "
+        "The climate we measured explains nearly all of that change."
+    )

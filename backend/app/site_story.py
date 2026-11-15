@@ -54,6 +54,9 @@ def format_number(value: float, digits: int = 2) -> str:
     return f"{MINUS}{text}" if rounded < 0 else text
 
 
+NEARLY_ALL_EXPLAINED_PCT = 5  # a non-climate share under this is said in words, not as a percent
+
+
 def headline(rows: Sequence[Mapping], impact_ids: frozenset[str]) -> str | None:
     """Template sentence for the top-ranked real impact with a non-climate share, else None.
 
@@ -75,5 +78,8 @@ def headline(rows: Sequence[Mapping], impact_ids: frozenset[str]) -> str | None:
         if pct_range and round(pct_range[0]) != round(pct_range[1]):
             lo, hi = (round(x) for x in pct_range)
             return lead + f"Between {lo}% and {hi}% of that change is not explained by climate, depending on the climate model."
+        if round(pct) < NEARLY_ALL_EXPLAINED_PCT:
+            # "About 0% ... is not explained" reads like a broken figure.
+            return lead + "The climate we measured explains nearly all of that change."
         return lead + f"About {round(pct)}% of that change is not explained by climate."
     return None
