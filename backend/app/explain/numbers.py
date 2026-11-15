@@ -151,6 +151,8 @@ def allowed_numbers(report: Mapping) -> tuple[AllowedNumber, ...]:
         add(end, False, "end_year")
         add(end - start, False, "period_years")
         add(end - start + 1, False, "period_years_inclusive")
+    for i, figure in enumerate(report.get("figures") or ()):
+        add(figure, False, f"figure[{i}]")  # detective: every number a tool returned
     validation = report.get("validation")
     if isinstance(validation, Mapping):
         for key in ("r", "n_months", "elevation_trend_m_per_decade"):
