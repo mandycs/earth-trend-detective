@@ -24,6 +24,7 @@ from app.detective.session import Session
 from app.extractors import erddap, gibs_values
 from app.investigate import landcover
 from app.investigate.runner import LAND_COVER_YEARS
+from app.sites import load_sites
 from app.stats.annual import MIN_YEARS, annual_trend, annual_years_needed, n_years, to_annual
 from app.stats.deseason import monthly_anomalies
 from app.stats.trend import trend_test as mk_trend_test
@@ -266,7 +267,19 @@ def _list(session: Session) -> dict:
 
 def _open_sea(session: Session) -> bool:
     share = session.place.water_share
-    return share is not None and share >= OPEN_SEA_WATER_SHARE
+    return (share is not None and share >= OPEN_SEA_WATER_SHARE) or _sea_case(session.place.site_id)
+
+
+def _sea_case(site_id: str | None) -> bool:
+    """A solved case built by the sea pipeline (the reef): open sea, though no GEBCO check runs for a case."""
+    if site_id is None:
+        return False
+    try:
+        site = load_sites().get(site_id)
+    except Exception as exc:  # noqa: BLE001 - an unreadable catalogue is not evidence of sea
+        logger.warning("sites catalogue unreadable: %s", type(exc).__name__)
+        return False
+    return site is not None and site.pipeline == "sea"
 
 
 def _rows(session: Session) -> list[dict]:
