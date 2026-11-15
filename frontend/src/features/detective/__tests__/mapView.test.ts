@@ -2,7 +2,9 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { CONTEXT_LAYER_IDS, EMPTY_VIEW, applyMapOp, mapViewAt, openingView } from "../map/mapView.ts";
+import {
+  CONTEXT_LAYER_IDS, CURTAIN_YEAR_NOTE, EMPTY_VIEW, NO_PLACE_NOTE, UNKNOWN_LAYER_NOTE, applyMapOp, mapViewAt, openingView,
+} from "../map/mapView.ts";
 import type { CaseLayers, MapContext, MapView } from "../map/mapView.ts";
 import type { CaseLayerRow } from "../map/types.ts";
 import type { MapOp } from "../events.ts";
@@ -93,8 +95,8 @@ test("satellite pair becomes a curtain of two images", () => {
   const v = fold([op]);
   assert.ok(v.curtain);
   assert.equal(v.curtain.layerId, "true_colour");
-  assert.equal(v.curtain.yearA, 2003);
-  assert.equal(v.curtain.yearB, 2024);
+  assert.equal(v.curtain.left.year, 2003);
+  assert.equal(v.curtain.right.year, 2024);
   assert.deepEqual(v.curtain.left.render, { type: "image", url: "https://x/before.jpg", bbox: PLACE.bbox });
   assert.deepEqual(v.curtain.right.render, { type: "image", url: "https://x/after.jpg", bbox: PLACE.bbox });
   const withBox = fold([{ ...op, bbox: [-1, -1, 1, 1] }]);
@@ -122,6 +124,108 @@ test("case before_after row gives its two pictures", () => {
   assert.equal(v.curtain.right.render.url, "/sites/lake_mead/after.jpg");
   assert.equal(v.curtain.left.render.type, "image");
   if (v.curtain.left.render.type === "image") assert.deepEqual(v.curtain.left.render.bbox, CASE.caseLayers?.bbox);
+});
+
+test("curtain years are the years drawn, not the years asked", () => {
+  const v = fold([
+    { op: "show_before_after", layer_id: "true_colour_viirs", year_a: 2003, year_b: 2024, before_url: null, after_url: null, bbox: null },
+  ]);
+  assert.ok(v.curtain);
+  assert.equal(v.curtain.left.date, "2015-11-24");
+  assert.equal(v.curtain.left.year, 2015);
+  assert.equal(v.curtain.right.year, 2024);
+  assert.ok(!("yearA" in v.curtain) && !("yearB" in v.curtain));
+});
+
+test("a curtain replaces the coloured evidence layer", () => {
+  const v = fold([
+    layer("ndvi"),
+    { op: "show_before_after", layer_id: "ndvi", year_a: 2003, year_b: 2023, before_url: null, after_url: null, bbox: null },
+  ]);
+  assert.ok(v.curtain);
+  assert.equal(v.evidence, null);
+  assert.equal(v.context?.layerId, "land_cover");
+});
+
+test("set_year after a curtain moves the after side of tiles and yearly case layers", () => {
+  const tiles = fold([
+    { op: "show_before_after", layer_id: "ndvi", year_a: 2003, year_b: 2023, before_url: null, after_url: null, bbox: null },
+    { op: "set_year", year: 2010 },
+  ]);
+  assert.equal(tiles.curtain?.left.year, 2003);
+  assert.equal(tiles.curtain?.right.year, 2010);
+  assert.ok(tiles.curtain?.right.render.url.includes("/2010-07-01/"));
+  assert.equal(tiles.context?.year, 2024);
+  assert.deepEqual(tiles.notes, []);
+
+  const yearly = fold([
+    { op: "show_before_after", layer_id: "lst_gibs", year_a: 2003, year_b: 2024, before_url: null, after_url: null, bbox: null },
+    { op: "set_year", year: 2012 },
+  ], CASE);
+  assert.equal(yearly.curtain?.right.render.url, "/sites/lake_mead/layers/lst_gibs/2012.png");
+});
+
+test("set_year on a curtain of two fixed pictures is ignored with a note", () => {
+  const pics = fold([
+    {
+      op: "show_before_after", layer_id: "true_colour", year_a: 2003, year_b: 2024,
+      before_url: "https://x/before.jpg", after_url: "https://x/after.jpg", bbox: null,
+    },
+  ]);
+  const v = fold([{ op: "set_year", year: 2010 }], NO_CASE, pics);
+  assert.deepEqual(v.curtain, pics.curtain);
+  assert.deepEqual(v.notes, [CURTAIN_YEAR_NOTE]);
+
+  const caseRow = fold([
+    { op: "show_before_after", layer_id: "before_after", year_a: 2003, year_b: 2024, before_url: null, after_url: null, bbox: null },
+    { op: "set_year", year: 2010 },
+  ], CASE);
+  assert.equal(caseRow.curtain?.right.render.url, "/sites/lake_mead/after.jpg");
+  assert.deepEqual(caseRow.notes, [CURTAIN_YEAR_NOTE]);
+});
+
+test("a yearly case row becomes a two-image curtain", () => {
+  const v = fold([
+    { op: "show_before_after", layer_id: "lst_gibs", year_a: 2003, year_b: 2024, before_url: null, after_url: null, bbox: null },
+  ], CASE);
+  assert.ok(v.curtain);
+  assert.equal(v.curtain.left.render.url, "/sites/lake_mead/layers/lst_gibs/2003.png");
+  assert.equal(v.curtain.right.render.url, "/sites/lake_mead/layers/lst_gibs/2024.png");
+  assert.equal(v.curtain.left.year, 2003);
+  assert.deepEqual(v.notes, []);
+});
+
+test("image pair with no bbox and no place gets its own note", () => {
+  const v = applyMapOp(EMPTY_VIEW, {
+    op: "show_before_after", layer_id: "true_colour", year_a: 2003, year_b: 2024,
+    before_url: "https://x/a.jpg", after_url: "https://x/b.jpg", bbox: null,
+  }, NO_CASE);
+  assert.equal(v.curtain, null);
+  assert.deepEqual(v.notes, [NO_PLACE_NOTE]);
+  assert.notEqual(NO_PLACE_NOTE, UNKNOWN_LAYER_NOTE);
+});
+
+test("case legends keep their labels and stops; trend maps carry their period", () => {
+  const v = fold([layer("trend_lst_day")], CASE);
+  const lg = v.evidence?.legend;
+  assert.ok(lg);
+  assert.deepEqual([lg.min, lg.max], [-1.634, 1.634]);
+  assert.ok(lg.labels?.includes("Faded = not statistically significant (Mann-Kendall p ≥ 0.05)"));
+  assert.ok(lg.labels?.includes("Transparent = not enough data"));
+  assert.equal(lg.stops?.length, 9);
+  assert.equal(lg.stops?.[0], "#053061");
+  assert.deepEqual(v.evidence?.period, [2003, 2024]);
+
+  const yearly = fold([layer("lst_gibs", { year: 2010 })], CASE);
+  assert.equal(yearly.evidence?.period, null);
+  const cat = fold([layer("ndvi")]);
+  assert.equal(cat.evidence?.legend?.labels, undefined);
+  assert.equal(cat.evidence?.legend?.stops, undefined);
+});
+
+test("ongoing layers with no date lag behind now", () => {
+  const v = fold([layer("true_colour")], { caseLayers: null, now: "2026-11-15" });
+  assert.equal(v.context?.date, "2026-11-08");
 });
 
 test("case layers resolve to /sites files", () => {

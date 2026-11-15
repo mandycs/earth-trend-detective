@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { LAYER_CATALOG } from '../map/layerCatalog.generated.ts'
-import { catalogLayer, dateFor, tileUrl, maxZoomOf } from '../map/catalog.ts'
+import { catalogLayer, dateFor, safeDefaultDate, tileUrl, maxZoomOf } from '../map/catalog.ts'
 
 const get = (id: string) => {
   const l = catalogLayer(id)
@@ -24,10 +24,27 @@ test('dateFor', () => {
   assert.equal(dateFor(get('true_colour'), { year: 2003 }), '2003-07-01')
   assert.equal(dateFor(get('land_cover'), { year: 2023 }), '2023-01-01')
   assert.equal(dateFor(get('night_lights'), { year: 2012 }), '2012-01-01')
-  assert.equal(dateFor(get('ndvi'), {}), '2026-10-01')
+  assert.equal(dateFor(get('ndvi'), {}, '2026-11-15'), '2026-09-01')
   assert.equal(dateFor(get('true_colour'), { date: '2010-05-04' }), '2010-05-04')
   assert.equal(dateFor(get('true_colour'), { date: '2030-01-01' }), get('true_colour').dates.end)
   assert.equal(dateFor(get('land_cover'), { year: 1990 }), get('land_cover').dates.start)
+})
+
+test('ongoing layers default to a safe lag behind now', () => {
+  const now = '2026-11-15'
+  assert.equal(dateFor(get('true_colour'), {}, now), '2026-11-08')
+  assert.equal(dateFor(get('precipitation'), {}, now), '2026-11-08')
+  assert.equal(dateFor(get('lst_day'), {}, now), '2026-10-30')
+  assert.equal(dateFor(get('ndvi'), {}, now), '2026-09-01')
+  // clamped to the layer end when the lag still lands after it
+  assert.equal(dateFor(get('true_colour_viirs'), {}, now), '2026-11-02')
+  // not ongoing: the last date, whatever now is
+  assert.equal(dateFor(get('land_cover'), {}, now), '2024-01-01')
+  // without now, the layer end stands in for it
+  assert.equal(dateFor(get('true_colour'), {}), '2026-11-08')
+  assert.equal(safeDefaultDate('annual', now), '2025-01-01')
+  assert.equal(safeDefaultDate('monthly', '2026-01-20'), '2025-11-01')
+  assert.equal(safeDefaultDate('daily', '2026-03-03'), '2026-02-24')
 })
 
 test('tileUrl wmts', () => {

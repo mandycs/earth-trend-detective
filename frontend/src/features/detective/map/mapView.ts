@@ -7,12 +7,19 @@ import { catalogLayer, dateFor, maxZoomOf, tileUrl } from "./catalog.ts";
 
 export type LayerRender = { type: "tiles"; url: string; maxzoom: number } | { type: "image"; url: string; bbox: Bbox };
 export type LayerRole = "context" | "evidence";
+/** Catalog legend, widened with a case's `labels` and `stops` copied from layers.json (honesty cues such as
+ * "Faded = not statistically significant" live in `labels`). Catalog legends never carry them. */
+export type LayerLegend = CatalogLayer["legend"] & { labels?: string[]; stops?: string[] };
 export interface LayerView {
   key: string; layerId: string; title: string; source: string; resolution: string | null;
-  legend: CatalogLayer["legend"] | null; render: LayerRender; opacity: number; role: LayerRole;
+  legend: LayerLegend | null; render: LayerRender; opacity: number; role: LayerRole;
+  /** The year actually drawn (after snapping and clamping), never the year asked for. */
   year: number | null; date: string | null;
+  /** The period a single-file case layer covers (e.g. a trend map), `[first, last]` from the row's `years`. */
+  period: [number, number] | null;
 }
-export interface CurtainView { layerId: string; title: string; source: string; left: LayerView; right: LayerView; yearA: number; yearB: number }
+/** The years drawn are `left.year` and `right.year`. */
+export interface CurtainView { layerId: string; title: string; source: string; left: LayerView; right: LayerView }
 export interface FootprintView { source: string; label: string; size: string; bbox: Bbox; approximate: true }
 export interface CameraView { bbox: Bbox; pitch: number; bearing: number; seq: number }
 export interface MapView {
@@ -20,13 +27,19 @@ export interface MapView {
   curtain: CurtainView | null; footprints: FootprintView[]; camera: CameraView | null; notes: string[];
 }
 export interface CaseLayers { siteId: string; bbox: Bbox; rows: Record<string, CaseLayerRow> }
-export interface MapContext { caseLayers: CaseLayers | null }
+export interface MapContext {
+  caseLayers: CaseLayers | null;
+  /** Today as YYYY-MM-DD, for the safe default date of ongoing layers. Omitted: each layer's end date stands in. */
+  now?: string | null;
+}
 
 export const CONTEXT_LAYER_IDS: ReadonlySet<string> = new Set([
   "true_colour", "true_colour_viirs", "land_cover", "base", "base_hq", "hillshade",
 ]);
 
 export const UNKNOWN_LAYER_NOTE = "A layer the map does not know was skipped.";
+export const NO_PLACE_NOTE = "A comparison with no place to draw it was skipped.";
+export const CURTAIN_YEAR_NOTE = "This comparison shows two fixed pictures, so the year did not change.";
 const OPENING_LAYER = "land_cover";
 const OPENING_PITCH = 50;
 const DEFAULT_OPACITY = 0.8;
@@ -48,14 +61,14 @@ function withNote(view: MapView, note: string): MapView {
 
 interface When { date?: string | null; year?: number | null }
 
-function catalogView(layer: CatalogLayer, when: When, opacity: number, role: LayerRole): LayerView {
-  const date = dateFor(layer, when);
+function catalogView(layer: CatalogLayer, when: When, opacity: number, role: LayerRole, now?: string | null): LayerView {
+  const date = dateFor(layer, when, now);
   const year = Number(date.slice(0, 4));
   return {
     key: `${layer.id}@${date}`, layerId: layer.id, title: layer.title, source: layer.source,
     resolution: layer.resolution, legend: layer.legend,
     render: { type: "tiles", url: tileUrl(layer, date), maxzoom: maxZoomOf(layer) },
-    opacity, role, year: Number.isFinite(year) ? year : null, date,
+    opacity, role, year: Number.isFinite(year) ? year : null, date, period: null,
   };
 }
 
@@ -66,13 +79,24 @@ function rowSource(row: CaseLayerRow): string {
   return row.source?.name ?? "";
 }
 
-/** Case legends carry `range: [min, max]`; mapped to the catalog shape, values copied as they are. */
-function rowLegend(row: CaseLayerRow): CatalogLayer["legend"] | null {
-  const lg = (row as { legend?: { unit?: unknown; range?: unknown } }).legend;
+const strings = (xs: unknown[]): string[] => xs.filter((x): x is string => typeof x === "string");
+
+/** Case legends carry `range: [min, max]`, `labels` and `stops`; mapped to the catalog shape, values copied as they
+ * are. `labels` is an object in layers.json ({more, less, faded, transparent}); its values keep the file's order. */
+function rowLegend(row: CaseLayerRow): LayerLegend | null {
+  const lg = row.legend;
   if (!lg || typeof lg.unit !== "string") return null;
   const r = Array.isArray(lg.range) && lg.range.length === 2 ? lg.range : null;
   const n = (x: unknown): number | null => (typeof x === "number" ? x : null);
-  return { unit: lg.unit, min: r ? n(r[0]) : null, max: r ? n(r[1]) : null };
+  const out: LayerLegend = { unit: lg.unit, min: r ? n(r[0]) : null, max: r ? n(r[1]) : null };
+  const labels = Array.isArray(lg.labels) ? strings(lg.labels)
+    : lg.labels && typeof lg.labels === "object" ? strings(Object.values(lg.labels)) : [];
+  const stops = Array.isArray(lg.stops) ? strings(lg.stops) : [];
+  return {
+    ...out,
+    ...(labels.length > 0 ? { labels } : {}),
+    ...(stops.length > 0 ? { stops } : {}),
+  };
 }
 
 /** The year to draw from a yearly row: the asked year when the row has it, else the nearest it has, else its last. */
@@ -90,24 +114,27 @@ function caseFile(cl: CaseLayers, file: string): string {
 function caseView(cl: CaseLayers, row: CaseLayerRow, when: When, opacity: number, role: LayerRole): LayerView | null {
   let file: string;
   let year: number | null = null;
+  let period: [number, number] | null = null;
   if (row.file_pattern) {
     year = rowYear(row, when.year);
     if (year == null) return null;
     file = row.file_pattern.replaceAll("{YYYY}", String(year));
   } else if (row.file) {
     file = row.file;
+    const ys = row.years ?? [];
+    if (ys.length >= 2) period = [ys[0], ys[ys.length - 1]];
   } else return null;
   return {
     key: `${cl.siteId}/${row.id}@${year ?? "file"}`, layerId: row.id, title: row.title ?? row.id,
     source: rowSource(row), resolution: row.pixel_m != null ? `${row.pixel_m} m` : null, legend: rowLegend(row),
-    render: { type: "image", url: caseFile(cl, file), bbox: cl.bbox }, opacity, role, year, date: null,
+    render: { type: "image", url: caseFile(cl, file), bbox: cl.bbox }, opacity, role, year, date: null, period,
   };
 }
 
 function resolveLayer(id: string, when: When, opacity: number, ctx: MapContext): LayerView | null {
   const role = roleOf(id);
   const layer = catalogLayer(id);
-  if (layer) return catalogView(layer, when, opacity, role);
+  if (layer) return catalogView(layer, when, opacity, role, ctx.now);
   const cl = ctx.caseLayers;
   const row = cl?.rows[id];
   if (cl && row) return caseView(cl, row, when, opacity, role);
@@ -122,7 +149,25 @@ function showLayer(view: MapView, op: Extract<MapOp, { op: "show_layer" }>, ctx:
   return { ...view, [lv.role]: lv, curtain: null };
 }
 
+/** A curtain side that can be redrawn for another year: catalog tiles or a yearly case row. */
+function sideForYear(side: LayerView, year: number, ctx: MapContext): LayerView | null {
+  if (side.render.type === "tiles") {
+    const layer = catalogLayer(side.layerId);
+    return layer ? catalogView(layer, { year }, side.opacity, side.role, ctx.now) : null;
+  }
+  const cl = ctx.caseLayers;
+  const row = cl?.rows[side.layerId];
+  if (!cl || !row || !row.file_pattern) return null;
+  return caseView(cl, row, { year }, side.opacity, side.role);
+}
+
 function setYear(view: MapView, year: number, ctx: MapContext): MapView {
+  if (view.curtain) {
+    // The "before" side is the anchor; set_year moves the "after" side.
+    const right = sideForYear(view.curtain.right, year, ctx);
+    if (!right) return withNote(view, CURTAIN_YEAR_NOTE);
+    return { ...view, curtain: { ...view.curtain, right } };
+  }
   const slot: LayerRole | null = view.evidence ? "evidence" : view.context ? "context" : null;
   if (!slot) return view;
   const cur = view[slot] as LayerView;
@@ -137,13 +182,13 @@ function imagePair(
   const role = roleOf(layerId);
   const side = (url: string, year: number, s: string): LayerView => ({
     key: `${layerId}@${s}:${url}`, layerId, title, source, resolution: null, legend: null,
-    render: { type: "image", url, bbox }, opacity: 1, role, year, date: null,
+    render: { type: "image", url, bbox }, opacity: 1, role, year, date: null, period: null,
   });
-  return {
-    layerId, title, source, left: side(urls[0], years[0], "a"), right: side(urls[1], years[1], "b"),
-    yearA: years[0], yearB: years[1],
-  };
+  return { layerId, title, source, left: side(urls[0], years[0], "a"), right: side(urls[1], years[1], "b") };
 }
+
+/** A curtain replaces the coloured evidence layer: one coloured layer at a time (DESIGN.md). */
+const withCurtain = (view: MapView, curtain: CurtainView): MapView => ({ ...view, curtain, evidence: null });
 
 function showBeforeAfter(view: MapView, op: Extract<MapOp, { op: "show_before_after" }>, ctx: MapContext): MapView {
   const layer = catalogLayer(op.layer_id);
@@ -154,25 +199,26 @@ function showBeforeAfter(view: MapView, op: Extract<MapOp, { op: "show_before_af
 
   if (op.before_url && op.after_url) {
     const bbox = op.bbox ?? view.place?.bbox;
-    if (!bbox) return withNote(view, UNKNOWN_LAYER_NOTE);
-    const curtain = imagePair(op.layer_id, title, source, [op.before_url, op.after_url], bbox, [op.year_a, op.year_b]);
-    return { ...view, curtain };
+    if (!bbox) return withNote(view, NO_PLACE_NOTE);
+    return withCurtain(view, imagePair(op.layer_id, title, source, [op.before_url, op.after_url], bbox, [op.year_a, op.year_b]));
   }
   if (cl && row && row.kind === "before_after" && row.before && row.after) {
-    const curtain = imagePair(
+    return withCurtain(view, imagePair(
       op.layer_id, title, source, [caseFile(cl, row.before.file), caseFile(cl, row.after.file)], cl.bbox,
       [row.before.year, row.after.year],
-    );
-    return { ...view, curtain };
+    ));
   }
   if (layer) {
     const role = roleOf(layer.id);
-    const left = catalogView(layer, { year: op.year_a }, 1, role);
-    const right = catalogView(layer, { year: op.year_b }, 1, role);
-    return {
-      ...view,
-      curtain: { layerId: layer.id, title, source, left, right, yearA: op.year_a, yearB: op.year_b },
-    };
+    const left = catalogView(layer, { year: op.year_a }, 1, role, ctx.now);
+    const right = catalogView(layer, { year: op.year_b }, 1, role, ctx.now);
+    return withCurtain(view, { layerId: layer.id, title, source, left, right });
+  }
+  if (cl && row && row.file_pattern) {
+    const role = roleOf(row.id);
+    const left = caseView(cl, row, { year: op.year_a }, 1, role);
+    const right = caseView(cl, row, { year: op.year_b }, 1, role);
+    if (left && right) return withCurtain(view, { layerId: row.id, title, source, left, right });
   }
   return withNote(view, UNKNOWN_LAYER_NOTE);
 }
@@ -198,12 +244,12 @@ export function applyMapOp(view: MapView, op: MapOp, ctx: MapContext): MapView {
   }
 }
 
-export function openingView(place: PlaceEvent): MapView {
+export function openingView(place: PlaceEvent, now?: string | null): MapView {
   const layer = catalogLayer(OPENING_LAYER);
   const bbox = [...place.bbox] as Bbox;
   return {
     place: { lat: place.lat, lon: place.lon, bbox },
-    context: layer ? catalogView(layer, {}, DEFAULT_OPACITY, "context") : null,
+    context: layer ? catalogView(layer, {}, DEFAULT_OPACITY, "context", now) : null,
     evidence: null, curtain: null, footprints: [], notes: [],
     camera: { bbox: [...bbox] as Bbox, pitch: OPENING_PITCH, bearing: 0, seq: 1 },
   };
@@ -222,7 +268,7 @@ function pulledOut(bbox: Bbox): Bbox {
 export function mapViewAt(inv: Investigation, index: number, ctx: MapContext): MapView {
   if (!inv.place) return EMPTY_VIEW;
   const upto = Number.isFinite(index) ? Math.min(Math.floor(index), inv.scenes.length - 1) : -1;
-  let view = openingView(inv.place);
+  let view = openingView(inv.place, ctx.now);
   for (let i = 0; i <= upto; i++) {
     for (const op of inv.scenes[i].mapOps) view = applyMapOp(view, op, ctx);
   }

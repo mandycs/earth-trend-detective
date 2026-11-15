@@ -17,15 +17,52 @@ export function catalogLayer(id: string): CatalogLayer | null {
   return LAYER_CATALOG.find((l) => l.id === id) ?? null
 }
 
-/** Date to request: a given date wins; else a year snapped to the layer period; else dates.end. Clamped to [start, end]. */
-export function dateFor(layer: CatalogLayer, when: { date?: string | null; year?: number | null }): string {
-  const { start, end, step, years } = layer.dates
+const DAY_MS = 86_400_000
+
+function isoDay(ms: number): string {
+  return new Date(ms).toISOString().slice(0, 10)
+}
+
+/**
+ * Default date for an ongoing layer: a safe lag behind `now` by step, because same-day GIBS tiles are often empty.
+ * daily: now - 7 days; 8day: now - 16 days; monthly: first day of the month two months back; annual: Jan 1 of last year.
+ */
+export function safeDefaultDate(step: string, now: string): string {
+  const t = Date.parse(`${now}T00:00:00Z`)
+  const y = Number(now.slice(0, 4))
+  const m = Number(now.slice(5, 7)) // 1..12
+  switch (step) {
+    case 'annual':
+      return `${y - 1}-01-01`
+    case 'monthly': {
+      const back = new Date(Date.UTC(y, m - 1 - 2, 1))
+      return isoDay(back.getTime())
+    }
+    case '8day':
+      return isoDay(t - 16 * DAY_MS)
+    default:
+      return isoDay(t - 7 * DAY_MS)
+  }
+}
+
+/**
+ * Date to request: a given date wins; else a year snapped to the layer period; else, for an ongoing layer, a safe
+ * lag behind `now` (see safeDefaultDate); else dates.end. Clamped to [start, end]. Pure: `now` (YYYY-MM-DD) is
+ * passed in; when it is omitted the layer's own dates.end stands in for it.
+ */
+export function dateFor(
+  layer: CatalogLayer,
+  when: { date?: string | null; year?: number | null },
+  now?: string | null,
+): string {
+  const { start, end, step, years, ongoing } = layer.dates
   let d: string
   if (when.date) d = when.date
   else if (when.year != null) {
     const jan = step === 'annual' || (years?.length ?? 0) > 0
     d = `${when.year}-${jan ? '01-01' : '07-01'}`
-  } else d = end
+  } else if (ongoing) d = safeDefaultDate(step, now ?? end)
+  else d = end
   if (d > end) return end
   if (d < start) return start
   return d

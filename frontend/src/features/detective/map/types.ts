@@ -23,4 +23,13 @@ export interface CaseLayerRow {
   before?: { file: string; year: number }
   after?: { file: string; year: number }
   pixel_m?: number
+  legend?: CaseLegend
+}
+
+/** A case legend as written in sites/<id>/layers.json; read defensively. */
+export interface CaseLegend {
+  unit?: string
+  range?: number[]
+  labels?: Record<string, string> | string[]
+  stops?: string[]
 }
