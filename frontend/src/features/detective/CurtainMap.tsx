@@ -6,7 +6,7 @@ import { STYLE } from '../explore/mapStyle'
 import { curtainAriaLabel, curtainYears, drawSpecs, initialSplit } from './map/draw'
 import type { DrawSpec } from './map/draw'
 import type { CurtainView, MapView } from './map/mapView'
-import { addRelief, demErrorHandler, syncSpecs } from './mapSync'
+import { addRelief, syncSpecs } from './mapSync'
 import styles from './detective.module.css'
 
 export interface CurtainCamera {
@@ -53,7 +53,11 @@ export function CurtainMap({ curtain, camera, overlays = [], sync, flat = false 
 
   useEffect(() => {
     if (!sync) return
-    sync.current = (c) => map.current?.jumpTo(c)
+    sync.current = (c) => {
+      // Kept for the map built later (its import is async): it opens where the main map is now.
+      cameraRef.current = c
+      map.current?.jumpTo(c)
+    }
     return () => {
       sync.current = null
     }
@@ -72,10 +76,9 @@ export function CurtainMap({ curtain, camera, overlays = [], sync, flat = false 
         maxPitch: 85,
         ...cameraRef.current,
       })
-      const onDem = demErrorHandler(m, () => {})
-      m.on('error', (e) => {
-        onDem((e as { sourceId?: string }).sourceId)
-      })
+      // Relief is decided by the main map alone (`flat`): dropping it here on this map's own DEM errors would
+      // leave the two halves misaligned. Errors on this map are otherwise not news (the main map reports).
+      m.on('error', () => {})
       m.on('load', () => {
         if (cancelled) return
         addRelief(m)

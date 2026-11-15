@@ -94,7 +94,11 @@ export default function DetectiveMap({ view, target, pickMode, pickEnabled, onPi
       })
       m.on('data', (e) => {
         const ev = e as { sourceId?: string; tile?: unknown }
-        if (ev.sourceId === BASE && ev.tile) baseTileSeen.current = true
+        if (ev.sourceId === BASE && ev.tile && !baseTileSeen.current) {
+          baseTileSeen.current = true
+          // A slow first tile after an early error: the map works after all.
+          if (loaded.current) setFailed(false)
+        }
       })
       m.on('error', (e) => {
         const sourceId = (e as { sourceId?: string }).sourceId

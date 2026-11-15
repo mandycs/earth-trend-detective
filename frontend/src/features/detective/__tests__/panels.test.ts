@@ -40,6 +40,11 @@ test("check line, with and without done", () => {
   assert.equal(checkLine(answer(false), null), "Not every figure could be checked");
 });
 
+test("a missing test count is dropped, never printed as 0", () => {
+  assert.equal(checkLine(answer(true), { ...done, n_tests: null }), "✓ every figure checked");
+  assert.equal(checkLine(answer(true), { ...done, n_tests: 1 }), "✓ every figure checked · 1 test run");
+});
+
 test("replay and fork lines", () => {
   assert.equal(recordedDate("2026-11-15T09:30:00Z"), "15 Nov 2026");
   assert.equal(recordedDate("garbage"), "garbage");

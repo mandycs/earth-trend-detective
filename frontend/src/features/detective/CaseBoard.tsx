@@ -36,6 +36,22 @@ export function CaseBoard({ board, beats }: { board: BoardEvent | null; beats: S
         </span>
         {boardToggleLabel(suspects.length)}
       </button>
+      {!open && beats.length > 0 && (
+        <ul className={styles.suspects} aria-label="New stamps">
+          {beats.map((b) => {
+            const w = STATUS_WORDS[b.status]
+            return (
+              <li key={`${b.suspectId}:${b.status}`} className={styles.boardNews}>
+                <span className={`${styles.suspectStamp} ${TONE[b.status]} ${styles.stampIn}`}>
+                  <span aria-hidden="true">{w.icon}</span>
+                  <span>{w.text}</span>
+                </span>
+                <span>{b.label}</span>
+              </li>
+            )
+          })}
+        </ul>
+      )}
       <div id={bodyId} className={styles.boardBody} data-open={open}>
         <h2 className={styles.boardTitle}>Case board</h2>
         {suspects.length === 0 ? (
@@ -49,7 +65,6 @@ export function CaseBoard({ board, beats }: { board: BoardEvent | null; beats: S
                   <span
                     key={s.status}
                     className={`${styles.suspectStamp} ${TONE[s.status] ?? styles.suspectOpen}${fresh.has(s.id) ? ` ${styles.stampIn}` : ''}`}
-                    title={w.meaning}
                   >
                     <span aria-hidden="true">{w.icon}</span>
                     <span>{w.text}</span>
@@ -57,7 +72,8 @@ export function CaseBoard({ board, beats }: { board: BoardEvent | null; beats: S
                   <div className={styles.suspectText}>
                     <p className={styles.suspectLabel}>{s.label}</p>
                     {s.note && <p>{s.note}</p>}
-                    {s.status === 'trend_only' && <p className={styles.muted}>{w.meaning}</p>}
+                    {/* Every stamp says what it means in words on screen, not only in a tooltip. */}
+                    <p className={styles.muted}>{w.meaning}</p>
                     {s.downgraded && <p className={styles.tertiary}>{s.downgraded}</p>}
                   </div>
                 </li>

@@ -56,7 +56,10 @@ function add(m: MlMap, spec: DrawSpec, anchor: string | undefined) {
       return
     case 'image':
       m.addSource(spec.id, { type: 'image', url: spec.url, coordinates: imageCoordinates(spec.bbox) })
-      m.addLayer({ id: `${spec.id}-image`, type: 'raster', source: spec.id, paint: { 'raster-resampling': 'linear' } }, anchor)
+      m.addLayer(
+        { id: `${spec.id}-image`, type: 'raster', source: spec.id, paint: { 'raster-resampling': spec.crisp ? 'nearest' : 'linear' } },
+        anchor,
+      )
       return
     case 'footprint':
       m.addSource(spec.id, { type: 'geojson', data: footprintData(spec.bbox, spec.text) })

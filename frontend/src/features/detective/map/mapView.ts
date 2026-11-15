@@ -17,6 +17,8 @@ export interface LayerView {
   year: number | null; date: string | null;
   /** The period a single-file case layer covers (e.g. a trend map), `[first, last]` from the row's `years`. */
   period: [number, number] | null;
+  /** Drawn pixel for pixel (no smoothing): each pixel is one data cell, as in a tool's trend overlay. */
+  crisp?: true;
 }
 /** The years drawn are `left.year` and `right.year`. */
 export interface CurtainView { layerId: string; title: string; source: string; left: LayerView; right: LayerView }
@@ -31,6 +33,8 @@ export interface MapContext {
   caseLayers: CaseLayers | null;
   /** Today as YYYY-MM-DD, for the safe default date of ongoing layers. Omitted: each layer's end date stands in. */
   now?: string | null;
+  /** The backend's base URL, for overlay pictures the backend serves under a path (`/detective/maps/…`). */
+  apiBase?: string | null;
 }
 
 export const CONTEXT_LAYER_IDS: ReadonlySet<string> = new Set([
@@ -40,6 +44,7 @@ export const CONTEXT_LAYER_IDS: ReadonlySet<string> = new Set([
 export const UNKNOWN_LAYER_NOTE = "A layer the map does not know was skipped.";
 export const NO_PLACE_NOTE = "A comparison with no place to draw it was skipped.";
 export const CURTAIN_YEAR_NOTE = "This comparison shows two fixed pictures, so the year did not change.";
+export const BAD_OVERLAY_NOTE = "A map picture with no usable address was skipped.";
 const OPENING_LAYER = "land_cover";
 const OPENING_PITCH = 50;
 const DEFAULT_OPACITY = 0.8;
@@ -223,6 +228,33 @@ function showBeforeAfter(view: MapView, op: Extract<MapOp, { op: "show_before_af
   return withNote(view, UNKNOWN_LAYER_NOTE);
 }
 
+/** A backend path is read from the backend; a full http(s) URL is kept; anything else is refused. */
+export function overlayUrl(url: string, apiBase: string | null | undefined): string | null {
+  if (/^https?:\/\//i.test(url)) return url;
+  if (url.startsWith("/") && !url.startsWith("//")) return apiBase ? `${apiBase.replace(/\/$/, "")}${url}` : url;
+  return null;
+}
+
+/** A tool's own per-pixel picture: the evidence layer, with the legend, source and period the tool sent. */
+function overlay(view: MapView, op: Extract<MapOp, { op: "overlay" }>, ctx: MapContext): MapView {
+  const url = overlayUrl(op.url, ctx.apiBase);
+  if (!url) return withNote(view, BAD_OVERLAY_NOTE);
+  const lg = op.legend;
+  const legend: LayerLegend | null = lg
+    ? {
+        unit: lg.unit, min: lg.range ? lg.range[0] : null, max: lg.range ? lg.range[1] : null,
+        ...(lg.labels.length > 0 ? { labels: [...lg.labels] } : {}),
+        ...(lg.stops.length > 0 ? { stops: [...lg.stops] } : {}),
+      }
+    : null;
+  const lv: LayerView = {
+    key: `overlay@${url}`, layerId: `overlay:${op.url}`, title: op.title, source: op.source, resolution: op.resolution,
+    legend, render: { type: "image", url, bbox: [...op.bounds] as Bbox }, opacity: 1, role: "evidence",
+    year: null, date: null, period: op.period ? [op.period[0], op.period[1]] : null, crisp: true,
+  };
+  return { ...view, evidence: lv, curtain: null };
+}
+
 function camera(view: MapView, bbox: Bbox, pitch: number, bearing: number): CameraView {
   return { bbox: [...bbox] as Bbox, pitch: clamp(pitch, 0, MAX_PITCH), bearing, seq: (view.camera?.seq ?? 0) + 1 };
 }
@@ -237,6 +269,8 @@ export function applyMapOp(view: MapView, op: MapOp, ctx: MapContext): MapView {
       return showBeforeAfter(view, op, ctx);
     case "fly_to":
       return { ...view, camera: camera(view, op.bbox, op.pitch, op.bearing) };
+    case "overlay":
+      return overlay(view, op, ctx);
     case "show_footprint": {
       const fp: FootprintView = { source: op.source, label: op.label, size: op.size, bbox: [...op.bbox] as Bbox, approximate: true };
       return { ...view, footprints: [...view.footprints.filter((f) => f.source !== op.source), fp] };

@@ -107,7 +107,6 @@ export function QuestionBox({
         maxLength={QUESTION_MAX}
         rows={3}
         readOnly={active}
-        aria-describedby={blocker ? reasonId : undefined}
         onKeyDown={(e) => {
           if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) e.currentTarget.form?.requestSubmit()
         }}
@@ -125,7 +124,12 @@ export function QuestionBox({
           </>
         ) : (
           <>
-            <button type="submit" className="btn btn-primary" disabled={blocker !== null}>
+            <button
+              type="submit"
+              className="btn btn-primary"
+              disabled={blocker !== null}
+              aria-describedby={blocker ? reasonId : undefined}
+            >
               {followUp ? 'Ask' : 'Investigate'}
             </button>
             {blocker && (

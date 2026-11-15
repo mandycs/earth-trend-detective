@@ -107,7 +107,7 @@ export function CoverReel({ cases, years }: { cases: ReelCase[]; years: string }
         </div>
         <div className={styles.reelControls}>
           <Link href="/detective" className={styles.quiet}>
-            Investigate anywhere
+            Pick your own place
           </Link>
           <button type="button" className={styles.quiet} onClick={() => setPlaying((p) => !p)} aria-pressed={!playing}>
             {playing ? 'Pause' : 'Play'}

@@ -16,13 +16,20 @@ export type MapOp =
   | { op: "set_year"; year: number }
   | { op: "show_before_after"; layer_id: string; year_a: number; year_b: number; before_url: string | null; after_url: string | null; bbox: Bbox | null }
   | { op: "fly_to"; bbox: Bbox; pitch: number; bearing: number }
-  | { op: "show_footprint"; source: string; label: string; size: string; bbox: Bbox; approximate: true };
+  | { op: "show_footprint"; source: string; label: string; size: string; bbox: Bbox; approximate: true }
+  | {
+      /** A per-pixel picture written by a tool (`trend_map`), drawn over `bounds`. `url` may be a backend path. */
+      op: "overlay"; url: string; bounds: Bbox; legend: OverlayLegend | null; title: string; source: string;
+      resolution: string | null; period: [number, number] | null;
+    };
+/** As sent: `labels` is an object ({more, less, faded, transparent}) whose values keep their order. */
+export interface OverlayLegend { unit: string; labels: string[]; stops: string[]; range: [number, number] | null }
 export type SuspectStatus = "open" | "supported" | "hint" | "ruled_out" | "trend_only";
 export interface Suspect { id: string; label: string; status: SuspectStatus; evidence: string[]; note: string; downgraded: string | null }
 export interface BoardEvent { suspects: Suspect[]; n_tests: number; verdicts: Record<string, { verdict: Verdict; direction: Direction }> }
 export interface NotMeasured { label: string; reason: string | null }
 export interface AnswerEvent { text: string; checked: boolean; figures: string[]; source: string; not_measured: NotMeasured[] }
-export interface DoneEvent { thread_id: string; n_tests: number; n_tests_branch: number | null; n_tool_calls: number | null }
+export interface DoneEvent { thread_id: string; n_tests: number | null; n_tests_branch: number | null; n_tool_calls: number | null }
 export type DetEvent =
   | { kind: "place"; data: PlaceEvent } | { kind: "thinking"; data: { text: string } }
   | { kind: "tool_start"; data: ToolStart } | { kind: "tool_done"; data: ToolDone } | { kind: "tool_failed"; data: ToolFailed }
@@ -57,6 +64,23 @@ const toolDone = z.object({
 });
 const toolFailed = z.object({ id: nullStr, tool: str, reason: str.catch("") });
 
+const overlayLegend = z
+  .object({
+    unit: str,
+    labels: z.union([z.array(z.unknown()), z.record(z.string(), z.unknown())]).catch([]),
+    stops: z.array(z.unknown()).catch([]),
+    range: z.tuple([num, num]).nullable().catch(null),
+  })
+  .transform((o): OverlayLegend => {
+    const words = (xs: unknown[]): string[] => xs.filter((x): x is string => typeof x === "string" && x !== "");
+    return {
+      unit: o.unit,
+      labels: words(Array.isArray(o.labels) ? o.labels : Object.values(o.labels)),
+      stops: words(o.stops),
+      range: o.range,
+    };
+  });
+
 const mapOp = z.discriminatedUnion("op", [
   z.object({
     op: z.literal("show_layer"), layer_id: str, date: nullStr, year: nullNum, opacity: num.catch(0.8),
@@ -70,6 +94,11 @@ const mapOp = z.discriminatedUnion("op", [
   z.object({
     op: z.literal("show_footprint"), source: str, label: str, size: str, bbox,
     approximate: z.unknown().transform((): true => true),
+  }),
+  z.object({
+    op: z.literal("overlay"), url: str.min(1), bounds: bbox, legend: overlayLegend.nullable().catch(null),
+    title: str.catch("Trend map"), source: str.catch(""), resolution: nullStr,
+    period: z.tuple([num, num]).nullable().catch(null),
   }),
 ]);
 
@@ -123,7 +152,8 @@ const answer = z.object({
   not_measured: notMeasured,
 });
 const done = z.object({
-  thread_id: str, n_tests: num.catch(0), n_tests_branch: nullNum, n_tool_calls: nullNum,
+  // A missing or bad count stays null: the screen drops the tests part rather than print an invented "0 tests".
+  thread_id: str, n_tests: nullNum, n_tests_branch: nullNum, n_tool_calls: nullNum,
 });
 
 const schemas = {

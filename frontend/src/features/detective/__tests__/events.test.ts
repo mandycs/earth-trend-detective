@@ -88,3 +88,37 @@ test("board status trend_only is kept", () => {
   const e = parseEvent("board", { suspects: [{ id: "x", label: "x", status: "trend_only" }], n_tests: 0 });
   assert.equal(e?.kind === "board" && e.data.suspects[0].status, "trend_only");
 });
+
+// The shape trend_map emits (backend app/detective/tools/where.py), copied field for field.
+const OVERLAY = {
+  op: "overlay", url: "/detective/maps/0123456789abcdef0123456789abcdef.png", bounds: [-116, 35, -113, 37.5],
+  legend: {
+    unit: "mm per decade",
+    labels: { more: "Wetter", less: "Drier", faded: "Faded = not statistically significant (Mann-Kendall p ≥ 0.05)", transparent: "Transparent = not enough data" },
+    stops: ["#8c510a", "#f5f5f5", "#01665e"], range: [-12, 12],
+  },
+  title: "Rain: trend per pixel, 2001–2024", source: "CHIRPS", resolution: "~5 km", period: [2001, 2024],
+};
+
+test("an overlay op keeps the tool's legend words in order, its bounds and its period", () => {
+  const e = parseEvent("map", OVERLAY);
+  assert.ok(e?.kind === "map" && e.data.op === "overlay");
+  if (e?.kind !== "map" || e.data.op !== "overlay") return;
+  assert.deepEqual(e.data.bounds, [-116, 35, -113, 37.5]);
+  assert.deepEqual(e.data.period, [2001, 2024]);
+  assert.deepEqual(e.data.legend?.labels, Object.values(OVERLAY.legend.labels));
+  assert.deepEqual(e.data.legend?.range, [-12, 12]);
+  assert.equal(e.data.resolution, "~5 km");
+});
+
+test("an overlay op without a url or bounds is dropped; a bad legend is null", () => {
+  assert.equal(parseEvent("map", { ...OVERLAY, url: "" }), null);
+  assert.equal(parseEvent("map", { ...OVERLAY, bounds: [1, 2] }), null);
+  const e = parseEvent("map", { ...OVERLAY, legend: "nope", period: "x" });
+  assert.ok(e?.kind === "map" && e.data.op === "overlay" && e.data.legend === null && e.data.period === null);
+});
+
+test("a done without a count keeps it null, never 0", () => {
+  const d = parseEvent("done", { thread_id: "t" });
+  assert.equal(d?.kind === "done" && d.data.n_tests, null);
+});

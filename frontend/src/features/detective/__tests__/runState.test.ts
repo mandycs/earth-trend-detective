@@ -82,3 +82,9 @@ test("fail after stop or before any start is ignored", () => {
   assert.notEqual(stopped.message, "late");
   assert.deepEqual(runReducer(IDLE_RUN, { type: "fail", message: "x" }), IDLE_RUN);
 });
+
+test("an error event ends the run at once; a later end changes nothing", () => {
+  const s = run([start, ev({ kind: "error", data: { message: "boom" } })]);
+  assert.equal(s.status, "finished");
+  assert.equal(runReducer(s, { type: "end" }), s);
+});

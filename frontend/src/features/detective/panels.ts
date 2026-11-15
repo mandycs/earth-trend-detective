@@ -55,10 +55,12 @@ export function forkLine(step: number, summary: string): string {
   return `Re-running from step ${step}: ${summary}`;
 }
 
-/** The check line under the answer. Only the tests part goes when `done` is missing. */
+/** The check line under the answer. Only the tests part goes when `done` or its count is missing. */
 export function checkLine(answer: AnswerEvent, done: DoneEvent | null): string {
   const head = answer.checked ? "✓ every figure checked" : "Not every figure could be checked";
-  return done ? `${head} · ${done.n_tests} tests run` : head;
+  const n = done?.n_tests;
+  if (n == null) return head;
+  return `${head} · ${n} ${n === 1 ? "test" : "tests"} run`;
 }
 
 export const CLUE_LINE = "A clue, not proof.";

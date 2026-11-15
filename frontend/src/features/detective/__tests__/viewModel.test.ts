@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  focusTargetFor, forkTurn, localDate, parseLatLon, previewCamera, trimToTurn, turnCount, turnOutcomes, wrapTarget,
+  focusTargetFor, forkKeepTurns, forkTurn, localDate, parseLatLon, previewCamera, trimToTurn, turnCount, turnOutcomes, wrapTarget,
 } from "../viewModel.ts";
 import type { AnswerEvent, DetEvent, DoneEvent, PlaceEvent } from "../events.ts";
 import type { Target } from "../request.ts";
@@ -117,4 +117,22 @@ test("preview camera frames the target with a negative seq", () => {
   assert.ok(p.bbox[0] < -4.17 && p.bbox[2] > -4.17 && p.bbox[1] < 36.87 && p.bbox[3] > 36.87);
   const c = previewCamera({ kind: "case", siteId: "x", name: "X", bbox: [1, 2, 3, 4] }, 1);
   assert.deepEqual(c.bbox, [1, 2, 3, 4]);
+});
+
+test("a fork keeps the turns before the step, and its own turn only from its answer", () => {
+  const steps = [
+    { step: 30, kind: "answer" }, { step: 24, kind: "tool" }, { step: 14, kind: "answer" }, { step: 4, kind: "tool" },
+  ];
+  assert.equal(forkKeepTurns(steps, { step: 4, kind: "tool" }), -1);
+  assert.equal(forkKeepTurns(steps, { step: 14, kind: "answer" }), 0);
+  assert.equal(forkKeepTurns(steps, { step: 24, kind: "tool" }), 0);
+  assert.equal(forkKeepTurns(steps, { step: 30, kind: "answer" }), 1);
+  const evs = [place("t"), answer("a")];
+  assert.equal(trimToTurn(evs, -1).length, 0);
+});
+
+test("an answer that lands after the run is over takes the focus once", () => {
+  assert.equal(focusTargetFor("finished", "finished", "live", true, false), "answer");
+  assert.equal(focusTargetFor("finished", "finished", "live", true, true), null);
+  assert.equal(focusTargetFor("idle", "idle", "live", true, false), null);
 });

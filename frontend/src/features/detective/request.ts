@@ -22,12 +22,18 @@ export function wrapLon(lon: number): number {
 
 const clampLat = (lat: number): number => Math.max(-MAX_LAT, Math.min(MAX_LAT, lat));
 
+/** Like `wrapLon`, but an east edge on the 180° line stays at +180 (a box from 170 to 180 is not a crossing). */
+function cornerLon(lon: number): number {
+  const w = wrapLon(lon);
+  return w === -180 && lon > 0 ? 180 : w;
+}
+
 export function boxFromCorners(
   a: { lat: number; lon: number },
   b: { lat: number; lon: number },
 ): { ok: true; bbox: Bbox } | { ok: false; message: string } {
-  const lonA = wrapLon(a.lon);
-  const lonB = wrapLon(b.lon);
+  const lonA = cornerLon(a.lon);
+  const lonB = cornerLon(b.lon);
   if (Math.abs(lonA - lonB) > 180) {
     return { ok: false, message: "Boxes can't cross the 180° line yet. Draw it on one side." };
   }
@@ -49,7 +55,7 @@ export function requestBody(
   const q = question.trim();
   const base =
     target.kind === "point"
-      ? { question: q, lat: target.lat, lon: target.lon }
+      ? { question: q, lat: target.lat, lon: wrapLon(target.lon) }
       : target.kind === "box"
         ? { question: q, bbox: target.bbox }
         : { question: q, site_id: target.siteId };
@@ -60,24 +66,32 @@ export function requestBody(
   };
 }
 
-const UNSAFE = /traceback|exception|error \d{3}/i;
+// Words that mean the text is a server internal, not a sentence for the person: stack traces, exceptions, paths,
+// URLs, OS errors and raw HTTP codes. A multi-line or long text is treated the same way.
+const UNSAFE = /traceback|exception|error \d{3}|http \d{3}|errno|:\/\/|\/|\n|\r/i;
+const MAX_MESSAGE = 200;
+
+const safe = (text: string): boolean => text.trim().length > 0 && text.length <= MAX_MESSAGE && !UNSAFE.test(text);
 
 export function messageForResponse(status: number, body: unknown): string {
+  const fallback = status >= 500 ? SERVER : GENERIC;
   const detail = body && typeof body === "object" ? (body as { detail?: unknown }).detail : undefined;
   let text: string | null = null;
   if (typeof detail === "string") text = detail;
   else if (status === 422 && Array.isArray(detail)) {
+    // Only our own validators speak to the person ("Value error, …"); Pydantic's structural messages
+    // ("Field required", "Input should be a valid number") describe the request, not the place.
     const msg = (detail[0] as { msg?: unknown } | undefined)?.msg;
-    if (typeof msg === "string") text = msg.replace(/^Value error, /, "");
+    if (typeof msg === "string" && msg.startsWith("Value error, ")) text = msg.slice("Value error, ".length);
   }
-  if (text && text.trim().length > 0) {
-    if (!UNSAFE.test(text)) return text;
-    return status >= 500 ? SERVER : GENERIC;
-  }
-  return status >= 500 ? SERVER : GENERIC;
+  return text !== null && safe(text) ? text.trim() : fallback;
 }
 
-const num = (n: number, d = 2): string => n.toFixed(d).replace("-", "−");
+const num = (n: number, d = 2): string => {
+  const t = n.toFixed(d);
+  // -0.001 rounds to "-0.00": a sign on zero is noise.
+  return (Number(t) === 0 ? t.replace("-", "") : t).replace("-", "−");
+};
 
 export function targetLabel(target: Target): string {
   if (target.kind === "case") return target.name;

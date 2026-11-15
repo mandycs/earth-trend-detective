@@ -83,7 +83,10 @@ function isBlank(image: CanvasImageSource): boolean {
 }
 
 function useTexture(url: string | null): { tex: THREE.Texture | null; status: PictureStatus } {
-  const [state, setState] = useState<{ tex: THREE.Texture | null; status: PictureStatus }>({ tex: null, status: 'loading' })
+  // Keyed by url: a new url reads as loading at once, never as the previous picture's outcome.
+  const [state, setState] = useState<{ url: string | null; tex: THREE.Texture | null; status: PictureStatus }>({
+    url: null, tex: null, status: 'loading',
+  })
   useEffect(() => {
     if (!url) return
     let live = true
@@ -99,23 +102,23 @@ function useTexture(url: string | null): { tex: THREE.Texture | null; status: Pi
         }
         if (isBlank(t.image as CanvasImageSource)) {
           t.dispose()
-          setState({ tex: null, status: 'empty' })
+          setState({ url, tex: null, status: 'empty' })
           return
         }
         t.colorSpace = THREE.SRGBColorSpace
         t.anisotropy = 4
         loaded = t
-        setState({ tex: t, status: 'ok' })
+        setState({ url, tex: t, status: 'ok' })
       },
       undefined,
-      () => live && setState({ tex: null, status: 'failed' }),
+      () => live && setState({ url, tex: null, status: 'failed' }),
     )
     return () => {
       live = false
       loaded?.dispose()
     }
   }, [url])
-  return state
+  return state.url === url ? { tex: state.tex, status: state.status } : { tex: null, status: 'loading' }
 }
 
 // ---- the base ----
@@ -144,9 +147,18 @@ function ReliefMesh({ grid, picture, metres, depth }: { grid: HeightGrid; pictur
   )
 }
 
-function Base({ model, depth, onPeak, onFailed }: { model: StackModel; depth: number; onPeak: (p: number) => void; onFailed: () => void }) {
+function Base({
+  model, depth, onPeak, onFailed, onPicture,
+}: {
+  model: StackModel; depth: number; onPeak: (p: number) => void; onFailed: () => void
+  onPicture: (status: PictureStatus) => void
+}) {
   const base = model.base
-  const { tex } = useTexture(base?.picture?.url ?? null)
+  const pictureUrl = base?.picture?.url ?? null
+  const { tex, status: pictureStatus } = useTexture(pictureUrl)
+  useEffect(() => {
+    if (pictureUrl) onPicture(pictureStatus)
+  }, [pictureUrl, pictureStatus, onPicture])
   const [grid, setGrid] = useState<HeightGrid | null>(null)
   const hm = base?.heightmap ?? null
   // Keyed on primitives: a fresh model object with the same heightmap does not reload it.
@@ -457,7 +469,7 @@ function SlabCard({
   )
 }
 
-function BaseCard({ model, reliefFailed }: { model: StackModel; reliefFailed: boolean }) {
+function BaseCard({ model, reliefFailed, picture }: { model: StackModel; reliefFailed: boolean; picture?: PictureStatus }) {
   const b = model.base
   if (!b) return null
   const relief = b.kind === 'relief' && !reliefFailed
@@ -472,6 +484,8 @@ function BaseCard({ model, reliefFailed }: { model: StackModel; reliefFailed: bo
         </span>
       )}
       {b.picture && b.picture.source !== b.source && <span className={styles.cardMuted}>{b.picture.source}</span>}
+      {b.picture && picture === 'failed' && <span className={styles.cardMuted}>Picture unavailable: it did not load.</span>}
+      {b.picture && picture === 'empty' && <span className={styles.cardMuted}>Picture unavailable: no data for this date.</span>}
     </div>
   )
 }
@@ -500,6 +514,7 @@ export default function EvidenceStack({ model, exploded, onPick, onClose, onColl
   const [wide, setWide] = useState(false)
   const [reliefFailed, setReliefFailed] = useState(false)
   const onReliefFailed = useMemo(() => () => setReliefFailed(true), [])
+  const [basePicture, setBasePicture] = useState<PictureStatus | undefined>(undefined)
   // All keyed by slab key, never by position.
   const groups = useRef(new Map<string, THREE.Group>())
   const anchors = useRef(new Map<string, Anchor>())
@@ -595,7 +610,7 @@ export default function EvidenceStack({ model, exploded, onPick, onClose, onColl
       cancelAnimationFrame(layoutRaf.current)
       layoutRaf.current = 0
     }
-  }, [scheduleLayout, pictures, reliefFailed])
+  }, [scheduleLayout, pictures, reliefFailed, basePicture])
 
   const onTexture = useMemo(
     () => (key: string, status: PictureStatus) => setPictures((f) => (f[key] === status ? f : { ...f, [key]: status })),
@@ -636,7 +651,7 @@ export default function EvidenceStack({ model, exploded, onPick, onClose, onColl
           >
             <ambientLight intensity={0.9} />
             <directionalLight position={[-2.2, 1.6, 1.1]} intensity={1.6} />
-            <Base model={model} depth={depth} onPeak={setPeak} onFailed={onReliefFailed} />
+            <Base model={model} depth={depth} onPeak={setPeak} onFailed={onReliefFailed} onPicture={setBasePicture} />
             {slabs.map((s) => (
               <SlabMesh
                 key={s.key}
@@ -707,7 +722,7 @@ export default function EvidenceStack({ model, exploded, onPick, onClose, onColl
               }}
             />
           ))}
-          <BaseCard model={model} reliefFailed={reliefFailed} />
+          <BaseCard model={model} reliefFailed={reliefFailed} picture={basePicture} />
         </div>
       </div>
     </div>

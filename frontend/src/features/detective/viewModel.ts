@@ -82,9 +82,11 @@ const OVER: readonly RunStatus[] = ["finished", "stopped", "cut", "failed"];
  * current scene when there is none) when a run ends. Null: focus stays where it is.
  */
 export function focusTargetFor(
-  prev: RunStatus, next: RunStatus, mode: "live" | "replay", hasAnswer: boolean,
+  prev: RunStatus, next: RunStatus, mode: "live" | "replay", hasAnswer: boolean, hadAnswer: boolean = hasAnswer,
 ): FocusTarget | null {
   const was = ACTIVE.includes(prev);
+  // An answer that lands once the run is already over still gets the focus.
+  if (!was && OVER.includes(next) && prev === next && hasAnswer && !hadAnswer) return "answer";
   if (!was && ACTIVE.includes(next)) return mode === "live" ? "stop" : null;
   if (was && OVER.includes(next)) return hasAnswer ? "answer" : "scene";
   return null;
@@ -103,6 +105,16 @@ export function forkTurn(steps: readonly HistoryStepLike[], step: HistoryStepLik
   return steps.filter((s) => s.kind === "answer" && s.step < step.step).length;
 }
 export interface HistoryStepLike { step: number; kind: string }
+
+/**
+ * The turns kept on screen when forking from `step`: the turns before it, and its own turn only when the step is
+ * that turn's answer. A fork from inside a turn drops that turn: what came after the step is not on the new branch,
+ * and the screen never shows steps the branch does not have. -1 keeps nothing.
+ */
+export function forkKeepTurns(steps: readonly HistoryStepLike[], step: HistoryStepLike): number {
+  const turn = forkTurn(steps, step);
+  return step.kind === "answer" ? turn : turn - 1;
+}
 
 /** The events of turns 0..`turn` (inclusive): everything before the place event that opens turn `turn + 1`. */
 export function trimToTurn(events: readonly DetEvent[], turn: number): DetEvent[] {

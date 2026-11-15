@@ -370,7 +370,7 @@
 }
 
 .textBtn:hover {
-  color: var(--accent-press);
+  text-decoration-thickness: 2px;
 }
 
 /* question box */
@@ -655,8 +655,22 @@
   display: none;
 }
 
+/* A stamp that lands while the board is folded (narrow screens) still shows, under the toggle. */
+.boardNews {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0 0;
+  font-size: 1rem;
+}
+
 @media (min-width: 1100px) {
   .boardToggle {
+    display: none;
+  }
+
+  .boardNews {
     display: none;
   }
 

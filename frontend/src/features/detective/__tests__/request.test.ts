@@ -73,3 +73,30 @@ test("labels", () => {
   assert.equal(targetLabel({ kind: "case", siteId: "s", name: "Doñana", bbox: [0, 0, 1, 1] }), "Doñana");
   assert.match(targetLabel({ kind: "box", bbox: [-4.6, 36.9, -4.4, 37.1] }), /^Box 36\.90–37\.10 N, /);
 });
+
+test("a point body carries a wrapped longitude", () => {
+  assert.deepEqual(requestBody({ kind: "point", lat: 1, lon: 190 }, "q"), { question: "q", lat: 1, lon: -170 });
+});
+
+test("a box whose east corner sits on the 180° line is not a crossing", () => {
+  const r = boxFromCorners({ lat: 10, lon: 170 }, { lat: 20, lon: 180 });
+  assert.deepEqual(r, { ok: true, bbox: [170, 10, 180, 20] });
+});
+
+test("internals, structural Pydantic messages and long text never reach the screen", () => {
+  const GENERIC = "This place or question could not be investigated. Pick another point and try again.";
+  const SERVER = "The investigation failed on the server. Try again in a moment.";
+  assert.equal(messageForResponse(404, { detail: "see https://example.org" }), GENERIC);
+  assert.equal(messageForResponse(404, { detail: "/srv/app/data missing" }), GENERIC);
+  assert.equal(messageForResponse(502, { detail: "[Errno 111] Connection refused" }), SERVER);
+  assert.equal(messageForResponse(502, { detail: "upstream said HTTP 503" }), SERVER);
+  assert.equal(messageForResponse(400, { detail: "line one\nline two" }), GENERIC);
+  assert.equal(messageForResponse(400, { detail: "x".repeat(201) }), GENERIC);
+  assert.equal(messageForResponse(422, { detail: [{ msg: "Field required" }] }), GENERIC);
+  assert.equal(messageForResponse(422, { detail: [{ msg: "Input should be a valid number" }] }), GENERIC);
+  assert.equal(messageForResponse(422, { detail: "Pick a step after a tool finished." }), "Pick a step after a tool finished.");
+});
+
+test("a coordinate that rounds to zero has no sign", () => {
+  assert.equal(targetLabel({ kind: "point", lat: -0.001, lon: 2 }), "Point 0.00, 2.00");
+});

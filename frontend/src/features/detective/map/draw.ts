@@ -11,7 +11,7 @@ export const DRAW_PREFIX = "det-";
 
 export type DrawSpec =
   | { id: string; kind: "raster"; tiles: string[]; maxzoom: number; opacity: number; attribution: string }
-  | { id: string; kind: "image"; url: string; bbox: Bbox; opacity: number; attribution: string }
+  | { id: string; kind: "image"; url: string; bbox: Bbox; opacity: number; attribution: string; crisp: boolean }
   | { id: string; kind: "footprint"; bbox: Bbox; text: string }
   | { id: string; kind: "outline"; bbox: Bbox }
   | { id: string; kind: "point"; lat: number; lon: number };
@@ -24,7 +24,10 @@ function layerSpec(id: string, lv: LayerView): DrawSpec {
   if (lv.render.type === "tiles") {
     return { id, kind: "raster", tiles: [lv.render.url], maxzoom: lv.render.maxzoom, opacity: lv.opacity, attribution: GIBS_ATTRIBUTION };
   }
-  return { id, kind: "image", url: lv.render.url, bbox: [...lv.render.bbox] as Bbox, opacity: lv.opacity, attribution: lv.source };
+  return {
+    id, kind: "image", url: lv.render.url, bbox: [...lv.render.bbox] as Bbox, opacity: lv.opacity, attribution: lv.source,
+    crisp: lv.crisp === true,
+  };
 }
 
 /**
@@ -78,7 +81,7 @@ export function specSignature(spec: DrawSpec): string {
     case "raster":
       return `raster:${spec.tiles.join("|")}:${spec.maxzoom}`;
     case "image":
-      return `image:${spec.url}:${spec.bbox.join(",")}`;
+      return `image:${spec.url}:${spec.bbox.join(",")}:${spec.crisp ? "crisp" : "smooth"}`;
     case "footprint":
       return `fp:${spec.bbox.join(",")}:${spec.text}`;
     case "outline":
@@ -205,7 +208,7 @@ function entryFor(lv: LayerView, role: string, when: string | null): LegendEntry
     // they get no ramp here. Copy the stops into the catalog at generation time; never invent them on the front.
     ramp: lg?.stops ?? [], labels: lg?.labels ?? [],
     source: lv.source,
-    resolution: lv.resolution ? `${lv.resolution} pixels, smoothed for display` : null,
+    resolution: lv.resolution ? `${lv.resolution} pixels, ${lv.crisp ? "drawn as they are" : "smoothed for display"}` : null,
   };
 }
 

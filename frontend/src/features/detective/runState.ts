@@ -39,7 +39,9 @@ export function runReducer(s: RunState, a: RunAction): RunState {
       if (!isActive(s)) return s;
       const e = a.event;
       const threadId = e.kind === "place" || e.kind === "done" ? e.data.thread_id : s.threadId;
-      return { ...s, status: "streaming", events: [...s.events, e], threadId };
+      // An error event is the run's last word: the run is over at once, not when the socket closes.
+      const status: RunStatus = e.kind === "error" ? "finished" : "streaming";
+      return { ...s, status, events: [...s.events, e], threadId, message: e.kind === "error" ? null : s.message };
     }
     case "end": {
       if (!isActive(s)) return s;

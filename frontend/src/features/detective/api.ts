@@ -29,6 +29,15 @@ async function readBody(res: Response): Promise<unknown> {
   }
 }
 
+/** A body that is not the JSON it should be is a failure in words, never a raw SyntaxError. */
+async function json<T>(res: Response, failure: string): Promise<T> {
+  try {
+    return (await res.json()) as T;
+  } catch {
+    throw new FriendlyError(failure);
+  }
+}
+
 async function send(url: string, init: RequestInit, signal: AbortSignal): Promise<Response> {
   try {
     return await fetch(url, { ...init, signal });
@@ -79,17 +88,17 @@ export async function streamDetective(
 export async function fetchHistory(threadId: string, signal: AbortSignal): Promise<HistoryStep[]> {
   const res = await send(`${API_URL}/detective/${encodeURIComponent(threadId)}/history`, {}, signal);
   if (!res.ok) throw new FriendlyError(messageForResponse(res.status, await readBody(res)));
-  return (await res.json()) as HistoryStep[];
+  return json<HistoryStep[]>(res, "The steps of this investigation could not be read. Try again in a moment.");
 }
 
 export async function fetchRecording(name: string, signal: AbortSignal): Promise<Recording> {
   const res = await send(`/recordings/${encodeURIComponent(name)}.json`, {}, signal);
   if (!res.ok) throw new FriendlyError("This recording is not available.");
-  return (await res.json()) as Recording;
+  return json<Recording>(res, "This recording is not available.");
 }
 
 export async function fetchCaseLayers(siteId: string, signal: AbortSignal): Promise<Record<string, CaseLayerRow>> {
   const res = await send(`/sites/${encodeURIComponent(siteId)}/layers.json`, {}, signal);
   if (!res.ok) throw new FriendlyError("This case has no layers.");
-  return (await res.json()) as Record<string, CaseLayerRow>;
+  return json<Record<string, CaseLayerRow>>(res, "This case has no layers.");
 }

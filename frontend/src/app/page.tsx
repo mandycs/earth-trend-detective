@@ -53,7 +53,7 @@ export default function HomePage() {
               Three places, three answers. Now pick yours.
             </h2>
             <p>
-              Click anywhere on the globe and ask in plain words. The detective picks the NASA records that fit the place,
+              Click anywhere on the globe and ask in plain words. The detective picks the satellite records that fit the place,
               tests each one, and shows you what it found, scene by scene.
             </p>
             <div className={styles.ownActions}>

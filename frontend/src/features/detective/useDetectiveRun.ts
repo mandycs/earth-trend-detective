@@ -23,7 +23,7 @@ export interface StartOpts {
   checkpointId?: string
   /** A retry of the last request: the failed attempt is dropped, never kept as a turn. */
   retry?: boolean
-  /** A fork: keep turns 0..keepTurns only (the forked turn included); later turns are not on the new branch. */
+  /** A fork: keep turns 0..keepTurns only (-1: none; see forkKeepTurns); later turns are not on the new branch. */
   keepTurns?: number
 }
 export interface LoadedRecording { name: string; question: string; startedAt: string; target: Target | null }

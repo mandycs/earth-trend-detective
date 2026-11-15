@@ -330,3 +330,33 @@ test("scrubbing back shows that scene's map", () => {
 test("no place yet gives the empty view", () => {
   assert.deepEqual(mapViewAt({ ...inv([]), place: null }, 0, NO_CASE), EMPTY_VIEW);
 });
+
+const OVERLAY_OP: MapOp = {
+  op: "overlay", url: "/detective/maps/0123456789abcdef0123456789abcdef.png", bounds: [-116, 35, -113, 37.5],
+  legend: { unit: "mm per decade", labels: ["Wetter", "Drier"], stops: ["#8c510a", "#01665e"], range: [-12, 12] },
+  title: "Rain: trend per pixel, 2001–2024", source: "CHIRPS", resolution: "~5 km", period: [2001, 2024],
+};
+
+test("an overlay is the evidence layer, read from the backend, drawn pixel for pixel", () => {
+  const v = fold([OVERLAY_OP], { caseLayers: null, apiBase: "http://api.test/" });
+  assert.ok(v.evidence);
+  assert.equal(v.evidence.role, "evidence");
+  assert.deepEqual(v.evidence.render, {
+    type: "image", url: "http://api.test/detective/maps/0123456789abcdef0123456789abcdef.png", bbox: [-116, 35, -113, 37.5],
+  });
+  assert.deepEqual(v.evidence.period, [2001, 2024]);
+  assert.equal(v.evidence.crisp, true);
+  assert.deepEqual(v.evidence.legend, { unit: "mm per decade", min: -12, max: 12, labels: ["Wetter", "Drier"], stops: ["#8c510a", "#01665e"] });
+  assert.equal(v.evidence.source, "CHIRPS");
+});
+
+test("an overlay replaces a curtain, and an address that is not http(s) or a path is refused", () => {
+  const curtained = fold([{ op: "show_before_after", layer_id: "true_colour", year_a: 2003, year_b: 2023, before_url: null, after_url: null, bbox: null }]);
+  assert.ok(curtained.curtain);
+  const v = applyMapOp(curtained, OVERLAY_OP, NO_CASE);
+  assert.equal(v.curtain, null);
+  assert.equal(v.evidence?.render.type === "image" && v.evidence.render.url, OVERLAY_OP.op === "overlay" ? OVERLAY_OP.url : "");
+  const bad = applyMapOp(openingView(PLACE), { ...(OVERLAY_OP as Extract<MapOp, { op: "overlay" }>), url: "javascript:alert(1)" }, NO_CASE);
+  assert.equal(bad.evidence, null);
+  assert.equal(bad.notes.length, 1);
+});

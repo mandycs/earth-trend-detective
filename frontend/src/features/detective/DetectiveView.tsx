@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { Wordmark } from '../../brand/Wordmark'
+import { API_URL } from '../explore/api'
 import { fetchCaseLayers } from './api'
 import type { HistoryStep } from './api'
 import { AnswerPanel } from './AnswerPanel'
@@ -27,7 +28,7 @@ import { STACK_MAX, stackFor } from './stack/stackModel'
 import type { Slab } from './stack/stackModel'
 import { showSlab, slabCaption } from './stack/showSlab'
 import {
-  ANSWER_READY, COORDS_HINT, COORDS_PLACEHOLDER, focusTargetFor, forkTurn, localDate, parseLatLon, previewCamera,
+  ANSWER_READY, COORDS_HINT, COORDS_PLACEHOLDER, focusTargetFor, forkKeepTurns, localDate, parseLatLon, previewCamera,
 } from './viewModel'
 import type { FocusTarget } from './viewModel'
 import styles from './detective.module.css'
@@ -212,16 +213,17 @@ export default function DetectiveView({ cases, recordings, initialSite, replay }
     return () => ctl.abort()
   }, [siteId, caseBboxKey])
 
+  const mapCtx = useMemo(() => ({ caseLayers, now, apiBase: API_URL }), [caseLayers, now])
   const sceneView = useMemo(() => {
     if (!inv.place && preview && run.mode === 'live') return { ...EMPTY_VIEW, camera: previewCamera(preview.target, preview.seq) }
-    return mapViewAt(inv, player.state.index, { caseLayers, now })
-  }, [inv, player.state.index, caseLayers, now, preview, run.mode])
+    return mapViewAt(inv, player.state.index, mapCtx)
+  }, [inv, player.state.index, mapCtx, preview, run.mode])
 
   // ---- the exploded evidence stack (Task 17): the ending's closing beat ----
   const atEnding = player.scene?.kind === 'ending'
   const stack = useMemo(
-    () => (atEnding ? stackFor(inv, sceneView, { max: STACK_MAX, ctx: { caseLayers, now } }) : null),
-    [atEnding, inv, sceneView, caseLayers, now],
+    () => (atEnding ? stackFor(inv, sceneView, { max: STACK_MAX, ctx: mapCtx }) : null),
+    [atEnding, inv, sceneView, mapCtx],
   )
   const [stackMounted, setStackMounted] = useState(false)
   const [exploded, setExploded] = useState(false)
@@ -241,7 +243,10 @@ export default function DetectiveView({ cases, recordings, initialSite, replay }
     setExploded(false)
     setStackMounted(true)
   }
-  const closeStack = useCallback(() => setExploded(false), [])
+  const explodedRef = useRef(exploded)
+  useEffect(() => {
+    explodedRef.current = exploded
+  }, [exploded])
   const pickSlab = useCallback(
     (key: string) => {
       setShownSlab(stack?.slabs.find((s) => s.key === key) ?? null)
@@ -254,11 +259,23 @@ export default function DetectiveView({ cases, recordings, initialSite, replay }
     refocusExplode.current = true
     setStackMounted(false)
   }, [])
+  // Esc before the first frame: nothing has risen yet, so there is no collapse to wait for. Unmounting also
+  // cancels the pending frame that would have exploded it.
+  const closeStack = useCallback(() => {
+    if (explodedRef.current) setExploded(false)
+    else onStackCollapsed()
+  }, [onStackCollapsed])
+  // The stack went away under the dialog (no ending, no slabs): close it, so the page is not left inert.
+  const stackGone = !stack || stack.slabs.length === 0
+  useEffect(() => {
+    if (stackMounted && stackGone) onStackCollapsed()
+  }, [stackMounted, stackGone, onStackCollapsed])
   // Focus returns once the page behind is no longer inert (after the unmount has rendered).
   useEffect(() => {
     if (stackMounted || !refocusExplode.current) return
     refocusExplode.current = false
-    explodeRef.current?.focus({ preventScroll: true })
+    // The button is gone when the stack went away with the ending: the scene takes the focus instead.
+    ;(explodeRef.current ?? sceneRef.current)?.focus({ preventScroll: true })
   }, [stackMounted])
   const view = useMemo(() => (shownSlab ? showSlab(sceneView, shownSlab) : sceneView), [sceneView, shownSlab])
 
@@ -301,17 +318,21 @@ export default function DetectiveView({ cases, recordings, initialSite, replay }
   const sceneRef = useRef<HTMLElement>(null)
   const messageRef = useRef<HTMLParagraphElement>(null)
   const prevStatus = useRef(run.status)
+  // This run's own answer: after a follow-up that gave none, the previous turn's answer is not the one to focus.
+  const runAnswered = run.events.some((e) => e.kind === 'answer')
+  const prevAnswered = useRef(runAnswered)
   const [pendingFocus, setPendingFocus] = useState<Exclude<FocusTarget, 'stop'> | null>(null)
   const [announce, setAnnounce] = useState('')
   useEffect(() => {
-    const t = focusTargetFor(prevStatus.current, run.status, run.mode, inv.answer !== null)
+    const t = focusTargetFor(prevStatus.current, run.status, run.mode, runAnswered, prevAnswered.current)
     prevStatus.current = run.status
+    prevAnswered.current = runAnswered
     if (t === 'stop') {
       setPendingFocus(null)
       setAnnounce('')
       stopRef.current?.focus()
     } else if (t) setPendingFocus(t)
-  }, [run.status, run.mode, inv.answer])
+  }, [run.status, run.mode, runAnswered])
   // The ending is paced: focus waits until the player shows the last scene (or the answer itself).
   useEffect(() => {
     if (!pendingFocus || (inv.scenes.length > 0 && !atLast)) return
@@ -342,7 +363,7 @@ export default function DetectiveView({ cases, recordings, initialSite, replay }
 
   const fork = (step: HistoryStep, all: HistoryStep[]) => {
     setForkFrom(step)
-    setForkAt(forkTurn(all, step))
+    setForkAt(forkKeepTurns(all, step))
     document.getElementById('detective-question')?.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' })
   }
 
