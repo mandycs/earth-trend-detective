@@ -76,6 +76,11 @@ are listed in `final-fix-report.md` next to it. In short:
   variables `list_variables` marked unavailable here.
 - `thinking {text}` and board notes are checked. A line with a figure no tool returned, a cause claim,
   "proof" or "this part is human" is shown as `Next: <tool>.` instead, and such a note is shown empty.
+- The map moves on its own: after `profile_place` the code appends `map {op: "fly_to", bbox: place bbox,
+  pitch: 55, bearing: 0}` unless the camera already moved, and a solved case's profile lists
+  `case_layers [{layer_id, title, kind}]`. `show_layer` with no date and no year gets `year` = the last
+  year of the most recent tested period (else the investigation's end), when the layer has that year
+  (case layers: yearly ones only).
 - `map {op: "show_before_after", layer_id, year_a, year_b}` may also carry `before_url`, `after_url` and
   `bbox` (from `satellite_picture`). `layer_id` is always a map catalog id, e.g. `true_colour`.
 - `history` items describe a step by the **last** tool message of that step. When the model made several

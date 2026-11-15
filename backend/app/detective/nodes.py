@@ -1,7 +1,8 @@
 """The work inside the detective graph's nodes: run one tool call, write the checked answer.
 
 - `run_call`: one model tool call against the session. Exceptions become a plain
-  `{"status": "failed", "reason": ...}` result (the graph never crashes on a tool).
+  `{"status": "failed", "reason": ...}` result (the graph never crashes on a tool). After
+  `profile_place` the camera flies to the place and a solved case lists its own layers.
 - `tool_message`: what the model sees (compact JSON, no `chart` / `series` / `transient`,
   verdicts refreshed from the ledger now) and, as `artifact`, the full result for the front.
 - `narrate`: the narrator writes at most 3 sentences from the report; the validator checks
@@ -26,7 +27,7 @@ from pydantic import ValidationError
 from app.detective.ledger import json_safe
 from app.detective.prompt import CONCLUDE_PROMPT, conclude_request, retry_request
 from app.detective.session import Session
-from app.detective.tools import TOOLS
+from app.detective.tools import TOOLS, mapping
 from app.detective.tools.analysis import WORDING, refresh_verdicts
 from app.detective.wording import RESIDUAL_WORDING, answer_rejections, cause_problems, without_quotes
 from app.explain.numbers import extract_numbers
@@ -83,10 +84,27 @@ def run_call(session: Session, call: Mapping) -> dict:
         raise ToolFailure(_bad_args(exc)[:MAX_REASON]) from exc
     kwargs = {k: getattr(args, k) for k in type(args).model_fields}
     try:
-        return spec.fn(session, **kwargs)
+        result = spec.fn(session, **kwargs)
     except Exception as exc:  # noqa: BLE001 - a broken tool is a step result, never a crash
         logger.warning("tool %s raised %s: %s", name, type(exc).__name__, exc)
         raise ToolFailure(f"{TOOL_ERROR_PREFIX}: {exc}"[:MAX_REASON]) from exc
+    after = AFTER.get(name)
+    return after(session, result) if after is not None else result
+
+
+def _after_profile(session: Session, result: dict) -> dict:
+    """Profiling the place also frames it on the map and, in a solved case, offers its own layers.
+    Only the returned copy changes: the ledger keeps the profile as the tool gave it."""
+    out = dict(result)
+    if mapping.auto_fly_to(session):
+        out["map"] = mapping.AUTO_FLY_NOTE
+    rows = mapping.case_layer_rows(session)
+    if rows:
+        out["case_layers"] = rows
+    return out
+
+
+AFTER = {"profile_place": _after_profile}
 
 
 def _hide(value: Any) -> Any:

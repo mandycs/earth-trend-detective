@@ -52,3 +52,16 @@ def test_system_prompt_asks_for_two_suspects_that_are_reasons_with_their_own_ser
 
 def test_system_prompt_retries_a_removed_note():
     assert "if update_board returns note_removed, call update_board again" in SYSTEM
+
+
+def test_system_prompt_uses_the_automatic_map_and_the_cases_layers():
+    assert "profile_place already flies the map to the place" in SYSTEM
+    assert "show_layer without a date shows the last year of the period you tested" in SYSTEM
+    assert "trend_lst_day" in SYSTEM and "before_after" in SYSTEM and "case_layers" in SYSTEM
+
+
+def test_tool_descriptions_tell_the_model_about_the_automatic_map():
+    from app.detective.tools import TOOLS
+
+    assert "flies the map to the place" in TOOLS["profile_place"].description
+    assert "last year of the period you tested" in TOOLS["show_layer"].description

@@ -153,7 +153,8 @@ TOOLS: dict[str, ToolSpec] = {
         data.profile_place,
         "Call this first. Profiles the picked place: land-cover shares and the dominant class "
         "(MODIS, ~20 km box), the tags that decide which variables apply, and the size of the data "
-        "cells. Coarse sources average over big cells (GRACE ~300 km, POWER ~50 km), so a single "
+        "cells. It also flies the map to the place and, in a solved case, lists the case's own map layers "
+        "(case_layers). Coarse sources average over big cells (GRACE ~300 km, POWER ~50 km), so a single "
         "field or street is never resolved.",
         NoArgs,
     ),
@@ -241,8 +242,8 @@ TOOLS: dict[str, ToolSpec] = {
     "show_layer": ToolSpec(
         mapping.show_layer,
         "Puts one layer on the map: the evidence of the current step (the variable just tested, for its year "
-        "or day), with its legend, source and resolution shown to the user. Unknown ids or dates outside the "
-        "layer are rejected. A map instruction: not a test, no figure comes from it.",
+        "or day), with its legend, source and resolution shown to the user. With no date and no year it shows the "
+        "last year of the period you tested. Unknown ids or dates outside the layer are rejected. A map instruction: not a test, no figure comes from it.",
         ShowLayerArgs,
     ),
     "set_year": ToolSpec(
