@@ -9,7 +9,8 @@
     "prebuild": "npm run sync-sites",
     "build": "next build",
     "start": "next start -p 5180",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node --test 'src/features/detective/**/*.test.ts'"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",
