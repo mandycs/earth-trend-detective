@@ -1,7 +1,7 @@
 import type { Site, SiteVariable, Verdict, Direction } from '../story/types'
 
 /** The solved cases shown in story mode. `_example` (synthetic art) is never listed. */
-export const CASE_IDS = ['lake_mead', 'aletsch', 'donana'] as const
+export const CASE_IDS = ['lake_mead', 'aletsch', 'donana', 'great_barrier_reef'] as const
 export type CaseId = (typeof CASE_IDS)[number]
 
 export function isCaseId(value: string): value is CaseId {
@@ -13,12 +13,17 @@ export function shortName(name: string): string {
   return name.replace(/\s*\(.*\)\s*$/, '').trim() || name
 }
 
+/** True for an event record (e.g. heat stress): counts, never a trend verdict. */
+export function isEvents(v: Pick<SiteVariable, 'kind'>): boolean {
+  return v.kind === 'events'
+}
+
 /**
  * The variable a case is about: the one the climate split was computed for,
- * else total water stored, else the first real trend.
+ * else total water stored, else the first real trend. Event records never lead.
  */
 export function leadVariable(site: Pick<Site, 'variables'>): SiteVariable | null {
-  const vars = site.variables ?? []
+  const vars = (site.variables ?? []).filter((v) => !isEvents(v))
   return (
     vars.find((v) => v.residual_pct_non_climate != null) ??
     vars.find((v) => v.id === 'grace_tws') ??

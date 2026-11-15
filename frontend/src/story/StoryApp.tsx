@@ -35,6 +35,7 @@ const CASE_LABELS: Record<string, string> = {
   lake_mead: 'Lake Mead',
   aletsch: 'Aletsch',
   donana: 'Doñana',
+  great_barrier_reef: 'Great Barrier Reef',
 }
 
 /** Seconds per year while playing: the frame holds, then moves to the next. */

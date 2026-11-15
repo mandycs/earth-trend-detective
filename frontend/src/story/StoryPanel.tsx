@@ -6,7 +6,8 @@ import type { Site, SiteVariable } from './types'
 import { Stamp } from '../lib/Stamp'
 import { SeriesLine } from '../lib/SeriesLine'
 import { RangeBar, SplitBar } from '../lib/Evidence'
-import { fmt, leadVariable, shortName, slopeText, stampFor } from '../lib/cases'
+import { fmt, isEvents, leadVariable, shortName, slopeText, stampFor } from '../lib/cases'
+import { EventsTag, HeatStressRecord } from './HeatStress'
 import { API_URL } from '../features/explore/api'
 import { FootprintGlyph, footprintOf, footprintVsMap } from '../lib/footprint'
 
@@ -54,6 +55,10 @@ function usePair(siteId: string): BeforeAfterPair | null {
 
 function Changing({ site, variable, mapKm, onSelectVariable }: { site: Site; variable: SiteVariable; mapKm: number; onSelectVariable: (id: string) => void }) {
   const pair = usePair(site.id)
+  // A record that is on the list but lost some years has gaps; one not on the list is still on its way.
+  const missing = Object.entries(site.missing ?? {})
+  const gaps = missing.filter(([id]) => site.variables.some((v) => v.id === id))
+  const pending = missing.filter(([id]) => !site.variables.some((v) => v.id === id))
   return (
     <>
       {pair ? <BeforeAfter pair={pair} alt={`Satellite picture of ${shortName(site.name)}`} /> : null}
@@ -74,7 +79,9 @@ function Changing({ site, variable, mapKm, onSelectVariable }: { site: Site; var
                 onClick={() => onSelectVariable(entry.id)}
               >
                 <span className="sp-var-name">{entry.label}</span>
-                <span className="sp-var-slope">{slope ? `${slope} / decade` : 'no trend estimate'}</span>
+                <span className="sp-var-slope">
+                  {isEvents(entry) ? 'not a trend test' : slope ? `${slope} / decade` : 'no trend estimate'}
+                </span>
                 {entry.series && entry.series.length > 1 ? (
                   <SeriesLine
                     series={entry.series}
@@ -87,7 +94,11 @@ function Changing({ site, variable, mapKm, onSelectVariable }: { site: Site; var
                 ) : (
                   <span className="sp-var-line" />
                 )}
-                <Stamp verdict={entry.verdict} direction={entry.direction} className="sp-var-stamp" />
+                {isEvents(entry) ? (
+                  <EventsTag variable={entry} className="sp-var-stamp" />
+                ) : (
+                  <Stamp verdict={entry.verdict} direction={entry.direction} className="sp-var-stamp" />
+                )}
                 <span className="sp-var-area">
                   <FootprintGlyph fp={footprintOf(entry.id, entry.footprint)} mapKm={mapKm} className="sp-var-glyph" />
                   <span>
@@ -99,11 +110,23 @@ function Changing({ site, variable, mapKm, onSelectVariable }: { site: Site; var
           )
         })}
       </ul>
-      {site.missing && Object.keys(site.missing).length > 0 ? (
+      {gaps.length > 0 ? (
+        <div className="sp-missing sp-gaps">
+          <h3>Gaps in the records</h3>
+          <ul>
+            {gaps.map(([id, why]) => (
+              <li key={id}>
+                <strong>{site.variables.find((v) => v.id === id)?.label ?? id}</strong>: {why}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      {pending.length > 0 ? (
         <div className="sp-missing">
           <h3>Still on its way</h3>
           <ul>
-            {Object.entries(site.missing).map(([id, why]) => (
+            {pending.map(([id, why]) => (
               <li key={id}>
                 <strong>{id.replace(/_/g, ' ')}</strong>: {why}
               </li>
@@ -115,7 +138,28 @@ function Changing({ site, variable, mapKm, onSelectVariable }: { site: Site; var
   )
 }
 
+function Events({ site, variable }: { site: Site; variable: SiteVariable }) {
+  const heat = site.heat_stress
+  return (
+    <>
+      <div className="sp-verdict">
+        <EventsTag variable={variable} />
+        <p>
+          <strong>{variable.label}.</strong> A record of hot spells, counted reef by reef and year by year.
+        </p>
+      </div>
+      {variable.note ? <p className="sp-note">{variable.note}</p> : null}
+      {heat ? (
+        <HeatStressRecord heat={heat} />
+      ) : (
+        <p className="ev-empty">The heat-stress record is not in this case file yet.</p>
+      )}
+    </>
+  )
+}
+
 function Real({ site, variable }: { site: Site; variable: SiteVariable }) {
+  if (isEvents(variable)) return <Events site={site} variable={variable} />
   const s = stampFor(variable.verdict, variable.direction)
   const lead = leadVariable(site)
   const validation = site.validation

@@ -322,6 +322,24 @@
   vector-effect: non-scaling-stroke;
 }
 
+.tl-threshold {
+  stroke: var(--ink-3);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 5;
+  vector-effect: non-scaling-stroke;
+}
+
+.tl-threshold-label {
+  position: absolute;
+  left: 4px;
+  transform: translateY(-110%);
+  font-size: 0.8rem;
+  line-height: 1;
+  color: var(--ink-3);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
 .tl-area {
   fill: var(--surface-2);
 }
@@ -600,6 +618,10 @@
 .sp-missing strong {
   color: var(--ink);
   text-transform: capitalize;
+}
+
+.sp-gaps strong {
+  text-transform: none;
 }
 
 .sp-verdict {

@@ -10,7 +10,12 @@ export function generateStaticParams() {
 
 export const dynamicParams = false
 
-const TITLES: Record<string, string> = { lake_mead: 'Lake Mead', aletsch: 'Aletsch Glacier', donana: 'Doñana' }
+const TITLES: Record<string, string> = {
+  lake_mead: 'Lake Mead',
+  aletsch: 'Aletsch Glacier',
+  donana: 'Doñana',
+  great_barrier_reef: 'Great Barrier Reef',
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params
