@@ -20,7 +20,7 @@ from app.catalog import Variable, variables_for_site
 from app.detective.ledger import TestRecord
 from app.detective.place import Place
 from app.detective.session import Session
-from app.extractors import erddap
+from app.extractors import erddap, gibs_values
 from app.investigate import landcover
 from app.investigate.runner import LAND_COVER_YEARS
 from app.stats.annual import annual_trend, annual_years_needed, n_years, to_annual
@@ -43,6 +43,8 @@ GIBS_TWINS: Mapping[str, str] = {"ndvi": "ndvi_gibs", "lst_day": "lst_gibs", "sn
 TWIN_OF: Mapping[str, str] = {twin: base for base, twin in GIBS_TWINS.items()}
 SEA_TAGS = frozenset({"ocean", "coast", "reef"})
 ANNUAL = "annual"
+ANNUAL_SUFFIX = "annual mean of monthly values"
+NO_COMPLETED_YEAR_REASON = "no completed year in this range"
 GRACE_AT_SEA_REASON = "measures water stored on land; over open sea it is not meaningful"
 LAND_AT_SEA_REASON = "not_available_here: a land-only source; this place is open sea"
 SEA_MAX_ELEVATION_M = -5.0  # a box whose lowest point is at or below this is sea; lakes sit above it
@@ -312,6 +314,8 @@ def _fetch(session: Session, var_id: str, start: int, end: int) -> dict:
     if reason is not None:
         twin = GIBS_TWINS.get(var_id) if reason == OFF_CASE_REASON else None
         return _not_available(reason, var_id=var_id, **({"use_instead": twin} if twin else {}))
+    if var.source == "gibs" and start > gibs_values.last_complete_year():
+        return _not_available(NO_COMPLETED_YEAR_REASON, var_id=var_id)  # a plain answer, not a failure
     fetcher = gather.FETCHERS.get(var.source)
     if fetcher is None:
         return _not_available(f"source {var.source!r} is not supported", var_id=var_id)
@@ -460,12 +464,13 @@ def _annual_trend(
     res = annual_trend(window)
     slope = None if res.too_short else res.sen_slope_per_decade
     label = var.label if var else var_id
+    suffix = ANNUAL_SUFFIX if var is not None and var.source == "gibs" else "yearly values"  # DHW: a yearly peak
     test_id = f"t{session.ledger.n_tests + 1}"
     session.ledger.add_test(
         TestRecord(
             id=test_id,
             var_id=var_id,
-            label=label if "yearly values" in label else f"{label} (yearly values)",
+            label=label if suffix in label else f"{label} ({suffix})",
             kind="trend",
             p_value=res.p_value,
             slope=slope,

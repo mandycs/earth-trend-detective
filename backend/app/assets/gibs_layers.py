@@ -25,6 +25,7 @@ import json
 import logging
 import re
 import sys
+import time
 from collections.abc import Iterable, Mapping, Sequence
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
@@ -48,6 +49,11 @@ YEARS = range(2003, 2025)
 TIMEOUT_S = 60.0
 MIN_PX = 64
 MIN_VALID_SHARE = 0.2  # a year needs at least this share of pixels with a value, else it is dropped
+MIN_SEEN_MONTHS = 6  # layers with `transparent_value`: months with a coloured pixel a year needs
+RETRY_STATUS = frozenset({429, 500, 502, 503, 504})
+RETRIES = 2  # extra tries after the first, on RETRY_STATUS or a network error
+BACKOFF_S = 1.0
+_sleep = time.sleep  # patched in tests
 _ENTRY_RE = re.compile(r"<ColorMapEntry\s+([^>]*)/>")
 _ATTR_RE = re.compile(r'(\w+)="([^"]*)"')
 
@@ -152,13 +158,34 @@ def colorize(values: np.ndarray, vmin: float, vmax: float, palette: str) -> np.n
     return rgba
 
 
+class TileFailed(RuntimeError):
+    """GIBS did not answer a GetMap (5xx, 429 or a network error after the retries)."""
+
+
 def _fetch(client: httpx.Client, layer: GibsLayer, bbox: Sequence[float], date: str, size: tuple[int, int]) -> np.ndarray | None:
+    """The month's picture; None when GIBS answers but serves no picture for that date.
+
+    A busy or failing server (RETRY_STATUS, network error) is retried RETRIES times with a
+    short backoff, then `TileFailed` is raised: a failure is never read as "no clear view".
+    """
     w, s, e, n = bbox
-    r = client.get(GIBS_WMS_URL, params={
+    params = {
         "SERVICE": "WMS", "REQUEST": "GetMap", "VERSION": "1.3.0", "LAYERS": layer.gibs_layer,
         "CRS": "EPSG:4326", "BBOX": f"{s},{w},{n},{e}", "WIDTH": str(size[0]), "HEIGHT": str(size[1]),
         "FORMAT": "image/png", "TIME": date,
-    })
+    }
+    for attempt in range(RETRIES + 1):
+        try:
+            r = client.get(GIBS_WMS_URL, params=params)
+        except httpx.HTTPError as exc:
+            problem = type(exc).__name__
+        else:
+            if r.status_code not in RETRY_STATUS:
+                break
+            problem = f"HTTP {r.status_code}"
+        if attempt == RETRIES:
+            raise TileFailed(f"GIBS {layer.gibs_layer} {date}: {problem}")
+        _sleep(BACKOFF_S * (attempt + 1))
     if r.status_code != 200 or not r.headers.get("content-type", "").startswith("image/"):
         return None
     return np.asarray(Image.open(io.BytesIO(r.content)).convert("RGBA"))
@@ -175,9 +202,16 @@ def load_colormap(client: httpx.Client, layer: GibsLayer) -> dict[tuple[int, int
     return parse_colormap(client.get(COLORMAP_URL.format(name=layer.colormap)).text)
 
 
+def _seen(rgba: np.ndarray) -> bool:
+    """At least one coloured (not transparent) pixel."""
+    return rgba.shape[-1] < 4 or bool((rgba[..., 3] > 0).any())
+
+
 def _decode_tile(rgba: np.ndarray, table: Mapping[tuple[int, int, int], float], layer: GibsLayer) -> np.ndarray:
     vals = decode(rgba, table)
     if layer.transparent_value is not None and rgba.shape[-1] == 4:
+        if not _seen(rgba):  # a wholly transparent box was not seen this month: missing, not 0
+            return np.full(rgba.shape[:2], np.nan)
         vals = np.where(rgba[..., 3] == 0, layer.transparent_value, vals)
     return vals + layer.to_unit
 
@@ -191,12 +225,15 @@ def yearly_values(
     size: tuple[int, int] | None = None,
     table: Mapping[tuple[int, int, int], float] | None = None,
     workers: int = 1,
+    failed: set[int] | None = None,
 ) -> dict[int, np.ndarray]:
     """Season mean grid (display units) per year over `bbox`, for the years with enough pixels.
 
     One GetMap per month; a month GIBS does not serve is skipped. A year keeps its grid when
     at least MIN_VALID_SHARE of the pixels have a value (transparent years are dropped). With
-    `layer.transparent_value` set, a year also needs one coloured pixel in some month.
+    `layer.transparent_value` set, a wholly transparent month is missing and a year needs
+    MIN_SEEN_MONTHS seen months. A month GIBS failed on (`TileFailed`) is skipped and its year
+    added to `failed` when given; a caller that cannot accept partial years leaves them out.
     """
     size = layer_size(bbox, layer) if size is None else size
     table = load_colormap(client, layer) if table is None else table
@@ -204,7 +241,13 @@ def yearly_values(
 
     def get(job: tuple[int, int]) -> np.ndarray | None:
         year, m = job
-        return _fetch(client, layer, bbox, f"{year}-{m:02d}-01", size)
+        try:
+            return _fetch(client, layer, bbox, f"{year}-{m:02d}-01", size)
+        except TileFailed as exc:
+            logger.warning("%s", exc)
+            if failed is not None:
+                failed.add(year)
+            return None
 
     if workers > 1:
         with ThreadPoolExecutor(max_workers=workers) as pool:
@@ -212,17 +255,16 @@ def yearly_values(
     else:
         tiles = [get(job) for job in jobs]
     by_year: dict[int, list[np.ndarray]] = {}
-    seen: set[int] = set()
+    seen: dict[int, int] = {}
     for (year, _), rgba in zip(jobs, tiles):
         if rgba is None:
             continue
-        if rgba.shape[-1] < 4 or (rgba[..., 3] > 0).any():
-            seen.add(year)
+        seen[year] = seen.get(year, 0) + _seen(rgba)
         by_year.setdefault(year, []).append(_decode_tile(rgba, table, layer))
     yearly: dict[int, np.ndarray] = {}
     for year, grids in by_year.items():
-        if layer.transparent_value is not None and year not in seen:
-            continue
+        if layer.transparent_value is not None and seen[year] < MIN_SEEN_MONTHS:
+            continue  # too few months seen to call it this year's snow
         vals = season_mean(grids)
         if np.isfinite(vals).mean() >= MIN_VALID_SHARE:
             yearly[year] = vals

@@ -126,8 +126,8 @@ variables:
   # path only; drivers as the twin's, but no climate split on yearly values (it needs months).
   # Status "observed", precision one palette step.
   - id: ndvi_gibs
-    label: Plant greenness (yearly values)
-    definition: "How green and leafy the land looks from space, averaged over each year from NASA's MODIS satellite pictures; higher means more plant growth."
+    label: Plant greenness (annual mean of monthly values)
+    definition: "How green and leafy the land looks from space, as the annual mean of monthly values from NASA's MODIS satellite pictures; higher means more plant growth."
     role: impact
     source: gibs
     dataset: MODIS_Terra_L3_NDVI_Monthly   # MOD13A3, colormap MODIS_L3_NDVI
@@ -142,8 +142,8 @@ variables:
     drivers: [precip, t2m, solar]
 
   - id: lst_gibs
-    label: Daytime ground temperature (yearly values)
-    definition: "How hot the ground surface itself is in the daytime, averaged over each year from NASA's MODIS satellite pictures. It is not the air temperature."
+    label: Daytime ground temperature (annual mean of monthly values)
+    definition: "How hot the ground surface itself is in the daytime, as the annual mean of monthly values from NASA's MODIS satellite pictures. It is not the air temperature."
     role: impact
     source: gibs
     dataset: MODIS_Terra_L3_Land_Surface_Temp_Monthly_Day   # MOD11C3, colormap MODIS_Land_Surface_Temp
@@ -158,8 +158,8 @@ variables:
     drivers: [t2m, solar]
 
   - id: snow_gibs
-    label: Snow cover (yearly values)
-    definition: "The share of the ground covered by snow, averaged over each year from NASA's MODIS satellite pictures."
+    label: Snow cover (annual mean of monthly values)
+    definition: "The share of the ground covered by snow, as the annual mean of monthly values from NASA's MODIS pictures; unseen months are left out."
     role: impact
     source: gibs
     dataset: MODIS_Terra_L3_Snow_Cover_Monthly_Average_Pct   # MOD10CM, colormap MODIS_NDSI_Snow_Cover

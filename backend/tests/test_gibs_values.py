@@ -8,6 +8,7 @@ from pathlib import Path
 
 import httpx
 import numpy as np
+import pytest
 from PIL import Image
 
 import pandas as pd
@@ -46,7 +47,14 @@ def _tile(width: int, height: int, date: str, blank: bool = False) -> bytes:
     return buf.getvalue()
 
 
-def _handler(blank_years: frozenset[int] = frozenset(), calls: list | None = None):
+def _handler(
+    blank_years: frozenset[int] = frozenset(),
+    calls: list | None = None,
+    blank_months: frozenset[tuple[int, int]] = frozenset(),
+    fail: frozenset[tuple[int, int]] = frozenset(),
+):
+    """Fixture GIBS: `blank_*` answer a wholly transparent picture, `fail` months answer 503."""
+
     def handle(request: httpx.Request) -> httpx.Response:
         if "colormaps" in str(request.url):
             return httpx.Response(200, text=COLORMAP_XML)
@@ -54,7 +62,11 @@ def _handler(blank_years: frozenset[int] = frozenset(), calls: list | None = Non
         if calls is not None:
             calls.append(dict(p))
         date = p["TIME"]
-        tile = _tile(int(p["WIDTH"]), int(p["HEIGHT"]), date, blank=int(date[:4]) in blank_years)
+        ym = (int(date[:4]), int(date[5:7]))
+        if ym in fail:
+            return httpx.Response(503, text="busy")
+        blank = ym[0] in blank_years or ym in blank_months
+        tile = _tile(int(p["WIDTH"]), int(p["HEIGHT"]), date, blank=blank)
         return httpx.Response(200, content=tile, headers={"content-type": "image/png"})
 
     return handle
@@ -96,8 +108,14 @@ GOLDEN: dict[str, str] = {  # recorded with build_layer before the yearly_values
 # --------------------------------------------------------------------------- any point
 
 
-def _client(blank_years=frozenset(), calls=None) -> httpx.Client:
-    return httpx.Client(transport=httpx.MockTransport(_handler(frozenset(blank_years), calls)))
+def _client(blank_years=frozenset(), calls=None, blank_months=frozenset(), fail=frozenset()) -> httpx.Client:
+    handler = _handler(frozenset(blank_years), calls, frozenset(blank_months), frozenset(fail))
+    return httpx.Client(transport=httpx.MockTransport(handler))
+
+
+@pytest.fixture(autouse=True)
+def _no_backoff(monkeypatch):
+    monkeypatch.setattr(gibs_layers, "_sleep", lambda s: None)
 
 
 def _layer(layer_id: str) -> gibs_layers.GibsLayer:
@@ -134,24 +152,89 @@ def test_transparent_years_are_dropped():
 
 def test_every_year_transparent_is_a_source_failure():
     layer = _layer("ndvi_gibs")
-    with _client(blank_years=set(range(2003, 2015))) as client:
-        try:
-            gibs_values.fetch_annual(layer, BOX, 2003, 2014, client=client)
-        except gibs_values.GibsError:
-            pass
-        else:  # pragma: no cover
-            raise AssertionError("expected GibsError")
+    with _client(blank_years=set(range(2003, 2015))) as client, pytest.raises(gibs_values.GibsError):
+        gibs_values.fetch_annual(layer, BOX, 2003, 2014, client=client)
 
 
-def test_snow_transparent_counts_as_no_snow():
-    """GIBS paints 0 % snow transparent, like a pixel it did not see: both count as no snow,
-    and a year is kept as long as some month shows a coloured pixel."""
+def test_snow_blank_winter_months_do_not_lower_the_year():
+    """A wholly transparent snow month was not seen (cloud, polar night): it is left out, not 0 %."""
     layer = _layer("snow_gibs")
     assert layer.transparent_value == 0.0
-    with _client(blank_years={2004}) as client:
+    with _client() as client:
+        full = gibs_values.fetch_annual(layer, BOX, 2003, 2003, client=client, cache_dir=None)
+    blank = {(2003, 1), (2003, 2), (2003, 12)}
+    with _client(blank_months=blank) as client:
+        partial = gibs_values.fetch_annual(layer, BOX, 2003, 2003, client=client, cache_dir=gibs_values.cache_dir_default / "b")
+    months = [m for m in range(1, 13) if (2003, m) not in blank]
+    with _client() as client:
+        seen_only = gibs_layers.yearly_values(layer, BOX, [2003], client, months)
+    with np.errstate(all="ignore"):
+        expected = float(np.nanmean(seen_only[2003]))
+    assert abs(partial.iloc[0] - expected) < 1e-9  # the mean of the nine seen months
+    assert full.attrs["caveat"] == gibs_values.SNOW_CAVEAT
+    assert "left out" in gibs_values.SNOW_CAVEAT
+
+
+def test_snow_year_with_fewer_than_six_seen_months_is_dropped():
+    layer = _layer("snow_gibs")
+    blank = {(2004, m) for m in range(1, 8)}  # five seen months left in 2004
+    with _client(blank_months=blank) as client:
         series = gibs_values.fetch_annual(layer, BOX, 2003, 2005, client=client)
     assert [d.year for d in series.index] == [2003, 2005]
-    assert "caveat" in series.attrs
+    assert series.attrs["dropped_years"] == [2004]
+
+
+# --------------------------------------------------------------------------- failures and cache
+
+
+def test_a_503_month_is_missing_not_transparent():
+    layer = _layer("ndvi_gibs")
+    calls: list = []
+    with _client(fail={(2005, 3)}, calls=calls) as client:
+        series = gibs_values.fetch_annual(layer, BOX, 2003, 2014, client=client)
+    assert series.attrs["missing_years"] == [2005]
+    assert series.attrs["dropped_years"] == []
+    assert 2005 not in [d.year for d in series.index]
+    assert sum(1 for c in calls if c["TIME"] == "2005-03-01") == 1 + gibs_layers.RETRIES  # retried, then given up
+
+
+def test_completed_years_are_cached_but_a_failed_year_is_not():
+    layer = _layer("ndvi_gibs")
+    with _client(fail={(2005, 3)}) as client:
+        first = gibs_values.fetch_annual(layer, BOX, 2003, 2014, client=client)
+    calls: list = []
+    with _client(calls=calls) as client:
+        again = gibs_values.fetch_annual(layer, BOX, 2003, 2014, client=client)
+    assert {c["TIME"][:4] for c in calls} == {"2005"}  # only the failed year is asked again
+    assert again.attrs["missing_years"] == []
+    assert [d.year for d in again.index] == list(range(2003, 2015))
+    assert again.drop(pd.Timestamp("2005-01-01")).equals(first)
+    calls.clear()
+    with _client(calls=calls) as client:
+        gibs_values.fetch_annual(layer, BOX, 2003, 2014, client=client)
+    assert calls == []  # every year from the disk cache
+
+
+def test_corrupt_cache_file_is_fetched_again():
+    layer = _layer("ndvi_gibs")
+    with _client() as client:
+        first = gibs_values.fetch_annual(layer, BOX, 2003, 2014, client=client)
+    path = gibs_values._cache_path(gibs_values.cache_dir_default, layer, BOX, 2007)
+    path.write_text("{not json", encoding="utf-8")
+    calls: list = []
+    with _client(calls=calls) as client:
+        again = gibs_values.fetch_annual(layer, BOX, 2003, 2014, client=client)
+    assert {c["TIME"][:4] for c in calls} == {"2007"}
+    assert again.equals(first)
+    assert not list(path.parent.glob("*.tmp"))
+
+
+def test_no_completed_year_in_range_is_an_empty_series(monkeypatch):
+    monkeypatch.setattr(gibs_values, "_this_year", lambda: 2026)
+    calls: list = []
+    with _client(calls=calls) as client:
+        series = gibs_values.fetch_annual(_layer("ndvi_gibs"), BOX, 2026, 2026, client=client)
+    assert series.empty and calls == []
 
 
 def test_gibs_fetcher_returns_annual_series_with_precision(monkeypatch):

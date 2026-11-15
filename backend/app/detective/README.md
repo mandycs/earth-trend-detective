@@ -42,3 +42,11 @@ are listed in `final-fix-report.md` next to it. In short:
   tool calls in one turn, only the name of the last one is shown.
 - A follow-up on a thread whose last run was cut between the model's turn and its tools first closes
   each open tool call with a `Stopped.` result. Without that, the provider would refuse the conversation.
+
+## Known limitations
+
+- GIBS yearly NDVI and ground temperature (`ndvi_gibs`, `lst_gibs`) average the months each pixel was seen,
+  with no minimum number of valid months per pixel. A year with a cloudier season can lean towards the clear
+  months.
+- Heat stress (`dhw`) north of the equator uses July–December. Near the equator the warm season can fall
+  outside that window, so the yearly peak may be understated there.

@@ -82,7 +82,7 @@ def test_ndvi_gibs_goes_through_the_annual_trend_path(gibs_calls):
     assert res["n_years"] == 22 and res["too_short"] is False
     assert res["slope_per_decade"] > 0 and res["direction"] == "up"
     assert res["test_id"] == "t1" and s.ledger.n_tests == 1 and res["n_tests_so_far"] == 1
-    assert "yearly values" in s.ledger.test("t1").label
+    assert "annual mean of monthly values" in s.ledger.test("t1").label
 
 
 def test_annual_test_counts_in_the_session_family(gibs_calls, monkeypatch):
@@ -163,3 +163,25 @@ def test_heat_stress_window_follows_the_hemisphere(monkeypatch, lat, months):
     res = tools.trend_test(s, series_id=got["series_id"])
     assert res["basis"] == "annual" and res["status"] == "observed" and "precision" not in res
     assert res["n_years"] == s.end - s.start + 1
+
+
+def test_no_completed_year_is_a_plain_answer(monkeypatch):
+    def boom(*a, **k):
+        raise AssertionError("must not fetch")
+
+    monkeypatch.setattr(gibs_values, "fetch_annual", boom)
+    monkeypatch.setattr(gibs_values, "_this_year", lambda: 2026)
+    got = tools.get_series(_session(), var_id="ndvi_gibs", start=2026, end=2026)
+    assert got["status"] == "not_available" and got["reason"] == tools.NO_COMPLETED_YEAR_REASON
+    assert "transient" not in got and "evidence_id" in got  # cached: not a source failure
+
+
+def test_missing_years_reach_the_model(monkeypatch):
+    def fake(layer, bbox, start, end, client=None):
+        s = _yearly(start, end, dropped=(2010,))
+        s.attrs |= {"missing_years": [2010], "dropped_years": []}
+        return s
+
+    monkeypatch.setattr(gibs_values, "fetch_annual", fake)
+    got = tools.get_series(_session(), var_id="ndvi_gibs")
+    assert got["missing_years"] == [2010] and "dropped_years" not in got

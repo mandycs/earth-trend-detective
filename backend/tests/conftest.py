@@ -13,5 +13,7 @@ def _no_real_llm_keys(monkeypatch, tmp_path_factory):
     monkeypatch.setenv("DETECTIVE_DB", str(tmp_path_factory.mktemp("detective-db") / "detective.sqlite"))
     # never the real ERDDAP disk cache (backend/data/cache/erddap/)
     monkeypatch.setattr("app.extractors.erddap.cache_dir_default", tmp_path_factory.mktemp("erddap-cache"))
+    # never the real GIBS yearly-values cache (backend/data/cache/gibs_values/)
+    monkeypatch.setattr("app.extractors.gibs_values.cache_dir_default", tmp_path_factory.mktemp("gibs-cache"))
     for name in ("LANGSMITH_TRACING", "LANGCHAIN_TRACING_V2", "LANGSMITH_API_KEY", "LANGCHAIN_API_KEY"):
         monkeypatch.delenv(name, raising=False)

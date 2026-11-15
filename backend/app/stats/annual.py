@@ -18,6 +18,7 @@ import numpy as np
 import pandas as pd
 import pymannkendall as mk
 
+from app.stats.deseason import anomaly_std
 from app.stats.trend import TrendResult, sen_slope_ci
 from app.stats.years import years_needed
 
@@ -45,7 +46,7 @@ def annual_trend(series: pd.Series) -> TrendResult:
     n = int(valid.size)
     years = valid.index.year.to_numpy(dtype=float)
     span = float(years[-1] - years[0] + 1) if n else 0.0
-    std = float(np.std(valid.to_numpy(dtype=float), ddof=1)) if n > 1 else float("nan")
+    std = anomaly_std(valid)  # same spread as the monthly path (values kept with their trend)
     nan = float("nan")
     if n < MIN_YEARS:
         return TrendResult(0, span, True, nan, nan, nan, nan, std, nan, nan)
