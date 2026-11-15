@@ -9,7 +9,7 @@ subtitles only if the audio is not English, but captions protect us if audio fai
 **Disclosures:** screen capture only, no AI-generated imagery, no NASA logos anywhere on screen, no minors, no
 third-party music (the T&Cs require that we hold the rights to every element).
 
-**Fill before recording:** `[TEAM NAME]`, `[LIVE_URL]`, `[org]` in the GitHub URL.
+**Fill before recording:** `[TEAM NAME]`, `https://alibi.sphyrnasolutions.com`, `[org]` in the GitHub URL.
 
 ---
 
@@ -22,7 +22,7 @@ third-party music (the T&Cs require that we hold the rights to every element).
 | **8.0–14.0** | Pull back to the globe / explore map. A click lands on a coastal city. The sweep runs: a column of variable names resolves one by one into verdict chips. Team lower-third appears. | `Alibi` + `an Earth trend detective` + one-line tagline `What is changing here — and is it real?` · lower third: `[TEAM NAME] · Málaga, Spain` | "Alibi, an Earth trend detective: pick any place, and we test every NASA variable that applies." | The lower third covers NASA's "introduce yourself and your team" beat without spending voice-over time on it. |
 | **14.0–21.0** | Split screen. Left: the variable's time series with the Sen slope drawn. Right: the residual panel with the share climate does not explain. One annotation arrow draws to the residual. | `Climate explains part of it.` → `The rest is the lead.` | "Then we remove what the climate explains. What is left is the part it does not." | Both panels must be legible at 720p. Zoom the UI to 125 % before recording. |
 | **21.0–26.0** | The explanation paragraph types in under its label. Then the validator line flashes green: `12 figures checked · 0 mismatches`. | `Written by a language model.` / `Every figure checked against the data.` | "A language model writes it. A validator checks every number." | This is the answer to "another LLM wrapper". Show the check, not the claim. |
-| **26.0–30.0** | Cut back to the full 3D scene, slow pull-back, verdict chip still on screen. End card over the terrain. | `Pick a place.` / `[LIVE_URL]` + `github.com/[org]/earth-trend-detective` | "Pick a place. Find out what is really changing." | Hold the end card for at least 1.5 s. No fade to black before 29.5 s. |
+| **26.0–30.0** | Cut back to the full 3D scene, slow pull-back, verdict chip still on screen. End card over the terrain. | `Pick a place.` / `https://alibi.sphyrnasolutions.com` + `github.com/[org]/earth-trend-detective` | "Pick a place. Find out what is really changing." | Hold the end card for at least 1.5 s. No fade to black before 29.5 s. |
 
 **Voice-over total: 66 words in 30 seconds (2.2 words/second).** That is a calm, readable pace. If a take runs long,
 **cut words — never speed up the read.** A rushed 30 seconds reads as panic; a calm 29 seconds reads as confidence.

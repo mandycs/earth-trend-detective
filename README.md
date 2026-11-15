@@ -14,7 +14,7 @@
 Ask a question about a place in your own words. Alibi picks the NASA records that can answer it, tests whether
 the change is real, and tells you in plain English what is real and what is only a clue.
 
-**Live demo: `[LIVE_URL]`** · **[71-second film](frontend/public/video/alibi-hero.mp4)** · **[Deck](frontend/public/deck.html)** · [Challenge](https://www.spaceappschallenge.org/2026/challenges/earth-system-trend-detective/)
+**[Live demo](https://alibi.sphyrnasolutions.com)** · **[Watch a recorded case](https://alibi.sphyrnasolutions.com/detective?replay=mead)** · **[71-second film](frontend/public/video/alibi-hero.mp4)** · **[Deck](https://alibi.sphyrnasolutions.com/deck.html)** · [Challenge](https://www.spaceappschallenge.org/2026/challenges/earth-system-trend-detective/)
 
 ![NASA Space Apps 2026](https://img.shields.io/badge/NASA%20Space%20Apps-2026%20M%C3%A1laga-0e1012)
 ![Licence](https://img.shields.io/badge/licence-Apache--2.0-e9ecee)
