@@ -1,6 +1,7 @@
 // Small decisions for the /detective screen (Task 14). Pure: no DOM, no React.
 // Nothing here derives a figure for printing; the coordinates typed by the user are passed through.
-import type { AnswerEvent, DetEvent, DoneEvent } from "./events.ts";
+import type { AnswerEvent, Bbox, DetEvent, DoneEvent } from "./events.ts";
+import type { RunStatus } from "./runState.ts";
 import type { Target } from "./request.ts";
 import { wrapLon } from "./request.ts";
 
@@ -67,4 +68,68 @@ export function turnCount(events: readonly DetEvent[]): number {
 export function localDate(d: Date): string {
   const p = (n: number): string => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+// ---- focus (fix round 1) ----
+
+export type FocusTarget = "stop" | "answer" | "scene";
+
+const ACTIVE: readonly RunStatus[] = ["connecting", "streaming"];
+const OVER: readonly RunStatus[] = ["finished", "stopped", "cut", "failed"];
+
+/**
+ * Where keyboard focus goes on a run status change: to Stop when a live run starts, and to the answer (or the
+ * current scene when there is none) when a run ends. Null: focus stays where it is.
+ */
+export function focusTargetFor(
+  prev: RunStatus, next: RunStatus, mode: "live" | "replay", hasAnswer: boolean,
+): FocusTarget | null {
+  const was = ACTIVE.includes(prev);
+  if (!was && ACTIVE.includes(next)) return mode === "live" ? "stop" : null;
+  if (was && OVER.includes(next)) return hasAnswer ? "answer" : "scene";
+  return null;
+}
+
+export const ANSWER_READY = "The answer is ready.";
+
+// ---- forks (fix round 1) ----
+
+/**
+ * The turn a history step belongs to: the number of answers given before it on the thread (steps grow along a
+ * branch; an answer step closes its turn). Forks of forks share the list, so this is a best reading, never
+ * printed.
+ */
+export function forkTurn(steps: readonly HistoryStepLike[], step: HistoryStepLike): number {
+  return steps.filter((s) => s.kind === "answer" && s.step < step.step).length;
+}
+export interface HistoryStepLike { step: number; kind: string }
+
+/** The events of turns 0..`turn` (inclusive): everything before the place event that opens turn `turn + 1`. */
+export function trimToTurn(events: readonly DetEvent[], turn: number): DetEvent[] {
+  let places = 0;
+  const out: DetEvent[] = [];
+  for (const e of events) {
+    if (e.kind === "place") {
+      if (places > turn) break;
+      places += 1;
+    }
+    out.push(e);
+  }
+  return out;
+}
+
+// ---- camera before a run (fix round 1) ----
+
+const POINT_HALF = 0.25;
+
+/**
+ * Where the map looks before a run, so a preselected, typed or chosen place is visible. Seqs are negative so they
+ * never collide with a run's own camera seqs (which start at 1).
+ */
+export function previewCamera(target: Target, seq: number): { bbox: Bbox; pitch: number; bearing: number; seq: number } {
+  const bbox: Bbox =
+    target.kind === "point"
+      ? [target.lon - POINT_HALF, target.lat - POINT_HALF, target.lon + POINT_HALF, target.lat + POINT_HALF]
+      : [...target.bbox] as Bbox;
+  return { bbox, pitch: 0, bearing: 0, seq: -Math.abs(seq) };
 }

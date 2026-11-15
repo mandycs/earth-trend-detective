@@ -1,3 +1,4 @@
+import type { Ref } from 'react'
 import { Stamp } from '../../lib/Stamp'
 import { verdictFor } from './board'
 import type { ChartModel } from './chart'
@@ -12,15 +13,17 @@ export interface ScenePanelProps {
   chart: ChartModel | null
   /** Shown as "Try again" on the error scene. */
   onRetry?: () => void
+  /** Focus lands on the panel (tabIndex −1) when a run ends without an answer. */
+  focusRef?: Ref<HTMLElement>
 }
 
 /** The subtitle of one scene: question line, plain tool label, summary, chart and verdict. */
-export function ScenePanel({ inv, scene, chart, onRetry }: ScenePanelProps) {
+export function ScenePanel({ inv, scene, chart, onRetry, focusRef }: ScenePanelProps) {
   const tool = scene.tool
 
   if (scene.kind === 'error') {
     return (
-      <section className={styles.scene} aria-label="Investigation stopped">
+      <section className={styles.scene} aria-label="Investigation stopped" tabIndex={-1} ref={focusRef}>
         <p className={styles.sceneError} role="alert">
           {scene.note}
         </p>
@@ -36,7 +39,7 @@ export function ScenePanel({ inv, scene, chart, onRetry }: ScenePanelProps) {
   const sides = tool?.tool === 'compare' && tool.state === 'done' ? compareSides(tool.result) : null
 
   return (
-    <section className={styles.scene} aria-label="Current step">
+    <section className={styles.scene} aria-label="Current step" tabIndex={-1} ref={focusRef}>
       {scene.kind === 'opening' && inv.place && <h2 className={styles.scenePlace}>{inv.place.name}</h2>}
       {scene.question && <p className={styles.sceneQuestion}>{scene.question}</p>}
       {tool && <p className={styles.sceneTool}>{toolLabel(tool.tool)}</p>}

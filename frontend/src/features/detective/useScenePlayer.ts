@@ -13,6 +13,8 @@ export interface ScenePlayer {
   scene: Scene | null
   goto: (i: number) => void
   live: () => void
+  /** The clock is ticking: scenes may still advance (Pause makes sense). */
+  running: boolean
   pause: () => void
   resume: () => void
 }
@@ -49,5 +51,5 @@ export function useScenePlayer(inv: Investigation): ScenePlayer {
   const resume = useCallback(() => dispatch({ type: 'resume', now: performance.now() }), [])
 
   const scene = scenes.length > 0 ? scenes[Math.min(state.index, last)] : null
-  return { state, scene, goto, live, pause, resume }
+  return { state, scene, goto, live, running, pause, resume }
 }

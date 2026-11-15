@@ -12,7 +12,7 @@ import { chartFor } from './chart'
 import type { Bbox } from './events'
 import { HistoryList } from './HistoryList'
 import type { PickMode, PickResult } from './map/draw'
-import { mapViewAt } from './map/mapView'
+import { EMPTY_VIEW, mapViewAt } from './map/mapView'
 import type { CaseLayers } from './map/mapView'
 import { historyEnabled, isActiveRun, recordedDate } from './panels'
 import { QuestionBox } from './QuestionBox'
@@ -23,7 +23,10 @@ import { StepList } from './StepList'
 import { useDetectiveRun } from './useDetectiveRun'
 import type { StartOpts } from './useDetectiveRun'
 import { useScenePlayer } from './useScenePlayer'
-import { COORDS_HINT, COORDS_PLACEHOLDER, localDate, parseLatLon } from './viewModel'
+import {
+  ANSWER_READY, COORDS_HINT, COORDS_PLACEHOLDER, focusTargetFor, forkTurn, localDate, parseLatLon, previewCamera,
+} from './viewModel'
+import type { FocusTarget } from './viewModel'
 import styles from './detective.module.css'
 
 const DetectiveMap = dynamic(() => import('./DetectiveMap'), {
@@ -166,9 +169,12 @@ export default function DetectiveView({ cases, recordings, initialSite, replay }
     const c = initialSite ? cases.find((x) => x.id === initialSite) : undefined
     return c ? caseTarget(c) : null
   })
+  // Where the map looks before a run: a preselected, typed or chosen place (map clicks are already in view).
+  const [preview, setPreview] = useState<{ target: Target; seq: number } | null>(() => (target ? { target, seq: 1 } : null))
   const [pickMode, setPickMode] = useState<PickMode>('point')
   const [pickError, setPickError] = useState<string | null>(null)
   const [forkFrom, setForkFrom] = useState<HistoryStep | null>(null)
+  const [forkAt, setForkAt] = useState<number | null>(null)
   const [lastQuestion, setLastQuestion] = useState('')
   const lastAsk = useRef<{ target: Target; question: string; opts: StartOpts } | null>(null)
   // The safe default date of ongoing layers: today, in the viewer's own time zone.
@@ -187,21 +193,24 @@ export default function DetectiveView({ cases, recordings, initialSite, replay }
 
   // Case layers for a solved case, from /sites/<id>/layers.json. A missing file just means none.
   const siteId = inv.place?.site_id ?? null
-  const placeBbox = inv.place?.bbox ?? null
+  // A string key: `inv.place.bbox` is a fresh array on every regrouping and would refetch on every event.
+  const caseBboxKey = siteId ? (cases.find((c) => c.id === siteId)?.bbox ?? inv.place?.bbox ?? null)?.join(',') ?? null : null
   const [caseLayers, setCaseLayers] = useState<CaseLayers | null>(null)
   useEffect(() => {
     setCaseLayers(null)
-    if (!siteId || !placeBbox) return
-    const bbox = cases.find((c) => c.id === siteId)?.bbox ?? placeBbox
+    if (!siteId || !caseBboxKey) return
+    const bbox = caseBboxKey.split(',').map(Number) as Bbox
     const ctl = new AbortController()
     fetchCaseLayers(siteId, ctl.signal)
       .then((rows) => !ctl.signal.aborted && setCaseLayers({ siteId, bbox, rows }))
       .catch(() => undefined)
     return () => ctl.abort()
-    // Keyed by the case only: the place bbox of one case does not change between turns.
-  }, [siteId])
+  }, [siteId, caseBboxKey])
 
-  const view = useMemo(() => mapViewAt(inv, player.state.index, { caseLayers, now }), [inv, player.state.index, caseLayers, now])
+  const view = useMemo(() => {
+    if (!inv.place && preview && run.mode === 'live') return { ...EMPTY_VIEW, camera: previewCamera(preview.target, preview.seq) }
+    return mapViewAt(inv, player.state.index, { caseLayers, now })
+  }, [inv, player.state.index, caseLayers, now, preview, run.mode])
 
   const active = isActiveRun(run.status)
   const replaying = run.mode === 'replay'
@@ -211,45 +220,79 @@ export default function DetectiveView({ cases, recordings, initialSite, replay }
   const chart = useMemo(() => (scene ? chartFor(inv, scene) : null), [inv, scene])
   const outcome = scene?.kind === 'ending' ? outcomes[scene.key] : undefined
   const lastIndex = inv.scenes.length - 1
-  const playing = inv.scenes.length > 0 && !(inv.finished && player.state.index >= lastIndex)
+  const atLast = player.state.index >= lastIndex
 
-  /** A new place. Once a run has been shown, a new place is a new case. */
+  /** A new place. Once a run has been shown, a new place is a new case. Typed and chosen places are flown to. */
   const choose = useCallback(
-    (t: Target) => {
+    (t: Target, fly = true) => {
       if (run.status !== 'idle') {
-        det.reset()
+        reset()
         setForkFrom(null)
+        setForkAt(null)
       }
       setPickError(null)
       setTarget(t)
+      setPreview((p) => (fly ? { target: t, seq: (p?.seq ?? 0) + 1 } : null))
     },
-    [run.status, det],
+    [run.status, reset],
   )
 
   const onPick = useCallback(
     (r: PickResult) => {
       if ('error' in r) setPickError(r.error)
-      else choose(r.target)
+      else choose(r.target, false)
     },
     [choose],
   )
 
+  // ---- focus follows the run (fix round 1) ----
+  const stopRef = useRef<HTMLButtonElement>(null)
+  const answerRef = useRef<HTMLHeadingElement>(null)
+  const sceneRef = useRef<HTMLElement>(null)
+  const messageRef = useRef<HTMLParagraphElement>(null)
+  const prevStatus = useRef(run.status)
+  const [pendingFocus, setPendingFocus] = useState<Exclude<FocusTarget, 'stop'> | null>(null)
+  const [announce, setAnnounce] = useState('')
+  useEffect(() => {
+    const t = focusTargetFor(prevStatus.current, run.status, run.mode, inv.answer !== null)
+    prevStatus.current = run.status
+    if (t === 'stop') {
+      setPendingFocus(null)
+      setAnnounce('')
+      stopRef.current?.focus()
+    } else if (t) setPendingFocus(t)
+  }, [run.status, run.mode, inv.answer])
+  // The ending is paced: focus waits until the player shows the last scene (or the answer itself).
+  useEffect(() => {
+    if (!pendingFocus || (inv.scenes.length > 0 && !atLast)) return
+    const el = pendingFocus === 'answer' ? answerRef.current : (sceneRef.current ?? messageRef.current)
+    if (!el) return
+    el.focus({ preventScroll: true })
+    el.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' })
+    if (pendingFocus === 'answer') setAnnounce(ANSWER_READY)
+    setPendingFocus(null)
+  })
+
   const ask = (question: string) => {
     if (!target) return
-    const opts: StartOpts = followUp || forkFrom ? { followUp: true, checkpointId: forkFrom?.checkpoint_id } : {}
+    const opts: StartOpts = forkFrom
+      ? { followUp: true, checkpointId: forkFrom.checkpoint_id, keepTurns: forkAt ?? undefined }
+      : followUp ? { followUp: true } : {}
     lastAsk.current = { target, question, opts }
     setLastQuestion(question)
     setForkFrom(null)
+    setForkAt(null)
     det.start(target, question, opts)
   }
 
   const retry = () => {
     const a = lastAsk.current
-    if (a) det.start(a.target, a.question, a.opts)
+    if (a) det.start(a.target, a.question, { ...a.opts, retry: true })
   }
 
-  const fork = (step: HistoryStep) => {
+  const fork = (step: HistoryStep, all: HistoryStep[]) => {
     setForkFrom(step)
+    setForkAt(forkTurn(all, step))
     document.getElementById('detective-question')?.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' })
   }
 
@@ -291,11 +334,18 @@ export default function DetectiveView({ cases, recordings, initialSite, replay }
             initialQuestion={replaying ? (recording?.question ?? '') : boxKey === 'ask' ? lastQuestion : ''}
             onAsk={ask}
             onStop={det.stop}
-            onCancelFork={() => setForkFrom(null)}
+            onCancelFork={() => {
+              setForkFrom(null)
+              setForkAt(null)
+            }}
             onPickMode={setPickMode}
             pickMode={pickMode}
             recordedAt={recording?.startedAt ?? null}
+            stopRef={stopRef}
           />
+          <p className="sr-only" aria-live="polite">
+            {announce}
+          </p>
 
           {pickError && (
             <p className={styles.qReason} role="alert">
@@ -324,20 +374,31 @@ export default function DetectiveView({ cases, recordings, initialSite, replay }
           )}
 
           {run.message && (
-            <p className={run.status === 'failed' ? styles.sceneError : styles.runNote} role={run.status === 'failed' ? 'alert' : 'status'}>
+            <p
+              ref={messageRef}
+              tabIndex={-1}
+              className={run.status === 'failed' ? styles.sceneError : styles.runNote}
+              role={run.status === 'failed' ? 'alert' : 'status'}
+            >
               {run.message}
             </p>
           )}
 
           {scene && (
-            <ScenePanel inv={inv} scene={scene} chart={chart} onRetry={!replaying && lastAsk.current ? retry : undefined} />
+            <ScenePanel
+              inv={inv}
+              scene={scene}
+              chart={chart}
+              onRetry={!replaying && lastAsk.current ? retry : undefined}
+              focusRef={sceneRef}
+            />
           )}
 
           {inv.place && <CaseBoard board={inv.board} beats={scene?.stamps ?? []} />}
 
-          {outcome?.answer && <AnswerPanel answer={outcome.answer} done={outcome.done} />}
+          {outcome?.answer && <AnswerPanel answer={outcome.answer} done={outcome.done} headingRef={answerRef} />}
 
-          {playing && (
+          {player.running && (
             <div className={styles.playerRow}>
               <button type="button" className={styles.textBtn} onClick={player.state.paused ? player.resume : player.pause}>
                 {player.state.paused ? 'Resume' : 'Pause'}

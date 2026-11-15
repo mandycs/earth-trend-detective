@@ -21,7 +21,8 @@ export function HistoryList({
 }: {
   threadId: string | null
   enabled: boolean
-  onFork: (step: HistoryStep) => void
+  /** `all` is the full list, for working out which turn the step belongs to. */
+  onFork: (step: HistoryStep, all: HistoryStep[]) => void
 }) {
   const [load, setLoad] = useState<Load>({ state: 'loading' })
   const on = enabled && !!threadId
@@ -64,7 +65,7 @@ export function HistoryList({
                 <span>
                   Step {s.step} · {s.summary}
                 </span>
-                <button type="button" className={styles.textBtn} onClick={() => onFork(s)}>
+                <button type="button" className={styles.textBtn} onClick={() => onFork(s, load.steps)}>
                   Re-run from this step
                 </button>
               </li>

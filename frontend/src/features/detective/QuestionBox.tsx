@@ -1,6 +1,7 @@
 'use client'
 
 import { useId, useState } from 'react'
+import type { Ref } from 'react'
 import Link from 'next/link'
 import type { HistoryStep } from './api'
 import type { PickMode } from './map/draw'
@@ -26,11 +27,13 @@ export interface QuestionBoxProps {
   pickMode: PickMode
   /** `started_at` of the recording, for the replay line. */
   recordedAt?: string | null
+  /** Focus lands here when a live run starts (the Ask button it replaces is gone). */
+  stopRef?: Ref<HTMLButtonElement>
 }
 
 export function QuestionBox({
   target, status, mode, followUp, forkFrom, initialQuestion, onAsk, onStop, onCancelFork, onPickMode, pickMode,
-  recordedAt = null,
+  recordedAt = null, stopRef,
 }: QuestionBoxProps) {
   const [question, setQuestion] = useState(initialQuestion)
   const id = useId()
@@ -116,7 +119,7 @@ export function QuestionBox({
             <p className={styles.qStatus} aria-live="polite">
               {status === 'connecting' ? 'Opening the case…' : ''}
             </p>
-            <button type="button" className="btn" onClick={onStop}>
+            <button type="button" className="btn" onClick={onStop} ref={stopRef}>
               Stop
             </button>
           </>

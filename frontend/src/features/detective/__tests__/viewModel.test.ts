@@ -1,6 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { localDate, parseLatLon, turnCount, turnOutcomes, wrapTarget } from "../viewModel.ts";
+import {
+  focusTargetFor, forkTurn, localDate, parseLatLon, previewCamera, trimToTurn, turnCount, turnOutcomes, wrapTarget,
+} from "../viewModel.ts";
 import type { AnswerEvent, DetEvent, DoneEvent, PlaceEvent } from "../events.ts";
 import type { Target } from "../request.ts";
 
@@ -65,4 +67,54 @@ test("done before the answer of the same turn is kept", () => {
 test("local date is YYYY-MM-DD with padding", () => {
   assert.equal(localDate(new Date(2026, 0, 5, 23, 59)), "2026-01-05");
   assert.equal(localDate(new Date(2026, 10, 15)), "2026-11-15");
+});
+
+test("focus goes to Stop when a live run starts, nowhere for a replay", () => {
+  assert.equal(focusTargetFor("idle", "connecting", "live", false), "stop");
+  assert.equal(focusTargetFor("finished", "connecting", "live", true), "stop");
+  assert.equal(focusTargetFor("failed", "connecting", "live", false), "stop");
+  assert.equal(focusTargetFor("idle", "connecting", "replay", false), null);
+  assert.equal(focusTargetFor("connecting", "streaming", "live", false), null);
+});
+
+test("focus goes to the answer, or the scene, when a run ends", () => {
+  assert.equal(focusTargetFor("streaming", "finished", "live", true), "answer");
+  assert.equal(focusTargetFor("streaming", "finished", "replay", true), "answer");
+  assert.equal(focusTargetFor("streaming", "finished", "live", false), "scene");
+  assert.equal(focusTargetFor("streaming", "stopped", "live", false), "scene");
+  assert.equal(focusTargetFor("connecting", "failed", "live", false), "scene");
+  assert.equal(focusTargetFor("streaming", "cut", "live", false), "scene");
+});
+
+test("no focus move without a transition into or out of a run", () => {
+  assert.equal(focusTargetFor("idle", "idle", "live", false), null);
+  assert.equal(focusTargetFor("finished", "idle", "live", true), null);
+  assert.equal(focusTargetFor("stopped", "failed", "live", false), null);
+});
+
+test("a fork step belongs to the turn of the answers before it", () => {
+  const steps = [
+    { step: 30, kind: "answer" }, { step: 24, kind: "tool" }, { step: 14, kind: "answer" }, { step: 4, kind: "tool" },
+  ];
+  assert.equal(forkTurn(steps, { step: 4, kind: "tool" }), 0);
+  assert.equal(forkTurn(steps, { step: 14, kind: "answer" }), 0);
+  assert.equal(forkTurn(steps, { step: 24, kind: "tool" }), 1);
+  assert.equal(forkTurn(steps, { step: 30, kind: "answer" }), 1);
+});
+
+test("trimToTurn keeps turns up to and including the given one", () => {
+  const evs = [place("t"), answer("a"), place("t"), answer("b"), place("t"), answer("c")];
+  assert.equal(trimToTurn(evs, 0).length, 2);
+  assert.equal(trimToTurn(evs, 1).length, 4);
+  assert.equal(trimToTurn(evs, 5).length, 6);
+  assert.equal(turnCount(trimToTurn(evs, 1)), 2);
+});
+
+test("preview camera frames the target with a negative seq", () => {
+  const p = previewCamera({ kind: "point", lat: 36.87, lon: -4.17 }, 2);
+  assert.equal(p.seq, -2);
+  assert.equal(p.pitch, 0);
+  assert.ok(p.bbox[0] < -4.17 && p.bbox[2] > -4.17 && p.bbox[1] < 36.87 && p.bbox[3] > 36.87);
+  const c = previewCamera({ kind: "case", siteId: "x", name: "X", bbox: [1, 2, 3, 4] }, 1);
+  assert.deepEqual(c.bbox, [1, 2, 3, 4]);
 });

@@ -12,13 +12,20 @@ import { IDLE_RUN, runReducer } from './runState'
 import type { RunState } from './runState'
 import { groupScenes } from './scenes'
 import type { Investigation } from './scenes'
-import { turnCount, turnOutcomes, wrapTarget } from './viewModel'
+import { trimToTurn, turnCount, turnOutcomes, wrapTarget } from './viewModel'
 import type { TurnOutcome } from './viewModel'
 
 const NOT_AVAILABLE = 'This recording is not available.'
 const GENERIC = 'The investigation failed. Try again in a moment.'
 
-export interface StartOpts { followUp?: boolean; checkpointId?: string }
+export interface StartOpts {
+  followUp?: boolean
+  checkpointId?: string
+  /** A retry of the last request: the failed attempt is dropped, never kept as a turn. */
+  retry?: boolean
+  /** A fork: keep turns 0..keepTurns only (the forked turn included); later turns are not on the new branch. */
+  keepTurns?: number
+}
 export interface LoadedRecording { name: string; question: string; startedAt: string; target: Target | null }
 
 export interface DetectiveRun {
@@ -62,7 +69,11 @@ export function useDetectiveRun(): DetectiveRun {
       const followUp = opts.followUp === true
       const prev = runRef.current
       // State updates queue in order: the earlier turns are read from the run before `start` clears it.
-      setEarlier((e) => (followUp ? [...e, ...prev.events] : []))
+      setEarlier((e) => {
+        if (!followUp) return []
+        const base = opts.retry ? e : [...e, ...prev.events]
+        return opts.keepTurns != null ? trimToTurn(base, opts.keepTurns) : base
+      })
       setRecording(null)
       const c = new AbortController()
       ctl.current = c
