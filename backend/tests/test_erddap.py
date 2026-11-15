@@ -251,3 +251,161 @@ def test_sea_variables_in_the_catalog():
         assert var.definition and var.units and var.resolution
     for var in (sst, chl):
         assert set(var.applies_to) <= {"ocean", "coast", "reef"} and var.applies_to
+
+
+# --------------------------------------------------------------------------- fix round 1
+
+
+def _for_year(name: str, year: int) -> str:
+    """A recorded 2010 fixture moved to `year` (the 2011 snapped row to year + 1)."""
+    return _text(name).replace("2011-", f"{year + 1}-").replace("2010-", f"{year}-")
+
+
+def test_cache_hit_makes_no_http_call(tmp_path):
+    calls = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(1)
+        return _csv("mur_point_2010.csv")
+
+    first, _ = erddap.fetch_point_monthly("jplMURSST41mday", "sst", 36.0, -10.0, 2010, 2010, client=_client(handler), cache_dir=tmp_path)
+    assert len(calls) == 1 and list(tmp_path.rglob("*.csv"))
+
+    def no_network(request: httpx.Request) -> httpx.Response:
+        raise AssertionError("cache hit must not call ERDDAP")
+
+    again, _ = erddap.fetch_point_monthly("jplMURSST41mday", "sst", 36.0, -10.0, 2010, 2010, client=_client(no_network), cache_dir=tmp_path)
+    pd.testing.assert_series_equal(first, again)
+
+
+def test_current_year_is_not_cached(tmp_path, monkeypatch):
+    import datetime as dt
+
+    monkeypatch.setattr(erddap, "_today", lambda: dt.date(2010, 6, 1))
+    erddap.fetch_point_monthly(
+        "jplMURSST41mday", "sst", 36.0, -10.0, 2010, 2010, client=_client(lambda r: _csv("mur_point_2010.csv")), cache_dir=tmp_path
+    )
+    assert not list(tmp_path.rglob("*.csv"))
+
+
+def test_failing_middle_year_is_a_gap(tmp_path):
+    def handler(request: httpx.Request) -> httpx.Response:
+        year = int(_axes(request.url)[0][1:5])
+        if year == 2010:
+            return httpx.Response(503, text="Service Unavailable")
+        return httpx.Response(200, text=_for_year("mur_point_2010.csv", year))
+
+    series, _ = erddap.fetch_point_monthly("jplMURSST41mday", "sst", 36.0, -10.0, 2009, 2011, client=_client(handler), cache_dir=tmp_path)
+    assert sorted(set(series.dropna().index.year)) == [2009, 2011]
+    assert series.attrs["missing_years"] == [2010]
+
+
+def test_three_failed_first_years_raise(tmp_path):
+    years = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        years.append(int(_axes(request.url)[0][1:5]))
+        return httpx.Response(502, text="Proxy Error")
+
+    with pytest.raises(erddap.ErddapError):
+        erddap.fetch_point_monthly("jplMURSST41mday", "sst", 36.0, -10.0, 2008, 2015, client=_client(handler), cache_dir=tmp_path)
+    assert sorted(set(years)) == [2008, 2009, 2010]  # stopped early
+    assert len(years) == 3 * erddap.RETRIES
+
+
+def test_two_threads_never_overlap(tmp_path):
+    import threading
+    import time as _time
+
+    active, peak = [0], [0]
+    guard = threading.Lock()
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        with guard:
+            active[0] += 1
+            peak[0] = max(peak[0], active[0])
+        _time.sleep(0.02)
+        with guard:
+            active[0] -= 1
+        return _csv("mur_point_2010.csv")
+
+    def run(lon: float) -> None:  # different points: no shared cache entries
+        erddap.fetch_point_monthly("jplMURSST41mday", "sst", 36.0, lon, 2005, 2010, client=_client(handler), cache_dir=tmp_path)
+
+    threads = [threading.Thread(target=run, args=(lon,)) for lon in (-10.0, -11.0)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert peak[0] == 1
+
+
+def test_partial_last_year_is_clamped_to_the_time_axis(tmp_path, monkeypatch):
+    import datetime as dt
+
+    monkeypatch.setattr(erddap, "_today", lambda: dt.date(2026, 11, 15))
+    asked: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        asked.append(_axes(request.url)[0])
+        if len(asked) == 1:
+            return httpx.Response(404, text=_text("axis_maximum_404.txt"))
+        return httpx.Response(200, text=_for_year("chl_point_2010.csv", 2026))
+
+    series, _ = erddap.fetch_point_monthly(
+        "erdMH1chlamday_R2022SQ", "chlor_a", 37.6, -0.75, 2026, 2026, client=_client(handler), cache_dir=tmp_path
+    )
+    assert asked[1] == "(2026-01-01T00:00:00Z):1:(2026-04-16T00:00:00Z)"
+    assert series.notna().sum() == 4
+    assert not list(tmp_path.rglob("*.csv"))  # current year: not cached
+
+
+def test_requery_at_moved_cell_with_no_rows_is_skipped(tmp_path):
+    masked = (
+        "time,latitude,longitude,degree_heating_week\nUTC,degrees_north,degrees_east,degree_Celsius_weeks\n"
+        "2010-01-16T12:00:00Z,-19.25,146.8,NaN\n"
+    )
+    box = _text("mur_coast_box.csv").replace("sst", "degree_heating_week")
+    responses = iter(
+        [
+            httpx.Response(200, text=masked),  # the asked cell: masked
+            httpx.Response(200, text=box),  # the probe finds a valid neighbour
+            httpx.Response(404, text=_text("no_matching_results.txt")),  # ...which has no rows
+        ]
+    )
+    series, cell = erddap.fetch_point_yearly_max(
+        "noaacrwdhwDaily", "degree_heating_week", -19.25, 146.8, 2010, 2010,
+        client=_client(lambda r: next(responses)), cache_dir=tmp_path,
+    )
+    assert series.empty  # no IndexError on an empty frame
+    assert cell != (-19.25, 146.8)
+
+
+def test_box_corners_beyond_the_offset_are_never_picked(tmp_path):
+    asked = (-19.25, 146.8)
+    # only valid cells are the box corners at ~0.14 degrees: farther than the 0.1 limit
+    box = (
+        "time,latitude,longitude,sst\nUTC,degrees_north,degrees_east,degree_C\n"
+        "2010-01-16T00:00:00Z,-19.35,146.7,29.1\n"
+        "2010-01-16T00:00:00Z,-19.35,146.8,NaN\n"
+        "2010-01-16T00:00:00Z,-19.25,146.8,NaN\n"
+        "2010-01-16T00:00:00Z,-19.15,146.9,29.2\n"
+    )
+    responses = iter([_csv("mur_masked_point.csv"), httpx.Response(200, text=box)])
+    series, cell = erddap.fetch_point_monthly(
+        "jplMURSST41mday", "sst", *asked, 2010, 2010, client=_client(lambda r: next(responses)), cache_dir=tmp_path
+    )
+    assert cell == asked
+    assert series.notna().sum() == 0
+
+
+def test_chlorophyll_zero_or_nan_becomes_nan_without_warning(transport):
+    import warnings
+
+    transport["handler"] = lambda request: _csv("chl_point_zero_nan.csv")
+    site = point_site(37.6, -0.75, ("coast",))
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        got = gather.FETCHERS["erddap"](site, (_var("chlorophyll"),), load_catalog(), 2010, 2010)["chlorophyll"]
+    assert np.isnan(got.loc["2010-02-01"]) and np.isnan(got.loc["2010-03-01"])
+    assert got.loc["2010-04-01"] == pytest.approx(math.log10(0.6155786))

@@ -240,7 +240,7 @@ def _fetch(session: Session, var_id: str, start: int, end: int) -> dict:
     try:
         raw = fetcher(session.place.as_site(), (var,), session.catalog, start, end)
         series = raw.get(var_id) if isinstance(raw, Mapping) else None
-        cell = series.attrs.get("cell") if isinstance(series, pd.Series) else None
+        attrs = dict(series.attrs) if isinstance(series, pd.Series) else {}
         if series is not None:
             series = gather.conform(series, start, end).rename(var_id)
     except Exception as exc:  # noqa: BLE001 - a failing source is a result, not a crash
@@ -252,7 +252,11 @@ def _fetch(session: Session, var_id: str, start: int, end: int) -> dict:
     series_id = f"{var_id}:{start}-{end}"
     session.series[series_id] = series
     annual = series.groupby(series.index.year).mean().dropna()
-    extra = {"cell": [_num(c) for c in cell]} if cell is not None else {}
+    extra = {}
+    if attrs.get("cell") is not None:  # the grid cell actually used (ERDDAP may move a masked one)
+        extra["cell"] = [_num(c) for c in attrs["cell"]]
+    if attrs.get("missing_years"):  # years the source failed on, kept as gaps
+        extra["missing_years"] = [int(y) for y in attrs["missing_years"]]
     return {
         "status": "ok",
         "series_id": series_id,
