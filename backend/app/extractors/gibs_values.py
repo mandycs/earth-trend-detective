@@ -78,7 +78,7 @@ NO2_LAYER = GibsLayer(
     source={"name": "NASA OMI/Aura daily NO2 (OMNO2d), via NASA GIBS", "url": "https://disc.gsfc.nasa.gov/datasets/OMNO2d_004/summary"},
     seasons={},
     days=NO2_DAYS,
-    min_seen=len(NO2_DAYS) * 12 // 2,  # at least half of the sampled days show the box
+    min_months=10,  # months with a seen day; each month weighs the same in the year
     first_year=2005,  # OMI data start in October 2004
     caveat=OMI_CAVEAT,
 )
@@ -101,6 +101,8 @@ CO_LAYER = GibsLayer(
 )
 POINT_LAYERS: tuple[GibsLayer, ...] = (*LAYERS, SNOW_LAYER, NO2_LAYER, CO_LAYER)
 MONTHLY_SUFFIX = "annual mean of monthly values"
+SATURATED_LIMIT = 0.01  # a year with more seen pixels than this on the open top bin: say so
+SATURATION_CAVEAT = "Some days exceed the colour scale (≥ {top} {unit}); yearly values and the trend are understated."
 
 
 class GibsError(RuntimeError):
@@ -123,7 +125,17 @@ def annual_suffix(layer: GibsLayer) -> str:
     """What one yearly value of this layer is, in words for the user."""
     if layer.days == (1,):
         return MONTHLY_SUFFIX
-    return f"annual mean of daily values on {len(layer.days)} days a month"
+    return f"annual mean of daily values on {len(layer.days)} days a month, each month weighted equally"
+
+
+def saturation_caveat(attrs: dict, scale: float, unit: str) -> str | None:
+    """The caveat when any year has more than SATURATED_LIMIT of its seen pixels on the top bin
+    (read as the top of the scale, so the value is a floor); `scale` turns it into `unit`."""
+    shares = attrs.get("saturated_share") or {}
+    top = attrs.get("scale_top")
+    if top is None or not any(share > SATURATED_LIMIT for share in shares.values()):
+        return None
+    return SATURATION_CAVEAT.format(top=f"{top * scale:.3g}", unit=unit)
 
 
 def palette_step(table: dict[tuple[int, int, int], float]) -> float:
@@ -141,7 +153,7 @@ def last_complete_year() -> int:
 def _cache_path(cache_dir: Path, layer: GibsLayer, bbox: Sequence[float], year: int) -> Path:
     parts: list = [layer.gibs_layer, [round(float(c), 6) for c in bbox], list(YEAR_MONTHS), year]
     if layer.days != (1,):  # monthly layers keep the keys they were cached under
-        parts.append(list(layer.days))
+        parts += [list(layer.days), "months-weighted-equally"]
     key = json.dumps(parts)
     return cache_dir / layer.id / f"{hashlib.sha256(key.encode()).hexdigest()[:20]}.json"
 
@@ -153,7 +165,12 @@ def _read_cache(path: Path) -> dict | None:
     try:
         entry = json.loads(path.read_text(encoding="utf-8"))
         mean, step = entry["mean"], float(entry["palette_step"])
-        return {"mean": None if mean is None else float(mean), "palette_step": step}
+        out = {"mean": None if mean is None else float(mean), "palette_step": step}
+        if entry.get("saturated_share") is not None:  # older entries predate the count
+            out["saturated_share"] = float(entry["saturated_share"])
+        if entry.get("scale_top") is not None:
+            out["scale_top"] = float(entry["scale_top"])
+        return out
     except (OSError, ValueError, KeyError, TypeError) as exc:
         logger.warning("GIBS cache %s unreadable (%s), fetching again", path.name, exc)
         path.unlink(missing_ok=True)
@@ -206,7 +223,10 @@ def fetch_annual(
                 raise GibsError(f"GIBS colormap {layer.colormap!r}: {type(exc).__name__}") from exc
             if not table:
                 raise GibsError(f"GIBS colormap {layer.colormap!r} unreadable")
-            grids = yearly_values(layer, bbox, todo, client, YEAR_MONTHS, table=table, workers=WORKERS, failed=failed)
+            saturated: dict[int, float] = {}
+            grids = yearly_values(
+                layer, bbox, todo, client, YEAR_MONTHS, table=table, workers=WORKERS, failed=failed, saturated=saturated
+            )
         finally:
             if own:
                 client.close()
@@ -216,7 +236,9 @@ def fetch_annual(
                 continue  # partial: a gap, and asked again next time
             with np.errstate(all="ignore"):
                 mean = float(np.nanmean(grids[year])) if year in grids else None
-            entries[year] = {"mean": mean, "palette_step": step}
+            entries[year] = {"mean": mean, "palette_step": step, "saturated_share": saturated.get(year, 0.0)}
+            if getattr(table, "top_value", None) is not None:
+                entries[year]["scale_top"] = table.top_value
             if year < _this_year():
                 try:
                     _write_atomic(paths[year], json.dumps(entries[year]))
@@ -237,6 +259,12 @@ def fetch_annual(
         "dropped_years": [y for y in years if y in entries and entries[y]["mean"] is None],
         "missing_years": sorted(failed),
     }
+    shares = {y: entries[y]["saturated_share"] for y in kept if "saturated_share" in entries[y]}
+    if shares:
+        series.attrs["saturated_share"] = shares
+    tops = [entries[y]["scale_top"] for y in entries if "scale_top" in entries[y]]
+    if tops:
+        series.attrs["scale_top"] = tops[0]
     if layer.days != (1,):
         series.attrs["days"] = list(layer.days)
     if layer.caveat:

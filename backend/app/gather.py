@@ -233,6 +233,9 @@ def _fetch_gibs(
         series = (raw * var.scale + var.offset).astype(float).rename(var.id)
         step = raw.attrs.get("palette_step")
         series.attrs = {**raw.attrs, "temporal": "annual"}
+        top = gibs_values.saturation_caveat(raw.attrs, abs(var.scale), var.units)
+        if top is not None:  # values on the top bin are floors: said with every result
+            series.attrs["caveat"] = " ".join(c for c in (raw.attrs.get("caveat"), top) if c)
         if step is not None and np.isfinite(step):
             series.attrs["precision"] = f"palette step ≈ {step * abs(var.scale):.2g} {var.units}"  # display units
         out[var.id] = series

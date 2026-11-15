@@ -175,10 +175,11 @@ variables:
 
   # --- Air over cities (NASA GIBS, no auth; app/extractors/gibs_values.py) ---
   # OMI NO2 has no monthly layer on GIBS (nor a monthly product at GES DISC): the daily
-  # layer is read on 4 days a month and averaged, a year needs half of those days seen.
+  # layer is read on 4 days a month: each month's seen days averaged, then the months
+  # (each weighs the same); a year needs 10 of 12 months with a seen day.
   # AIRS carbon monoxide is a monthly layer; a year needs all 12 months.
   - id: no2_omi
-    label: Nitrogen dioxide in the lower air (annual mean of daily values on 4 days a month)
+    label: Nitrogen dioxide in the lower air (annual mean of daily values on 4 days a month, each month weighted equally)
     definition: "Nitrogen dioxide, a gas given off when fuel is burned, in the air from the ground to about 10 km up, seen by NASA's OMI satellite instrument on cloud-free days."
     role: impact
     source: gibs

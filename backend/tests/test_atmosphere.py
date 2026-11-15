@@ -36,6 +36,7 @@ NO2_COLORMAP = """
   <ColorMapEntry rgb="255,252,199" transparent="false" sourceValue="[-INF,0.00e+00)" value="[-INF,0.00e+00)" ref="1"/>
   <ColorMapEntry rgb="10,20,30" transparent="false" sourceValue="[4.00e+15,4.20e+15)" value="[4.00e+15,4.20e+15)" ref="2"/>
   <ColorMapEntry rgb="40,50,60" transparent="false" sourceValue="[8.00e+15,8.20e+15)" value="[8.00e+15,8.20e+15)" ref="3"/>
+  <ColorMapEntry rgb="127,0,14" transparent="false" sourceValue="[2.00e+16,+INF)" value="[2.00e+16,+INF)" ref="4"/>
 </ColorMap>
 </ColorMaps>
 """
@@ -109,7 +110,7 @@ def test_no2_variable_applies_to_cities():
     assert {"no2_omi", "co_airs"} <= city
     assert not {"no2_omi", "co_airs"} & forest
     # the label says exactly what the yearly value is
-    assert "annual mean of daily values on 4 days a month" in no2.label
+    assert "annual mean of daily values on 4 days a month, each month weighted equally" in no2.label
     assert "annual mean of monthly values" in co.label
 
 
@@ -140,6 +141,8 @@ def test_colormap_reads_scientific_notation_with_a_plus_exponent():
     assert table[(10, 20, 30)] == pytest.approx(4.1e15)
     assert table[(40, 50, 60)] == pytest.approx(8.1e15)
     assert (255, 0, 255) not in table  # no data
+    assert table.top == {(127, 0, 14)} and table.top_value == pytest.approx(2.0e16)
+    assert table.bottom == {(255, 252, 199)}
 
 
 # --------------------------------------------------------------------------- OMI NO2 (daily layer)
@@ -177,7 +180,8 @@ def test_omi_result_carries_row_anomaly_caveat(monkeypatch):
     res = tools.trend_test(s, series_id=got["series_id"])
     assert res["caveat"] == OMI_CAVEAT and res["basis"] == "annual"
     label = s.ledger.test(res["test_id"]).label
-    assert "annual mean of daily values on 4 days a month" in label and "monthly" not in label
+    assert "annual mean of daily values on 4 days a month, each month weighted equally" in label
+    assert "monthly" not in label and label.count("annual mean") == 1
 
 
 def _yearly(layer, start, end) -> pd.Series:
@@ -189,20 +193,82 @@ def _yearly(layer, start, end) -> pd.Series:
     return s
 
 
-def test_no2_year_with_too_few_seen_days_is_dropped():
+def test_no2_year_needs_ten_months_with_a_seen_day():
     layer = gibs_values.layer_for(_var("no2_omi"))
-    # 2012: only 10 of the 48 sampled days show the box (cloud, the row anomaly)
-    seen_2012 = {f"2012-{m:02d}-01" for m in range(1, 11)}
+    # 2012: one seen day in each of 9 months (cloud, the row anomaly); 2013: one in each of 10
+    seen = {f"2012-{m:02d}-01" for m in range(1, 10)} | {f"2013-{m:02d}-09" for m in range(1, 11)}
 
     def colour(date):
-        if date.startswith("2012"):
-            return (10, 20, 30) if date in seen_2012 else None
+        if date[:4] in ("2012", "2013"):
+            return (10, 20, 30) if date in seen else None
         return (40, 50, 60)
 
     with _client(NO2_COLORMAP, colour) as client:
         raw = gibs_values.fetch_annual(layer, BOX, 2011, 2013, client=client)
     assert [d.year for d in raw.index] == [2011, 2013]
     assert raw.attrs["dropped_years"] == [2012]
+
+
+def test_no2_months_weigh_equally_however_many_days_were_seen():
+    """Winter (high, every day seen) must not outweigh a cloudy summer (low, one day a month)."""
+    layer = gibs_values.layer_for(_var("no2_omi"))
+    winter = {1, 2, 3, 10, 11, 12}
+
+    def colour(date):
+        m, d = int(date[5:7]), int(date[8:10])
+        if m in winter:
+            return (40, 50, 60)  # 8.1e15, all 4 days seen
+        if m in (6, 7):
+            return None  # monsoon: no day seen
+        return (10, 20, 30) if d == 1 else None  # 4.1e15, one day of 4 seen
+
+    with _client(NO2_COLORMAP, colour) as client:
+        raw = gibs_values.fetch_annual(layer, BOX, 2010, 2010, client=client)
+    monthly_mean = (6 * 8.1e15 + 4 * 4.1e15) / 10  # the 10 seen months, each once
+    assert raw.iloc[0] == pytest.approx(monthly_mean)  # a day-weighted mean would give ~7.5e15
+
+
+def test_values_on_the_top_of_the_scale_are_said(monkeypatch):
+    layer = gibs_values.layer_for(_var("no2_omi"))
+    # 2010: every 1st of the month on the open top bin ("[2e16,+INF)": the value is a floor)
+    colour = lambda date: (127, 0, 14) if date.startswith("2010") and date.endswith("-01") else (40, 50, 60)  # noqa: E731
+    with _client(NO2_COLORMAP, colour) as client:
+        raw = gibs_values.fetch_annual(layer, BOX, 2010, 2011, client=client)
+    assert raw.attrs["saturated_share"][2010] == pytest.approx(0.25)
+    assert raw.attrs["saturated_share"][2011] == 0.0
+    caveat = gibs_values.saturation_caveat(raw.attrs, 1e-15, "10^15 molecules/cm²")
+    assert caveat == (
+        "Some days exceed the colour scale (≥ 20 10^15 molecules/cm²); yearly values and the trend are understated."
+    )
+    # the fetcher adds it to the OMI caveat, so every result for the series carries both
+    monkeypatch.setattr(gibs_values, "fetch_annual", lambda lay, bbox, start, end, client=None: raw)
+    s = _session()
+    got = tools.get_series(s, var_id="no2_omi", start=2010, end=2011)
+    assert got["caveat"] == f"{OMI_CAVEAT} {caveat}"
+    assert tools.trend_test(s, series_id=got["series_id"])["caveat"] == f"{OMI_CAVEAT} {caveat}"
+
+
+def test_clean_values_say_nothing_about_the_scale(monkeypatch):
+    layer = gibs_values.layer_for(_var("no2_omi"))
+    with _client(NO2_COLORMAP, lambda date: (40, 50, 60)) as client:
+        raw = gibs_values.fetch_annual(layer, BOX, 2010, 2011, client=client)
+    assert set(raw.attrs["saturated_share"].values()) == {0.0}
+    assert gibs_values.saturation_caveat(raw.attrs, 1e-15, "x") is None
+    monkeypatch.setattr(gibs_values, "fetch_annual", lambda lay, bbox, start, end, client=None: raw)
+    got = tools.get_series(_session(), var_id="no2_omi", start=2010, end=2011)
+    assert got["caveat"] == OMI_CAVEAT
+
+
+def test_saturated_share_survives_the_disk_cache():
+    layer = gibs_values.layer_for(_var("no2_omi"))
+    colour = lambda date: (127, 0, 14)  # noqa: E731
+    with _client(NO2_COLORMAP, colour) as client:
+        first = gibs_values.fetch_annual(layer, BOX, 2010, 2010, client=client)
+    calls: list = []
+    with _client(NO2_COLORMAP, colour, calls) as client:
+        again = gibs_values.fetch_annual(layer, BOX, 2010, 2010, client=client)
+    assert calls == [] and again.attrs["saturated_share"] == first.attrs["saturated_share"] == {2010: 1.0}
+    assert again.attrs["scale_top"] == pytest.approx(2.0e16)
 
 
 def test_no2_starts_with_the_first_full_omi_year():
@@ -257,3 +323,40 @@ def test_monthly_layer_cache_keys_are_unchanged():
 def test_gibs_source_names_the_air_products():
     name = gather.SOURCES["gibs"].title
     assert "OMI" in name and "AIRS" in name
+
+
+# --------------------------------------------------------------------------- one applies_to gate
+
+
+def test_a_variable_that_does_not_apply_is_refused_without_fetching(monkeypatch):
+    def boom(*a, **k):
+        raise AssertionError("must not fetch")
+
+    monkeypatch.setattr(gather, "FETCHERS", {name: boom for name in gather.FETCHERS})
+    s = _session(tags=("vegetated",))
+    listed = {r["id"] for r in tools.list_variables(s)["variables"]}
+    assert "no2_omi" not in listed
+    got = tools.get_series(s, var_id="no2_omi")
+    assert got["status"] == "not_available" and got["reason"] == tools.NOT_THIS_PLACE_REASON
+    # listing and fetching agree: every tagged variable left out of the list is refused
+    for var in load_catalog():
+        if var.applies_to and var.id not in listed:
+            assert tools.get_series(s, var_id=var.id)["status"] == "not_available", var.id
+
+
+def test_solved_cases_keep_every_variable_their_tags_allow():
+    from app.sites import load_sites
+
+    for site in load_sites().sites:
+        place = Place(lat=site.lat, lon=site.lon, bbox=tuple(site.bbox), tags=tuple(site.tags), site_id=site.id)
+        s = Session(ledger=Ledger(), place=place, catalog=load_catalog(), series={})
+        for row in tools.list_variables(s)["variables"]:
+            assert row.get("reason") != tools.NOT_THIS_PLACE_REASON, (site.id, row["id"])
+
+
+def test_co_map_layer_does_not_offer_months_gibs_lacks():
+    s = _session()
+    gap = mapping.show_layer(s, layer_id="co", date="2025-05-01")
+    assert gap["status"] == "rejected" and "no pictures from 2025-05-01 to 2025-06-30" in gap["reason"]
+    assert mapping.show_layer(s, layer_id="co", date="2026-10-01")["status"] == "rejected"  # after the last month
+    assert mapping.show_layer(s, layer_id="co", date="2025-07-01")["status"] == "shown"

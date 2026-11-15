@@ -50,7 +50,7 @@ WITHDRAWN: Mapping[str, str] = {"snow_gibs": SNOW_GIBS_REASON}
 TWIN_OF: Mapping[str, str] = {twin: base for base, twin in GIBS_TWINS.items()}
 SEA_TAGS = frozenset({"ocean", "coast", "reef"})
 ANNUAL = "annual"
-ANNUAL_SUFFIX = gibs_values.MONTHLY_SUFFIX  # monthly GIBS layers; see gibs_values.annual_suffix
+NOT_THIS_PLACE_REASON = "not_available_here: this variable does not apply to this kind of place (see profile_place tags)"
 NO_COMPLETED_YEAR_REASON = "no completed year in this range"
 GRACE_AT_SEA_REASON = "measures water stored on land; over open sea it is not meaningful"
 LAND_AT_SEA_REASON = "not_available_here: a land-only source; this place is open sea"
@@ -168,6 +168,8 @@ def _unavailable_reason(session: Session, var: Variable, extra_ids: frozenset[st
         return OFF_CASE_REASON
     if _is_opt_in(var) and var.id not in extra_ids:
         return EXTRA_DRIVER_REASON
+    if var.applies_to and not variables_for_site((var,), session.place.tags):
+        return NOT_THIS_PLACE_REASON
     return None
 
 

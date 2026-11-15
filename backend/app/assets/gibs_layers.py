@@ -81,6 +81,7 @@ class GibsLayer:
     days: tuple[int, ...] = (1,)
     # Pictures with a coloured pixel a year needs (0: MIN_SEEN_MONTHS with `transparent_value`, else none).
     min_seen: int = 0
+    min_months: int = 0  # months with a seen picture a year needs
     first_year: int = 0  # first complete year of the product; earlier years are never asked
     caveat: str = ""  # said with every value read from this layer
 
@@ -119,9 +120,21 @@ LAYERS: tuple[GibsLayer, ...] = (
 )
 
 
-def parse_colormap(xml: str) -> dict[tuple[int, int, int], float]:
-    """rgb -> value (midpoint of the entry's interval); transparent / no-data entries left out."""
-    table: dict[tuple[int, int, int], float] = {}
+class ColorTable(dict):
+    """rgb -> value, plus the open-ended bins: `top` colours ("[x,+INF)", read as x, a floor)
+    and `bottom` colours ("[-INF,x)", read as x, a ceiling); `top_value` is x of the top bin."""
+
+    top: frozenset = frozenset()
+    bottom: frozenset = frozenset()
+    top_value: float | None = None
+
+
+def parse_colormap(xml: str) -> ColorTable:
+    """rgb -> value (midpoint of the entry's interval); transparent / no-data entries left out.
+    Open-ended bins are marked on the table (`top`, `bottom`)."""
+    table = ColorTable()
+    top: set = set()
+    bottom: set = set()
     for raw in _ENTRY_RE.findall(xml):
         attrs = dict(_ATTR_RE.findall(raw))
         if attrs.get("transparent") == "true" or attrs.get("nodata") == "true" or "value" not in attrs:
@@ -132,6 +145,12 @@ def parse_colormap(xml: str) -> dict[tuple[int, int, int], float]:
         mid = (nums[0] + nums[-1]) / 2 if len(nums) > 1 else nums[0]
         rgb = tuple(int(c) for c in attrs["rgb"].split(","))
         table[rgb] = mid  # type: ignore[index]
+        if "+INF" in attrs["value"]:
+            top.add(rgb)
+            table.top_value = mid if table.top_value is None else min(table.top_value, mid)
+        elif "-INF" in attrs["value"]:
+            bottom.add(rgb)
+    table.top, table.bottom = frozenset(top), frozenset(bottom)
     return table
 
 
@@ -205,13 +224,25 @@ def layer_size(bbox: Sequence[float], layer: GibsLayer) -> tuple[int, int]:
     return width, max(1, round(width * dy / dx))
 
 
-def load_colormap(client: httpx.Client, layer: GibsLayer) -> dict[tuple[int, int, int], float]:
+def load_colormap(client: httpx.Client, layer: GibsLayer) -> ColorTable:
     return parse_colormap(client.get(COLORMAP_URL.format(name=layer.colormap)).text)
 
 
 def _seen(rgba: np.ndarray) -> bool:
     """At least one coloured (not transparent) pixel."""
     return rgba.shape[-1] < 4 or bool((rgba[..., 3] > 0).any())
+
+
+def _count_colours(rgba: np.ndarray, colours: Iterable[tuple[int, int, int]]) -> int:
+    """Coloured (not transparent) pixels drawn in one of `colours`."""
+    if not colours:
+        return 0
+    flat = rgba.reshape(-1, rgba.shape[-1]).astype(np.int64)
+    keys = (flat[:, 0] << 16) | (flat[:, 1] << 8) | flat[:, 2]
+    hit = np.isin(keys, [(r << 16) | (g << 8) | b for r, g, b in colours])
+    if rgba.shape[-1] == 4:
+        hit &= flat[:, 3] > 0
+    return int(hit.sum())
 
 
 def _decode_tile(rgba: np.ndarray, table: Mapping[tuple[int, int, int], float], layer: GibsLayer) -> np.ndarray:
@@ -233,6 +264,7 @@ def yearly_values(
     table: Mapping[tuple[int, int, int], float] | None = None,
     workers: int = 1,
     failed: set[int] | None = None,
+    saturated: dict[int, float] | None = None,
 ) -> dict[int, np.ndarray]:
     """Season mean grid (display units) per year over `bbox`, for the years with enough pixels.
 
@@ -243,6 +275,11 @@ def yearly_values(
     and a year needs MIN_SEEN_MONTHS seen months. A date GIBS failed on (`TileFailed`) is
     skipped and its year added to `failed` when given; a caller that cannot accept partial
     years leaves them out.
+
+    A daily layer (several `layer.days`) averages each month's seen days first, then the
+    months, so a cloudy season weighs as much as a clear one; a year needs `layer.min_months`
+    months with a seen day. When `saturated` is given it gets, per year, the share of seen
+    pixels drawn in the colormap's open top bin (a value at or above the top of the scale).
     """
     size = layer_size(bbox, layer) if size is None else size
     table = load_colormap(client, layer) if table is None else table
@@ -264,18 +301,31 @@ def yearly_values(
             tiles = list(pool.map(get, jobs))
     else:
         tiles = [get(job) for job in jobs]
-    by_year: dict[int, list[np.ndarray]] = {}
+    by_month: dict[int, dict[int, list[np.ndarray]]] = {}
     seen: dict[int, int] = {}
-    for (year, _, _), rgba in zip(jobs, tiles):
+    seen_months: dict[int, set[int]] = {}
+    coloured: dict[int, int] = {}
+    on_top: dict[int, int] = {}
+    top = getattr(table, "top", frozenset())
+    for (year, m, _), rgba in zip(jobs, tiles):
         if rgba is None:
             continue
-        seen[year] = seen.get(year, 0) + _seen(rgba)
-        by_year.setdefault(year, []).append(_decode_tile(rgba, table, layer))
+        if _seen(rgba):
+            seen[year] = seen.get(year, 0) + 1
+            seen_months.setdefault(year, set()).add(m)
+        coloured[year] = coloured.get(year, 0) + (int((rgba[..., 3] > 0).sum()) if rgba.shape[-1] == 4 else rgba[..., 0].size)
+        on_top[year] = on_top.get(year, 0) + _count_colours(rgba, top)
+        by_month.setdefault(year, {}).setdefault(m, []).append(_decode_tile(rgba, table, layer))
+    if saturated is not None:
+        saturated.update({y: on_top[y] / coloured[y] for y in coloured if coloured[y]})
     yearly: dict[int, np.ndarray] = {}
-    for year, grids in by_year.items():
-        if seen[year] < need_seen:
+    for year, months_grids in by_month.items():
+        if seen.get(year, 0) < need_seen or len(seen_months.get(year, ())) < layer.min_months:
             continue  # too few pictures seen to stand for the whole year
-        vals = season_mean(grids)
+        if len(layer.days) > 1:  # each month weighs the same, however many of its days were seen
+            vals = season_mean([season_mean(g) for g in months_grids.values()])
+        else:
+            vals = season_mean([g for grids in months_grids.values() for g in grids])
         if np.isfinite(vals).mean() >= MIN_VALID_SHARE:
             yearly[year] = vals
     return yearly

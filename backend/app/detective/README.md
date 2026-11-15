@@ -53,3 +53,10 @@ are listed in `final-fix-report.md` next to it. In short:
 - Snow from GIBS (`snow_gibs`) is not offered: GIBS draws no-snow and unseen ground (cloud, polar night) with
   the same transparent pixel, so a snow trend can't be measured honestly from its colours. Off-case snow stays
   not available; in the solved cases the AppEEARS monthly snow cover is used.
+- Nitrogen dioxide (`no2_omi`) reads the daily OMI layer on GIBS on 4 days a month, about 1,000 pictures for
+  2005–2025: the first call for a new place takes about 2.5 minutes. Completed years are then served from the
+  disk cache (`backend/data/cache/gibs_values/`). Before a demo, pre-warm the cache for the demo cities by
+  running `get_series("no2_omi")` for each once (or `gibs_values.fetch_annual` on their box).
+- Air values from GIBS colours stop at the top of the colour scale (NO₂ 2×10¹⁶ molecules/cm², CO 350 ppbv);
+  when more than 1 % of a year's seen pixels sit there, the result says the yearly values and the trend are
+  understated.
