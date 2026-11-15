@@ -6,17 +6,10 @@ import { createSseParser } from "./sse.ts";
 import { messageForResponse } from "./request.ts";
 import type { DetectiveBody } from "./request.ts";
 import type { CaseLayerRow } from "./map/types.ts";
+import type { Recording } from "./replay.ts";
 
 const UNREACHABLE =
   "We couldn't reach the investigator. Check your connection (or that the backend is running) and try again.";
-
-/** Same shape as `Recording` in replay.ts (Task 11); kept structural so api.ts does not depend on it. */
-export interface Recording {
-  question: string;
-  request: Record<string, unknown>;
-  started_at: string;
-  events: { t_ms: number; event: string; data: unknown }[];
-}
 
 export interface HistoryStep {
   checkpoint_id: string;

@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "sync-sites": "node scripts/sync-sites.mjs",
-    "predev": "npm run sync-sites",
+    "sync-recordings": "node scripts/sync-recordings.mjs",
+    "predev": "npm run sync-sites && npm run sync-recordings",
     "dev": "next dev -p 5180",
-    "prebuild": "npm run sync-sites",
+    "prebuild": "npm run sync-sites && npm run sync-recordings",
     "build": "next build",
     "start": "next start -p 5180",
     "typecheck": "tsc --noEmit",
