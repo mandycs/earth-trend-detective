@@ -53,10 +53,14 @@ def build_site_assets(site_id: str, sites_dir: Path = SITES_DIR) -> None:
     logger.info("%s: heightmap %dx%d, %.0f-%.0f m", site_id, hm.width, hm.height, hm.min_m, hm.max_m)
 
 
+def default_site_ids() -> list[str]:
+    return load_sites().land_ids()
+
+
 def main(argv: list[str]) -> None:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     logging.getLogger("httpx").setLevel(logging.WARNING)
-    ids = argv or [s.id for s in load_sites().sites]
+    ids = argv or default_site_ids()
     for site_id in ids:
         build_site_assets(site_id)
 

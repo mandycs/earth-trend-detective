@@ -36,3 +36,11 @@ sites:
     bbox: [-6.6, 36.8, -6.2, 37.15]
     point: [-6.4, 36.98]
     tags: [wetland, vegetated, agriculture]
+
+  - id: great_barrier_reef
+    name: Great Barrier Reef (Australia)
+    bbox: [145.5, -21.0, 150.0, -17.0]
+    point: [147.6, -18.8]
+    tags: [ocean, coast, reef]
+    # Sea case: built by `python -m app.reef.build`, never by the land pipeline.
+    pipeline: sea

@@ -125,6 +125,7 @@ def load_sites(path: Path = SITES_PATH) -> tuple[Site, ...]:
             tags=tuple(s.get("tags") or ()),
         )
         for s in data["sites"]
+        if s.get("pipeline", "land") != "sea"
     )
 
 
