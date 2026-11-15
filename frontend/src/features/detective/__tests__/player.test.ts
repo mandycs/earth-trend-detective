@@ -72,3 +72,13 @@ test("never past the last scene", () => {
   assert.equal(playerReducer(at(5, 0), { type: "tick", now: 1e9, scenes }).index, 5); // stale index: no advance
   assert.equal(playerReducer(INITIAL_PLAYER, { type: "tick", now: 1e9, scenes: [] }).index, 0);
 });
+
+test("goto never takes a NaN or infinite index", () => {
+  const scenes = [mk("evidence"), mk("evidence")];
+  for (const bad of [NaN, Infinity, -Infinity]) {
+    const s = playerReducer(at(1, 0), { type: "goto", index: bad, now: 3 });
+    assert.equal(s.index, 0, String(bad));
+    assert.equal(s.pinned, true);
+    assert.equal(playerReducer(s, { type: "live", now: 4, scenes }).index, 1);
+  }
+});

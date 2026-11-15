@@ -35,8 +35,12 @@ export function playerReducer(s: PlayerState, a: PlayerAction): PlayerState {
       return s.paused ? s : { ...s, paused: true };
     case "resume":
       return { ...s, paused: false, enteredAt: a.now };
-    case "goto":
-      return { ...s, index: Math.max(0, Math.trunc(a.index)), enteredAt: a.now, pinned: true };
+    case "goto": {
+      // No upper clamp: the action carries no `scenes`. Consumers must clamp to `scenes.length - 1`;
+      // a pinned index past the end holds until `live` or `reset`.
+      const i = Number.isFinite(a.index) ? Math.max(0, Math.trunc(a.index)) : 0;
+      return { ...s, index: i, enteredAt: a.now, pinned: true };
+    }
     case "live":
       return { ...s, index: Math.max(0, a.scenes.length - 1), enteredAt: a.now, pinned: false };
     case "reset":
