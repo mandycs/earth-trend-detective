@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { Wordmark } from '../brand/Wordmark'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type * as THREE from 'three'
 import { readFrame, useSite, useStoryAssets } from './useSite'
@@ -452,7 +453,7 @@ export default function StoryApp({ caseId }: { caseId: string }) {
     <div className={mode === 'doc' ? 'st st-documentary' : drone ? 'st st-in-drone' : 'st'}>
       <header className="st-bar">
         <Link href="/" className="st-wordmark wide">
-          Earth Trend Detective
+          <Wordmark />
         </Link>
         <nav className="st-cases" aria-label="Cases">
           {CASE_IDS.map((id) => (
@@ -481,7 +482,7 @@ export default function StoryApp({ caseId }: { caseId: string }) {
               <div className="doc">
                 <div className="doc-top">
                   <Link href="/" className="doc-wordmark wide">
-                    Earth Trend Detective
+                    <Wordmark />
                   </Link>
                   <ol className="doc-chapters" aria-label="Chapters">
                     {CHAPTER_NAMES.map((name, i) => (

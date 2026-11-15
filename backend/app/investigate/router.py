@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-import json
-from collections.abc import Callable, Iterator
+from collections.abc import AsyncIterator, Callable, Iterator
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
@@ -12,6 +11,7 @@ from pydantic import BaseModel, Field, model_validator
 from app.explain.llm import LLM
 from app.explain.router import get_llm
 from app.investigate.runner import Event, investigate
+from app.investigate.sse import SSE_HEADERS, sse_stream
 from app.sites import load_sites
 
 router = APIRouter(tags=["investigate"])
@@ -36,9 +36,9 @@ def get_investigate() -> Callable[..., Iterator[Event]]:
     return investigate
 
 
-def sse(events: Iterator[Event]) -> Iterator[str]:
-    for e in events:
-        yield f"event: {e['event']}\ndata: {json.dumps(e['data'], ensure_ascii=False, allow_nan=False)}\n\n"
+def sse(events: Iterator[Event]) -> AsyncIterator[str]:
+    """The events as SSE frames, with a keepalive comment while the producer is quiet."""
+    return sse_stream(events)
 
 
 @router.post("/investigate")
@@ -55,5 +55,5 @@ def post_investigate(
     return StreamingResponse(
         sse(events),
         media_type="text/event-stream",
-        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        headers=SSE_HEADERS,
     )

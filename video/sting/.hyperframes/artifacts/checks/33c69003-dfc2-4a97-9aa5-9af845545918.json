@@ -1,0 +1,283 @@
+{
+  "ok": true,
+  "strict": false,
+  "browserSkipped": false,
+  "lint": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 1,
+    "infoCount": 0,
+    "findings": [
+      {
+        "code": "svg_round_cap_hidden_dash",
+        "severity": "warning",
+        "message": "<polyline> is hidden with stroke-dasharray 1 and stroke-dashoffset 1 on pathLength 1, but its round cap can still paint a dot at the end of the path (Chrome rounds the zero-length dash differently per curve).",
+        "selector": "#thread",
+        "dataAttributes": {},
+        "sourceFile": "/home/mandycs/Escritorio/earth-trend-detective/video/sting/index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Make the gap longer than the path (stroke-dasharray \"1 1.2\" with stroke-dashoffset 1.1), or keep the element visibility:hidden until its draw tween starts."
+      }
+    ],
+    "filesScanned": 1
+  },
+  "runtime": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": []
+  },
+  "layout": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": [],
+    "duration": 5.5,
+    "samples": [
+      0.306,
+      0.917,
+      1.528,
+      2.139,
+      2.75,
+      3.361,
+      3.972,
+      4.583,
+      5.194
+    ],
+    "transitionSamples": [],
+    "transitionSamplesDropped": 0,
+    "tolerance": 2,
+    "totalIssueCount": 0,
+    "truncated": false
+  },
+  "motion": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": [],
+    "enabled": false,
+    "samples": 0
+  },
+  "contrast": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": [],
+    "enabled": true,
+    "samples": [
+      0.306,
+      1.528,
+      2.75,
+      3.972,
+      5.194
+    ],
+    "checked": 3,
+    "passed": 3
+  },
+  "craft": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 2,
+    "infoCount": 0,
+    "findings": [
+      {
+        "code": "line_unread",
+        "severity": "warning",
+        "message": "The film's last line \"ALIBI\" (1 word) is on screen 1.86 s (±0.01 s), under the 2.00 s a closing line needs: hold it about 0.5 s + 0.3 s a word and at least 2 s before the film ends; see references/motion.md.",
+        "text": "ALIBI",
+        "selector": "#word",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 846.95,
+          "y": 382.5,
+          "width": 432.48,
+          "height": 189
+        },
+        "time": 3.641,
+        "words": 1,
+        "seconds": 1.863,
+        "floorSeconds": 2,
+        "measured": [
+          {
+            "time": 3.375,
+            "opacity": null,
+            "heightPx": null
+          },
+          {
+            "time": 3.5,
+            "opacity": null,
+            "heightPx": null
+          },
+          {
+            "time": 3.625,
+            "opacity": null,
+            "heightPx": null
+          },
+          {
+            "time": 3.75,
+            "opacity": 1,
+            "heightPx": 189
+          },
+          {
+            "time": 3.875,
+            "opacity": 1,
+            "heightPx": 189
+          },
+          {
+            "time": 4,
+            "opacity": 1,
+            "heightPx": 189
+          },
+          {
+            "time": 4.125,
+            "opacity": 1,
+            "heightPx": 189
+          },
+          {
+            "time": 5,
+            "opacity": 1,
+            "heightPx": 189
+          },
+          {
+            "time": 5.125,
+            "opacity": 1,
+            "heightPx": 189
+          },
+          {
+            "time": 5.25,
+            "opacity": 1,
+            "heightPx": 189
+          },
+          {
+            "time": 5.375,
+            "opacity": 1,
+            "heightPx": 189
+          }
+        ]
+      },
+      {
+        "code": "line_unread",
+        "severity": "warning",
+        "message": "The film's last line \"The satellites saw it all. Nobody told the story.\" (9 words) is on screen 1.33 s (±0.01 s), under the 2.40 s a closing line needs: hold it about 0.5 s + 0.3 s a word and at least 2 s before the film ends; see references/motion.md.",
+        "text": "The satellites saw it all. Nobody told the story.",
+        "selector": "#tag",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 846.95,
+          "y": 596.55,
+          "width": 622.9100000000001,
+          "height": 104
+        },
+        "time": 4.172,
+        "words": 9,
+        "seconds": 1.332,
+        "floorSeconds": 2.4,
+        "measured": [
+          {
+            "time": 3.875,
+            "opacity": null,
+            "heightPx": null
+          },
+          {
+            "time": 4,
+            "opacity": null,
+            "heightPx": null
+          },
+          {
+            "time": 4.125,
+            "opacity": 0.27,
+            "heightPx": 104
+          },
+          {
+            "time": 4.25,
+            "opacity": 0.75,
+            "heightPx": 104
+          },
+          {
+            "time": 4.375,
+            "opacity": 0.95,
+            "heightPx": 104
+          },
+          {
+            "time": 4.5,
+            "opacity": 1,
+            "heightPx": 104
+          },
+          {
+            "time": 4.625,
+            "opacity": 1,
+            "heightPx": 104
+          },
+          {
+            "time": 5,
+            "opacity": 1,
+            "heightPx": 104
+          },
+          {
+            "time": 5.125,
+            "opacity": 1,
+            "heightPx": 104
+          },
+          {
+            "time": 5.25,
+            "opacity": 1,
+            "heightPx": 104
+          },
+          {
+            "time": 5.375,
+            "opacity": 1,
+            "heightPx": 104
+          }
+        ]
+      }
+    ],
+    "enabled": true,
+    "step": 0.125,
+    "samples": 44
+  },
+  "audio": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 1,
+    "findings": [
+      {
+        "code": "audio_none",
+        "severity": "info",
+        "message": "The film has no sound: no clip in it plays audio.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0
+      }
+    ]
+  },
+  "hdr": {
+    "autoPromotion": null,
+    "inspection": "available"
+  },
+  "snapshots": {
+    "enabled": false,
+    "files": [],
+    "times": [],
+    "findingFiles": []
+  }
+}

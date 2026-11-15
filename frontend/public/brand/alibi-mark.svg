@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-labelledby="t d">
+  <title id="t">Alibi</title>
+  <desc id="d">A globe used as an evidence board: pins on data points joined by a red thread, one pin left unconnected.</desc>
+  <g id="globe" fill="none" stroke="#e9ecee">
+    <circle cx="100" cy="100" r="74" stroke-width="6"/>
+    <ellipse cx="100" cy="100" rx="34" ry="74" stroke-width="3.5"/>
+    <line x1="26" y1="100" x2="174" y2="100" stroke-width="3.5"/>
+  </g>
+  <polyline id="thread" points="56,128 84,88 114,114 146,62" fill="none" stroke="#c8102e" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <g id="pins" fill="#e9ecee">
+    <circle cx="56" cy="128" r="11"/><circle cx="84" cy="88" r="11"/><circle cx="114" cy="114" r="11"/><circle cx="146" cy="62" r="11"/>
+  </g>
+  <g id="pin-heads" fill="#0e1012">
+    <circle cx="56" cy="128" r="4"/><circle cx="84" cy="88" r="4"/><circle cx="114" cy="114" r="4"/><circle cx="146" cy="62" r="4"/>
+  </g>
+  <g id="loose-pin"><circle cx="134" cy="148" r="11" fill="#e9ecee"/><circle cx="134" cy="148" r="4" fill="#0e1012"/></g>
+</svg>

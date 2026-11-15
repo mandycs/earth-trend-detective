@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import InvestigateView from '../../features/investigate/InvestigateView'
 
 export const metadata: Metadata = {
-  title: 'Ask the detective · Earth Trend Detective',
+  title: 'Ask the detective · Alibi',
   description: 'Pick a place, ask a question, and watch the detective run its NASA checks one by one.',
 }
 

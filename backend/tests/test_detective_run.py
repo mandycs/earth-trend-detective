@@ -69,3 +69,8 @@ def test_a_stream_cut_mid_run_still_saves_what_came(tmp_path, monkeypatch):
     assert code == 1
     doc = json.loads(out.read_text())
     assert [e["event"] for e in doc["events"]] == ["place"] and doc["partial"] is True
+
+
+def test_keepalive_comment_between_events_is_ignored():
+    lines = ["event: place\n", 'data: {"id": "p"}\n', "\n", ": keepalive\n", "\n", ": keepalive\n", "\n", "event: done\n", "data: {}\n", "\n"]
+    assert [n for n, _ in parse_sse(lines)] == ["place", "done"]

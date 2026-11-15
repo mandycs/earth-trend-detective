@@ -101,7 +101,7 @@ export default function ExploreView() {
     <div className={styles.shell}>
       <header className={styles.topbar}>
         <Link href="/" className={styles.homeLink}>
-          <span aria-hidden="true">←</span> Earth Trend Detective
+          <span aria-hidden="true">←</span> Alibi
         </Link>
         <nav className={styles.topbarNav} aria-label="Main">
           <Link href="/investigate" className={styles.topbarHint}>

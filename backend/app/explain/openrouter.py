@@ -106,6 +106,6 @@ def make_openrouter_llm() -> OpenRouterLLM | None:
         return None
     client = httpx.Client(
         timeout=TIMEOUT_S,
-        headers={"Authorization": f"Bearer {key}", "X-Title": "Earth Trend Detective"},
+        headers={"Authorization": f"Bearer {key}", "X-Title": "Alibi"},
     )
     return OpenRouterLLM(client)
