@@ -104,7 +104,7 @@ export default function ExploreView() {
           <span aria-hidden="true">←</span> Alibi
         </Link>
         <nav className={styles.topbarNav} aria-label="Main">
-          <Link href="/investigate" className={styles.topbarHint}>
+          <Link href="/detective" className={styles.topbarHint}>
             Ask the detective
           </Link>
           <Link href="/story/lake_mead" className={styles.topbarHint}>

@@ -106,8 +106,8 @@ export function CoverReel({ cases, years }: { cases: ReelCase[]; years: string }
           <i style={{ width: `${((index + t) / cases.length) * 100}%` }} />
         </div>
         <div className={styles.reelControls}>
-          <Link href="/investigate" className={styles.quiet}>
-            Investigate any point
+          <Link href="/detective" className={styles.quiet}>
+            Investigate anywhere
           </Link>
           <button type="button" className={styles.quiet} onClick={() => setPlaying((p) => !p)} aria-pressed={!playing}>
             {playing ? 'Pause' : 'Play'}

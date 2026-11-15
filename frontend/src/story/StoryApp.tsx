@@ -462,7 +462,7 @@ export default function StoryApp({ caseId }: { caseId: string }) {
             </Link>
           ))}
         </nav>
-        <Link href={`/investigate?site=${caseId}`} className="st-explore st-ask">
+        <Link href={`/detective?site=${caseId}`} className="st-explore st-ask">
           <span>
             Ask<span className="st-hide-sm"> the detective</span>
           </span>
