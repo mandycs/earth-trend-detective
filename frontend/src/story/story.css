@@ -329,13 +329,27 @@
   vector-effect: non-scaling-stroke;
 }
 
+/* With threshold lines the plot (and the slider over it) leaves a gutter on the
+   right for their labels; both shrink together, so the cursor stays on its year. */
+.tl-chart-gutter svg,
+.tl-chart-gutter input,
+.tl-chart-gutter .tl-ends {
+  right: 96px;
+}
+
+.tl-chart-gutter svg,
+.tl-chart-gutter input {
+  width: calc(100% - 96px);
+}
+
 .tl-threshold-label {
   position: absolute;
-  left: 4px;
-  transform: translateY(-110%);
-  font-size: 0.8rem;
+  right: 0;
+  width: 88px;
+  transform: translateY(-50%);
+  font-size: 1rem;
   line-height: 1;
-  color: var(--ink-3);
+  color: var(--ink-2);
   pointer-events: none;
   white-space: nowrap;
 }

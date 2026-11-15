@@ -63,7 +63,7 @@ function Changing({ site, variable, mapKm, onSelectVariable }: { site: Site; var
     <>
       {pair ? <BeforeAfter pair={pair} alt={`Satellite picture of ${shortName(site.name)}`} /> : null}
       <p className="sp-lede">
-        Every NASA record we could get for this place, {site.years[0]} to {site.years[1]}. Pick one to put it on the
+        Every record we could get for this place, {site.years[0]} to {site.years[1]}. Pick one to put it on the
         timeline.
       </p>
       <ul className="sp-vars">

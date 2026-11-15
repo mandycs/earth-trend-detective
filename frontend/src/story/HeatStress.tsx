@@ -6,9 +6,13 @@ import type { HeatStress, SiteVariable } from './types'
  * `site.json` `heat_stress` only.
  */
 
-/** "4" for 4.0, as the pipeline keys `reef_years_at_or_above` and `years_at_or_above`. */
+/**
+ * The key the pipeline uses in `reef_years_at_or_above` and `years_at_or_above`:
+ * backend `dhw._key` is `str(int(threshold))` (backend/app/reef/dhw.py), so 4.0 -> "4".
+ * Same rule here (truncate), so a fractional threshold cannot silently miss its counts.
+ */
 export function thresholdKey(value: number): string {
-  return String(value)
+  return String(Math.trunc(value))
 }
 
 export function thresholdText(value: number, unit: string): string {
@@ -40,16 +44,17 @@ export function HeatStressRecord({ heat }: { heat: HeatStress }) {
         <ul>
           {heat.periods.map((period) => {
             const [y0, y1] = period.years
+            const counts = heat.thresholds
+              .map((t) => ({ t, n: period.reef_years_at_or_above[thresholdKey(t.value)] }))
+              .filter((c): c is { t: (typeof heat.thresholds)[number]; n: number } => c.n != null)
+            if (counts.length === 0 && period.reef_years_missing <= 0) return null
             return (
               <li key={`${y0}-${y1}`}>
-                {heat.thresholds.map((t) => {
-                  const n = period.reef_years_at_or_above[thresholdKey(t.value)]
-                  return n == null ? null : (
-                    <span key={t.value}>
-                      {reefYears(n)} at or above {thresholdText(t.value, heat.unit)}, {y0}–{y1}.{' '}
-                    </span>
-                  )
-                })}
+                {counts.map(({ t, n }) => (
+                  <span key={t.value}>
+                    {reefYears(n)} at or above {thresholdText(t.value, heat.unit)}, {y0}–{y1}.{' '}
+                  </span>
+                ))}
                 {period.reef_years_missing > 0 ? <span>{reefYears(period.reef_years_missing)} without data.</span> : null}
               </li>
             )
@@ -64,7 +69,7 @@ export function HeatStressRecord({ heat }: { heat: HeatStress }) {
               const years = point.years_at_or_above[firstKey] ?? []
               return (
                 <li key={point.id}>
-                  <strong>{point.name}</strong>: {years.length > 0 ? years.join(', ') : 'no measured year'}
+                  <strong>{point.name}</strong>: {years.length > 0 ? years.join(', ') : `no year at or above ${thresholdText(first.value, heat.unit)}`}
                 </li>
               )
             })}
