@@ -1,0 +1,43 @@
+{
+  "var": "snow_cover",
+  "label": "Snow cover",
+  "kind": "trend",
+  "unit": "% per decade",
+  "vmin": -4.728,
+  "vmax": 4.728,
+  "colormap": "RdBu",
+  "stops": [
+    "#67001f",
+    "#bb2a34",
+    "#e58368",
+    "#fbceb7",
+    "#f6f7f7",
+    "#c0dceb",
+    "#68abd0",
+    "#2870b1",
+    "#053061"
+  ],
+  "legend": {
+    "more": "↑ more snow cover",
+    "less": "↓ less snow cover",
+    "faded": "Faded = could be chance at this pixel",
+    "transparent": "Transparent = not enough data"
+  },
+  "alpha": {
+    "significant": 230,
+    "faded": 70
+  },
+  "years": [
+    2003,
+    2024
+  ],
+  "pixels": 2064,
+  "share_significant": 0.3232,
+  "share_up": 0.05426,
+  "method": "Per pixel: Sen slope and Mann-Kendall S on annual means of deseasonalized monthly anomalies.",
+  "value_file": "trend_snow_cover_values.png",
+  "value_offset": -9.301429544628677,
+  "value_scale": 0.00028386576569807055,
+  "significance_file": "trend_snow_cover_significant.png",
+  "source": "MOD10A1.061"
+}
