@@ -280,7 +280,10 @@ def build_layer(site_id: str, layer: GibsLayer, sites_dir: Path = SITES_DIR) -> 
     out.mkdir(parents=True, exist_ok=True)
     width, height = layer_size(site.bbox, layer)
     with httpx.Client(timeout=TIMEOUT_S) as client:
-        yearly = yearly_values(layer, site.bbox, YEARS, client, months, size=(width, height))
+        failed: set[int] = set()
+        yearly = yearly_values(layer, site.bbox, YEARS, client, months, size=(width, height), failed=failed)
+    # A year with a month GIBS failed on would be partial: left out and listed as missing.
+    yearly = {year: vals for year, vals in yearly.items() if year not in failed}
     if not yearly:
         logger.warning("%s/%s: no usable months", site_id, layer.id)
         return None
@@ -311,6 +314,8 @@ def build_layer(site_id: str, layer: GibsLayer, sites_dir: Path = SITES_DIR) -> 
         ),
         "source": dict(layer.source),
     }
+    if failed:  # only when something failed, so a clean run writes the same file as before
+        meta["missing_years"] = sorted(failed)
     (out / "meta.json").write_text(json.dumps(meta, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     logger.info("%s/%s: %d years, %dx%d px, range %s %s", site_id, layer.id, len(yearly), width, height, meta["range"], layer.unit)
     return meta

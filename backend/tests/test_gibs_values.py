@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import io
 from pathlib import Path
 
@@ -275,3 +276,18 @@ def test_point_season_skips_the_unfinished_year(monkeypatch):
         series = gibs_values.fetch_annual(layer, BOX, 2003, 2014, client=client)
     assert series.index[-1].year == 2013
     assert {c["TIME"][:4] for c in calls} == {str(y) for y in range(2003, 2014)}
+
+
+def test_build_layer_leaves_out_a_year_it_could_not_fetch(monkeypatch, tmp_path):
+    """A month that still fails after the retries: its year is not written, and meta.json says so."""
+    transport = httpx.MockTransport(_handler(fail=frozenset({(2004, 3)})))
+    real = httpx.Client
+    monkeypatch.setattr(gibs_layers.httpx, "Client", lambda **kw: real(transport=transport, **kw))
+    monkeypatch.setattr(gibs_layers, "YEARS", range(2003, 2007))
+    layer = next(lay for lay in gibs_layers.LAYERS if lay.id == "ndvi_gibs")
+    meta = gibs_layers.build_layer("donana", layer, sites_dir=tmp_path)
+    out = tmp_path / "donana" / "layers" / "ndvi_gibs"
+    assert meta["years"] == [2003, 2005, 2006]
+    assert not (out / "2004.png").exists() and not (out / "2004_values.png").exists()
+    written = json.loads((out / "meta.json").read_text(encoding="utf-8"))
+    assert written["missing_years"] == [2004] and written["years"] == [2003, 2005, 2006]
