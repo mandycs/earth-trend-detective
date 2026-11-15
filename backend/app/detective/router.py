@@ -38,13 +38,13 @@ from app.detective.graph import build_graph, limits_from_env
 from app.detective.model import make_chat_model
 from app.detective.persistence import close_persistence, open_persistence
 from app.investigate.router import sse
+from app.investigate.sse import SSE_HEADERS
 
 router = APIRouter(tags=["detective"])
 
 Persistence = tuple[BaseCheckpointSaver, BaseStore]
 UNKNOWN_THREAD = "We could not find that investigation."
 NOT_READY = "The investigator is not ready yet. Try again in a moment."
-SSE_HEADERS = {"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
 
 _lock = threading.Lock()
 _persistence: Persistence | None = None
