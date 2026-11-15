@@ -14,7 +14,7 @@
 Ask a question about a place in your own words. Alibi picks the NASA records that can answer it, tests whether
 the change is real, and tells you in plain English what is real and what is only a clue.
 
-**[Live demo](https://alibi.sphyrnasolutions.com)** · **[Watch a recorded case](https://alibi.sphyrnasolutions.com/detective?replay=mead)** · **[71-second film](frontend/public/video/alibi-hero.mp4)** · **[Deck](https://alibi.sphyrnasolutions.com/deck.html)** · [Challenge](https://www.spaceappschallenge.org/2026/challenges/earth-system-trend-detective/)
+**[Live demo](https://alibi.sphyrnasolutions.com)** · **[Watch a recorded case](https://alibi.sphyrnasolutions.com/detective?replay=mead)** · **[30-second video](https://alibi.sphyrnasolutions.com/video/alibi-30s.mp4)** · **[71-second film](frontend/public/video/alibi-hero.mp4)** · **[Deck](https://alibi.sphyrnasolutions.com/deck.html)** · [Challenge](https://www.spaceappschallenge.org/2026/challenges/earth-system-trend-detective/)
 
 ![NASA Space Apps 2026](https://img.shields.io/badge/NASA%20Space%20Apps-2026%20M%C3%A1laga-0e1012)
 ![Licence](https://img.shields.io/badge/licence-Apache--2.0-e9ecee)
@@ -317,4 +317,4 @@ Space Apps 2026 calls this "SI"; the full declaration is in [`AI.md`](AI.md).
   narrates the answer. It never computes a number or decides a verdict, and its text is labelled as written by an
   AI narrator and checked figure by figure.
 - **Media.** The film and the deck are built from real app screenshots and real satellite and aerial imagery; no AI imagery is shown as data.
-- **Music.** The background music of the landing and web pitch films was generated with Google Lyria (AI), declared here and in the files' metadata. The 30-second submission video uses a separate instrumental track generated with Google Lyria 3 Pro (AI) through Artlist, declared in its description and metadata.
+- **Music.** The background music of the landing and web pitch films was generated with Google Lyria (AI), declared here and in the files' metadata. The 30-second submission video uses the same Google Lyria (AI) track, declared in its description and metadata.
