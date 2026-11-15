@@ -27,7 +27,7 @@ from app.detective.graph import BUDGET_REACHED, new_case
 from app.detective.ledger import Ledger, json_safe
 from app.detective.nodes import TOOL_ERROR_PREFIX, text_of
 from app.detective.place import Place
-from app.detective.scrub import scrub
+from app.detective.scrub import log_reason, scrub
 from app.detective.session import Session
 from app.detective.wording import screen_note, screen_thinking
 from app.investigate.landcover import box_around
@@ -360,7 +360,7 @@ def stream_run(graph: Any, run: Run) -> Iterator[Event]:
             n_tool_calls=n_calls,
         )
     except Exception as exc:  # noqa: BLE001 - a plain message, never a trace, URL or key
-        logger.warning("detective run failed: %s", type(exc).__name__)
+        logger.warning("detective run failed: %s", log_reason(exc))
         yield event("error", message=UNEXPECTED)
 
 

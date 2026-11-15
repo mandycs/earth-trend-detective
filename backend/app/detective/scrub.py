@@ -22,3 +22,15 @@ def scrub(text: str) -> str:
     for pattern, mask in _MASKS:
         text = pattern.sub(mask, text)
     return text
+
+
+_LONG_TOKEN = re.compile(r"\b(?:sk|pk|rk)-[\w-]{6,}|\b[A-Za-z0-9_\-]{32,}\b")
+LOG_REASON_MAX = 200
+
+
+def log_reason(exc: BaseException) -> str:
+    """`Type: short message` for a server log: links, keys, long tokens and paths masked, one line, capped."""
+    text = " ".join(_LONG_TOKEN.sub("[hidden]", scrub(str(exc))).split())
+    if len(text) > LOG_REASON_MAX:
+        text = text[: LOG_REASON_MAX - 1] + "…"
+    return f"{type(exc).__name__}: {text}" if text else type(exc).__name__

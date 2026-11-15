@@ -1,6 +1,7 @@
 """POST /detective and the iterate endpoints: the investigation as events (all offline)."""
 
 import json
+import logging
 
 import numpy as np
 import pandas as pd
@@ -12,6 +13,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.store.memory import InMemoryStore
 
 from app import gather
+from app.detective import events as detective_events
 from app.detective import router as detective_router
 from app.detective.persistence import open_persistence
 from app.detective.tools import TOOLS, ToolSpec
@@ -521,3 +523,43 @@ def test_a_broken_database_does_not_take_the_api_down(monkeypatch):
         assert r.status_code == 503
         assert "not ready" in r.json()["detail"]
     assert detective_router._persistence is None
+
+
+# --------------------------------------------------------------------------- errors reach the server log
+
+
+def test_a_run_that_cannot_start_is_logged_without_links_or_keys(client_with, monkeypatch, caplog):
+    def explode(*a, **kw):
+        raise RuntimeError("no route to https://openrouter.ai/api/v1?key=abc with sk-or-v1-0123456789abcdef")
+
+    monkeypatch.setattr(detective_router, "build_graph", explode)
+    with caplog.at_level(logging.INFO, logger="app"):
+        events = _post(client_with([]), **POINT)
+    assert events[0][1]["message"] == detective_events.UNEXPECTED
+    logged = [r for r in caplog.records if r.name == "app.detective.router"]
+    assert len(logged) == 1 and logged[0].levelno == logging.WARNING
+    text = logged[0].getMessage()
+    assert "RuntimeError" in text and "no route to" in text
+    assert "openrouter.ai" not in text and "sk-or" not in text and "abc" not in text
+
+
+def test_a_run_that_breaks_midway_is_logged(client_with, offline, monkeypatch, caplog):
+    def broken(*a, **kw):
+        raise ValueError("board went missing")
+
+    monkeypatch.setattr(detective_events, "board_payload", broken)
+    with caplog.at_level(logging.INFO, logger="app"):
+        events = _post(client_with([AIMessage(content=GOOD_ANSWER)]), **POINT)
+    assert events[-1] == ("error", {"message": detective_events.UNEXPECTED})
+    logged = [r.getMessage() for r in caplog.records if r.name == "app.detective.events"]
+    assert any("ValueError: board went missing" in m for m in logged)
+
+
+def test_app_logging_is_configured_at_info():
+    from app.main import configure_app_logging
+
+    configure_app_logging()
+    configure_app_logging()  # idempotent: one handler
+    app_logger = logging.getLogger("app")
+    assert app_logger.level == logging.INFO
+    assert sum(1 for h in app_logger.handlers if getattr(h, "_alibi", False)) == 1

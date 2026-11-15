@@ -12,6 +12,7 @@ directly (no model, no graph). Tests override `get_persistence` and `get_detecti
 
 from __future__ import annotations
 
+import logging
 import threading
 from collections.abc import Iterable, Iterator
 
@@ -37,8 +38,11 @@ from app.detective.events import (
 from app.detective.graph import build_graph, limits_from_env
 from app.detective.model import make_chat_model
 from app.detective.persistence import close_persistence, open_persistence
+from app.detective.scrub import log_reason
 from app.investigate.router import sse
 from app.investigate.sse import SSE_HEADERS
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["detective"])
 
@@ -107,7 +111,8 @@ def post_detective(
         run = prepare_run(graph, body)
     except RunRefused as exc:
         raise HTTPException(exc.status, exc.message) from None
-    except Exception:  # noqa: BLE001 - a plain message, never a trace
+    except Exception as exc:  # noqa: BLE001 - a plain message to the client, never a trace
+        logger.warning("detective run could not start: %s", log_reason(exc))
         return _stream([event("error", message=UNEXPECTED)])
     events: Iterator[Event] = stream_run(graph, run)
     return _stream(events)
