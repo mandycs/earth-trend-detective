@@ -317,4 +317,4 @@ Space Apps 2026 calls this "SI"; the full declaration is in [`AI.md`](AI.md).
   narrates the answer. It never computes a number or decides a verdict, and its text is labelled as written by an
   AI narrator and checked figure by figure.
 - **Media.** The film and the deck are built from real app screenshots and real satellite and aerial imagery; no AI imagery is shown as data.
-- **Music.** The background music of the landing and web pitch films was generated with Google Lyria (AI), declared here and in the files' metadata. The 30-second submission video has no AI music.
+- **Music.** The background music of the landing and web pitch films was generated with Google Lyria (AI), declared here and in the files' metadata. The 30-second submission video uses a separate instrumental track generated with Google Lyria 3 Pro (AI) through Artlist, declared in its description and metadata.
