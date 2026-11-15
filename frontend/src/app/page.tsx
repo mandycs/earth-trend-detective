@@ -111,6 +111,16 @@ export default function HomePage() {
             </p>
             <p className={styles.footerNote}>Built for NASA Space Apps 2026, Málaga.</p>
           </div>
+          <div>
+            <h2>Project</h2>
+            <ul>
+              <li>
+                <a href="https://github.com/mandycs/earth-trend-detective" target="_blank" rel="noreferrer noopener">
+                  Source code on GitHub
+                </a>
+              </li>
+            </ul>
+          </div>
         </div>
       </footer>
     </div>
