@@ -51,8 +51,21 @@ instead of showing every control at once.
 
 ## Verdict stamp
 
-Icon + words + fill strength, never colour alone, all in ink:
-`↓ Real` (solid ink, dark text) · `↑ Likely` (ink outline) · `? Can't tell yet` (tertiary dashed outline).
+A label, never a control: no box around it. Icon + words + a three-bar strength meter, all in ink:
+`▮▮▮ ↓ Real` (three bars filled) · `▮▮▯ ↑ Likely` (two filled) · `▯▯▯ ? Can't tell yet` (none filled,
+tertiary ink). Revised 15 Nov 2026: the boxed stamps read as buttons.
+
+## Labels vs. controls
+
+Accepted on 15 Nov 2026.
+
+- **Only controls get a box or a fill.** Status keys (layer status, verdicts, the relief note on the
+  map) are text: small uppercase key text or a caption, no border, no background.
+- **One filled button per view.** The current task (Next, Ask, Investigate). Map tools such as the
+  drone view are outlined on the ground colour.
+- **Secondary detail folds.** Gaps, pending records, caveats, method and sources are `<details>` with
+  a `+`/`−` and a count in the summary (`.sp-fold`). In the record list only the selected record shows
+  where it is measured.
 
 ## Brand
 

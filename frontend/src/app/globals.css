@@ -192,33 +192,48 @@ img {
   cursor: not-allowed;
 }
 
-/* The verdict stamp: icon + words + fill strength, never colour alone. */
+/* The verdict stamp: a label, not a control. Icon + words + a marker whose fill carries
+   the strength (solid = real, outline = likely, dashed = can't tell). No box around the
+   words, so it never reads as a button. */
 .stamp {
   font-family: var(--font-display);
   display: inline-flex;
   align-items: center;
   gap: 0.4em;
-  padding: 0.18em 0.55em 0.2em;
   font-weight: 800;
   font-stretch: 85%;
   line-height: 1.1;
   white-space: nowrap;
-  border: 3px solid currentColor;
+  color: var(--ink);
 }
 
-.stamp-real {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--on-accent);
+/* Strength meter: three rising bars. Real fills all three, likely two, can't tell none. */
+.stamp::before {
+  --on: currentColor;
+  --off: color-mix(in srgb, currentColor 22%, transparent);
+  content: '';
+  flex: none;
+  order: -1;
+  width: 0.78em;
+  height: 0.75em;
+  background:
+    linear-gradient(var(--b1, var(--on)), var(--b1, var(--on))) 0 100% / 0.2em 40% no-repeat,
+    linear-gradient(var(--b2, var(--on)), var(--b2, var(--on))) 0.29em 100% / 0.2em 70% no-repeat,
+    linear-gradient(var(--b3, var(--on)), var(--b3, var(--on))) 0.58em 100% / 0.2em 100% no-repeat;
 }
 
-.stamp-likely {
-  color: var(--accent);
+.stamp-likely::before {
+  --b3: var(--off);
 }
 
 .stamp-unknown {
   color: var(--ink-3);
-  border-style: dashed;
+}
+
+.stamp-unknown::before {
+  --b1: var(--off);
+  --b2: var(--off);
+  --b3: var(--off);
 }
 
 .stamp-big {

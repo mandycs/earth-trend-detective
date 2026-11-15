@@ -99,20 +99,24 @@ function Changing({ site, variable, mapKm, onSelectVariable }: { site: Site; var
                 ) : (
                   <Stamp verdict={entry.verdict} direction={entry.direction} className="sp-var-stamp" />
                 )}
-                <span className="sp-var-area">
-                  <FootprintGlyph fp={footprintOf(entry.id, entry.footprint)} mapKm={mapKm} className="sp-var-glyph" />
-                  <span>
-                    Over {footprintOf(entry.id, entry.footprint).words}: {footprintVsMap(footprintOf(entry.id, entry.footprint), mapKm)}
+                {/* Where the record is measured: only for the record on the timeline, so the
+                    list stays a list to scan and not a wall of explanations. */}
+                {selected ? (
+                  <span className="sp-var-area">
+                    <FootprintGlyph fp={footprintOf(entry.id, entry.footprint)} mapKm={mapKm} className="sp-var-glyph" />
+                    <span>
+                      Over {footprintOf(entry.id, entry.footprint).words}: {footprintVsMap(footprintOf(entry.id, entry.footprint), mapKm)}
+                    </span>
                   </span>
-                </span>
+                ) : null}
               </button>
             </li>
           )
         })}
       </ul>
       {gaps.length > 0 ? (
-        <div className="sp-missing sp-gaps">
-          <h3>Gaps in the records</h3>
+        <details className="sp-fold sp-gaps">
+          <summary>Gaps in the records ({gaps.length})</summary>
           <ul>
             {gaps.map(([id, why]) => (
               <li key={id}>
@@ -120,11 +124,11 @@ function Changing({ site, variable, mapKm, onSelectVariable }: { site: Site; var
               </li>
             ))}
           </ul>
-        </div>
+        </details>
       ) : null}
       {pending.length > 0 ? (
-        <div className="sp-missing">
-          <h3>Still on its way</h3>
+        <details className="sp-fold">
+          <summary>Still on its way ({pending.length})</summary>
           <ul>
             {pending.map(([id, why]) => (
               <li key={id}>
@@ -132,7 +136,7 @@ function Changing({ site, variable, mapKm, onSelectVariable }: { site: Site; var
               </li>
             ))}
           </ul>
-        </div>
+        </details>
       ) : null}
     </>
   )
@@ -205,7 +209,7 @@ function Real({ site, variable }: { site: Site; variable: SiteVariable }) {
           )}
         </div>
       ) : null}
-      <details className="sp-how">
+      <details className="sp-fold sp-how">
         <summary>How we know</summary>
         <p>
           Monthly records, with the normal seasons removed. Mann-Kendall trend test (Hamed-Rao correction for
@@ -319,14 +323,14 @@ function Climate({ site, variable, onSelectVariable }: { site: Site; variable: S
         </p>
       )}
       {caveats.length > 0 ? (
-        <div className="sp-caveats">
-          <h3>Read it right</h3>
+        <details className="sp-fold">
+          <summary>Read it right ({caveats.length})</summary>
           <ul>
             {caveats.map((c) => (
               <li key={c}>{c}</li>
             ))}
           </ul>
-        </div>
+        </details>
       ) : null}
       <NarratorButton siteId={site.id} />
     </>
@@ -392,7 +396,7 @@ export function StoryPanel({ site, variable, step, mapKm, onSelectVariable, onSt
           </button>
         )}
         {sources.length > 0 ? (
-          <details className="sp-sources">
+          <details className="sp-fold sp-sources">
             <summary>Data sources</summary>
             <ul>
               {sources.map((source) => (

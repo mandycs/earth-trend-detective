@@ -2115,3 +2115,125 @@
   text-underline-offset: 4px;
   cursor: pointer;
 }
+
+/* ---------------------------------------------------- hierarchy pass (15 Nov)
+   Labels look like labels, controls look like controls, and secondary detail folds. */
+
+/* Folding sections: one look for every <details> in the reading column. */
+.sp-fold {
+  border-top: 1px solid var(--line);
+}
+
+.sp-fold > summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  font-weight: 650;
+  list-style: none;
+}
+
+.sp-fold > summary::-webkit-details-marker {
+  display: none;
+}
+
+.sp-fold > summary::after {
+  content: '+';
+  flex: none;
+  width: 1.2em;
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: 400;
+  color: var(--ink-2);
+}
+
+.sp-fold[open] > summary::after {
+  content: '−';
+}
+
+.sp-fold > summary:hover {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.sp-fold > summary:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.sp-fold > ul {
+  margin: 0 0 14px;
+  padding-left: 1.1em;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--ink-2);
+}
+
+.sp-fold strong {
+  color: var(--ink);
+}
+
+/* The stamp inside a record row is a small label. */
+.sp-var-stamp {
+  font-size: 0.95rem;
+}
+
+/* Layer status: small key text with a marker, not a filled chip. */
+.lp-chip,
+.lp-chip-analysed,
+.lp-chip-observed,
+.lp-chip-visual_only {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  outline: 0;
+  color: var(--ink-2);
+  font-size: 0.8rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lp-chip-analysed {
+  color: var(--ink);
+}
+
+/* The relief note is a caption on the map, not a control. */
+.st-relief {
+  background: none;
+  padding-left: 0;
+  color: var(--ink);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.95), 0 1px 2px rgba(0, 0, 0, 0.95);
+}
+
+.st-relief span {
+  min-height: 0;
+  padding-right: 0;
+}
+
+/* The drone is a secondary action: outlined, never the filled primary. */
+.st-drone-toggle {
+  background: var(--ground);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--line); /* taste-skill-ignore: outline, not a shadow */
+}
+
+.st-drone-toggle:hover {
+  background: var(--surface-2);
+}
+
+/* The open Layers panel stops under the drone button instead of covering it. */
+@media (min-width: 1101px) {
+  .st:not(.st-documentary) .lp:not(.lp-folded) {
+    max-height: calc(100% - var(--tl-h) - 210px);
+  }
+}
