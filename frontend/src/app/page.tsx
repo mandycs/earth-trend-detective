@@ -7,6 +7,7 @@ import { shortName } from '../lib/cases'
 import { chaptersFor } from '../lib/chapters'
 import { CoverReel } from './landing/CoverReel'
 import type { ReelCase } from './landing/CoverReel'
+import { HeroFilm } from './landing/HeroFilm'
 import styles from './landing/cover.module.css'
 
 export const dynamic = 'force-static'
@@ -43,7 +44,11 @@ export default function HomePage() {
   return (
     <div className={styles.page}>
       <main>
-        <CoverReel cases={reel} years={span} />
+        <HeroFilm />
+
+        <div id="cases">
+          <CoverReel cases={reel} years={span} />
+        </div>
 
         <section className={styles.own} aria-labelledby="own-title">
           <img src="/img/blue-marble.jpg" alt="" className={styles.ownImage} loading="lazy" />

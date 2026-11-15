@@ -1,0 +1,47 @@
+{
+  "id": "dhw",
+  "title": "Heat stress on the peak day of each hot year",
+  "file_pattern": "layers/dhw/dhw_{YYYY}.png",
+  "value_pattern": "layers/dhw/dhw_{YYYY}_values.png",
+  "value_scale": 0.00047456282235175634,
+  "value_offset": -15.55,
+  "pixel_m": 5000,
+  "years": [
+    2009,
+    2016,
+    2017,
+    2020,
+    2022,
+    2024
+  ],
+  "dates": {
+    "2009": "2009-02-21",
+    "2016": "2016-03-24",
+    "2017": "2017-03-27",
+    "2020": "2020-03-14",
+    "2022": "2022-03-14",
+    "2024": "2024-03-08"
+  },
+  "missing_years": [],
+  "months": null,
+  "range": [
+    0,
+    12
+  ],
+  "unit": "°C-weeks",
+  "stops": [
+    "#fde68a",
+    "#f97316",
+    "#b91c1c"
+  ],
+  "legend": {
+    "less": "below 4 °C-weeks",
+    "more": "8 °C-weeks or more (Alert Level 2)",
+    "transparent": "Transparent = land or no data"
+  },
+  "method": "NOAA Coral Reef Watch daily degree heating weeks on the day the reef points inside this map peaked that year (January–June).",
+  "source": {
+    "name": "NOAA Coral Reef Watch daily degree heating weeks (not NASA)",
+    "url": "https://coastwatch.noaa.gov/erddap/griddap/noaacrwdhwDaily.html"
+  }
+}

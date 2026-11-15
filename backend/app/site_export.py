@@ -26,7 +26,7 @@ from app.gather import gather_site_series
 from app.layers import write_layers
 from app.site_report import GatherFn, report_from_gathered
 from app.site_story import badge, headline, round_floats
-from app.sites import Site, load_sites
+from app.sites import Site, load_sites, require_land
 from app.validation.mead_grace import SOURCE_TITLE, validate_grace_vs_mead
 from app.validation.usbr import USBR_MEAD_URL
 
@@ -35,9 +35,19 @@ logger = logging.getLogger(__name__)
 SITES_DIR = Path(__file__).resolve().parents[2] / "sites"
 PIPELINE_VERSION = "0.1"
 DEFAULT_EXAGGERATION = 3.0
-VERTICAL_EXAGGERATION: Mapping[str, float] = {"lake_mead": 3, "aletsch": 1.5, "donana": 8}
+VERTICAL_EXAGGERATION: Mapping[str, float] = {
+    "lake_mead": 3,
+    "aletsch": 1.5,
+    "donana": 8,
+    "great_barrier_reef": 30,
+}
 STEPS = ("What is changing here?", "Is it real, or is it chance?", "Is it the climate?")
-COUNTRY: Mapping[str, str] = {"lake_mead": "United States", "aletsch": "Switzerland", "donana": "Spain"}
+COUNTRY: Mapping[str, str] = {
+    "lake_mead": "United States",
+    "aletsch": "Switzerland",
+    "donana": "Spain",
+    "great_barrier_reef": "Australia",
+}
 MIN_MONTHS_PER_YEAR = 8
 BASE_CAVEATS = ("The leftover share is a clue, not an attribution.",)
 GRACE_CAVEAT = (
@@ -73,7 +83,8 @@ FOOTPRINTS: Mapping[str, dict] = {
     "appeears_water": {"km": 0.5, "label": "the site's 500 m MODIS pixels"},
 }
 UPSTREAM_FOOTPRINT = {"km": 50, "label": "two climate cells far upstream, in the river's mountain headwaters (NASA POWER)"}
-_TREND_RE = re.compile(r"^trend_(?P<var>.+)\.png$")
+# trend_<var>.png; its trend_<var>_values.png / _significant.png sidecars are not variables
+_TREND_RE = re.compile(r"^trend_(?P<var>.+?)(?P<sidecar>_values|_significant)?\.png$")
 _YEAR_RE = re.compile(r"^year_(?P<var>.+)_(?P<year>\d{4})\.png$")
 
 Validator = Callable[[pd.Series, int, int], Mapping]
@@ -86,7 +97,8 @@ def find_assets(site_dir: Path) -> dict:
     yearly: dict[str, str] = {}
     for name in names:
         if m := _TREND_RE.match(name):
-            trend[m["var"]] = name
+            if not m["sidecar"]:
+                trend[m["var"]] = name
         elif m := _YEAR_RE.match(name):
             yearly[m["var"]] = f"year_{m['var']}_{{YYYY}}.png"
     meta_path = site_dir / "heightmap.json"
@@ -225,12 +237,20 @@ def write_site_json(doc: Mapping, site_dir: Path) -> Path:
 
 
 def export_site(site_id: str, sites_dir: Path = SITES_DIR) -> dict:
-    """Build and write site.json for one site id; raises KeyError for an unknown id."""
+    """Build and write site.json for one site id; raises KeyError for an unknown id.
+
+    A sea site goes to `reef.export.export_reef` (cached ERDDAP data only).
+    """
     site_catalog = load_sites()
     site = site_catalog.get(site_id)
     if site is None:
         known = ", ".join(s.id for s in site_catalog.sites)
         raise KeyError(f"unknown site {site_id!r}; known: {known}")
+    if site.pipeline == "sea":  # the reef has its own builder (no land gather, no residual)
+        from app.reef import export as reef_export
+        from app.reef.points import DEFAULT_CACHE_DIR
+
+        return reef_export.export_reef(site, sites_dir, DEFAULT_CACHE_DIR)
     start, end = site_catalog.study_period
     site_dir = sites_dir / site.id
     doc = build_site_json(site, load_catalog(), start, end, site_dir)
@@ -249,8 +269,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     logging.getLogger("httpx").setLevel(logging.WARNING)  # signed URLs carry the user id
     if args.all == bool(args.site_id):
         parser.error("give a site id or --all (not both)")
-    ids = [s.id for s in load_sites().sites] if args.all else [args.site_id]
+    ids = load_sites().land_ids() if args.all else [args.site_id]
     for site_id in ids:
+        try:
+            require_land(site_id)
+        except ValueError as exc:
+            print(exc, file=sys.stderr)
+            return 2
         try:
             doc = export_site(site_id)
         except KeyError as exc:

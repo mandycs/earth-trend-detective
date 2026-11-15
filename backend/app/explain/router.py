@@ -72,6 +72,7 @@ def explain_route(body: RouteRequest, llm: LLM | None = Depends(get_llm)) -> dic
     return result.to_dict() | {"allowed_ids": list(choices)}
 
 
+# TODO(reef Task 7/9): this resolves the sea site great_barrier_reef with land logic; decide there.
 @router.post("/narrative")
 def explain_narrative(
     body: NarrativeRequest,

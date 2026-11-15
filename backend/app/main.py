@@ -187,6 +187,8 @@ def site_sweep(site_id: str, start: int | None = None, end: int | None = None) -
     if site is None:
         known = ", ".join(s.id for s in site_catalog.sites)
         raise HTTPException(404, f"We don't know a site called '{site_id}'. Pick one of: {known}.")
+    if site.pipeline == "sea":
+        raise HTTPException(409, "This sea case is precomputed; open it in story mode.")
     first, last = site_catalog.study_period
     start = first if start is None else start
     end = last if end is None else end

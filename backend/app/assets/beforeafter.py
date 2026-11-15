@@ -84,10 +84,14 @@ def build_before_after(
     return doc
 
 
+def default_site_ids() -> list[str]:
+    return [i for i in load_sites().land_ids() if i not in SKIP]
+
+
 def main(argv: list[str]) -> None:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     logging.getLogger("httpx").setLevel(logging.WARNING)
-    for site_id in argv or [s.id for s in load_sites().sites if s.id not in SKIP]:
+    for site_id in argv or default_site_ids():
         if site_id in SKIP:
             logger.warning("%s: skipped, %s", site_id, SKIP[site_id])
             continue

@@ -1,0 +1,361 @@
+{
+  "site": "great_barrier_reef",
+  "version": 1,
+  "layers": [
+    {
+      "id": "base",
+      "kind": "image",
+      "title": "Satellite picture",
+      "file": "base.jpg",
+      "status": "visual_only",
+      "source": {
+        "name": "MODIS Aqua corrected reflectance true colour, via GIBS",
+        "url": "https://nasa-gibs.github.io/gibs-api-docs/"
+      },
+      "dates": [
+        "2024-09-01"
+      ]
+    },
+    {
+      "id": "relief",
+      "kind": "heightmap",
+      "title": "Terrain height",
+      "file": "heightmap_rgb.png",
+      "encoding": "terrain-rgb",
+      "range_m": [
+        -100.0,
+        800.0
+      ],
+      "status": "visual_only",
+      "source": {
+        "name": "GEBCO Compilation Group, GEBCO 2020 Grid (not NASA)",
+        "url": "https://www.gebco.net/data-products/gridded-bathymetry-data/gebco2020-grid"
+      },
+      "note": "Heights clipped to −100…800 m so the shallow reef shelf stays visible; deeper sea and higher land are flattened."
+    },
+    {
+      "id": "hillshade",
+      "kind": "shading",
+      "title": "Relief shading",
+      "file": "hillshade.png",
+      "status": "visual_only",
+      "source": {
+        "name": "GEBCO Compilation Group, GEBCO 2020 Grid (not NASA)",
+        "url": "https://www.gebco.net/data-products/gridded-bathymetry-data/gebco2020-grid"
+      }
+    },
+    {
+      "id": "dhw",
+      "kind": "yearly",
+      "var": "dhw",
+      "title": "Heat stress on the peak day of each hot year",
+      "file_pattern": "layers/dhw/dhw_{YYYY}.png",
+      "value_pattern": "layers/dhw/dhw_{YYYY}_values.png",
+      "value_scale": 0.00047456282235175634,
+      "value_offset": -15.55,
+      "pixel_m": 5000,
+      "status": "observed",
+      "years": [
+        2009,
+        2016,
+        2017,
+        2020,
+        2022,
+        2024
+      ],
+      "months": null,
+      "legend": {
+        "unit": "°C-weeks",
+        "labels": {
+          "less": "below 4 °C-weeks",
+          "more": "8 °C-weeks or more (Alert Level 2)",
+          "transparent": "Transparent = land or no data"
+        },
+        "stops": [
+          "#fde68a",
+          "#f97316",
+          "#b91c1c"
+        ],
+        "range": [
+          0,
+          12
+        ]
+      },
+      "method": "NOAA Coral Reef Watch daily degree heating weeks on the day the reef points inside this map peaked that year (January–June).",
+      "source": {
+        "name": "NOAA Coral Reef Watch daily degree heating weeks (not NASA)",
+        "url": "https://coastwatch.noaa.gov/erddap/griddap/noaacrwdhwDaily.html"
+      }
+    },
+    {
+      "id": "trend_sst",
+      "kind": "trend",
+      "var": "sst",
+      "title": "Sea surface temperature: trend",
+      "file": "trend_sst.png",
+      "status": "analysed",
+      "years": [
+        2003,
+        2024
+      ],
+      "legend": {
+        "unit": "°C per decade",
+        "labels": {
+          "more": "↑ warmer water",
+          "less": "↓ cooler water",
+          "faded": "Faded = could be chance at this pixel",
+          "transparent": "Transparent = not enough data"
+        },
+        "stops": [
+          "#053061",
+          "#2a71b2",
+          "#6bacd1",
+          "#c2ddec",
+          "#f7f6f6",
+          "#fbccb4",
+          "#e48066",
+          "#ba2832",
+          "#67001f"
+        ],
+        "range": [
+          -0.3267,
+          0.3267
+        ]
+      },
+      "method": "Per pixel: Sen slope and Mann-Kendall S on annual means of deseasonalized monthly anomalies.",
+      "source": {
+        "name": "NASA JPL MUR sea surface temperature (GHRSST L4), via NOAA ERDDAP",
+        "url": "https://podaac.jpl.nasa.gov/dataset/MUR-JPL-L4-GLOB-v4.1"
+      },
+      "value_offset": -0.36411125000000044,
+      "value_scale": 1.1112132633442196e-05,
+      "value_file": "trend_sst_values.png",
+      "significance_file": "trend_sst_significant.png"
+    },
+    {
+      "id": "year_sst",
+      "kind": "yearly",
+      "var": "sst",
+      "title": "Sea surface temperature: year by year",
+      "file_pattern": "year_sst_{YYYY}.png",
+      "status": "analysed",
+      "years": [
+        2003,
+        2004,
+        2005,
+        2006,
+        2007,
+        2008,
+        2009,
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024
+      ],
+      "legend": {
+        "unit": "°C",
+        "labels": {
+          "more": "↑ warmer water than usual",
+          "less": "↓ cooler water than usual",
+          "transparent": "Transparent = not enough data that year"
+        },
+        "stops": [
+          "#053061",
+          "#2a71b2",
+          "#6bacd1",
+          "#c2ddec",
+          "#f7f6f6",
+          "#fbccb4",
+          "#e48066",
+          "#ba2832",
+          "#67001f"
+        ],
+        "range": [
+          -0.7015,
+          0.7015
+        ]
+      },
+      "method": null,
+      "source": {
+        "name": "NASA JPL MUR sea surface temperature (GHRSST L4), via NOAA ERDDAP",
+        "url": "https://podaac.jpl.nasa.gov/dataset/MUR-JPL-L4-GLOB-v4.1"
+      },
+      "value_offset": -0.829727268217893,
+      "value_scale": 2.532203949760103e-05,
+      "value_pattern": "value_sst_{YYYY}.png",
+      "baseline": "2003-2024 average for each calendar month"
+    }
+  ],
+  "timeline": {
+    "years": [
+      2003,
+      2004,
+      2005,
+      2006,
+      2007,
+      2008,
+      2009,
+      2010,
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024
+    ],
+    "layers": {
+      "base": {
+        "mode": "static"
+      },
+      "relief": {
+        "mode": "static"
+      },
+      "hillshade": {
+        "mode": "static"
+      },
+      "dhw": {
+        "mode": "yearly",
+        "years": [
+          2009,
+          2016,
+          2017,
+          2020,
+          2022,
+          2024
+        ]
+      },
+      "trend_sst": {
+        "mode": "span",
+        "years": [
+          2003,
+          2024
+        ]
+      },
+      "year_sst": {
+        "mode": "yearly",
+        "years": [
+          2003,
+          2004,
+          2005,
+          2006,
+          2007,
+          2008,
+          2009,
+          2010,
+          2011,
+          2012,
+          2013,
+          2014,
+          2015,
+          2016,
+          2017,
+          2018,
+          2019,
+          2020,
+          2021,
+          2022,
+          2023,
+          2024
+        ]
+      }
+    },
+    "records": {
+      "sst": [
+        2003,
+        2004,
+        2005,
+        2006,
+        2007,
+        2008,
+        2009,
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024
+      ],
+      "dhw": [
+        2003,
+        2004,
+        2005,
+        2006,
+        2007,
+        2008,
+        2009,
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024
+      ],
+      "chlorophyll": [
+        2003,
+        2004,
+        2005,
+        2006,
+        2007,
+        2008,
+        2009,
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024
+      ]
+    },
+    "record_map": {
+      "sst": "year_sst",
+      "dhw": "dhw",
+      "chlorophyll": null
+    }
+  }
+}

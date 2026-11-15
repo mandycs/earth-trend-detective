@@ -71,6 +71,7 @@ STYLES: Mapping[str, Style] = {
     "ndvi": Style("BrBG", "↑ more plant greenness", "↓ less plant greenness"),
     "et": Style("BrBG", "↑ more water evaporated", "↓ less water evaporated"),
     "snow_cover": Style("RdBu", "↑ more snow cover", "↓ less snow cover"),
+    "sst": Style("RdBu_r", "↑ warmer water", "↓ cooler water"),
 }
 
 
