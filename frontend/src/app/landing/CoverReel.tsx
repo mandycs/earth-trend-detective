@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { Wordmark } from '../../brand/Wordmark'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import styles from './cover.module.css'
 
 export interface ReelCase {
@@ -24,7 +24,12 @@ const SECONDS = 7
  */
 export function CoverReel({ cases, years }: { cases: ReelCase[]; years: string }) {
   const [index, setIndex] = useState(0)
-  const [t, setT] = useState(0)
+  // Progress within the current case lives in a ref and is painted straight onto the bar, so the
+  // reel does not re-render React sixty times a second.
+  const t = useRef(0)
+  const bar = useRef<HTMLElement>(null)
+  const section = useRef<HTMLElement>(null)
+  const [visible, setVisible] = useState(true)
   const [playing, setPlaying] = useState(true)
   // Only the picture on screen and the next one are fetched; the rest wait for their turn.
   const [warm, setWarm] = useState<ReadonlySet<number>>(() => new Set([0, 1]))
@@ -39,32 +44,43 @@ export function CoverReel({ cases, years }: { cases: ReelCase[]; years: string }
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) setPlaying(false)
   }, [])
 
+  // Off screen, the reel stops: no animation work while the viewer is on the film or below.
   useEffect(() => {
-    if (!playing || cases.length < 2) return
+    const el = section.current
+    if (!el || typeof IntersectionObserver === 'undefined') return
+    const io = new IntersectionObserver(([entry]) => setVisible(entry.isIntersecting), { threshold: 0.1 })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+
+  useEffect(() => {
+    if (bar.current) bar.current.style.width = `${((index + t.current) / Math.max(cases.length, 1)) * 100}%`
+  }, [index, cases.length])
+
+  useEffect(() => {
+    if (!playing || !visible || cases.length < 2) return
     let frame = 0
     let previous = performance.now()
     const tick = (now: number) => {
       const delta = Math.min((now - previous) / 1000, 0.1)
       previous = now
-      setT((value) => {
-        const next = value + delta / SECONDS
-        if (next >= 1) {
-          setIndex((i) => (i + 1) % cases.length)
-          return 0
-        }
-        return next
-      })
+      t.current += delta / SECONDS
+      if (t.current >= 1) {
+        t.current = 0
+        setIndex((i) => (i + 1) % cases.length)
+      }
+      if (bar.current) bar.current.style.width = `${((index + t.current) / cases.length) * 100}%`
       frame = requestAnimationFrame(tick)
     }
     frame = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(frame)
-  }, [playing, cases.length])
+  }, [playing, visible, cases.length, index])
 
   const current = cases[index]
   if (!current) return null
 
   return (
-    <section className={styles.reel} aria-label="Three solved cases">
+    <section ref={section} className={styles.reel} aria-label="Three solved cases">
       {cases.map((c, i) =>
         warm.has(i) || i === index ? (
           // next/image serves a WebP sized to the screen instead of the 2-4k source JPEG.
@@ -95,8 +111,8 @@ export function CoverReel({ cases, years }: { cases: ReelCase[]; years: string }
                 className={i === index ? `${styles.reelCase} ${styles.reelCaseOn}` : styles.reelCase}
                 aria-current={i === index ? 'true' : undefined}
                 onClick={() => {
+                  t.current = 0
                   setIndex(i)
-                  setT(0)
                 }}
               >
                 {c.name}
@@ -118,7 +134,7 @@ export function CoverReel({ cases, years }: { cases: ReelCase[]; years: string }
 
       <div className={styles.reelBottom}>
         <div className={styles.reelProgress} aria-hidden="true">
-          <i style={{ width: `${((index + t) / cases.length) * 100}%` }} />
+          <i ref={bar} />
         </div>
         <div className={styles.reelControls}>
           <Link href="/detective" className={styles.quiet}>
