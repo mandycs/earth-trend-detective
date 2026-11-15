@@ -2421,3 +2421,28 @@
     padding-bottom: 6px;
   }
 }
+
+/* Documentary chapter strip over the photo: the shared nav glass (DESIGN.md, nav chrome only), like the
+   cover's case strip. The tint carries AA contrast; inactive chapters rise from 60% to 84% white. */
+.doc-chapters {
+  padding: 4px;
+  background: var(--glass-bg, rgba(14, 16, 18, 0.72));
+  -webkit-backdrop-filter: var(--glass-blur, blur(14px) saturate(1.3));
+  backdrop-filter: var(--glass-blur, blur(14px) saturate(1.3));
+  border: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.doc-chapter {
+  color: rgba(255, 255, 255, 0.84);
+  text-shadow: none;
+  transition: color 200ms var(--ease), background 200ms var(--ease);
+}
+
+.doc-chapter-on {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.doc-chapter:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
