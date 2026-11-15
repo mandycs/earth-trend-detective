@@ -1,0 +1,9 @@
+.hyperframes/
+.thumbnails/
+.waveform-cache/
+renders/
+node_modules/
+
+# music: the licensed track and its cut are not committed (licence terms)
+assets/music/*.mp3
+assets/music/*.m4a
