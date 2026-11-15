@@ -31,6 +31,8 @@ export interface LoadedRecording { name: string; question: string; startedAt: st
 export interface DetectiveRun {
   run: RunState
   inv: Investigation
+  /** Every event of the thread so far (earlier turns first), for the guide's tool-call list. */
+  events: DetEvent[]
   /** Answer and `done` of every turn, keyed by the ending scene key. */
   outcomes: Record<string, TurnOutcome>
   /** Turns started so far (place events), for keying the question box per turn. */
@@ -149,5 +151,5 @@ export function useDetectiveRun(): DetectiveRun {
   const outcomes = useMemo(() => turnOutcomes(all), [all])
   const turns = useMemo(() => turnCount(all), [all])
 
-  return { run, inv, outcomes, turns, recording, start, stop, replay, reset }
+  return { run, inv, events: all, outcomes, turns, recording, start, stop, replay, reset }
 }

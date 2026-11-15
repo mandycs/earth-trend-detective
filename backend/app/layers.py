@@ -13,6 +13,7 @@ Usage (from backend/, venv active):
 from __future__ import annotations
 
 import argparse
+import sys
 import json
 import logging
 import re
@@ -20,7 +21,7 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 from app.assets.build import BASE_IMAGERY
-from app.sites import load_sites
+from app.sites import load_sites, require_land
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +34,15 @@ HLS = {
     "name": "NASA Harmonized Landsat Sentinel-2 (HLS) 30 m, via GIBS",
     "url": "https://www.earthdata.nasa.gov/data/projects/hls",
 }
+GEBCO = {
+    "name": "GEBCO Compilation Group, GEBCO 2020 Grid (not NASA)",
+    "url": "https://www.gebco.net/data-products/gridded-bathymetry-data/gebco2020-grid",
+}
+MODIS_AQUA_TRUE_COLOR = {
+    "name": "MODIS Aqua corrected reflectance true colour, via GIBS",
+    "url": "https://nasa-gibs.github.io/gibs-api-docs/",
+}
+RELIEF_SOURCES = {"GEBCO_2020": GEBCO}  # default NASADEM
 MODIS_TRUE_COLOR = {
     "name": "MODIS Terra corrected reflectance true colour, via GIBS",
     "url": "https://nasa-gibs.github.io/gibs-api-docs/",
@@ -57,6 +67,10 @@ DATASETS: Mapping[str, Mapping[str, str]] = {
     "MOD09A1.061": {
         "name": "MODIS Terra surface reflectance (MOD09A1 v061), via AppEEARS",
         "url": "https://lpdaac.usgs.gov/products/mod09a1v061/",
+    },
+    "jplMURSST41mday": {
+        "name": "NASA JPL MUR sea surface temperature (GHRSST L4), via NOAA ERDDAP",
+        "url": "https://podaac.jpl.nasa.gov/dataset/MUR-JPL-L4-GLOB-v4.1",
     },
 }
 _TREND_JSON_RE = re.compile(r"^trend_(?P<var>.+)\.json$")
@@ -91,6 +105,10 @@ def _legend(meta: Mapping) -> dict:
     return legend
 
 
+def _true_colour_source(imagery) -> dict:
+    return dict(MODIS_AQUA_TRUE_COLOR if imagery is not None and "Aqua" in imagery.layer else MODIS_TRUE_COLOR)
+
+
 def _base_layers(site_id: str, site_dir: Path, names: set[str]) -> list[dict]:
     layers: list[dict] = []
     if "base.jpg" in names:
@@ -102,7 +120,7 @@ def _base_layers(site_id: str, site_dir: Path, names: set[str]) -> list[dict]:
             "title": "Satellite picture",
             "file": "base.jpg",
             "status": "visual_only",
-            "source": dict(HLS if is_hls else MODIS_TRUE_COLOR),
+            "source": dict(HLS if is_hls else _true_colour_source(imagery)),
             "dates": [imagery.date] if imagery else [],
         })
     if "base_hq.jpg" in names:
@@ -124,6 +142,8 @@ def _base_layers(site_id: str, site_dir: Path, names: set[str]) -> list[dict]:
 def _relief_layers(site_dir: Path, names: set[str]) -> list[dict]:
     meta = _read_json(site_dir / "heightmap.json") if "heightmap.json" in names else None
     range_m = [meta["min_m"], meta["max_m"]] if meta and "min_m" in meta else None
+    source = RELIEF_SOURCES.get((meta or {}).get("source_id"), NASADEM)
+    note = {"note": meta["note"]} if meta and meta.get("note") else {}
     layers: list[dict] = []
     if "heightmap_rgb.png" in names:
         layers.append({
@@ -134,7 +154,8 @@ def _relief_layers(site_dir: Path, names: set[str]) -> list[dict]:
             "encoding": "terrain-rgb",  # height_m = -10000 + (R*65536 + G*256 + B) * 0.1
             "range_m": range_m,
             "status": "visual_only",
-            "source": dict(NASADEM),
+            "source": dict(source),
+            **note,
         })
     if "hillshade.png" in names:
         layers.append({
@@ -143,7 +164,7 @@ def _relief_layers(site_dir: Path, names: set[str]) -> list[dict]:
             "title": "Relief shading",
             "file": "hillshade.png",
             "status": "visual_only",
-            "source": dict(NASADEM),
+            "source": dict(source),
         })
     return layers
 
@@ -389,8 +410,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     if args.all == bool(args.site_ids):
         parser.error("give site ids or --all (not both)")
-    ids = [s.id for s in load_sites().sites] if args.all else args.site_ids
+    ids = load_sites().land_ids() if args.all else args.site_ids
     for site_id in ids:
+        try:
+            require_land(site_id)
+        except ValueError as exc:
+            print(exc, file=sys.stderr)
+            return 2
         write_layers(site_id, SITES_DIR / site_id)
     return 0
 

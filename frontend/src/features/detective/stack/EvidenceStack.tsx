@@ -3,7 +3,7 @@
 // The exploded evidence stack (Task 17): the current turn's layers as opaque slabs over the relief (or the flat
 // picture) of the same box. Separation is the point: this view is not the map's "one coloured layer at a time".
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { MutableRefObject } from 'react'
+import type { MutableRefObject, ReactNode } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import type { ThreeEvent } from '@react-three/fiber'
 import { OrbitControls } from '@react-three/drei'
@@ -35,6 +35,8 @@ export interface EvidenceStackProps {
   closeLabel?: string
   /** What picking a card does, read out at the end of its accessible name. Defaults to "Show it on the map." */
   pickHint?: string
+  /** "How to read the stack": a guide trigger under the lede. */
+  guide?: ReactNode
 }
 
 /** Shown on screen with the relief (DESIGN: the vertical exaggeration is shown). */
@@ -519,7 +521,7 @@ function layoutCards(want: number[], heights: number[], top: number, bottom: num
   return out
 }
 
-export default function EvidenceStack({ model, exploded, onPick, onClose, onCollapsed, reducedMotion, lede, closeLabel, pickHint = 'Show it on the map.' }: EvidenceStackProps) {
+export default function EvidenceStack({ model, exploded, onPick, onClose, onCollapsed, reducedMotion, lede, closeLabel, pickHint = 'Show it on the map.', guide }: EvidenceStackProps) {
   const box = model.bbox
   const depth = box ? boxAspect(box) : 1
   const [peak, setPeak] = useState(0)
@@ -649,6 +651,7 @@ export default function EvidenceStack({ model, exploded, onPick, onClose, onColl
             {lede ?? 'Each slab is one record drawn as a map over the same box, with the ground at the bottom. Pick one to see it on the map.'}
           </p>
           {model.note && <p className={styles.note}>{model.note}</p>}
+          {guide}
         </div>
         <button type="button" ref={closeRef} className="btn" onClick={onClose}>
           {closeLabel ?? 'Back to the map'}

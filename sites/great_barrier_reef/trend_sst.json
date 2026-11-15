@@ -1,0 +1,44 @@
+{
+  "var": "sst",
+  "label": "Sea surface temperature",
+  "kind": "trend",
+  "unit": "°C per decade",
+  "vmin": -0.3267,
+  "vmax": 0.3267,
+  "colormap": "RdBu_r",
+  "stops": [
+    "#053061",
+    "#2a71b2",
+    "#6bacd1",
+    "#c2ddec",
+    "#f7f6f6",
+    "#fbccb4",
+    "#e48066",
+    "#ba2832",
+    "#67001f"
+  ],
+  "legend": {
+    "more": "↑ warmer water",
+    "less": "↓ cooler water",
+    "faded": "Faded = could be chance at this pixel",
+    "transparent": "Transparent = not enough data"
+  },
+  "alpha": {
+    "significant": 230,
+    "faded": 70
+  },
+  "years": [
+    2003,
+    2024
+  ],
+  "pixels": 4777,
+  "share_significant": 0.8273,
+  "share_up": 1.0,
+  "method": "Per pixel: Sen slope and Mann-Kendall S on annual means of deseasonalized monthly anomalies.",
+  "value_file": "trend_sst_values.png",
+  "value_offset": -0.36411125000000044,
+  "value_scale": 1.1112132633442196e-05,
+  "significance_file": "trend_sst_significant.png",
+  "source": "jplMURSST41mday",
+  "missing_years": []
+}

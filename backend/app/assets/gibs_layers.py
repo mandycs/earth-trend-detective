@@ -381,10 +381,14 @@ def build_layer(site_id: str, layer: GibsLayer, sites_dir: Path = SITES_DIR) -> 
     return meta
 
 
+def default_site_ids() -> list[str]:
+    return load_sites().land_ids()
+
+
 def main(argv: Sequence[str]) -> None:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     logging.getLogger("httpx").setLevel(logging.WARNING)
-    for site_id in argv or [s.id for s in load_sites().sites]:
+    for site_id in argv or default_site_ids():
         for layer in LAYERS:
             build_layer(site_id, layer)
 

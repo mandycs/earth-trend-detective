@@ -38,6 +38,7 @@ import yaml
 from dotenv import load_dotenv
 
 from app.catalog import Variable, load_catalog, variables_for_site
+from app.sites import parse_pipeline
 
 logger = logging.getLogger(__name__)
 
@@ -125,6 +126,7 @@ def load_sites(path: Path = SITES_PATH) -> tuple[Site, ...]:
             tags=tuple(s.get("tags") or ()),
         )
         for s in data["sites"]
+        if parse_pipeline(str(s["id"]), s.get("pipeline")) != "sea"
     )
 
 

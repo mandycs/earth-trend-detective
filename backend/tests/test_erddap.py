@@ -502,3 +502,71 @@ def test_min_elevation_scales_the_stride_on_a_big_box(tmp_path):
     assert small[0].split(":")[1] == "4"  # the default for a small box
     lo, step, hi = big[0].split(":")
     assert (float(hi.strip("()")) - float(lo.strip("()"))) * 240 / int(step) <= 200
+
+
+# --------------------------------------------------------------------------- reef additions
+
+
+def test_elevation_grid_is_latitude_ascending_and_cached(tmp_path):
+    csv = (
+        "latitude,longitude,elevation\ndegrees_north,degrees_east,m\n"
+        "-20.0,147.0,-30.0\n-20.0,147.1,-10.0\n-19.9,147.0,5.0\n-19.9,147.1,-1.0\n"
+    )
+    calls = []
+
+    def handler(request):
+        calls.append(str(request.url))
+        return httpx.Response(200, text=csv)
+
+    grid = erddap.fetch_elevation_grid((147.0, -20.0, 147.1, -19.9), stride=2, client=_client(handler), cache_dir=tmp_path)
+    assert grid.dims == ("latitude", "longitude") and grid.shape == (2, 2)
+    assert list(grid.latitude.values) == [-20.0, -19.9]
+    assert float(grid.sel(latitude=-19.9, longitude=147.0)) == 5.0
+    assert "%5B" in calls[0] and "[" not in calls[0]
+    erddap.fetch_elevation_grid((147.0, -20.0, 147.1, -19.9), stride=2, client=_client(lambda r: 1 / 0), cache_dir=tmp_path)
+    assert len(calls) == 1
+
+
+def test_elevation_grid_error_page_is_not_cached(tmp_path):
+    with pytest.raises(erddap.ErddapError):
+        erddap.fetch_elevation_grid((0, 0, 1, 1), client=_client(lambda r: httpx.Response(200, text="<html>x")), cache_dir=tmp_path)
+    assert not list(tmp_path.rglob("*.csv"))
+
+
+def test_day_grid_one_encoded_request_and_cached(tmp_path):
+    import datetime as dt
+
+    csv = (
+        "time,latitude,longitude,degree_heating_week\nUTC,degrees_north,degrees_east,degree_Celsius\n"
+        "2016-03-20T12:00:00Z,-18.8,147.6,6.5\n2016-03-20T12:00:00Z,-18.8,147.65,NaN\n"
+    )
+    calls = []
+
+    def handler(request):
+        calls.append(str(request.url))
+        return httpx.Response(200, text=csv)
+
+    grid = erddap.fetch_day_grid(
+        "noaacrwdhwDaily", "degree_heating_week", (147.6, -18.8, 147.65, -18.8), dt.date(2016, 3, 20),
+        client=_client(handler), cache_dir=tmp_path,
+    )
+    assert float(grid.sel(latitude=-18.8, longitude=147.6)) == 6.5
+    assert np.isnan(float(grid.sel(latitude=-18.8, longitude=147.65)))
+    assert calls[0].startswith("https://coastwatch.noaa.gov/erddap/griddap/noaacrwdhwDaily.csv?degree_heating_week%5B(2016-03-20T12:00:00Z)%5D")
+    erddap.fetch_day_grid(
+        "noaacrwdhwDaily", "degree_heating_week", (147.6, -18.8, 147.65, -18.8), dt.date(2016, 3, 20),
+        client=_client(lambda r: 1 / 0), cache_dir=tmp_path,
+    )
+    assert len(calls) == 1
+
+
+def test_day_grid_404_and_error_page_raise_and_cache_nothing(tmp_path):
+    import datetime as dt
+
+    for response in (httpx.Response(404, text=erddap.NO_RESULTS), httpx.Response(200, text="<!DOCTYPE html>")):
+        with pytest.raises(erddap.ErddapError):
+            erddap.fetch_day_grid(
+                "noaacrwdhwDaily", "degree_heating_week", (0, 0, 1, 1), dt.date(2016, 3, 20),
+                client=_client(lambda r, response=response: response), cache_dir=tmp_path,
+            )
+    assert not list(tmp_path.rglob("*.csv"))
