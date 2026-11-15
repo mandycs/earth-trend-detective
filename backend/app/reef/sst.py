@@ -42,6 +42,7 @@ Fetch = Callable[..., xr.DataArray]
 
 @dataclass(frozen=True)
 class MurGrid(maps.Grid):
+    years: tuple[int, ...] = ()  # years requested, read or not
     missing_years: tuple[int, ...] = ()  # years whose fetch failed after its retries
 
 
@@ -125,32 +126,34 @@ def mur_grid(
         monthly=np.asarray(cube.values, dtype=float),
         lat=np.asarray(cube["latitude"].values, dtype=float),
         lon=np.asarray(cube["longitude"].values, dtype=float),
+        years=tuple(years),
         missing_years=tuple(missing),
     )
 
 
-def box_mean_series(grid: maps.Grid) -> pd.Series:
+def box_mean_series(grid: MurGrid) -> pd.Series:
     """Plain mean of the valid sea pixels per month (month-start index; NaN = no pixel).
 
-    The index runs January of the first year to December of the last, so a missing month
-    or year shows as NaN instead of disappearing.
+    The index runs January of the first requested year to December of the last, so a
+    missing month or a failed year (first and last included) shows as NaN, never disappears.
     """
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", RuntimeWarning)  # all-NaN month -> NaN
         means = np.nanmean(grid.monthly.reshape(len(grid.times), -1), axis=1)
     series = pd.Series(means, index=pd.DatetimeIndex(grid.times), dtype=float)
-    if series.empty:
+    years = sorted(set(grid.years) | set(series.index.year))
+    if not years:
         return series.rename(SST_VAR_ID)
-    full = pd.date_range(f"{series.index.min().year}-01-01", f"{series.index.max().year}-12-01", freq="MS")
+    full = pd.date_range(f"{years[0]}-01-01", f"{years[-1]}-12-01", freq="MS")
     return series.reindex(full).rename(SST_VAR_ID)
 
 
 def write_sst_maps(
-    var: Variable, grid: maps.Grid, site_dir: Path, bbox: Sequence[float], start: int, end: int
+    var: Variable, grid: MurGrid, site_dir: Path, bbox: Sequence[float], start: int, end: int
 ) -> list[Path]:
     """`trend_sst` and `year_sst_<YYYY>` (with sidecars); missing years noted in both JSONs."""
     written = maps.write_variable_maps(var, grid, site_dir, bbox, start, end)
-    missing = sorted(y for y in getattr(grid, "missing_years", ()) if start <= y <= end)
+    missing = sorted(y for y in grid.missing_years if start <= y <= end)
     for name in (f"trend_{var.id}.json", f"year_{var.id}.json"):
         path = site_dir / name
         doc = json.loads(path.read_text(encoding="utf-8"))

@@ -7,6 +7,7 @@ import xarray as xr
 from PIL import Image
 
 from app import layers
+from app.assets import maps
 from app.catalog import load_catalog
 from app.extractors.erddap import ErddapError
 from app.reef import sst
@@ -168,3 +169,61 @@ def test_offline_reads_cache(tmp_path):
     assert fetch.calls == []
     assert year.dims == ("time", "latitude", "longitude")
     assert float(year.latitude[0]) > float(year.latitude[-1])
+
+
+def test_failed_last_year_stays_as_twelve_nan_months(tmp_path):
+    grid = sst.mur_grid(range(2003, 2025), BBOX, tmp_path, fetch=FakeFetch(fail={2024}))
+    assert grid.years == tuple(range(2003, 2025))
+    assert grid.missing_years == (2024,)
+    series = sst.box_mean_series(grid)
+    assert series.index[0] == pd.Timestamp("2003-01-01")
+    assert series.index[-1] == pd.Timestamp("2024-12-01")
+    y2024 = series[series.index.year == 2024]
+    assert len(y2024) == 12 and y2024.isna().all()
+
+
+def test_failed_first_year_stays_as_twelve_nan_months(tmp_path):
+    grid = sst.mur_grid(range(2003, 2025), BBOX, tmp_path, fetch=FakeFetch(fail={2003}))
+    series = sst.box_mean_series(grid)
+    assert series.index[0] == pd.Timestamp("2003-01-01")
+    y2003 = series[series.index.year == 2003]
+    assert len(y2003) == 12 and y2003.isna().all()
+    assert series[series.index.year == 2004].notna().all()
+
+
+CORNER_LATS = np.array([-21.0, -20.0, -19.0, -18.0, -17.0])  # ascending, bbox south..north
+CORNER_LONS = np.array([145.5, 146.625, 147.75, 148.875, 150.0])  # bbox west..east
+PLANT = (-18.0, 148.875)  # warms 0.1 °C/yr faster than the rest
+
+
+def _corner_fetch(dataset, variable, bbox, start, end, stride, **kwargs):
+    times = pd.date_range(f"{start}-01-01", periods=12, freq="MS") + pd.Timedelta(days=15)
+    months = times.month.to_numpy()
+    base = 26.0 + 2.0 * np.cos(2 * np.pi * (months - 2) / 12) + 0.03 * (start - 2003)
+    cube = np.broadcast_to(base[:, None, None], (12, len(CORNER_LATS), len(CORNER_LONS))).copy()
+    r, c = list(CORNER_LATS).index(PLANT[0]), list(CORNER_LONS).index(PLANT[1])
+    cube[:, r, c] += 0.1 * (start - 2003)
+    return xr.DataArray(
+        cube, dims=("time", "latitude", "longitude"),
+        coords={"time": times, "latitude": CORNER_LATS, "longitude": CORNER_LONS}, name="sst",
+    )
+
+
+def test_overlay_aligns_with_bbox_corners(tmp_path, sst_var):
+    grid = sst.mur_grid(range(2003, 2025), BBOX, tmp_path, fetch=_corner_fetch)
+    site_dir = tmp_path / "site"
+    site_dir.mkdir()
+    sst.write_sst_maps(sst_var, grid, site_dir, BBOX, 2003, 2024)
+    meta = json.loads((site_dir / "trend_sst.json").read_text())
+    with Image.open(site_dir / meta["value_file"]) as im:
+        width, height = im.size
+        code = np.asarray(im).astype(float)
+    assert (width, height) == maps.overlay_size(site_dir, BBOX)
+    values = meta["value_offset"] + meta["value_scale"] * code
+    # rows north -> south: lat -18 is row 1 of 5; lon 148.875 is column 3 of 5
+    row, col = 1, 3
+    y, x = int((row + 0.5) * height / 5), int((col + 0.5) * width / 5)
+    assert values[y, x] == pytest.approx(1.3, abs=1e-3)  # (0.03 + 0.1) °C/yr per decade
+    assert values[y, int(0.5 * width / 5)] == pytest.approx(0.3, abs=1e-3)
+    assert values[int(0.5 * height / 5), x] == pytest.approx(0.3, abs=1e-3)
+    assert values[int(4.5 * height / 5), int(4.5 * width / 5)] == pytest.approx(0.3, abs=1e-3)
