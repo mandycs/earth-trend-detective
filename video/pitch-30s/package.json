@@ -1,0 +1,11 @@
+{
+  "name": "alibi-pitch-30s",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "python3 build.py",
+    "dev": "npx --yes hyperframes@0.9.47 preview",
+    "check": "npx --yes hyperframes@0.9.47 check",
+    "render": "./render.sh"
+  }
+}

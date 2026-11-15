@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1920, height=1080" />
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js"></script>
+<style>
+  @font-face { font-family: "Archivo"; src: url(assets/fonts/archivo.woff2) format("woff2"); font-weight: 100 900; font-stretch: 62% 125%; }
+  @font-face { font-family: "Manrope"; src: url(assets/fonts/manrope.woff2) format("woff2"); font-weight: 200 800; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { margin: 0; width: 1920px; height: 1080px; overflow: hidden; background: #0e1012; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="29.5" data-width="1920" data-height="1080">
+  <div id="mead" data-composition-id="mead" data-composition-src="compositions/mead.html" data-start="0.0" data-duration="3.9" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+  <div id="saw" data-composition-id="saw" data-composition-src="compositions/saw.html" data-start="3.9" data-duration="1.7" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+  <div id="jargon" data-composition-id="jargon" data-composition-src="compositions/jargon.html" data-start="5.6" data-duration="5.3" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+  <div id="turn" data-composition-id="turn" data-composition-src="compositions/turn.html" data-start="10.9" data-duration="1.8" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+  <div id="ask" data-composition-id="ask" data-composition-src="compositions/ask.html" data-start="12.7" data-duration="4.3" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+  <div id="stack" data-composition-id="stack" data-composition-src="compositions/stack.html" data-start="17.0" data-duration="2.4" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+  <div id="answer" data-composition-id="answer" data-composition-src="compositions/answer.html" data-start="19.4" data-duration="3.7" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+  <div id="close" data-composition-id="close" data-composition-src="compositions/close.html" data-start="23.1" data-duration="2.1" data-track-index="1" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+  <div id="sting" style="z-index:50" data-composition-id="sting" data-composition-src="compositions/sting.html" data-start="24.8" data-duration="4.7" data-track-index="4" data-track-kind="graphics" data-width="1920" data-height="1080"></div>
+  <!-- Music slot empty: drop assets/music/track.mp3 and run ./render.sh -->
+</div>
+<script>
+  const tl = gsap.timeline({ paused: true });
+  window.__timelines["main"] = tl;
+  tl.seek(0);
+</script>
+</body>
+</html>

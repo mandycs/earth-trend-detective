@@ -1,0 +1,83 @@
+<template>
+<style>
+  @font-face { font-family: "Archivo"; src: url(assets/fonts/archivo.woff2) format("woff2"); font-weight: 100 900; font-stretch: 62% 125%; }
+  @font-face { font-family: "Manrope"; src: url(assets/fonts/manrope.woff2) format("woff2"); font-weight: 200 800; }
+  #jargon-root { position: absolute; inset: 0; overflow: hidden; background: #0e1012; }
+  #jargon-root .h { position: absolute; left: 96px; font-family: "Archivo", sans-serif; font-stretch: 75%; font-weight: 800;
+        text-transform: uppercase; color: #e9ecee; line-height: 0.92; }
+  #jargon-root .lab { position: absolute; left: 100px; font-family: "Manrope", sans-serif; font-weight: 700; font-size: 34px;
+         letter-spacing: 0.12em; text-transform: uppercase; color: #aeb6bc; }
+  #jargon-root .src { position: absolute; left: 100px; bottom: 56px; font-family: "Manrope", sans-serif; font-weight: 500;
+         font-size: 28px; color: #9aa2a8; }
+  .term { position: absolute; white-space: nowrap; font-family: "Manrope", sans-serif; font-weight: 700;
+           color: #e9ecee; letter-spacing: -0.01em; line-height: 1; transform-origin: 0% 50%; }
+  #j-pile { position: absolute; inset: 0; }
+  #j-h1 { top: 300px; font-size: 170px; width: 1700px; }
+  #j-h2 { top: 300px; font-size: 230px; width: 1700px; }
+</style>
+<div id="jargon-root" data-composition-id="jargon" data-width="1920" data-height="1080" data-layout-allow-overlap>
+  <h2 id="j-h1" class="h">But reading it takes tools few people speak.</h2>
+  <div id="j-pile">
+    <div id="j0" class="term" style="left:110px;top:300px;font-size:150px">MOD11A2 v061</div>
+    <div id="j1" class="term" style="left:640px;top:560px;font-size:104px">GRACE-FO mascons RL06.3</div>
+    <div id="j2" class="term" style="left:180px;top:780px;font-size:96px">Mann–Kendall · Hamed &amp; Rao</div>
+    <div id="j3" class="term" style="left:1240px;top:160px;font-size:120px">Sen slope</div>
+    <div id="j4" class="term" style="left:1380px;top:820px;font-size:130px">ERDDAP</div>
+    <div id="j5" class="term" style="left:90px;top:120px;font-size:80px">GLDAS Noah v2.1</div>
+    <div id="j6" class="term" style="left:980px;top:380px;font-size:92px">AppEEARS</div>
+    <div id="j7" class="term" style="left:120px;top:520px;font-size:70px">false discovery rate</div>
+    <div id="j8" class="term" style="left:1080px;top:690px;font-size:64px">Benjamini–Hochberg</div>
+    <div id="j9" class="term" style="left:700px;top:120px;font-size:76px">MERRA-2</div>
+    <div id="j10" class="term" style="left:80px;top:940px;font-size:58px">MCD12Q1 IGBP</div>
+    <div id="j11" class="term" style="left:1400px;top:520px;font-size:56px">MOD13A3 NDVI</div>
+    <div id="j12" class="term" style="left:620px;top:900px;font-size:88px">IMERG</div>
+    <div id="j13" class="term" style="left:1560px;top:300px;font-size:60px">NASADEM</div>
+    <div id="j14" class="term" style="left:300px;top:660px;font-size:50px">HLS S30 / L30</div>
+    <div id="j15" class="term" style="left:980px;top:950px;font-size:50px">Hydrology Data Rods</div>
+    <div id="j16" class="term" style="left:520px;top:250px;font-size:54px">OPeNDAP</div>
+    <div id="j17" class="term" style="left:1640px;top:640px;font-size:52px">PO.DAAC</div>
+    <div id="j18" class="term" style="left:90px;top:400px;font-size:48px">GES DISC</div>
+    <div id="j19" class="term" style="left:760px;top:760px;font-size:46px">autocorrelation</div>
+    <div id="j20" class="term" style="left:1180px;top:280px;font-size:44px">LP DAAC</div>
+    <div id="j21" class="term" style="left:420px;top:420px;font-size:44px">Theil–Sen</div>
+    <div id="j22" class="term" style="left:1300px;top:420px;font-size:40px">Earthdata Login</div>
+    <div id="j23" class="term" style="left:860px;top:220px;font-size:42px">GIBS WMTS</div>
+    <div id="j24" class="term" style="left:1620px;top:960px;font-size:46px">q-value</div>
+  </div>
+  <h2 id="j-h2" class="h">Nobody told<br>the story.</h2>
+</div>
+<script>
+  const tl = gsap.timeline({ paused: true });
+  tl.fromTo("#j-h1", {opacity: 0, filter: "blur(10px)"}, {opacity: 1, filter: "blur(0px)", duration: 0.2, ease: "power4.out"}, 0.05);
+  tl.to("#j-h1", {opacity: 0, duration: 0.12, ease: "power2.in"}, 1.88);
+  tl.fromTo("#j0", {opacity: 0, scale: 1.12}, {opacity: 1.0, scale: 1, duration: 0.1, ease: "power3.out"}, 2.0);
+  tl.fromTo("#j1", {opacity: 0, scale: 1.12}, {opacity: 1.0, scale: 1, duration: 0.1, ease: "power3.out"}, 2.18);
+  tl.fromTo("#j2", {opacity: 0, scale: 1.12}, {opacity: 1.0, scale: 1, duration: 0.1, ease: "power3.out"}, 2.324);
+  tl.fromTo("#j3", {opacity: 0, scale: 1.12}, {opacity: 0.9, scale: 1, duration: 0.1, ease: "power3.out"}, 2.444);
+  tl.fromTo("#j4", {opacity: 0, scale: 1.12}, {opacity: 0.85, scale: 1, duration: 0.1, ease: "power3.out"}, 2.54);
+  tl.fromTo("#j5", {opacity: 0, scale: 1.12}, {opacity: 0.8, scale: 1, duration: 0.1, ease: "power3.out"}, 2.618);
+  tl.fromTo("#j6", {opacity: 0, scale: 1.12}, {opacity: 0.85, scale: 1, duration: 0.1, ease: "power3.out"}, 2.684);
+  tl.fromTo("#j7", {opacity: 0, scale: 1.12}, {opacity: 0.75, scale: 1, duration: 0.1, ease: "power3.out"}, 2.738);
+  tl.fromTo("#j8", {opacity: 0, scale: 1.12}, {opacity: 0.7, scale: 1, duration: 0.1, ease: "power3.out"}, 2.786);
+  tl.fromTo("#j9", {opacity: 0, scale: 1.12}, {opacity: 0.7, scale: 1, duration: 0.1, ease: "power3.out"}, 2.828);
+  tl.fromTo("#j10", {opacity: 0, scale: 1.12}, {opacity: 0.65, scale: 1, duration: 0.1, ease: "power3.out"}, 2.864);
+  tl.fromTo("#j11", {opacity: 0, scale: 1.12}, {opacity: 0.65, scale: 1, duration: 0.1, ease: "power3.out"}, 2.894);
+  tl.fromTo("#j12", {opacity: 0, scale: 1.12}, {opacity: 0.7, scale: 1, duration: 0.1, ease: "power3.out"}, 2.924);
+  tl.fromTo("#j13", {opacity: 0, scale: 1.12}, {opacity: 0.6, scale: 1, duration: 0.1, ease: "power3.out"}, 2.951);
+  tl.fromTo("#j14", {opacity: 0, scale: 1.12}, {opacity: 0.6, scale: 1, duration: 0.1, ease: "power3.out"}, 2.975);
+  tl.fromTo("#j15", {opacity: 0, scale: 1.12}, {opacity: 0.6, scale: 1, duration: 0.1, ease: "power3.out"}, 2.999);
+  tl.fromTo("#j16", {opacity: 0, scale: 1.12}, {opacity: 0.55, scale: 1, duration: 0.1, ease: "power3.out"}, 3.02);
+  tl.fromTo("#j17", {opacity: 0, scale: 1.12}, {opacity: 0.55, scale: 1, duration: 0.1, ease: "power3.out"}, 3.041);
+  tl.fromTo("#j18", {opacity: 0, scale: 1.12}, {opacity: 0.55, scale: 1, duration: 0.1, ease: "power3.out"}, 3.059);
+  tl.fromTo("#j19", {opacity: 0, scale: 1.12}, {opacity: 0.5, scale: 1, duration: 0.1, ease: "power3.out"}, 3.077);
+  tl.fromTo("#j20", {opacity: 0, scale: 1.12}, {opacity: 0.5, scale: 1, duration: 0.1, ease: "power3.out"}, 3.095);
+  tl.fromTo("#j21", {opacity: 0, scale: 1.12}, {opacity: 0.5, scale: 1, duration: 0.1, ease: "power3.out"}, 3.113);
+  tl.fromTo("#j22", {opacity: 0, scale: 1.12}, {opacity: 0.45, scale: 1, duration: 0.1, ease: "power3.out"}, 3.131);
+  tl.fromTo("#j23", {opacity: 0, scale: 1.12}, {opacity: 0.45, scale: 1, duration: 0.1, ease: "power3.out"}, 3.149);
+  tl.fromTo("#j24", {opacity: 0, scale: 1.12}, {opacity: 0.45, scale: 1, duration: 0.1, ease: "power3.out"}, 3.167);
+  tl.fromTo("#j-pile", {scale: 1}, {scale: 1.06, duration: 1.48, ease: "power1.in"}, 2.00);
+  tl.set("#j-pile", {opacity: 0}, 3.48);
+  tl.fromTo("#j-h2", {opacity: 0, filter: "blur(10px)"}, {opacity: 1, filter: "blur(0px)", duration: 0.22, ease: "power4.out"}, 3.53);
+  window.__timelines["jargon"] = tl;
+</script>
+</template>
