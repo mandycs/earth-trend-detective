@@ -380,6 +380,60 @@ def fetch_point_yearly_max(
     return series, cell
 
 
+# --------------------------------------------------------------------------- bathymetry
+
+
+def fetch_min_elevation(
+    bbox: tuple[float, float, float, float],
+    client: httpx.Client | None = None,
+    cache_dir: Path | None = None,
+    stride: int = 4,
+) -> float:
+    """Lowest GEBCO_2020 elevation (m, negative below sea level) in bbox (west, south, east, north).
+
+    Static data, so the answer is cached forever. Raises `ErddapError` if it cannot be read.
+    """
+    west, south, east, north = bbox
+    url = griddap_url("GEBCO_2020", "elevation", [_axis(south, north, stride), _axis(west, east, stride)])
+    path = _cache_path(cache_dir_default if cache_dir is None else cache_dir, "GEBCO_2020", url)
+    text = None
+    if path.exists():
+        try:
+            text = path.read_text(encoding="utf-8")
+            return _min_elevation(text)
+        except (ErddapError, OSError, UnicodeDecodeError):
+            path.unlink(missing_ok=True)
+    own = client is None
+    client = client or new_client()
+    try:
+        text = _request(client, url)
+    except _NoResults as exc:
+        raise ErddapError("GEBCO has no data for this box") from exc
+    finally:
+        if own:
+            client.close()
+    low = _min_elevation(text)  # validate before caching
+    try:
+        _write_atomic(path, text)
+    except OSError as exc:
+        logger.warning("ERDDAP GEBCO: cache write failed: %s", exc)
+    return low
+
+
+def _min_elevation(text: str) -> float:
+    head = text.lstrip()[:200].lower()
+    if head.startswith("<!doctype") or head.startswith("<html") or head.startswith("error"):
+        raise ErddapError("ERDDAP answered with an error page instead of CSV")
+    try:
+        frame = pd.read_csv(StringIO(text), skiprows=[1])
+        values = pd.to_numeric(frame["elevation"], errors="coerce").dropna()
+    except Exception as exc:  # noqa: BLE001 - any unreadable body is a source failure
+        raise ErddapError(f"unreadable GEBCO CSV: {exc}") from exc
+    if values.empty:
+        raise ErddapError("GEBCO CSV without elevation values")
+    return float(values.min())
+
+
 # --------------------------------------------------------------------------- grid
 
 

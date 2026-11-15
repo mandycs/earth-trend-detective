@@ -18,7 +18,9 @@ import pandas as pd
 from app import gather
 from app.catalog import Variable, variables_for_site
 from app.detective.ledger import TestRecord
+from app.detective.place import Place
 from app.detective.session import Session
+from app.extractors import erddap
 from app.investigate import landcover
 from app.investigate.runner import LAND_COVER_YEARS
 from app.stats.deseason import monthly_anomalies
@@ -35,6 +37,8 @@ SOURCE_DOWN_REASON = "The data source did not answer. Try again in a few minutes
 ANNUAL_PENDING_REASON = "not_available_here: one value per year; the yearly trend test is not connected yet"
 NOT_SEA_REASON = "not_available_here: a sea variable; this place is on land"
 GRACE_AT_SEA_REASON = "measures water stored on land; over open sea it is not meaningful"
+LAND_AT_SEA_REASON = "not_available_here: a land-only source; this place is open sea"
+SEA_MAX_ELEVATION_M = -5.0  # a box whose lowest point is at or below this is sea; lakes sit above it
 OPEN_SEA_WATER_SHARE = 0.95  # at least this much water: land-only sources are hidden
 LAND_ONLY_SOURCES = APPEEARS_SOURCES | {"gldas"}
 # Native grid of each catalog dataset (matched on the `dataset` prefix in variables.yaml).
@@ -106,7 +110,22 @@ def _is_opt_in(var: Variable) -> bool:
     return var.role == "driver" and not var.applies_to
 
 
+def _open_sea_reason(session: Session, var: Variable) -> str | None:
+    """Why `var` makes no sense over open sea (None when it does): one predicate for the
+    listing and for fetching, so they cannot disagree."""
+    if not _open_sea(session):
+        return None
+    if var.source in LAND_ONLY_SOURCES:
+        return LAND_AT_SEA_REASON
+    if var.source == "grace":
+        return GRACE_AT_SEA_REASON
+    return None
+
+
 def _unavailable_reason(session: Session, var: Variable, extra_ids: frozenset[str]) -> str | None:
+    at_sea = _open_sea_reason(session, var)
+    if at_sea is not None:
+        return at_sea
     if var.temporal == "annual":  # not on the monthly-anomaly trend path
         return ANNUAL_PENDING_REASON
     if var.source in APPEEARS_SOURCES and session.place.site_id is None:
@@ -125,12 +144,29 @@ def profile_place(session: Session) -> dict:
     return _through_ledger(session, "profile_place", args, lambda: _profile(session))
 
 
+def _is_sea(place: Place) -> bool:
+    """True only with evidence: a free place (not a curated case) whose box has ground at or
+    below -5 m (GEBCO). A lake or reservoir sits above sea level; a failed call means no sea tags."""
+    if place.site_id is not None:
+        return False
+    try:
+        return erddap.fetch_min_elevation(tuple(place.bbox)) <= SEA_MAX_ELEVATION_M
+    except Exception as exc:  # noqa: BLE001 - never claim sea without evidence
+        logger.warning("GEBCO failed at %s,%s: %s: %s", place.lat, place.lon, type(exc).__name__, exc)
+        return False
+
+
 def _profile(session: Session) -> dict:
     place = session.place
     try:
         cover = landcover.fetch_land_cover(place.lat, place.lon, LAND_COVER_YEARS[-1])
-        new_tags = tuple(dict.fromkeys(landcover.tags_for(cover.shares, lat=place.lat) + landcover.zone_tags(cover.shares, place.lat)))
-        water_share = float(cover.shares.get(landcover.WATER_CLASS, 0.0)) if cover.shares else 1.0  # no pixels: open sea
+        sea = _is_sea(place)
+        new_tags = tuple(
+            dict.fromkeys(landcover.tags_for(cover.shares, lat=place.lat) + landcover.zone_tags(cover.shares, place.lat, sea=sea))
+        )
+        # Only a confirmed sea gets a water share. No classified pixel at all means open sea
+        # (GIBS paints no land cover there), so that counts as 100 % water.
+        water_share = (float(cover.shares.get(landcover.WATER_CLASS, 0.0)) if cover.shares else 1.0) if sea else None
     except Exception as exc:  # noqa: BLE001 - the place can still be investigated without land cover
         logger.warning("land cover failed at %s,%s: %s: %s", place.lat, place.lon, type(exc).__name__, exc)
         return {
@@ -186,11 +222,7 @@ def _rows(session: Session) -> list[dict]:
     for var in applicable + opt_in + off_sea:
         if open_sea and var.source in LAND_ONLY_SOURCES:
             continue  # land models and land sensors say nothing over open sea
-        reason = _unavailable_reason(session, var, extra_ids)
-        if var in off_sea:
-            reason = NOT_SEA_REASON
-        elif open_sea and var.source == "grace":
-            reason = GRACE_AT_SEA_REASON
+        reason = NOT_SEA_REASON if var in off_sea else _unavailable_reason(session, var, extra_ids)
         row = {
             "id": var.id,
             "label": var.label,

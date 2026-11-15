@@ -465,3 +465,22 @@ def test_corrupt_cache_file_is_deleted_and_fetched_again(tmp_path):
     assert len(calls) == 2
     pd.testing.assert_series_equal(first, again)
     assert "half-written" not in cached.read_text(encoding="utf-8")  # healed
+
+
+def test_min_elevation_is_the_lowest_cell_and_is_cached(tmp_path):
+    csv = "latitude,longitude,elevation\ndegrees_north,degrees_east,m\n36.0,-10.0,-250.0\n36.1,-10.0,-4.0\n36.0,-9.9,12.0\n"
+    calls = []
+
+    def handler(request):
+        calls.append(str(request.url))
+        return httpx.Response(200, text=csv)
+
+    low = erddap.fetch_min_elevation((-10.1, 35.9, -9.9, 36.1), client=_client(handler), cache_dir=tmp_path)
+    assert low == -250.0 and "GEBCO_2020.csv?elevation%5B" in calls[0]
+    again = erddap.fetch_min_elevation((-10.1, 35.9, -9.9, 36.1), client=_client(lambda r: 1 / 0), cache_dir=tmp_path)
+    assert again == -250.0 and len(calls) == 1
+
+
+def test_min_elevation_error_page_raises(tmp_path):
+    with pytest.raises(erddap.ErddapError):
+        erddap.fetch_min_elevation((0, 0, 1, 1), client=_client(lambda r: httpx.Response(200, text="<html>x")), cache_dir=tmp_path)

@@ -120,20 +120,21 @@ def tags_for(
     return tuple(out)
 
 
-def zone_tags(shares: Mapping[str, float], lat: float) -> tuple[str, ...]:
+def zone_tags(shares: Mapping[str, float], lat: float, sea: bool = True) -> tuple[str, ...]:
     """Sea, coast, reef and city tags from the land-cover shares (see `ZONE_*` thresholds).
 
     `ocean`: Water is at least half, or no pixel was classified (open sea has none). `coast`:
-    some water but under half. `reef`: sea or coast within 30 degrees of the equator. `city`
-    (with `atmosphere`): built-up land is at least 15 %.
+    some water but under half. `reef`: a coast within 30 degrees of the equator (open sea
+    far from land is not reef). `city` (with `atmosphere`): built-up land is at least 15 %.
+    `sea=False` (a lake or reservoir: the caller checked the elevation) gives no ocean/coast/reef.
     """
     water = shares.get(WATER_CLASS, 0.0)
     out: list[str] = []
-    if not shares or water >= ZONE_OCEAN_SHARE:
+    if sea and (not shares or water >= ZONE_OCEAN_SHARE):
         out.append("ocean")
-    elif water >= ZONE_COAST_SHARE:
+    elif sea and water >= ZONE_COAST_SHARE:
         out.append("coast")
-    if out and abs(lat) <= REEF_MAX_LAT:
+    if "coast" in out and abs(lat) <= REEF_MAX_LAT:
         out.append("reef")
     if shares.get(URBAN_CLASS, 0.0) >= ZONE_CITY_SHARE:
         out += ["city", "atmosphere"]
