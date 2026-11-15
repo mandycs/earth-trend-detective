@@ -1,9 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  askBlocker, boardToggleLabel, checkLine, compareSides, forkLine, historyEnabled, notMeasuredLine,
+  askBlocker, boardToggleLabel, checkLine, compareSides, forkLine, historyEnabled, nextQuestionChips, notMeasuredLine,
   historyLine, recordedDate, replayLine, sceneSummary, stepRow, toolLabel,
 } from "../panels.ts";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { parseRecording, replaySchedule } from "../replay.ts";
 import { chartView } from "../chartView.ts";
 import type { ChartModel } from "../chart.ts";
 import type { AnswerEvent } from "../events.ts";
@@ -138,4 +141,27 @@ test("history rows speak in labels, never raw tool names or verdict lines", () =
     "A comparison on the map: A curtain to compare two years by eye.",
   );
   assert.equal(historyLine({ kind: "tool", tool: null, summary: "" }), "A step");
+});
+
+test("next question chips: trimmed, no repeats, at most three, none when empty", () => {
+  const a = (next_questions?: string[]) => ({ ...answer(true), next_questions });
+  assert.deepEqual(nextQuestionChips(a()), []);
+  assert.deepEqual(nextQuestionChips(a([])), []);
+  assert.deepEqual(
+    nextQuestionChips(a([" Is it still going down in recent years? ", "Is it still going down in recent years?", "  ", "B?", "C?", "D?"])),
+    ["Is it still going down in recent years?", "B?", "C?"],
+  );
+});
+
+test("the recorded cases carry next questions the replay can show", () => {
+  for (const name of ["mead", "aral"]) {
+    const raw = JSON.parse(readFileSync(join(import.meta.dirname, `../../../../../backend/data/recordings/${name}.json`), "utf8"));
+    const rec = parseRecording(raw);
+    assert.ok(rec, name);
+    const ans = replaySchedule(rec).map((s) => s.event).find((e) => e.kind === "answer");
+    assert.ok(ans && ans.kind === "answer", name);
+    const chips = nextQuestionChips(ans.data);
+    assert.ok(chips.length >= 2 && chips.length <= 3, name);
+    for (const q of chips) assert.ok(q.endsWith("?") && !/\d/.test(q), q);
+  }
 });

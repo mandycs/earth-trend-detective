@@ -1640,6 +1640,11 @@
       "kind": "length",
       "reason": "It is too long or empty; at most three short sentences."
      }
+    ],
+    "next_questions": [
+     "Can we test the link with less rain (drought)?",
+     "What about sunlight at the surface here?",
+     "What about daytime ground temperature here?"
     ]
    }
   },

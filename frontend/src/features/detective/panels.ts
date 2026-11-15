@@ -74,6 +74,21 @@ export function checkLine(answer: AnswerEvent, done: DoneEvent | null): string {
 export const CLUE_LINE = "A clue, not proof.";
 export const TEMPLATE_LINE = "The plain summary, written from the results without the language model.";
 
+export const NEXT_TITLE = "Ask next";
+export const NEXT_REPLAY_LINE = "Run it live to ask these.";
+export const NEXT_MAX = 3;
+
+/** The answer's suggested next questions, ready for chips: trimmed, no repeats, at most three. */
+export function nextQuestionChips(answer: Pick<AnswerEvent, "next_questions">): string[] {
+  const out: string[] = [];
+  for (const q of answer.next_questions ?? []) {
+    const t = q.trim();
+    if (t && !out.includes(t)) out.push(t);
+    if (out.length === NEXT_MAX) break;
+  }
+  return out;
+}
+
 export function notMeasuredLine(label: string, reason: string | null): string {
   return reason ? `${label} — ${reason}` : label;
 }
