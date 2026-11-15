@@ -150,7 +150,8 @@ def _trend_rows(session: Session, corrected: Mapping) -> dict[str, dict]:
         record = session.ledger.test(str(result.get("test_id")))
         if record is None or record.kind != "trend" or record.id not in corrected:
             continue
-        months = int(result.get("n_months") or 0)
+        # annual tests count their years as months, so a short monthly test never outranks them
+        months = int(result.get("n_months") or 12 * int(result.get("n_years") or 0))
         if record.var_id in best and best[record.var_id][0] >= months:
             continue
         _, verdict, direction = corrected[record.id]

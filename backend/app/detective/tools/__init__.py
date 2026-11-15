@@ -188,7 +188,9 @@ TOOLS: dict[str, ToolSpec] = {
         "Tests a fetched series for a long-term trend after removing the seasonal cycle "
         "(Mann-Kendall with Sen slope). Returns slope per decade with its 95% range, p-value, the "
         "q-value corrected over every test of this investigation, the verdict (real / likely / "
-        "unknown), direction and how many more years would be needed. Every call counts as a test "
+        "unknown), direction and how many more years would be needed. Rain, runoff and snow cover are "
+        "tested on the means of complete years instead (basis: annual means), because their dry or "
+        "snow-free seasons hide the change in monthly values. Every call counts as a test "
         "and makes the correction stricter, so test only what the question needs. Quote only the "
         "returned numbers.",
         TrendTestArgs,
