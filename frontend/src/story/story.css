@@ -74,7 +74,8 @@
 }
 
 .st-ask + .st-explore-last,
-.st-stack-btn + .st-explore-last {
+.st-stack-btn + .st-explore-last,
+.st-stack-status + .st-explore-last {
   margin-left: 20px;
 }
 
@@ -1991,7 +1992,12 @@
   }
 }
 
-/* Why the layer stack did not open (no layers, or a failed load), under the header. */
+/* Why the layer stack did not open (no layers, or a failed load), under the header. The live region is always
+   mounted and fixed, so it never takes room in the header row. */
+.st-stack-status {
+  position: fixed;
+}
+
 .st-stack-note {
   position: fixed;
   top: 64px;

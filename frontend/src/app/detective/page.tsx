@@ -9,7 +9,7 @@ import { readCases } from '../../lib/readSites'
 
 export const metadata: Metadata = {
   title: 'Your case · Alibi',
-  description: 'Pick any place on Earth, ask in plain words, and watch the detective test it with NASA data, scene by scene.',
+  description: 'Pick any place on Earth, ask in plain words, and watch the detective test it with satellite data, scene by scene.',
 }
 
 /** The replay chips written by scripts/sync-recordings.mjs. Missing or broken means no recordings. */

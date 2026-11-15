@@ -43,6 +43,9 @@ export function CaseLayersButton({ siteId, bbox, className }: { siteId: string; 
   useEffect(() => () => ctl.current?.abort(), [])
   // A new case: whatever was open belongs to the old one.
   useEffect(() => {
+    ctl.current?.abort()
+    ctl.current = null
+    setBusy(false)
     setModel(null)
     setNote(null)
   }, [siteId])
@@ -115,23 +118,29 @@ export function CaseLayersButton({ siteId, bbox, className }: { siteId: string; 
         aria-haspopup="dialog"
         aria-busy={busy}
       >
-        <span>{busy ? 'Layer stack…' : 'Layer stack'}</span>
+        <span>
+          Layer<span className="st-hide-sm"> stack</span>
+          {busy ? '…' : ''}
+        </span>
       </button>
-      {note && (
-        <div className="st-stack-note" role="status">
-          <p>{note.text}</p>
-          <div className="st-stack-note-actions">
-            {note.retry && (
-              <button type="button" className="st-stack-note-btn" onClick={open}>
-                Try again
+      {/* Always mounted, so screen readers hear the text when it changes; only the text and the box come and go. */}
+      <div role="status" className={note ? 'st-stack-status st-stack-note' : 'st-stack-status'}>
+        {note && (
+          <>
+            <p>{note.text}</p>
+            <div className="st-stack-note-actions">
+              {note.retry && (
+                <button type="button" className="st-stack-note-btn" onClick={open}>
+                  Try again
+                </button>
+              )}
+              <button type="button" className="st-stack-note-btn" onClick={() => setNote(null)}>
+                Dismiss
               </button>
-            )}
-            <button type="button" className="st-stack-note-btn" onClick={() => setNote(null)}>
-              Dismiss
-            </button>
-          </div>
-        </div>
-      )}
+            </div>
+          </>
+        )}
+      </div>
       {model &&
         createPortal(
           <EvidenceStack
