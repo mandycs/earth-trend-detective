@@ -477,11 +477,13 @@ def _annual_trend(
     window = series.loc[f"{start}-01-01":f"{end}-12-31"]
     res = annual_trend(window)
     slope = None if res.too_short else res.sen_slope_per_decade
-    label = var.label if var else var_id
+    # A series a tool stored outside the catalog (water_extent) carries its own label, unit, suffix.
+    label = var.label if var else str(series.attrs.get("label") or var_id)
     if var is not None and var.source == "gibs":
         suffix = gibs_values.annual_suffix(gibs_values.layer_for(var))
     else:
-        suffix = "yearly values"  # DHW: a yearly peak
+        suffix = str(series.attrs.get("suffix") or "yearly values")  # DHW: a yearly peak
+    units = var.units if var else series.attrs.get("units")
     test_id = f"t{session.ledger.n_tests + 1}"
     session.ledger.add_test(
         TestRecord(
@@ -508,7 +510,7 @@ def _annual_trend(
         "slope_per_decade": _num(slope),
         "ci_low": _num(res.ci_low),
         "ci_high": _num(res.ci_high),
-        "unit": f"{var.units} per decade" if var else "per decade",
+        "unit": f"{units} per decade" if units else "per decade",
         "p_value": _num(res.p_value),
         "years_needed": annual_years_needed(window, res),
         **extra,
