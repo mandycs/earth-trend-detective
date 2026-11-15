@@ -171,7 +171,7 @@ def test_event_order(client_with, offline):
     trend_done = data[6]
     assert trend_done["result"]["verdict"] == "real" and trend_done["evidence_id"] == "e2"
     assert data[7] == {"suspects": [], "n_tests": 1}
-    assert data[8] == {"text": GOOD_ANSWER, "checked": True, "figures": ["2003", "2024"]}
+    assert data[8] == {"text": GOOD_ANSWER, "checked": True, "figures": ["2003", "2024"], "source": "llm"}
     done = data[9]
     assert done["n_tests"] == 1 and done["n_tool_calls"] == 2 and done["thread_id"]
     assert data[0]["thread_id"] == done["thread_id"]
@@ -214,7 +214,7 @@ def test_stream_tool_failure_becomes_event(client_with, offline, monkeypatch):
     monkeypatch.setattr(gather, "FETCHERS", {**gather.FETCHERS, "power": down})
 
     def broken(session, **kw):
-        raise RuntimeError("boom")
+        raise RuntimeError("boom at https://api.example.com/v1?api_key=SECRET in /srv/app/x.py")
 
     monkeypatch.setitem(TOOLS, "list_variables", ToolSpec(broken, "x", TOOLS["list_variables"].args_schema))
     messages = [
@@ -227,7 +227,8 @@ def test_stream_tool_failure_becomes_event(client_with, offline, monkeypatch):
     failed = [d for k, d in events if k == "tool_failed"]
     assert [f["id"] for f in failed] == ["s1", "l1"]
     assert failed[0]["tool"] == "get_series" and failed[0]["reason"]
-    assert failed[1]["tool"] == "list_variables" and "boom" in failed[1]["reason"]
+    # an exception's text never reaches the UI, only the code's own sentence
+    assert failed[1] == {"id": "l1", "tool": "list_variables", "reason": "The tool stopped with an error."}
     assert not [d for k, d in events if k == "tool_done"]  # never both
     assert _done(events)["n_tests"] == 0
 
@@ -344,6 +345,7 @@ def test_get_case_reopens_an_investigation(client_with, offline):
         "text": "Air temperature went up from 2003 to 2024.",
         "checked": True,
         "figures": ["2003", "2024"],
+        "source": "llm",
     }
     assert case["board"] == {"suspects": [], "n_tests": 1}
     assert [op["op"] for op in case["map"]] == ["fly_to"]
@@ -351,16 +353,74 @@ def test_get_case_reopens_an_investigation(client_with, offline):
     assert client.get("/detective/nope").status_code == 404
 
 
-def test_persistence_is_opened_once_and_closed_on_shutdown(tmp_path, monkeypatch):
+def test_persistence_opens_and_closes_with_the_app(tmp_path, monkeypatch):
     monkeypatch.setenv("DETECTIVE_DB", str(tmp_path / "d.sqlite"))
-    detective_router.shutdown_persistence()
-    saver, store = detective_router.get_persistence()
-    try:
+    with TestClient(app):  # runs the lifespan
+        saver, store = detective_router.get_persistence()
         assert detective_router.get_persistence() == (saver, store)
         assert saver.conn.execute("PRAGMA journal_mode").fetchone()[0] == "wal"
         assert store.conn.execute("PRAGMA journal_mode").fetchone()[0] == "wal"
-    finally:
-        detective_router.shutdown_persistence()
     with pytest.raises(Exception):
         saver.conn.execute("SELECT 1")
     assert detective_router._persistence is None
+
+
+class DownModel(FakeModel):
+    def _generate(self, *a, **kw):
+        raise RuntimeError("401 invalid x-api-key")
+
+
+def test_model_failure_is_shown(client_with, offline, persistence):
+    app.dependency_overrides[detective_router.get_detective_model] = lambda: DownModel(messages=iter(()))
+    app.dependency_overrides[detective_router.get_persistence] = lambda: persistence
+    try:
+        events = _post(TestClient(app), **POINT)
+    finally:
+        app.dependency_overrides.clear()
+    failed = [d for k, d in events if k == "tool_failed"]
+    assert failed == [{"id": None, "tool": "agent", "reason": "The model did not answer."}]
+    answer = next(d for k, d in events if k == "answer")
+    assert answer["source"] == "template" and answer["checked"] is True
+    assert events[-1][0] == "done"
+
+
+def test_made_up_thread_id_is_not_used(client_with, offline):
+    client = client_with(_test_run("t2m", 1))
+    events = _post(client, **POINT, thread_id="demo")
+    assert events[0][1]["thread_id"] != "demo"
+    assert _done(events)["thread_id"] == events[0][1]["thread_id"]
+    assert len(events[0][1]["thread_id"]) == 32  # a uuid4 hex from the server
+    assert client.get("/detective/demo").status_code == 404
+
+
+def test_fork_with_a_checkpoint_of_another_thread(client_with, offline):
+    client = client_with(_test_run("t2m", 1) + _test_run("t2m", 2))
+    a = _done(_post(client, **POINT))["thread_id"]
+    b = _done(_post(client, **POINT))["thread_id"]
+    step_of_a = client.get(f"/detective/{a}/history").json()[0]["checkpoint_id"]
+    r = client.post("/detective", json={"question": "Again?", **POINT, "thread_id": b, "checkpoint_id": step_of_a})
+    assert r.status_code == 404
+
+
+def test_reading_a_thread_builds_no_graph(client_with, offline, monkeypatch):
+    client = client_with(_test_run("t2m", 1))
+    tid = _done(_post(client, **POINT))["thread_id"]
+
+    def no_graph(*a, **kw):
+        raise AssertionError("a GET must not build the graph")
+
+    monkeypatch.setattr(detective_router, "build_graph", no_graph)
+    assert client.get(f"/detective/{tid}").status_code == 200
+    assert client.get(f"/detective/{tid}/history").status_code == 200
+
+
+def test_scrub_masks_links_keys_and_paths():
+    from app.detective.events import scrub
+
+    text = scrub(
+        "failed at api.example.com/v1/x?a=1 and https://h.io/p; api_key=XYZ token: abc "
+        "Bearer eyJabc in /home/user/app/x.py or C:\\Users\\me\\x.py, about 0.5 °C/decade"
+    )
+    for leak in ("example.com", "h.io", "XYZ", "abc", "eyJabc", "/home/user", "Users"):
+        assert leak not in text
+    assert "°C/decade" in text

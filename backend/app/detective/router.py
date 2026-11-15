@@ -5,8 +5,9 @@
 - `GET /detective/{thread_id}/history`: the steps a run can be forked from, newest first.
 - `GET /detective/{thread_id}`: the case as it stands (board, map ops, answer).
 
-The checkpointer and store are opened once per process (`get_persistence`) and closed by the
-app's lifespan (`shutdown_persistence`). Tests override `get_persistence` and `get_detective_model`.
+The checkpointer and store are opened and closed once per process by the app's lifespan
+(`startup_persistence` / `shutdown_persistence`). The GET endpoints read the checkpointer
+directly (no model, no graph). Tests override `get_persistence` and `get_detective_model`.
 """
 
 from __future__ import annotations
@@ -17,7 +18,6 @@ from collections.abc import Iterable, Iterator
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.store.base import BaseStore
 
@@ -43,17 +43,11 @@ router = APIRouter(tags=["detective"])
 
 Persistence = tuple[BaseCheckpointSaver, BaseStore]
 UNKNOWN_THREAD = "We could not find that investigation."
+NOT_READY = "The investigator is not ready yet. Try again in a moment."
 SSE_HEADERS = {"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
 
 _lock = threading.Lock()
 _persistence: Persistence | None = None
-
-
-class _StateReader(GenericFakeChatModel):
-    """Stands in for the model when a graph is compiled only to read a thread's checkpoints."""
-
-    def bind_tools(self, tools, **kw):  # noqa: ANN001, ANN003, ANN201
-        return self
 
 
 def get_detective_model() -> BaseChatModel | None:
@@ -61,12 +55,19 @@ def get_detective_model() -> BaseChatModel | None:
     return make_chat_model()
 
 
-def get_persistence() -> Persistence:
-    """The process-wide checkpointer and store, opened on first use (overridden in tests)."""
+def startup_persistence() -> None:
+    """Open the process-wide checkpointer and store (the app's lifespan calls this)."""
     global _persistence
     with _lock:
         if _persistence is None:
             _persistence = open_persistence()
+
+
+def get_persistence() -> Persistence:
+    """The process-wide checkpointer and store opened by the lifespan (overridden in tests)."""
+    with _lock:
+        if _persistence is None:
+            raise HTTPException(503, NOT_READY)
         return _persistence
 
 
@@ -79,9 +80,8 @@ def shutdown_persistence() -> None:
             _persistence = None
 
 
-def _graph(model: BaseChatModel | None, persistence: Persistence):  # noqa: ANN202
+def _graph(model: BaseChatModel, persistence: Persistence):  # noqa: ANN202
     saver, store = persistence
-    model = model if model is not None else _StateReader(messages=iter(()))
     return build_graph(model, *limits_from_env(), checkpointer=saver, store=store)
 
 
@@ -118,7 +118,7 @@ def get_history(
     thread_id: str,
     persistence: Persistence = Depends(get_persistence),
 ) -> list[dict]:
-    steps = history(_graph(None, persistence), thread_id)
+    steps = history(persistence[0], thread_id)
     if steps is None:
         raise HTTPException(404, UNKNOWN_THREAD)
     return steps
@@ -129,7 +129,7 @@ def get_case(
     thread_id: str,
     persistence: Persistence = Depends(get_persistence),
 ) -> dict:
-    case = current_case(_graph(None, persistence), thread_id)
+    case = current_case(persistence[0], thread_id)
     if case is None:
         raise HTTPException(404, UNKNOWN_THREAD)
     return case

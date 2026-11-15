@@ -19,6 +19,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, ToolMessage
+from langgraph.checkpoint.base import BaseCheckpointSaver
 from pydantic import BaseModel, Field, model_validator
 
 from app.detective import board as case_board
@@ -46,7 +47,20 @@ MID_STEP = "Pick a step after a tool finished."
 OTHER_PLACE = "That step belongs to an investigation of another place."
 SOURCE_DOWN = "The data source did not answer."
 FAILED_STATUSES = frozenset({"not_available", "rejected", "failed"})
-_LINK = re.compile(r"https?://\S+")
+AGENT_DOWN = "The model did not answer."
+TOOL_ERROR = "The tool stopped with an error."
+TOOL_ERROR_PREFIX = "the tool stopped with an error"  # how nodes.run_call words an exception
+_MASKS = (
+    (re.compile(r"\b[a-z][a-z0-9+.-]*://\S+", re.I), "[link]"),
+    (re.compile(r"\b(?:[a-z0-9-]+\.)+[a-z]{2,}(?::\d+)?/\S*", re.I), "[link]"),
+    (re.compile(r"\bbearer\s+\S+", re.I), "bearer [hidden]"),
+    (
+        re.compile(r"\b((?:x-)?api[_-]?key|access[_-]?token|token|secret|password|authorization)\b\s*[:=]\s*\S+", re.I),
+        r"\1=[hidden]",
+    ),
+    (re.compile(r"(?<![\w.°])(?:~|/[\w.-]+)(?:/[\w.-]+)+/?"), "[path]"),
+    (re.compile(r"\b[a-z]:\\\S+", re.I), "[path]"),
+)
 
 
 class DetectiveRequest(BaseModel):
@@ -174,15 +188,35 @@ def prepare_run(graph: Any, req: DetectiveRequest) -> Run:
         case = (graph.get_state(config).values or {}).get("case")
         if case and _same_place(case, place):
             return Run(req.thread_id, config, {"messages": [question]}, case, True)
-        thread_id = req.thread_id if not case else uuid.uuid4().hex
-    else:
-        thread_id = uuid.uuid4().hex
+    # A new thread always gets the server's id: the id is the only key to a thread, so a
+    # client-chosen one ("demo") could be guessed by anyone.
+    thread_id = uuid.uuid4().hex
     case = new_case(place)
     return Run(thread_id, {"configurable": {"thread_id": thread_id}}, {"messages": [question], "case": case}, case, False)
 
 
+def scrub(text: str) -> str:
+    """`text` with links, key-like values and file paths masked (a last guard for UI strings)."""
+    for pattern, mask in _MASKS:
+        text = pattern.sub(mask, text)
+    return text
+
+
 def _plain(reason: Any) -> str:
-    return _LINK.sub("[link]", str(reason or "")).strip() or SOURCE_DOWN
+    """A reason fit for the UI: an exception's text never passes, only the code's own sentence."""
+    text = str(reason or "").strip()
+    if text.lower().startswith(TOOL_ERROR_PREFIX):
+        return TOOL_ERROR
+    return scrub(text).strip() or SOURCE_DOWN
+
+
+def _clean_reasons(value: Any) -> Any:
+    """A tool result with every `reason` field passed through `_plain` (the rest is left as is)."""
+    if isinstance(value, Mapping):
+        return {k: _plain(v) if k == "reason" and isinstance(v, str) else _clean_reasons(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_clean_reasons(v) for v in value]
+    return value
 
 
 def _tool_content(message: ToolMessage) -> dict:
@@ -220,10 +254,22 @@ def board_payload(case: Mapping) -> dict:
 def answer_payload(answer: Mapping | None) -> dict | None:
     if not answer:
         return None
-    return {"text": answer.get("text"), "checked": bool(answer.get("checked")), "figures": list(answer.get("figures") or [])}
+    return {
+        "text": answer.get("text"),
+        "checked": bool(answer.get("checked")),
+        "figures": list(answer.get("figures") or []),
+        "source": answer.get("source"),  # "llm" | "template"
+    }
 
 
-def _agent_events(values: Mapping) -> Iterator[Event]:
+def _new_failures(before: Mapping, after: Mapping) -> list[Mapping]:
+    return list((after.get("failures") or [])[len(before.get("failures") or []) :])
+
+
+def _agent_events(values: Mapping, failures: list[Mapping]) -> Iterator[Event]:
+    for f in failures:
+        if f.get("id") is None:  # the model call itself failed (expired key, provider down)
+            yield event("tool_failed", id=None, tool=f.get("tool") or "agent", reason=AGENT_DOWN)
     for reply in values.get("messages") or []:
         if not isinstance(reply, AIMessage) or not reply.tool_calls:
             continue
@@ -244,7 +290,7 @@ def _tool_events(messages: list, failures: Mapping[str, Mapping]) -> Iterator[Ev
         elif text_of(m) == BUDGET_REACHED:
             yield event("tool_failed", id=cid, tool=tool, reason=BUDGET_REACHED)
         else:
-            result = _tool_content(m)
+            result = _clean_reasons(_tool_content(m))
             if result.get("transient"):  # a source that did not answer: not evidence, not cached
                 yield event("tool_failed", id=cid, tool=tool, reason=_plain(result.get("reason")))
             else:
@@ -264,12 +310,12 @@ def stream_run(graph: Any, run: Run) -> Iterator[Event]:
                 if not isinstance(values, Mapping):
                     continue
                 after = values.get("case") or case
+                failures = _new_failures(case, after)
                 if node == "agent":
-                    yield from _agent_events(values)
+                    yield from _agent_events(values, failures)
                 elif node == "tools":
-                    known = len(case.get("failures") or [])
-                    new = {f.get("id"): f for f in (after.get("failures") or [])[known:] if f.get("id")}
-                    yield from _tool_events(values.get("messages") or [], new)
+                    by_id = {f.get("id"): f for f in failures if f.get("id")}
+                    yield from _tool_events(values.get("messages") or [], by_id)
                     for op in (after.get("map") or [])[len(case.get("map") or []) :]:
                         yield event("map", **op)
                     board = board_payload(after)
@@ -295,36 +341,48 @@ def stream_run(graph: Any, run: Run) -> Iterator[Event]:
 # --------------------------------------------------------------------------- re-opening a thread
 
 
-def history(graph: Any, thread_id: str) -> list[dict] | None:
-    """Steps of a thread that a run can be forked from, newest first (None: no such thread)."""
-    snapshots = list(graph.get_state_history({"configurable": {"thread_id": thread_id}}))
-    if not snapshots:
+def _thread_config(thread_id: str) -> dict:
+    return {"configurable": {"thread_id": thread_id, "checkpoint_ns": ""}}
+
+
+def _values(checkpoint_tuple: Any) -> dict:
+    return dict((checkpoint_tuple.checkpoint or {}).get("channel_values") or {})
+
+
+def history(saver: BaseCheckpointSaver, thread_id: str) -> list[dict] | None:
+    """Steps of a thread that a run can be forked from, newest first (None: no such thread).
+
+    Read straight from the checkpointer: no model and no graph are needed to look back."""
+    tuples = list(saver.list(_thread_config(thread_id)))
+    if not tuples:
         return None
     out = []
-    for snap in snapshots:
-        values = snap.values or {}
+    for tup in tuples:
+        values, metadata = _values(tup), tup.metadata or {}
         messages, case = values.get("messages") or [], values.get("case")
-        if (snap.metadata or {}).get("source") != "loop" or not messages or not case:
+        if metadata.get("source") != "loop" or not messages or not case:
             continue
         last = messages[-1]
         item = {
-            "checkpoint_id": snap.config["configurable"]["checkpoint_id"],
-            "step": (snap.metadata or {}).get("step"),
+            "checkpoint_id": tup.config["configurable"]["checkpoint_id"],
+            "step": metadata.get("step"),
         }
         if isinstance(last, ToolMessage):
-            item |= {"kind": "tool", "tool": last.name, "summary": summary_of(_tool_content(last))}
+            item |= {"kind": "tool", "tool": last.name, "summary": summary_of(_clean_reasons(_tool_content(last)))}
         elif isinstance(last, AIMessage) and not last.tool_calls and values.get("answer"):
             item |= {"kind": "answer", "summary": (values["answer"] or {}).get("text")}
         else:
             continue
-        item |= {"n_tests": n_finite_tests(Ledger.from_state(case["ledger"])), "created_at": snap.created_at}
+        created_at = (tup.checkpoint or {}).get("ts")
+        item |= {"n_tests": n_finite_tests(Ledger.from_state(case["ledger"])), "created_at": created_at}
         out.append(item)
     return out
 
 
-def current_case(graph: Any, thread_id: str) -> dict | None:
+def current_case(saver: BaseCheckpointSaver, thread_id: str) -> dict | None:
     """The thread as it stands: place, question, board, map ops and answer (None: no such thread)."""
-    values = graph.get_state({"configurable": {"thread_id": thread_id}}).values or {}
+    tup = saver.get_tuple(_thread_config(thread_id))
+    values = _values(tup) if tup is not None else {}
     case = values.get("case")
     if not case:
         return None

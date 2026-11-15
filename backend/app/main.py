@@ -31,11 +31,14 @@ POWER_FIRST_YEAR = 1981
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-    yield
-    # The detective's checkpointer and store are opened on first use; close them on shutdown.
-    from app.detective.router import shutdown_persistence
+    # The detective's checkpointer and store: one SQLite pair per process.
+    from app.detective.router import shutdown_persistence, startup_persistence
 
-    shutdown_persistence()
+    startup_persistence()
+    try:
+        yield
+    finally:
+        shutdown_persistence()
 
 
 app = FastAPI(title="Earth Trend Detective API", version="0.1.0", lifespan=lifespan)
