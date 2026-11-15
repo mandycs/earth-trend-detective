@@ -1,4 +1,5 @@
-import type { Ref } from 'react'
+import { useEffect, useState, type Ref } from 'react'
+import { elapsedLabel, waitingNote } from './waiting'
 import { Stamp } from '../../lib/Stamp'
 import { verdictFor } from './board'
 import type { ChartModel } from './chart'
@@ -52,11 +53,7 @@ export function ScenePanel({ inv, scene, chart, onRetry, focusRef }: ScenePanelP
         </p>
       )}
 
-      {tool?.state === 'running' && (
-        <p className={styles.sceneState} aria-live="polite">
-          Checking…
-        </p>
-      )}
+      {tool?.state === 'running' && <RunningState key={tool.id} />}
       {tool?.state === 'failed' && (
         <p className={styles.sceneState}>
           <span aria-hidden="true">✕ </span>
@@ -89,5 +86,32 @@ export function ScenePanel({ inv, scene, chart, onRetry, focusRef }: ScenePanelP
         </ul>
       )}
     </section>
+  )
+}
+
+/** A running step: a moving bar, the seconds it has taken, and why it can take a while. */
+function RunningState() {
+  const [seconds, setSeconds] = useState(0)
+  useEffect(() => {
+    const start = Date.now()
+    const id = window.setInterval(() => setSeconds((Date.now() - start) / 1000), 1000)
+    return () => window.clearInterval(id)
+  }, [])
+  const note = waitingNote(seconds)
+  return (
+    <div className={styles.running}>
+      <div className={styles.runningBar} aria-hidden="true">
+        <span />
+      </div>
+      <p className={styles.sceneState}>
+        <span role="status">Checking…</span>{' '}
+        <span className={styles.runningTime} aria-hidden="true">
+          {elapsedLabel(seconds)}
+        </span>
+      </p>
+      <p className={styles.runningNote} aria-live="polite">
+        {note}
+      </p>
+    </div>
   )
 }

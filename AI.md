@@ -29,5 +29,5 @@ built by code from the data, not by the model.
 In the interface, model-written text is labelled: *"Written by an AI narrator from the numbers above. Every
 figure was checked against the data before showing it."*
 
-No image or video in this project is AI-generated. The background music of the landing and web pitch films was generated with Google Lyria (AI); it is declared in the video descriptions and in the files' metadata. The 30-second submission video has no AI music. Model output is attributed to the model, never to
+No image or video in this project is AI-generated. The background music of the landing and web pitch films was generated with Google Lyria (AI); it is declared in the video descriptions and in the files' metadata. The 30-second submission video uses a separate instrumental track generated with Google Lyria 3 Pro (AI) through Artlist, declared in its description and metadata. Model output is attributed to the model, never to
 NASA, and no NASA insignia appears in the project.
