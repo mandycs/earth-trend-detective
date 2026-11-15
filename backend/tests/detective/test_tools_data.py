@@ -131,7 +131,7 @@ def test_profile_place_sets_tags(monkeypatch):
     s = _session(tags=())
     got = tools.profile_place(s)
     assert got["dominant"] == "Croplands"
-    assert got["land_cover"] == {"Croplands": 0.6, "Grasslands": 0.4}
+    assert got["land_cover_pct"] == {"Croplands": 60.0, "Grasslands": 40.0}
     assert got["data_cells"] == {"grace": "~300 km", "power": "~50 km"}
     assert set(got["tags"]) == set(s.place.tags)
     assert s.place.tags == landcover.tags_for(cover.shares)
@@ -144,7 +144,7 @@ def test_profile_place_land_cover_failure_keeps_going(monkeypatch):
     monkeypatch.setattr(landcover, "fetch_land_cover", boom)
     s = _session(tags=("vegetated",))
     got = tools.profile_place(s)
-    assert got["land_cover"] == {}
+    assert got["land_cover_pct"] == {}
     assert got["tags"] == ["vegetated"]
 
 

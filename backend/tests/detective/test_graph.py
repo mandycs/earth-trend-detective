@@ -118,6 +118,7 @@ def test_graph_runs_tools_and_concludes(offline):
         "checked": True,
         "figures": ["2003", "2024", "50"],
         "source": "llm",
+        "rejected": [],
         "n_tests": 1,
     }
     assert isinstance(state["messages"][-1], AIMessage) and state["messages"][-1].content == GOOD_ANSWER
@@ -236,10 +237,12 @@ def test_conclude_rejects_invented_figure(offline):
 
 def test_conclude_accepts_a_fixed_retry(offline):
     bad = "About 42 % of the warming is new."
-    graph, _ = _tested_graph([bad, "Air temperature went up from 2003 to 2024."])
+    fixed = "Air temperature went up from 2003 to 2024; one value covers a cell of about 50 km."
+    graph, _ = _tested_graph([bad, fixed])
     answer = graph.invoke(_start(), CONFIG)["answer"]
     assert answer["source"] == "llm" and answer["checked"] is True
-    assert answer["text"] == "Air temperature went up from 2003 to 2024."
+    assert answer["text"] == fixed
+    assert answer["rejected"] and all(r["try"] == 1 for r in answer["rejected"])
 
 
 def test_conclude_rejects_saying_this_part_is_human(offline):

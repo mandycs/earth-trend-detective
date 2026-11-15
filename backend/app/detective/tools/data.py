@@ -23,7 +23,7 @@ from app.detective.session import Session
 from app.extractors import erddap, gibs_values
 from app.investigate import landcover
 from app.investigate.runner import LAND_COVER_YEARS
-from app.stats.annual import annual_trend, annual_years_needed, n_years, to_annual
+from app.stats.annual import MIN_YEARS, annual_trend, annual_years_needed, n_years, to_annual
 from app.stats.deseason import monthly_anomalies
 from app.stats.trend import trend_test as mk_trend_test
 from app.stats.years import years_needed
@@ -50,6 +50,10 @@ WITHDRAWN: Mapping[str, str] = {"snow_gibs": SNOW_GIBS_REASON}
 TWIN_OF: Mapping[str, str] = {twin: base for base, twin in GIBS_TWINS.items()}
 SEA_TAGS = frozenset({"ocean", "coast", "reef"})
 ANNUAL = "annual"
+ANNUAL_MEANS = "annual means"
+SKEWED_WATER = frozenset({"precip", "precip_upstream", "runoff", "snow_cover"})
+"""Rain, runoff and snow: zero for whole seasons, so the Sen slope of monthly anomalies sits
+near zero even when the wet months change a lot. Their trend is tested on annual means."""
 NOT_THIS_PLACE_REASON = (
     "not_available_here: this variable does not apply to this kind of place (see profile_place tags); "
     "if the place is not profiled yet, call profile_place first"
@@ -223,7 +227,7 @@ def _profile(session: Session) -> dict:
         logger.warning("land cover failed at %s,%s: %s: %s", place.lat, place.lon, type(exc).__name__, exc)
         return {
             "tags": list(place.tags),
-            "land_cover": {},
+            "land_cover_pct": {},
             "dominant": None,
             "data_cells": dict(DATA_CELLS),
             "land_cover_status": "not_available",
@@ -233,7 +237,7 @@ def _profile(session: Session) -> dict:
     session.place = replace(place, tags=tags, water_share=water_share)
     return {
         "tags": list(tags),
-        "land_cover": {k: _num(v, 3) for k, v in cover.shares.items()},
+        "land_cover_pct": {k: _num(100.0 * v, 1) for k, v in cover.shares.items()},
         "dominant": cover.dominant,
         "land_cover_year": cover.year,
         "data_cells": dict(DATA_CELLS),
@@ -444,6 +448,10 @@ def _trend(session: Session, series: pd.Series, series_id: str, start: int, end:
     var = _variable(session, var_id)
     if is_annual(session, series, series_id):
         return _annual_trend(session, series, series_id, start, end, var_id, var)
+    if var_id in SKEWED_WATER:
+        means = complete_year_means(series, start, end)
+        if n_years(means) >= MIN_YEARS:
+            return _annual_means_trend(session, means, series_id, var_id, var)
     window = series.loc[f"{start}-01-01":f"{end}-12-01"]
     anomalies = monthly_anomalies(window)
     res = mk_trend_test(anomalies)
@@ -476,6 +484,57 @@ def _trend(session: Session, series: pd.Series, series_id: str, start: int, end:
         "unit": f"{var.units} per decade" if var else "per decade",
         "p_value": _num(res.p_value),
         "years_needed": needed,
+        **_corrected_fields(session, test_id),
+    }
+
+
+def complete_year_means(series: pd.Series, start: int, end: int) -> pd.Series:
+    """The mean of each year in [start, end] that has a value in all twelve months; a new series.
+
+    A part year is left out: the dry months alone would read as a drought."""
+    window = series.loc[f"{start}-01-01":f"{end}-12-31"].dropna()
+    index = pd.DatetimeIndex(window.index)
+    months = pd.Series(index.month, index=index.year).groupby(level=0).nunique()
+    full = months[months == 12].index
+    means = pd.Series(window.to_numpy(dtype=float), index=index.year).groupby(level=0).mean()
+    means = means.loc[means.index.isin(full)]
+    means.index = pd.to_datetime([f"{y}-01-01" for y in means.index])
+    return means.rename(series.name)
+
+
+def _annual_means_trend(session: Session, means: pd.Series, series_id: str, var_id: str, var: Variable | None) -> dict:
+    """Plain MK + Sen on the means of complete years, marked `basis: "annual means"`."""
+    res = annual_trend(means)
+    slope = None if res.too_short else res.sen_slope_per_decade
+    test_id = f"t{session.ledger.n_tests + 1}"
+    label = var.label if var else var_id
+    session.ledger.add_test(
+        TestRecord(
+            id=test_id,
+            var_id=var_id,
+            label=f"{label} ({ANNUAL_MEANS})",
+            kind="trend",
+            p_value=res.p_value,
+            slope=slope,
+            too_short=res.too_short,
+            result=res,
+        )
+    )
+    years = means.index.year
+    return {
+        "test_id": test_id,
+        "series_id": series_id,
+        "var_id": var_id,
+        "basis": ANNUAL_MEANS,
+        "years": [int(years.min()), int(years.max())],
+        "n_years": n_years(means),
+        "too_short": res.too_short,
+        "slope_per_decade": _num(slope),
+        "ci_low": _num(res.ci_low),
+        "ci_high": _num(res.ci_high),
+        "unit": f"{var.units} per decade" if var else "per decade",
+        "p_value": _num(res.p_value),
+        "years_needed": annual_years_needed(means, res),
         **_corrected_fields(session, test_id),
     }
 

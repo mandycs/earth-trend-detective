@@ -28,3 +28,9 @@ dist/
 
 # Detective checkpoints and store (local SQLite)
 backend/data/detective/
+
+# Local data cache link in worktrees (a symlink is not matched by **/data/cache/)
+backend/data/cache
+
+# Agent working notes
+.superpowers/

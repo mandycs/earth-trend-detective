@@ -35,7 +35,7 @@ are listed in `final-fix-report.md` next to it. In short:
 - `board {suspects, n_tests, verdicts}`. `verdicts` is `{test_id: {verdict, direction}}`, corrected over the
   whole family. A board event is also sent after every tools step that changed a verdict or added a test.
 - Each suspect in `board.suspects` is `{id, label, status, claimed, evidence, dropped, note, downgraded,
-  target_var, kind, suspect_var}`. `status` is one of `open`, `supported`, `hint`, `ruled_out` or
+  target_var, kind, suspect_var, expects}`. `status` is one of `open`, `supported`, `hint`, `ruled_out` or
   **`trend_only`** (shown as "TREND REAL · NOT LINKED"). The model can only ask for the first four; the
   code decides what is shown (`board.py`). `supported` needs an evidence test that links the suspect to the
   variable under investigation and survives the correction: a `correlate` test between the target and the
@@ -45,6 +45,17 @@ are listed in `final-fix-report.md` next to it. In short:
   `"its own trend is real, but no test links it to <target label>"`. Other `hint` reasons:
   `"fails correction over N tests"`, `"no test links it to <target label>"`, and
   `"no test links its own data to <target label>"` (when `suspect_var` is unknown).
+- `update_board` refuses a `suspect_var` equal to `target_var` (a suspect is a possible reason for the
+  change, never the changing variable). A note that fails the screen comes back as `note_removed` (asking
+  for a retry) and `note_problems` (fixed sentences per reason, never the note's own words).
+- **Opposite direction rules out.** `expects` (`up` / `down`, or `null`) is the way `suspect_var` must go
+  for the suspect to hold; when the model gives none it is read from the name ("less", "lower"... -> down;
+  "more", "warming"... -> up). A `trend` test of `suspect_var` in the evidence that is `real` (corrected,
+  enough years) and goes the other way shows the suspect as `ruled_out` whatever was claimed, with
+  `downgraded = "its own data went up, not down"`, but only when the model gave both `expects` and
+  `suspect_var`. A name-derived direction or an inferred `suspect_var` only keeps a claimed `ruled_out`
+  (also on a `likely` opposite trend). When another real/likely test of `suspect_var` goes the expected
+  way, no direction rule applies.
 - `target_var`, `kind` (`climate` / `non_climate`) and `suspect_var` are what the model gave, or `null` on
   older calls and boards. When they are `null`, the code infers them:
   - the target from the residual test, else the first trend-tested series, else `series_a` of the
@@ -54,8 +65,27 @@ are listed in `final-fix-report.md` next to it. In short:
     against the catalog driver labels) is a climate driver.
 - `done {thread_id, n_tests, n_tests_branch, n_tool_calls}`. `n_tests` counts the thread's whole family;
   `n_tests_branch` counts the tests on this branch.
+- `answer {text, checked, figures, source, rejected}`. `rejected` is `[{try, kind, reason}]`: why each
+  narrator try was turned down (`kind` from the validator — `number`, `direction`, `certainty`, `causal`,
+  `proof`, `jargon`, `length` — or the detective's rules — `cause`, `human`, `lead`, `residual_wording`,
+  `nothing_measured`, `cell`, `not_measured`). `reason` is a fixed sentence per kind
+  (`wording.REASONS`), never a piece of the model's text, so no unchecked figure travels in it; it is for
+  diagnosis, not for display. The cell counts as said only as a length in km ("about 50 km", "a 50-km
+  cell"), never as a bare number or a percent. A "why" question gets a
+  third try. The template (`source: "template"`) states what changed, the share not explained by the
+  climate (else whether the change is real), and one sentence with what could not be measured, the data
+  cell and the board statuses (suspect names with a figure or a cause word are left out).
+- The answer must state the data cell when the place is smaller than it (`report.data_cells`, from the
+  sources of the tested variables), and must say "could not be measured" when the question names a
+  variable that is in `report.not_measured` (`report.asked_not_measured`). `not_measured` also lists the
+  variables `list_variables` marked unavailable here.
 - `thinking {text}` and board notes are checked. A line with a figure no tool returned, a cause claim,
   "proof" or "this part is human" is shown as `Next: <tool>.` instead, and such a note is shown empty.
+- The map moves on its own: after `profile_place` the code appends `map {op: "fly_to", bbox: place bbox,
+  pitch: 55, bearing: 0}` unless the camera already moved, and a solved case's profile lists
+  `case_layers [{layer_id, title, kind}]`. `show_layer` with no date and no year gets `year` = the last
+  year of the most recent tested period (else the investigation's end), when the layer has that year
+  (case layers: yearly ones only).
 - `map {op: "show_before_after", layer_id, year_a, year_b}` may also carry `before_url`, `after_url` and
   `bbox` (from `satellite_picture`). `layer_id` is always a map catalog id, e.g. `true_colour`.
 - `history` items describe a step by the **last** tool message of that step. When the model made several

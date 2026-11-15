@@ -265,6 +265,7 @@ def answer_payload(answer: Mapping | None) -> dict | None:
         "checked": bool(answer.get("checked")),
         "figures": list(answer.get("figures") or []),
         "source": answer.get("source"),  # "llm" | "template"
+        "rejected": list(answer.get("rejected") or []),  # why each narrator try was turned down (no model text)
     }
 
 

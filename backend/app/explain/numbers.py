@@ -153,6 +153,8 @@ def allowed_numbers(report: Mapping) -> tuple[AllowedNumber, ...]:
         add(end - start + 1, False, "period_years_inclusive")
     for i, figure in enumerate(report.get("figures") or ()):
         add(figure, False, f"figure[{i}]")  # detective: every number a tool returned
+    for i, figure in enumerate(report.get("percent_figures") or ()):
+        add(figure, True, f"percent_figure[{i}]")  # detective: a tool's "_pct" values, quoted with %
     validation = report.get("validation")
     if isinstance(validation, Mapping):
         for key in ("r", "n_months", "elevation_trend_m_per_decade"):

@@ -150,14 +150,22 @@ class UpdateBoardArgs(BaseModel):
         "whenever one exists: a correlate test counts as a link only when it pairs target_var with this variable. "
         "Omit it for a suspect no catalog variable measures (it can then only be supported by the residual).",
     )
+    expects: Literal["up", "down"] | None = Field(
+        default=None,
+        description="Always give it when suspect_var is given: the way suspect_var must go for this suspect to "
+        "hold, e.g. 'down' for 'less rain', 'up' for 'warmer air'. If the suspect's own trend is real and goes "
+        "the other way, the board rules the suspect out.",
+    )
 
 
 TOOLS: dict[str, ToolSpec] = {
     "profile_place": ToolSpec(
         data.profile_place,
-        "Call this first. Profiles the picked place: land-cover shares and the dominant class "
+        "Call this first. Profiles the picked place: land-cover shares in percent of the box "
+        "(land_cover_pct) and the dominant class "
         "(MODIS, ~20 km box), the tags that decide which variables apply, and the size of the data "
-        "cells. Coarse sources average over big cells (GRACE ~300 km, POWER ~50 km), so a single "
+        "cells. It also flies the map to the place and, in a solved case, lists the case's own map layers "
+        "(case_layers). Coarse sources average over big cells (GRACE ~300 km, POWER ~50 km), so a single "
         "field or street is never resolved.",
         NoArgs,
     ),
@@ -181,7 +189,9 @@ TOOLS: dict[str, ToolSpec] = {
         "Tests a fetched series for a long-term trend after removing the seasonal cycle "
         "(Mann-Kendall with Sen slope). Returns slope per decade with its 95% range, p-value, the "
         "q-value corrected over every test of this investigation, the verdict (real / likely / "
-        "unknown), direction and how many more years would be needed. Every call counts as a test "
+        "unknown), direction and how many more years would be needed. Rain, runoff and snow cover are "
+        "tested on the means of complete years instead (basis: annual means), because their dry or "
+        "snow-free seasons hide the change in monthly values. Every call counts as a test "
         "and makes the correction stricter, so test only what the question needs. Quote only the "
         "returned numbers.",
         TrendTestArgs,
@@ -223,7 +233,8 @@ TOOLS: dict[str, ToolSpec] = {
     "land_cover_change": ToolSpec(
         context.land_cover_change,
         "Shows how the land cover around this place changed between two years (MODIS, 500 m): the "
-        "classes whose share moved most, with before and after shares, and shows the land cover layer "
+        "classes whose share moved most, with before_pct and after_pct (percent of the box) and "
+        "change_points (the move in percentage points, not a percent change), and shows the land cover layer "
         "on the map. Always repeat the returned caveat: at 500 m, orchards and tree crops can be "
         "classed as savanna or woody vegetation. Not a statistical test.",
         LandCoverArgs,
@@ -263,8 +274,8 @@ TOOLS: dict[str, ToolSpec] = {
     "show_layer": ToolSpec(
         mapping.show_layer,
         "Puts one layer on the map: the evidence of the current step (the variable just tested, for its year "
-        "or day), with its legend, source and resolution shown to the user. Unknown ids or dates outside the "
-        "layer are rejected. A map instruction: not a test, no figure comes from it.",
+        "or day), with its legend, source and resolution shown to the user. With no date and no year it shows the "
+        "last year of the period you tested. Unknown ids or dates outside the layer are rejected. A map instruction: not a test, no figure comes from it.",
         ShowLayerArgs,
     ),
     "set_year": ToolSpec(
@@ -301,8 +312,9 @@ TOOLS: dict[str, ToolSpec] = {
         "(non_climate suspects only) a real "
         "climate_residual of target_var. A suspect whose own trend is real but has no such link is shown as "
         "'trend_only' (TREND REAL, NOT LINKED); otherwise it is shown as 'hint' with the reason. 'ruled_out' "
-        "needs a test with no clear trend and enough years, otherwise 'open'. Report the status the board "
-        "returns, not the one you asked for.",
+        "needs a test with no clear trend and enough years, or its own data going the other way from 'expects', "
+        "otherwise 'open'; a suspect whose own data really went the other way is ruled out whatever you ask. "
+        "Report the status the board returns, not the one you asked for.",
         UpdateBoardArgs,
     ),
 }

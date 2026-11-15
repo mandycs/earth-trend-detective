@@ -64,10 +64,20 @@ def _land_cover(session: Session, year_a: int, year_b: int) -> dict:
         "year_b": year_b,
         "dominant_before": before.dominant,
         "dominant_after": after.dominant,
-        "changes": landcover.share_changes(before, after),
+        "changes": [_as_percent(row) for row in landcover.share_changes(before, after)],
         "layer": "land_cover",
         "source": landcover.SOURCE,
         "caveat": LAND_COVER_CAVEAT,
+    }
+
+
+def _as_percent(row: dict) -> dict:
+    """A share change in the words a student reads: percent of the box, and the move in points."""
+    return {
+        "class": row["class"],
+        "before_pct": round(100.0 * row["before"], 1),
+        "after_pct": round(100.0 * row["after"], 1),
+        "change_points": round(100.0 * row["change"], 1),
     }
 
 
