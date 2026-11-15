@@ -50,3 +50,6 @@ are listed in `final-fix-report.md` next to it. In short:
   months.
 - Heat stress (`dhw`) north of the equator uses July–December. Near the equator the warm season can fall
   outside that window, so the yearly peak may be understated there.
+- Snow from GIBS (`snow_gibs`) is not offered: GIBS draws no-snow and unseen ground (cloud, polar night) with
+  the same transparent pixel, so a snow trend can't be measured honestly from its colours. Off-case snow stays
+  not available; in the solved cases the AppEEARS monthly snow cover is used.

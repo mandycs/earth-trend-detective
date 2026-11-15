@@ -46,8 +46,8 @@ def _rows(session):
 
 def test_off_case_ndvi_becomes_ndvi_gibs():
     rows = _rows(_session(tags=("vegetated", "snow")))
-    assert "ndvi" not in rows and "lst_day" not in rows and "snow_cover" not in rows
-    for twin in ("ndvi_gibs", "lst_gibs", "snow_gibs"):
+    assert "ndvi" not in rows and "lst_day" not in rows
+    for twin in ("ndvi_gibs", "lst_gibs"):
         assert rows[twin]["available"] is True, rows[twin]
         assert rows[twin]["source"] == "gibs"
     assert rows["et"]["available"] is False and rows["et"]["reason"] == tools.OFF_CASE_REASON  # no GIBS twin
@@ -185,3 +185,20 @@ def test_missing_years_reach_the_model(monkeypatch):
     monkeypatch.setattr(gibs_values, "fetch_annual", fake)
     got = tools.get_series(_session(), var_id="ndvi_gibs")
     assert got["missing_years"] == [2010] and "dropped_years" not in got
+
+
+def test_snow_gibs_is_never_offered_and_snow_cover_has_no_twin(monkeypatch):
+    def boom(*a, **k):
+        raise AssertionError("must not fetch")
+
+    monkeypatch.setattr(gibs_values, "fetch_annual", boom)
+    s = _session(tags=("snow", "mountain"))
+    rows = _rows(s)
+    assert rows["snow_gibs"]["available"] is False and rows["snow_gibs"]["reason"] == tools.SNOW_GIBS_REASON
+    assert rows["snow_cover"]["available"] is False and rows["snow_cover"]["reason"] == tools.OFF_CASE_REASON
+    got = tools.get_series(s, var_id="snow_gibs")
+    assert got["status"] == "not_available" and got["reason"] == tools.SNOW_GIBS_REASON
+    off = tools.get_series(s, var_id="snow_cover")
+    assert off["reason"] == tools.OFF_CASE_REASON and "use_instead" not in off
+    in_case = _rows(_session(tags=("snow", "glacier"), site_id="aletsch"))
+    assert in_case["snow_gibs"]["available"] is False and in_case["snow_cover"]["available"] is True

@@ -39,7 +39,14 @@ NOT_SEA_REASON = "not_available_here: a sea variable; this place is on land"
 NOT_REEF_REASON = "not_available_here: heat stress on corals; only offered on reef coasts (within 30° of the equator)"
 ON_CASE_TWIN_REASON = "not_available_here: this solved case has the monthly series of this variable"
 # AppEEARS variables (solved cases only) and their GIBS yearly twin, offered everywhere else.
-GIBS_TWINS: Mapping[str, str] = {"ndvi": "ndvi_gibs", "lst_day": "lst_gibs", "snow_cover": "snow_gibs"}
+# No snow twin: GIBS draws no-snow and unseen ground with the same transparent pixel.
+GIBS_TWINS: Mapping[str, str] = {"ndvi": "ndvi_gibs", "lst_day": "lst_gibs"}
+SNOW_GIBS_REASON = (
+    "not_available_here: GIBS shows no-snow and unseen ground the same way, "
+    "so a snow trend can't be measured honestly from it"
+)
+# Catalog variables kept (fetcher code stays) but never offered, with the reason why.
+WITHDRAWN: Mapping[str, str] = {"snow_gibs": SNOW_GIBS_REASON}
 TWIN_OF: Mapping[str, str] = {twin: base for base, twin in GIBS_TWINS.items()}
 SEA_TAGS = frozenset({"ocean", "coast", "reef"})
 ANNUAL = "annual"
@@ -150,6 +157,8 @@ def _unavailable_reason(session: Session, var: Variable, extra_ids: frozenset[st
     at_sea = _open_sea_reason(session, var)
     if at_sea is not None:
         return at_sea
+    if var.id in WITHDRAWN:
+        return WITHDRAWN[var.id]
     sea = _sea_reason(session, var)
     if sea is not None:
         return sea
