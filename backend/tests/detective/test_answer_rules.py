@@ -176,3 +176,59 @@ def test_narrate_gives_a_why_question_a_third_try(power):
     text, _, _, source, rejected = narrate(narrator, "Why is it getting warmer?", report, BOARD)
     assert source == "llm" and text == good and narrator.calls == 3
     assert rejected  # the earlier tries are still reported
+
+
+# --------------------------------------------------------------------------- fix round 1: no model text in reasons
+
+
+LEAKY = "Lake Mead's level dropped 40 m because farmers' pumps drained it; it's proof, 47 % man-made."
+
+
+def test_rejected_reasons_are_fixed_sentences_without_model_text(power):
+    import re
+
+    from app.detective.nodes import REJECTION_REASONS
+
+    report = ledger_report(_tested(), "Why is the lake dropping?")
+    _, _, _, _, rejected = narrate(_Narrator([LEAKY] * 3), "Why is the lake dropping?", report, BOARD)
+    assert rejected
+    assert not any(re.search(r"\d", r) for r in REJECTION_REASONS.values())
+    for row in rejected:
+        assert set(row) == {"try", "kind", "reason"}
+        assert row["reason"] in REJECTION_REASONS.values(), row
+        assert not re.search(r"\d", row["reason"]), row
+        for word in ("Mead", "farmers", "pumps", "drained", "man-made"):
+            assert word not in row["reason"], row
+
+
+def test_note_problems_are_fixed_sentences_without_model_text():
+    import re
+
+    from app.detective.tools import TOOLS
+
+    s = Session(ledger=Ledger(), place=SMALL, catalog=load_catalog())
+    out = TOOLS["update_board"].fn(s, suspect="farms", status="open", evidence_ids=[], note=LEAKY)
+    assert out["note_problems"]
+    for p in out["note_problems"]:
+        assert not re.search(r"\d", p) and "Mead" not in p and "farmers" not in p, p
+
+
+@pytest.mark.parametrize("text", [
+    "Air temperature went up from 2003 to 2024; 50 % of it is new.",
+    "Air temperature went up from 2003 to 2024, about 50 of them.",
+])
+def test_cell_rule_needs_a_size_in_km(power, text):
+    report = ledger_report(_tested(), "Is it getting warmer?")
+    ok, _, rejected = check(text, report)
+    assert any("data cell" in r for r in rejected), (text, rejected)
+
+
+@pytest.mark.parametrize("text", [
+    "Air temperature went up from 2003 to 2024 in a 50 km cell.",
+    "Air temperature went up from 2003 to 2024 in one 50-km cell.",
+    "Air temperature went up from 2003 to 2024; one value covers about 50 km.",
+])
+def test_cell_rule_accepts_a_size_in_km(power, text):
+    report = ledger_report(_tested(), "Is it getting warmer?")
+    ok, _, rejected = check(text, report)
+    assert not any("data cell" in r for r in rejected), (text, rejected)

@@ -117,29 +117,50 @@ def _number_problems(text: str, report: Mapping) -> list[str]:
     return [f"'{n.text}' is not a number any tool returned" for n in extract_numbers(text) if find_match(n, allowed) is None]
 
 
-def screen_problems(text: str, report: Mapping, suspects: Iterable[Mapping] = ()) -> list[str]:
-    """Why `text` may not go on screen as it is (empty list: it may)."""
-    problems = _number_problems(text, report)
+def screen_rejections(text: str, report: Mapping, suspects: Iterable[Mapping] = ()) -> list[tuple[str, str]]:
+    """(kind, detail) of why `text` may not go on screen as it is (empty list: it may)."""
+    problems = [("number", p) for p in _number_problems(text, report)]
     for hit in PROOF_WORDS.finditer(NEGATED_PROOF.sub(" ", text)):
-        problems.append(f"'{hit.group(0)}': a clue is never proof")
-    problems += cause_problems(text, suspects)
+        problems.append(("proof", f"'{hit.group(0)}': a clue is never proof"))
+    problems += [("cause", p) for p in cause_problems(text, suspects)]
     hit = HUMAN_CLAIM.search(text)
     if hit:
-        problems.append(f"'{hit.group(0)}': never say a part is human; say '{RESIDUAL_WORDING}'")
+        problems.append(("human", f"'{hit.group(0)}': never say a part is human; say '{RESIDUAL_WORDING}'"))
     return problems
+
+
+def screen_problems(text: str, report: Mapping, suspects: Iterable[Mapping] = ()) -> list[str]:
+    """Why `text` may not go on screen as it is (empty list: it may)."""
+    return [detail for _, detail in screen_rejections(text, report, suspects)]
 
 
 def _suspect_rows(session: Session) -> list[dict]:
     return [{"id": s.id, "label": s.label} for s in session.board.values()]
 
 
-_QUOTED = re.compile(r"'[^']*'")
+# Fixed sentences for the reasons that leave the checker (a board note, the answer log): never a
+# piece of the model's text, so no unchecked figure and no cause claim travels with them.
+REASONS = {
+    "number": "It quotes a figure that no tool returned.",
+    "proof": "It calls a clue proof.",
+    "cause": "It claims a cause; say what changed and what the tests found, never why.",
+    "human": f"It says a part is human; say '{RESIDUAL_WORDING}' instead.",
+    "lead": "Say 'a clue, not proof', not 'a lead, not proof'.",
+    "residual_wording": f"A share not explained by climate must be said as '{RESIDUAL_WORDING} — a clue, not proof'.",
+    "nothing_measured": "Nothing was measured, so say that nothing could be measured here, not that nothing changes.",
+    "cell": "The place is smaller than the data cell: say how big the cell is, in km.",
+    "not_measured": "The question asks about something that could not be measured here: say so and why.",
+    "direction": "It says a variable went the other way from what the test found.",
+    "certainty": "It sounds surer than the test verdict allows.",
+    "causal": "It claims a cause; say what changed and what the tests found, never why.",
+    "jargon": "It uses statistics jargon; say it in plain words.",
+    "length": "It is too long or empty; at most three short sentences.",
+}
+OTHER_REASON = "It breaks a rule of the checker."
 
 
-def without_quotes(detail: str) -> str:
-    """A rejection reason with every quoted piece of the model's text replaced by '…' (no figure
-    the tools did not return, and no cause claim, travels with it)."""
-    return re.sub(r"\s{2,}", " ", _QUOTED.sub("…", detail)).strip()
+def reason_for(kind: str) -> str:
+    return REASONS.get(kind, OTHER_REASON)
 
 
 def note_problems(note: str | None, session: Session) -> list[str]:
@@ -147,7 +168,8 @@ def note_problems(note: str | None, session: Session) -> list[str]:
     text = (note or "").strip()
     if not text:
         return []
-    return [without_quotes(p) for p in screen_problems(text, ledger_report(session), _suspect_rows(session))]
+    found = screen_rejections(text, ledger_report(session), _suspect_rows(session))
+    return list(dict.fromkeys(reason_for(kind) for kind, _ in found))
 
 
 def screen_note(note: str | None, session: Session) -> str:
@@ -175,9 +197,13 @@ NOT_MEASURED_SAID = re.compile(
 )
 
 
+_KM_SIZE = re.compile(r"(?<![\d.,])(\d+(?:\.\d+)?)\s*-?\s*km\b", re.IGNORECASE)
+
+
 def _cell_said(text: str, cells: Iterable[Mapping]) -> bool:
+    """A cell size said as a length in km ("about 50 km", "a 50-km cell"); a bare number or a percent is not."""
     sizes = [float(c["size_km"]) for c in cells]
-    return any(abs(n.value - km) < 0.5 for n in extract_numbers(text) for km in sizes)
+    return any(abs(float(m.group(1)) - km) < 0.5 for m in _KM_SIZE.finditer(text) for km in sizes)
 
 
 def answer_rejections(text: str, report: Mapping, suspects: Iterable[Mapping] = ()) -> list[tuple[str, str]]:

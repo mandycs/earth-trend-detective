@@ -2,8 +2,10 @@
 
 Each call appends one op to `session.map` (`show_layer`, `set_year`, `show_before_after`,
 `fly_to`, `show_footprint`). They are instructions, not evidence: never cached by the
-ledger, they log no tests, and what they return to the model carries no figures (legend
-ranges go to the front through the layer catalog, not to the model).
+ledger, they log no tests, and what they return to the model carries no measured figures (legend
+ranges go to the front through the layer catalog, not to the model). The only numbers in them are
+years: a `show_layer` without a date returns the `year` it chose (with `year_note`), and the ops
+carry the years and boxes they were given.
 
 Valid layer ids: `catalog/map_layers.yaml` (GIBS layers, checked against the GIBS
 capabilities) plus, inside a solved case, the ids of `sites/<id>/layers.json`.

@@ -46,7 +46,7 @@ are listed in `final-fix-report.md` next to it. In short:
   `"no test links its own data to <target label>"` (when `suspect_var` is unknown).
 - `update_board` refuses a `suspect_var` equal to `target_var` (a suspect is a possible reason for the
   change, never the changing variable). A note that fails the screen comes back as `note_removed` (asking
-  for a retry) and `note_problems` (the reasons, with the note's own words replaced by `…`).
+  for a retry) and `note_problems` (fixed sentences per reason, never the note's own words).
 - **Opposite direction rules out.** `expects` (`up` / `down`, or `null`) is the way `suspect_var` must go
   for the suspect to hold; when the model gives none it is read from the name ("less", "lower"... -> down;
   "more", "warming"... -> up). A `trend` test of `suspect_var` in the evidence that is `real` (corrected,
@@ -67,8 +67,10 @@ are listed in `final-fix-report.md` next to it. In short:
 - `answer {text, checked, figures, source, rejected}`. `rejected` is `[{try, kind, reason}]`: why each
   narrator try was turned down (`kind` from the validator — `number`, `direction`, `certainty`, `causal`,
   `proof`, `jargon`, `length` — or the detective's rules — `cause`, `human`, `lead`, `residual_wording`,
-  `nothing_measured`, `cell`, `not_measured`). Every quoted piece of the model's text is replaced by `…`,
-  so no unchecked figure travels in it; it is for diagnosis, not for display. A "why" question gets a
+  `nothing_measured`, `cell`, `not_measured`). `reason` is a fixed sentence per kind
+  (`wording.REASONS`), never a piece of the model's text, so no unchecked figure travels in it; it is for
+  diagnosis, not for display. The cell counts as said only as a length in km ("about 50 km", "a 50-km
+  cell"), never as a bare number or a percent. A "why" question gets a
   third try. The template (`source: "template"`) states what changed, the share not explained by the
   climate (else whether the change is real), and one sentence with what could not be measured, the data
   cell and the board statuses (suspect names with a figure or a cause word are left out).

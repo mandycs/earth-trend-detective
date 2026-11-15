@@ -9,7 +9,7 @@
   every figure against the ledger; one retry with the rejections (two for a "why" question,
   whose first tries tend to claim a cause); else the code's template, which states the data
   cell, the board and what could not be measured. It also returns why each try was rejected
-  (`{try, kind, reason}`, with every quoted piece of the model's text taken out).
+  (`{try, kind, reason}`, `reason` a fixed sentence per kind: never any of the model's text).
 """
 
 from __future__ import annotations
@@ -29,7 +29,8 @@ from app.detective.prompt import CONCLUDE_PROMPT, conclude_request, retry_reques
 from app.detective.session import Session
 from app.detective.tools import TOOLS, mapping
 from app.detective.tools.analysis import WORDING, refresh_verdicts
-from app.detective.wording import RESIDUAL_WORDING, answer_rejections, cause_problems, without_quotes
+from app.detective.wording import REASONS as REJECTION_REASONS  # noqa: F401 - re-exported for callers
+from app.detective.wording import RESIDUAL_WORDING, answer_rejections, cause_problems, reason_for
 from app.explain.numbers import extract_numbers
 from app.explain.template import NO_SPLIT_SENTENCE, template_narrative
 from app.explain.validator import MAX_QUESTION_SENTENCES, SENTENCE_SPLIT, validate_narrative
@@ -244,7 +245,7 @@ def narrate(
         if not found:
             return text, True, figures, "llm", log
         logger.info("narrator answer rejected on %d point(s)", len(found))
-        log += [{"try": attempt, "kind": kind, "reason": without_quotes(detail)} for kind, detail in found]
+        log += [{"try": attempt, "kind": kind, "reason": reason_for(kind)} for kind, detail in found]
         request = [*request, AIMessage(text), HumanMessage(retry_request([d for _, d in found], why=why))]
     text, figures = template_answer(report, board)
     return text, True, figures, "template", log
