@@ -19,10 +19,17 @@ from collections.abc import Iterable, Mapping
 
 from app.detective.report import ledger_report
 from app.detective.session import Session
-from app.explain.numbers import allowed_numbers, extract_numbers, find_match
+from app.explain.numbers import AllowedNumber, FoundNumber, allowed_numbers, extract_numbers, find_match
 from app.explain.vocab import NEGATED_PROOF, PROOF_WORDS
 
 RESIDUAL_WORDING = "not explained by the climate we measured"
+# The same honest meaning in everyday words: what the weather we measured does not explain.
+# Said this way it is not a cause claim (it says what the climate split did NOT find).
+RESIDUAL_SAID = re.compile(
+    r"\bnot explained by the (?:climate|weather) we measured\b"
+    r"|\b(?:the )?(?:weather|climate) we measured (?:does not|doesn'?t|did not|didn'?t|can ?not|can'?t) explain\b",
+    re.IGNORECASE,
+)
 
 # Cause claims, in any clause (a hedge or a "not" elsewhere in the clause does not excuse them).
 CAUSE_WORDS = re.compile(
@@ -101,7 +108,7 @@ def _actors(suspects: Iterable[Mapping]) -> tuple[str, ...]:
 def cause_problems(text: str, suspects: Iterable[Mapping] = ()) -> list[str]:
     """One plain rejection per cause claim in `text` (suspects' names count as actors).
     A cause word about the data ("because the record is short") is not a claim about the world."""
-    about_world = DATA_CAUSE.sub(" ", text)
+    about_world = RESIDUAL_SAID.sub(" ", DATA_CAUSE.sub(" ", text))
     out = [
         f"'{hit.group(0)}' claims a cause; say what changed and what the tests found, never why"
         for hit in CAUSE_WORDS.finditer(about_world)
@@ -146,7 +153,7 @@ REASONS = {
     "cause": "It claims a cause; say what changed and what the tests found, never why.",
     "human": f"It says a part is human; say '{RESIDUAL_WORDING}' instead.",
     "lead": "Say 'a clue, not proof', not 'a lead, not proof'.",
-    "residual_wording": f"A share not explained by climate must be said as '{RESIDUAL_WORDING} — a clue, not proof'.",
+    "residual_wording": "A share not explained by climate must be said as 'not explained by the weather we measured' or 'the weather we measured doesn't explain', with 'a clue, not proof'.",
     "nothing_measured": "Nothing was measured, so say that nothing could be measured here, not that nothing changes.",
     "cell": "The place is smaller than the data cell: say how big the cell is, in km.",
     "not_measured": "The question asks about something that could not be measured here: say so and why.",
@@ -155,6 +162,8 @@ REASONS = {
     "causal": "It claims a cause; say what changed and what the tests found, never why.",
     "jargon": "It uses statistics jargon; say it in plain words.",
     "length": "It is too long or empty; at most three short sentences.",
+    "groundwater": "The water data counts all the water stored, ground and surface: never call it groundwater alone.",
+    "everyday": "It quotes an everyday figure (litres, a share in ten, most of it) that no tool worked out.",
 }
 OTHER_REASON = "It breaks a rule of the checker."
 
@@ -206,18 +215,29 @@ def _cell_said(text: str, cells: Iterable[Mapping]) -> bool:
     return any(abs(float(m.group(1)) - km) < 0.5 for m in _KM_SIZE.finditer(text) for km in sizes)
 
 
+GROUNDWATER = re.compile(r"\b(?:ground ?water|aquifers?)\b", re.IGNORECASE)
+# The answer may say "groundwater" only beside a plain word that the data counts all the water together.
+GROUNDWATER_HEDGE = re.compile(
+    r"\b(?:not (?:just|only|the) ground ?water(?: alone| on its own)?|ground ?water (?:alone|on its own)"
+    r"|(?:underground|ground) and (?:on the )?surface|surface and (?:underground|ground)"
+    r"|all (?:the )?water(?: stored)?|tell ground ?water apart|can(?:not|'t) see ground ?water)",
+    re.IGNORECASE,
+)
+
+
 def answer_rejections(text: str, report: Mapping, suspects: Iterable[Mapping] = ()) -> list[tuple[str, str]]:
     """(kind, detail) of every detective rule the final answer breaks, on top of the shared validator."""
     problems = [("cause", p) for p in cause_problems(text, suspects)]
+    problems += everyday_rejections(text, report)
     hit = HUMAN_CLAIM.search(text)
     if hit:
         problems.append(("human", f"'{hit.group(0)}': never say a part is human; say '{RESIDUAL_WORDING}'"))
     if LEAD_NOT_PROOF.search(text):
         problems.append(("lead", f"say '{RESIDUAL_WORDING} — a clue, not proof', not 'a lead, not proof'"))
     has_share = any(row.get("residual_pct_non_climate") is not None for row in report.get("variables") or ())
-    if has_share and RESIDUAL_WORDING not in text.lower():
+    if has_share and not RESIDUAL_SAID.search(text):
         problems.append(
-            ("residual_wording", f"a share not explained by climate must be said as '{RESIDUAL_WORDING} — a clue, not proof'")
+            ("residual_wording", "a share not explained by climate must be said as 'not explained by the weather we measured — that's a clue, not proof' or 'the weather we measured doesn't explain most of it — that's a clue, not proof' (most only with share_word most)")
         )
     if not report.get("n_tests"):
         hit = NO_CHANGE_CLAIM.search(text)
@@ -227,9 +247,89 @@ def answer_rejections(text: str, report: Mapping, suspects: Iterable[Mapping] = 
     if cells and not _cell_said(text, cells):
         sizes = " or ".join(f"about {c['size_km']:.0f} km ({c['label'].lower()})" for c in cells)
         problems.append(("cell", f"the place is smaller than the data cell: say how big the cell is, {sizes}"))
+    hit = GROUNDWATER.search(text)
+    grace = any(row.get("id") == "grace_tws" for row in report.get("variables") or ())
+    if hit and grace and not GROUNDWATER_HEDGE.search(text):
+        problems.append(("groundwater", f"'{hit.group(0)}': the water data counts all the water stored, ground and surface"))
     asked = list(report.get("asked_not_measured") or ())
     if asked and not NOT_MEASURED_SAID.search(text):
         problems.append(("not_measured", f"the question asks about {', '.join(a.lower() for a in asked)}: say it could not be measured here and why (see not_measured)"))
+    return problems
+
+
+_SMALL = {
+    "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10,
+}
+_LITRES = re.compile(r"(?<![\d.,])(\d[\d,]*(?:\.\d+)?)\s*(?:litres?|liters?)\b", re.IGNORECASE)
+_IN_TEN = re.compile(
+    r"\b(\d+|" + "|".join(_SMALL) + r")\s+(?:in|out\s+of)\s+(?:10|ten)\b", re.IGNORECASE
+)
+_MOST = re.compile(
+    r"\bmost\s+of\s+(?:it|this|that|the\s+(?:change|drop|fall|rise|loss|decline|increase|warming))\b"
+    r"|\bexplain\s+most\b",
+    re.IGNORECASE,
+)
+
+
+def mask_everyday(text: str) -> str:
+    """`text` with the "ten" of "N in ten" hidden from the figure check: the share is checked by
+    `everyday_rejections` against the tools' own "in ten" values."""
+    return _IN_TEN.sub(lambda m: f"{m.group(1)} in tenths", text)  # only a share: "fell in 10 years" stays checked
+
+
+def _values(report: Mapping, prefix: str) -> list[AllowedNumber]:
+    out = []
+    for block in report.get("everyday") or ():
+        for key, value in block.items():
+            if key.startswith(prefix) and isinstance(value, (int, float)) and not isinstance(value, bool):
+                out.append(AllowedNumber(float(value), False, f"everyday.{key}"))
+    return out
+
+
+_CLASS_STOP = frozenset({"land", "lands", "and", "with", "natural", "vegetation", "mosaic", "other"})
+
+
+_BOUNDARY = re.compile(r"[.;!?](?=\s|$)")
+
+
+def _sentence_at(text: str, pos: int) -> str:
+    """The sentence (or ;-clause) around `pos`; a decimal point is not a boundary."""
+    start = max((m.end() for m in _BOUNDARY.finditer(text, 0, pos)), default=0)
+    end = next((m.start() for m in _BOUNDARY.finditer(text, pos)), len(text))
+    return text[start:end]
+
+
+def _named_classes(sentence: str, report: Mapping) -> list[Mapping]:
+    """The land cover blocks whose class the sentence names (a share in ten then belongs to them)."""
+    low = sentence.lower()
+    out = []
+    for block in report.get("everyday") or ():
+        words = [w for w in re.findall(r"[a-z][a-z-]+", str(block.get("class") or "").lower()) if w not in _CLASS_STOP]
+        if any(re.search(r"\b" + re.escape(w), low) for w in words):
+            out.append(block)
+    return out
+
+
+def everyday_rejections(text: str, report: Mapping) -> list[tuple[str, str]]:
+    """(kind, detail) of every everyday figure that no tool's `everyday` block holds."""
+    problems: list[tuple[str, str]] = []
+    litres = _values(report, "litres_")
+    for m in _LITRES.finditer(text):
+        number = FoundNumber(m.group(1), float(m.group(1).replace(",", "")), False)
+        if find_match(number, litres) is None:
+            problems.append(("everyday", f"'{m.group(0)}' is not a litres figure any tool worked out"))
+    in_ten = {v.value for v in _values(report, "in_ten_")}
+    for m in _IN_TEN.finditer(text):
+        word = m.group(1).lower()
+        n = float(_SMALL[word]) if word in _SMALL else float(word)
+        named = _named_classes(_sentence_at(text, m.start()), report)
+        allowed = {v.value for b in named for v in _values({"everyday": [b]}, "in_ten_")} if named else in_ten
+        if n not in allowed:
+            problems.append(("everyday", f"'{m.group(0)}' is not a share in ten any tool worked out"))
+    most = any(b.get("share_word") == "most" for b in report.get("everyday") or ())
+    hit = _MOST.search(text)
+    if hit and not most:
+        problems.append(("everyday", f"'{hit.group(0)}': no tool found that most of the change is left unexplained"))
     return problems
 
 

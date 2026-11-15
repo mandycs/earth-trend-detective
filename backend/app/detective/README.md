@@ -65,10 +65,21 @@ are listed in `final-fix-report.md` next to it. In short:
     against the catalog driver labels) is a climate driver.
 - `done {thread_id, n_tests, n_tests_branch, n_tool_calls}`. `n_tests` counts the thread's whole family;
   `n_tests_branch` counts the tests on this branch.
-- `answer {text, checked, figures, source, rejected}`. `rejected` is `[{try, kind, reason}]`: why each
+- `answer {text, checked, figures, source, rejected, next_questions}`. `next_questions` is a list of 0-3
+  short plain follow-up questions ("Is it still going down in recent years?") written by code
+  (`plain.next_questions`) from what the run did not test: no figure and no cause claim in them (both
+  checked); `[]` on threads stored before it existed. `rejected` is `[{try, kind, reason}]`: why each
   narrator try was turned down (`kind` from the validator — `number`, `direction`, `certainty`, `causal`,
   `proof`, `jargon`, `length` — or the detective's rules — `cause`, `human`, `lead`, `residual_wording`,
-  `nothing_measured`, `cell`, `not_measured`). `reason` is a fixed sentence per kind
+  `nothing_measured`, `cell`, `not_measured`, `everyday`).
+- Everyday figures (`everyday.py`): trend, land cover and climate-split results carry an `everyday`
+  block worked out by code (water in litres on each square metre per decade and over the years tested,
+  degrees over the years tested, "N in ten" shares, "greener"/"browner"). The checker accepts a litres
+  figure, an "N in ten" share (bound to the land class the sentence names) or "most of it" only when it
+  matches one of those blocks. The share may be said "not explained by the weather we measured" or "the
+  weather we measured doesn't explain …", always with "a clue, not proof". The report also carries
+  `other_periods` (the same variable over other years), `comparisons` and `land_cover`, and a follow-up
+  gets the earlier answer so it leads with what is new. `reason` is a fixed sentence per kind
   (`wording.REASONS`), never a piece of the model's text, so no unchecked figure travels in it; it is for
   diagnosis, not for display. The cell counts as said only as a length in km ("about 50 km", "a 50-km
   cell"), never as a bare number or a percent. A "why" question gets a

@@ -29,7 +29,10 @@ export type SuspectStatus = "open" | "supported" | "hint" | "ruled_out" | "trend
 export interface Suspect { id: string; label: string; status: SuspectStatus; evidence: string[]; note: string; downgraded: string | null }
 export interface BoardEvent { suspects: Suspect[]; n_tests: number; verdicts: Record<string, { verdict: Verdict; direction: Direction }> }
 export interface NotMeasured { label: string; reason: string | null }
-export interface AnswerEvent { text: string; checked: boolean; figures: string[]; source: string; not_measured: NotMeasured[] }
+// next_questions: 2-3 plain follow-up questions written by the backend's code (no figures); [] on older threads.
+export interface AnswerEvent {
+  text: string; checked: boolean; figures: string[]; source: string; not_measured: NotMeasured[]; next_questions?: string[];
+}
 export interface DoneEvent { thread_id: string; n_tests: number | null; n_tests_branch: number | null; n_tool_calls: number | null }
 export type DetEvent =
   | { kind: "place"; data: PlaceEvent } | { kind: "thinking"; data: { text: string } }
@@ -151,6 +154,8 @@ const notMeasured = z
 const answer = z.object({
   text: str, checked: z.boolean().catch(false), figures: strArr.catch([]), source: str.catch(""),
   not_measured: notMeasured,
+  next_questions: z.array(z.unknown()).catch([])
+    .transform((qs) => qs.filter((q): q is string => typeof q === "string" && q.trim() !== "")),
 });
 const done = z.object({
   // A missing or bad count stays null: the screen drops the tests part rather than print an invented "0 tests".

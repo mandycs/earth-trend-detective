@@ -173,7 +173,8 @@ def test_event_order(client_with, offline):
     verdicts = {"t1": {"verdict": "real", "direction": "up"}}
     assert data[7] == {"suspects": [], "n_tests": 1, "verdicts": verdicts}
     assert data[8] == {"suspects": [], "n_tests": 1, "verdicts": verdicts}
-    assert data[9] == {"text": GOOD_ANSWER, "checked": True, "figures": ["2003", "2024", "50"], "source": "llm", "rejected": []}
+    assert data[9] == {"text": GOOD_ANSWER, "checked": True, "figures": ["2003", "2024", "50"], "source": "llm", "rejected": [],
+                       "next_questions": ["Is it still going up in recent years?", "Is a place nearby changing the same way?"]}
     done = data[10]
     assert done["n_tests"] == 1 and done["n_tests_branch"] == 1 and done["n_tool_calls"] == 2 and done["thread_id"]
     assert data[0]["thread_id"] == done["thread_id"]
@@ -355,6 +356,7 @@ def test_get_case_reopens_an_investigation(client_with, offline):
         "figures": ["2003", "2024", "50"],
         "source": "llm",
         "rejected": [],
+        "next_questions": ["Is it still going up in recent years?", "Is a place nearby changing the same way?"],
     }
     assert case["board"] == {"suspects": [], "n_tests": 1, "verdicts": {"t1": {"verdict": "real", "direction": "up"}}}
     assert [op["op"] for op in case["map"]] == ["fly_to"]

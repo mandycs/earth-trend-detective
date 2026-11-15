@@ -65,3 +65,22 @@ def test_tool_descriptions_tell_the_model_about_the_automatic_map():
 
     assert "flies the map to the place" in TOOLS["profile_place"].description
     assert "last year of the period you tested" in TOOLS["show_layer"].description
+
+
+def test_a_follow_up_gets_the_earlier_answer_and_is_told_not_to_repeat_it():
+    import json
+
+    from langchain_core.messages import AIMessage, HumanMessage
+
+    from app.detective.graph import _earlier_answer
+    from app.detective.prompt import conclude_request
+
+    first = {"messages": [HumanMessage("Is the water going down?"), AIMessage("Yes, it is going down.")]}
+    assert _earlier_answer(first) is None
+    second = {"messages": [*first["messages"], HumanMessage("Is it still falling?")]}
+    assert _earlier_answer(second) == "Yes, it is going down."
+    payload = json.loads(conclude_request("Is it still falling?", {}, [], "Yes, it is going down."))
+    assert payload["earlier_answer"] == "Yes, it is going down."
+    assert "earlier_answer" not in json.loads(conclude_request("q", {}, []))
+    assert "do not repeat the earlier answer" in CONCLUDE
+    assert "say what the recent-years test found" in CONCLUDE

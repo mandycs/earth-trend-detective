@@ -266,6 +266,8 @@ def answer_payload(answer: Mapping | None) -> dict | None:
         "figures": list(answer.get("figures") or []),
         "source": answer.get("source"),  # "llm" | "template"
         "rejected": list(answer.get("rejected") or []),  # why each narrator try was turned down (no model text)
+        # plain follow-up questions written by code (no figure, no cause claim); empty on older threads
+        "next_questions": list(answer.get("next_questions") or []),
     }
 
 

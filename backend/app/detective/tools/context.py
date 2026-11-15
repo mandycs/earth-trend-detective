@@ -14,6 +14,7 @@ import logging
 import re
 
 from app import layers
+from app.detective import everyday
 from app.detective.session import Session
 from app.detective.tools import data, mapping
 from app.investigate import landcover, thennow
@@ -64,7 +65,7 @@ def _land_cover(session: Session, year_a: int, year_b: int) -> dict:
         "year_b": year_b,
         "dominant_before": before.dominant,
         "dominant_after": after.dominant,
-        "changes": [_as_percent(row) for row in landcover.share_changes(before, after)],
+        "changes": [everyday.with_land_cover_everyday(_as_percent(row)) for row in landcover.share_changes(before, after)],
         "layer": "land_cover",
         "source": landcover.SOURCE,
         "caveat": LAND_COVER_CAVEAT,

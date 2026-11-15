@@ -23,6 +23,7 @@ import pandas as pd
 from scipy import stats
 
 from app import gather
+from app.detective import everyday
 from app.detective.ledger import Ledger, TestRecord
 from app.detective.place import Place
 from app.detective.session import Session
@@ -176,6 +177,9 @@ def _residual(session: Session, var_id: str) -> dict:
     }
     if out["pct_not_explained"] is None:
         out["pct_note"] = PCT_NOTE
+    block = everyday.for_residual(out["pct_not_explained"], out["pct_range"])
+    if block:
+        out["everyday"] = block
     return out
 
 
