@@ -74,12 +74,14 @@ def test_board_works_on_a_restored_ledger_without_trend_results():
     led = Ledger()
     led.add_test(TestRecord("t1", "t2m", "Air temperature", "trend", 0.001, 0.4, False, mk_trend_test(_monthly())))
     led.add_test(TestRecord("t2", "prec", "Rain", "trend", 0.6, 0.01, False, None))
+    led.add_test(TestRecord("t3", "grace_tws~t2m", "Water stored vs Air temperature", "correlate", 0.001, 0.7, False, None))
     led.remember("trend_test:a", {"test_id": "t1", "status": "ok"})
     led.remember("trend_test:b", {"test_id": "t2", "status": "ok"})
+    led.remember("correlate:c", {"test_ids": ["t3"], "status": "ok"})
     back = Ledger.from_state(_json_round_trip(led.to_state()))
     assert all(back.test(t).result is None for t in ("t1", "t2"))
 
-    board = apply_update({}, {"suspect": "heat", "status": "supported", "evidence_ids": ["e1"], "note": ""}, back)
+    board = apply_update({}, {"suspect": "heat", "status": "supported", "evidence_ids": ["e3"], "note": ""}, back)
     board = apply_update(board, {"suspect": "rain", "status": "ruled_out", "evidence_ids": ["e2"], "note": ""}, back)
     board = evaluate(board, back)
     assert board["heat"].status == "supported" and board["rain"].status == "ruled_out"

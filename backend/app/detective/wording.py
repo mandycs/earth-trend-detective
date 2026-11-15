@@ -31,16 +31,41 @@ CAUSE_WORDS = re.compile(
     r"(?:comes?|came|coming)\s+from|"
     r"explain(?:s|ing)?\b|explanation|explained by(?! the climate we measured)|"
     r"blam(?:e|es|ed|ing)|culprits?|"
-    r"(?:lead|leads|led|leading)\s+to"
+    r"(?:lead|leads|led|leading)\s+to|"
+    r"account(?:s|ed|ing)?\s+for|"
+    r"(?<!not )(?<!never )(?<!n't )linked\s+to|"
+    r"(?:is|are|was|were|be|been)\s+behind\b(?!\s+(?:the\s+|a\s+)?(?:dam|dams|wall|barrage)\b)|"
+    r"attributable\s+to|"
+    r"contribut(?:e|es|ed|ing)\s+to"
     r")",
     re.IGNORECASE,
 )
+# A cause word about the DATA, not the world ("because the record is short") is not a cause claim.
+_DATA_SUBJECT = (
+    r"(?:records?|series|data(?:\s+cells?)?|dataset|samples?|window|tests?|correction|gaps?|cells?|"
+    r"(?:too\s+)?few\s+years|missing\s+(?:years|months))"
+)
+DATA_CAUSE = re.compile(
+    r"\b(?:because(?:\s+of)?|due\s+to|owing\s+to)\s+"
+    r"(?:(?:the|this|that|our|its|a|an|one|each)\s+)?"
+    r"(?:(?:short|shorter|limited|small|coarse|noisy|patchy|missing|few|too|big|large)\s+)*"
+    rf"{_DATA_SUBJECT}\b",
+    re.IGNORECASE,
+)
 # Who may not be the subject of a drain verb ("irrigation is draining the aquifer").
+# A single "dam" or "reservoir" is a place ("the reservoir behind the dam dried up"), not an actor.
 ACTORS = (
     "irrigation", "irrigating", "farm", "farms", "farmers", "farming", "agriculture", "crops", "orchards",
-    "people", "humans", "human", "wells", "pumping", "pumps", "cities", "city", "towns", "dams", "dam",
+    "people", "humans", "human", "wells", "pumping", "pumps", "cities", "city", "towns", "dams",
     "mines", "mining", "industry", "tourism", "tourists",
 )
+# Words of a suspect's label that never make it an actor: places and plain words ("water use").
+_NOT_ACTORS = frozenset({
+    "dam", "reservoir", "reservoirs", "lake", "lakes", "river", "rivers", "basin", "aquifer", "sea", "coast",
+    "water", "use", "uses", "used", "usage", "less", "more", "the", "and", "for", "from", "with", "change",
+    "changes", "level", "levels", "area", "land", "cover", "local", "other", "factor", "factors", "not",
+    "modelled", "modeled", "releases", "release",
+})
 _DRAIN_VERBS = (
     r"(?:drain(?:s|ed|ing)?|deplet(?:e|es|ed|ing)|empt(?:y|ies|ied|ying)|dr(?:y|ies|ied|ying)\s+(?:up|out)|"
     r"suck(?:s|ed|ing)?|us(?:e|es|ed|ing)\s+up|draw(?:s|ing)?\s+down|pump(?:s|ed|ing)?\s+(?:out|away))"
@@ -60,12 +85,17 @@ NO_CHANGE_CLAIM = re.compile(
 
 def _actors(suspects: Iterable[Mapping]) -> tuple[str, ...]:
     words = {w for s in suspects for k in ("id", "label") for w in _WORD.findall(str(s.get(k) or "").lower())}
-    return tuple(sorted(set(ACTORS) | {w for w in words if len(w) > 2}))
+    return tuple(sorted(set(ACTORS) | {w for w in words if len(w) > 2 and w not in _NOT_ACTORS}))
 
 
 def cause_problems(text: str, suspects: Iterable[Mapping] = ()) -> list[str]:
-    """One plain rejection per cause claim in `text` (suspects' names count as actors)."""
-    out = [f"'{hit.group(0)}' claims a cause; say what changed and what the tests found, never why" for hit in CAUSE_WORDS.finditer(text)]
+    """One plain rejection per cause claim in `text` (suspects' names count as actors).
+    A cause word about the data ("because the record is short") is not a claim about the world."""
+    about_world = DATA_CAUSE.sub(" ", text)
+    out = [
+        f"'{hit.group(0)}' claims a cause; say what changed and what the tests found, never why"
+        for hit in CAUSE_WORDS.finditer(about_world)
+    ]
     actors = "|".join(re.escape(a) for a in _actors(suspects))
     drain = re.compile(rf"\b(?:{actors})\b(?:\s+\w+){{0,2}}?\s+{_DRAIN_VERBS}\b", re.IGNORECASE)
     out += [f"'{hit.group(0)}' claims a cause; never say a suspect drains or uses up the water" for hit in drain.finditer(text)]

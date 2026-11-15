@@ -18,6 +18,14 @@ def _record(test_id: str, p: float, slope: float | None = 0.1, too_short: bool =
     )
 
 
+def _link(test_id: str, p: float) -> TestRecord:
+    """A correlate test between the target (water stored) and the suspect (air temperature)."""
+    return TestRecord(
+        id=test_id, var_id="grace_tws~t2m", label="Water stored vs Air temperature", kind="correlate",
+        p_value=p, slope=0.7, too_short=False, result=None,
+    )
+
+
 def _ledger(*records: TestRecord) -> Ledger:
     ledger = Ledger()
     for r in records:
@@ -50,7 +58,7 @@ def test_supported_without_corrected_evidence_becomes_hint(ledger_with_one_weak_
 
 
 def test_supported_with_corrected_evidence_stays_supported():
-    ledger = _ledger(_record("t1", 0.001))  # evidence e1 -> test t1
+    ledger = _ledger(_link("t1", 0.001))  # evidence e1 -> test t1, a link to the target
     board = apply_update({}, {"suspect": "irrigation", "status": "supported",
                               "evidence_ids": ["e1"], "note": "x"}, ledger)
     assert board["irrigation"].status == "supported"
@@ -60,8 +68,8 @@ def test_supported_with_corrected_evidence_stays_supported():
 
 def test_evidence_with_several_test_ids_uses_any_of_them():
     ledger = Ledger()
-    ledger.add_test(_record("t1", 0.5))
-    ledger.add_test(_record("t2", 0.0001))
+    ledger.add_test(_link("t1", 0.5))
+    ledger.add_test(_link("t2", 0.0001))
     ledger.remember("correlate:x", {"test_ids": ["t1", "t2"], "status": "ok"})
     board = apply_update({}, {"suspect": "dams", "status": "supported", "evidence_ids": ["e1"], "note": ""}, ledger)
     assert board["dams"].status == "supported"
@@ -116,7 +124,7 @@ def test_unknown_status_raises():
 
 
 def test_evaluate_rejudges_after_later_tests_change_the_correction():
-    ledger = _ledger(_record("t1", 0.01))
+    ledger = _ledger(_link("t1", 0.01))
     board = apply_update({}, {"suspect": "s", "status": "supported", "evidence_ids": ["e1"], "note": ""}, ledger)
     assert board["s"].status == "supported"
     for i in range(2, 12):

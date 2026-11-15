@@ -113,10 +113,27 @@ class ShowFootprintArgs(BaseModel):
 class UpdateBoardArgs(BaseModel):
     suspect: str = Field(description="Short name of the suspect, e.g. 'irrigation' or 'less rain'.")
     status: Literal["open", "supported", "hint", "ruled_out"] = Field(
-        description="Status you propose; the code may downgrade it (supported -> hint, ruled_out -> open)."
+        description="Status you propose; the code may downgrade it (supported -> trend_only or hint, "
+        "ruled_out -> open)."
     )
-    evidence_ids: list[str] = Field(description="evidence_id values of the tool results that back this status.")
+    evidence_ids: list[str] = Field(
+        description="evidence_id values of the tool results that back this status. For 'supported', include the "
+        "test that links the suspect to target_var: the correlate(target, suspect) result, or for a non_climate "
+        "suspect the climate_residual result of target_var."
+    )
     note: str = Field(description="One plain sentence on why, using only figures from tool results.")
+    target_var: str | None = Field(
+        default=None,
+        description="Always give it: the variable id whose change this suspect would explain (the variable under "
+        "investigation), e.g. 'grace_tws'. The same for every suspect of one question.",
+    )
+    kind: Literal["climate", "non_climate"] | None = Field(
+        default=None,
+        description="Always give it: 'climate' for weather and climate suspects (rain, temperature, snow, sunlight), "
+        "'non_climate' for water use, irrigation, dams, land change and anything else the climate data does not "
+        "measure. A climate suspect can only be supported by a correlate test with target_var; a non_climate one "
+        "also by a real climate_residual of target_var.",
+    )
 
 
 TOOLS: dict[str, ToolSpec] = {
@@ -243,10 +260,14 @@ TOOLS: dict[str, ToolSpec] = {
     "update_board": ToolSpec(
         case_board.update_board,
         "Writes one suspect on the case board with a status (open / supported / hint / ruled_out), the "
-        "evidence_ids that back it and a short note. The code keeps the board honest: 'supported' needs an "
-        "evidence test that survives the correction over every test of this investigation, otherwise it is "
-        "shown as 'hint' with the reason; 'ruled_out' needs a test with no clear trend and enough years, "
-        "otherwise 'open'. Report the status the board returns, not the one you asked for.",
+        "evidence_ids that back it, a short note, the target_var under investigation and the suspect's kind "
+        "(climate / non_climate). The code keeps the board honest: 'supported' needs an evidence test that LINKS "
+        "the suspect to target_var and survives the correction over every test of this investigation: a "
+        "correlate test between target_var and the suspect's series, or (non_climate suspects only) a real "
+        "climate_residual of target_var. A suspect whose own trend is real but has no such link is shown as "
+        "'trend_only' (TREND REAL, NOT LINKED); otherwise it is shown as 'hint' with the reason. 'ruled_out' "
+        "needs a test with no clear trend and enough years, otherwise 'open'. Report the status the board "
+        "returns, not the one you asked for.",
         UpdateBoardArgs,
     ),
 }

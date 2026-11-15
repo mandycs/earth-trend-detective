@@ -173,7 +173,7 @@ def build_graph(
         case = state["case"]
         pending = [ToolMessage(BUDGET_REACHED, tool_call_id=c["id"], name=c.get("name")) for c in _pending_calls(state)]
         session = session_of(case, config, with_series=False)  # the report needs no series
-        judged = case_board.evaluate(session.board, session.ledger)
+        judged = case_board.evaluate(session.board, session.ledger, session.catalog)
         board_rows = case_board.as_json(judged)
         report = ledger_report(session, _question(state))
         text, checked, figures, source = narrate(narrator, _question(state), report, board_rows)

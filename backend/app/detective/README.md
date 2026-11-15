@@ -32,6 +32,17 @@ are listed in `final-fix-report.md` next to it. In short:
 
 - `board {suspects, n_tests, verdicts}`. `verdicts` is `{test_id: {verdict, direction}}`, corrected over the
   whole family. A board event is also sent after every tools step that changed a verdict or added a test.
+- Each suspect in `board.suspects` is `{id, label, status, claimed, evidence, dropped, note, downgraded,
+  target_var, kind}`. `status` is one of `open`, `supported`, `hint`, `ruled_out` or **`trend_only`**
+  (shown as "TREND REAL · NOT LINKED"). The model can only ask for the first four; the code decides
+  what is shown (`board.py`). `supported` needs an evidence test that links the suspect to the variable
+  under investigation and survives the correction: a `correlate` test with the target (any lag), or,
+  for a non-climate suspect only, the target's residual with a real verdict. When only the suspect's own
+  trend is real, the status is `trend_only` and `downgraded` is
+  `"its own trend is real, but no test links it to <target label>"`. `target_var` and `kind`
+  (`climate` / `non_climate`) are what the model gave, or `null` on older calls and boards. When they are
+  `null`, the code infers them: the target from the residual test, else the first trend-tested series; the
+  kind from whether the evidence variables are climate drivers in the catalog.
 - `done {thread_id, n_tests, n_tests_branch, n_tool_calls}`. `n_tests` counts the thread's whole family;
   `n_tests_branch` counts the tests on this branch.
 - `thinking {text}` and board notes are checked. A line with a figure no tool returned, a cause claim,

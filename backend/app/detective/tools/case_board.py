@@ -16,11 +16,26 @@ from app.detective.wording import screen_note
 NOTE_REMOVED = "The note was not shown: notes may only use figures from tool results and never claim a cause."
 
 
-def update_board(session: Session, suspect: str, status: str, evidence_ids: list[str], note: str) -> dict:
+def update_board(
+    session: Session,
+    suspect: str,
+    status: str,
+    evidence_ids: list[str],
+    note: str,
+    target_var: str | None = None,
+    kind: str | None = None,
+) -> dict:
     shown_note = screen_note(note, session)
-    update = {"suspect": suspect, "status": status, "evidence_ids": evidence_ids, "note": shown_note}
+    update = {
+        "suspect": suspect,
+        "status": status,
+        "evidence_ids": evidence_ids,
+        "note": shown_note,
+        "target_var": target_var,
+        "kind": kind,
+    }
     try:
-        new_board = board.apply_update(session.board, update, session.ledger)
+        new_board = board.apply_update(session.board, update, session.ledger, session.catalog)
     except ValueError as exc:
         return {"status": "rejected", "reason": str(exc)}
     session.board = new_board

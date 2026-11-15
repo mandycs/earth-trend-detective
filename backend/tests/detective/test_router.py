@@ -202,11 +202,11 @@ def test_map_and_board_events(client_with, offline):
     suspect = boards[0]["suspects"][0]
     assert {k: suspect[k] for k in ("id", "status", "claimed", "evidence", "note", "downgraded")} == {
         "id": "warming",
-        "status": "supported",
+        "status": "hint",  # the variable's own trend is not a link (board.py)
         "claimed": "supported",
         "evidence": ["e2"],
         "note": "The trend is real.",
-        "downgraded": None,
+        "downgraded": "no test links it to Air temperature",
     }
     assert boards[0]["n_tests"] == 1
 
