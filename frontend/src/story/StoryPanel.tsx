@@ -224,12 +224,13 @@ function Real({ site, variable }: { site: Site; variable: SiteVariable }) {
         <summary>How we know</summary>
         <p>
           Monthly records, with the normal seasons removed. Mann-Kendall trend test (Hamed-Rao correction for
-          autocorrelation), Theil-Sen slope with a 95% range, and a Benjamini-Hochberg correction because we test
+          autocorrelation: neighboring months look alike), Theil-Sen slope (the middle value of the slopes between
+          every pair of points) with a 95% range, and a Benjamini-Hochberg correction because we test
           several records at once.
         </p>
         <dl>
           <div>
-            <dt>p-value</dt>
+            <dt>p-value (chance it is luck)</dt>
             <dd>{variable.p_value == null ? 'n/a' : fmt(variable.p_value)}</dd>
           </div>
           <div>

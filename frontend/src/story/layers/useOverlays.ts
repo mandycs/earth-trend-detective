@@ -60,7 +60,7 @@ export function useOverlays(
           else return layerTexture(w.url, false, w.def.blend !== 'multiply').then(store)
         })
         .catch(() => undefined)
-      // Warm the neighbouring years so playback does not stall.
+      // Warm the neighboring years so playback does not stall.
       for (const near of [year + 1, year - 1]) smoothTexture(siteId, w.def, near).catch(() => undefined)
     }
     return () => {

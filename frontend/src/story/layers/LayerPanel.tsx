@@ -217,10 +217,10 @@ export function LayerPanel({
                     />
                   </label>
                   <div className="lp-order">
-                    <button type="button" className="lp-btn" onClick={() => move(index, index - 1)} disabled={index === 0}>
+                    <button type="button" className="lp-btn" aria-label={`Move ${def.title} up`} onClick={() => move(index, index - 1)} disabled={index === 0}>
                       Up
                     </button>
-                    <button type="button" className="lp-btn" onClick={() => move(index, index + 1)} disabled={index === stack.length - 1}>
+                    <button type="button" className="lp-btn" aria-label={`Move ${def.title} down`} onClick={() => move(index, index + 1)} disabled={index === stack.length - 1}>
                       Down
                     </button>
                   </div>

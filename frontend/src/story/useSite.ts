@@ -30,7 +30,7 @@ function loadTexture(url: string, srgb: boolean): Promise<THREE.Texture> {
 }
 
 /**
- * The pipeline and this viewer grew up separately, so the manifest is normalised
+ * The pipeline and this viewer grew up separately, so the manifest is normalized
  * here: missing arrays become empty arrays and absent layers become empty maps.
  */
 function normaliseSite(raw: Site): Site {
@@ -182,7 +182,7 @@ export interface FrameRead {
 }
 
 /**
- * Reads one anomaly frame back from its colours (red side vs blue side of
+ * Reads one anomaly frame back from its colors (red side vs blue side of
  * the pipeline's diverging map). Pale and transparent pixels count as neither.
  */
 export function readFrame(texture: THREE.Texture): FrameRead | null {
