@@ -54,3 +54,18 @@ def test_summary_is_short_and_json_safe():
     line = detective_run.summary("tool_failed", {"tool": "get_series", "reason": "plain"})
     assert line == "get_series plain"
     json.dumps(list(parse_sse(SAMPLE)))
+
+
+def test_a_stream_cut_mid_run_still_saves_what_came(tmp_path, monkeypatch):
+    import httpx
+
+    def cut(base_url, body, timeout, sink):
+        sink.append({"t_ms": 5, "event": "place", "data": {"id": "point"}})
+        raise httpx.RemoteProtocolError("peer closed connection")
+
+    monkeypatch.setattr(detective_run, "record", cut)
+    out = tmp_path / "run.json"
+    code = detective_run.main(["--question", "q", "--lat", "1", "--lon", "2", "--out", str(out)])
+    assert code == 1
+    doc = json.loads(out.read_text())
+    assert [e["event"] for e in doc["events"]] == ["place"] and doc["partial"] is True

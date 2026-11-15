@@ -2,7 +2,7 @@
 
     python scripts/detective_run.py --question "..." --lat 36.87 --lon -4.17 --out data/recordings/vinuela.json
 
-The file holds `{"question", "request", "started_at", "events": [{"t_ms", "event", "data"}]}` and is what
+The file holds `{"question", "request", "started_at", "partial", "events": [{"t_ms", "event", "data"}]}` and is what
 the front replay reads. Nothing about headers, keys or the environment is printed or saved.
 """
 
@@ -83,8 +83,9 @@ def build_request(args: argparse.Namespace) -> dict:
     return body
 
 
-def record(base_url: str, body: dict, timeout: float) -> list[dict]:
-    events: list[dict] = []
+def record(base_url: str, body: dict, timeout: float, sink: list[dict]) -> list[dict]:
+    """Stream the run into `sink` as it comes (so a stream cut mid-run keeps what arrived)."""
+    events = sink
     t0 = time.monotonic()
     with httpx.Client(timeout=httpx.Timeout(timeout, connect=10.0)) as client:
         with client.stream("POST", f"{base_url.rstrip('/')}/detective", json=body) as resp:
@@ -114,17 +115,22 @@ def main(argv: list[str] | None = None) -> int:
 
     body = build_request(args)
     started = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    events: list[dict] = []
+    failed = False
     try:
-        events = record(args.base_url, body, args.timeout)
+        record(args.base_url, body, args.timeout, events)
     except httpx.HTTPError as exc:
         print(f"request failed: {type(exc).__name__}", file=sys.stderr)
-        return 1
-    if args.out:
+        failed = True
+    if args.out and events:
         out = Path(args.out)
         out.parent.mkdir(parents=True, exist_ok=True)
-        doc = {"question": args.question, "request": body, "started_at": started, "events": events}
+        partial = failed or not any(e["event"] == "done" for e in events)
+        doc = {"question": args.question, "request": body, "started_at": started, "partial": partial, "events": events}
         out.write_text(json.dumps(doc, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
-        print(f"saved {len(events)} events to {out}")
+        print(f"saved {len(events)} events to {out}" + (" (partial)" if partial else ""))
+    if failed:
+        return 1
     if not any(e["event"] == "done" for e in events):
         print("no done event", file=sys.stderr)
         return 1

@@ -34,7 +34,10 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     # The detective's checkpointer and store: one SQLite pair per process.
     from app.detective.router import shutdown_persistence, startup_persistence
 
-    startup_persistence()
+    try:
+        startup_persistence()
+    except Exception as exc:  # noqa: BLE001 - the rest of the API must still start; /detective answers 503
+        logger.error("detective persistence failed to open: %s", type(exc).__name__)
     try:
         yield
     finally:
