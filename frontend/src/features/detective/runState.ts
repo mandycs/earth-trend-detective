@@ -49,7 +49,8 @@ export function runReducer(s: RunState, a: RunAction): RunState {
     case "stop":
       return isActive(s) ? { ...s, status: "stopped", message: STOP_MESSAGE } : s;
     case "fail":
-      return { ...s, status: "failed", message: a.message };
+      // A run already stopped, cut or finished keeps its outcome; a late failure is not news.
+      return isActive(s) ? { ...s, status: "failed", message: a.message } : s;
     case "reset":
       return IDLE_RUN;
   }

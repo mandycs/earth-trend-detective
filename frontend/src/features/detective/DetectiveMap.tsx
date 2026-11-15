@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Map as MlMap, Marker } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { STYLE } from '../explore/mapStyle'
-import { OPPOSITE_CORNER_HINT, drawSpecs, fitPadding, mapLabel, overlaySpecs, pickStep } from './map/draw'
+import { OPPOSITE_CORNER_HINT, READING_BREAKPOINT, drawSpecs, fitPadding, mapLabel, overlaySpecs, pickStep } from './map/draw'
 import type { Corner, PickMode, PickResult } from './map/draw'
 import type { MapView } from './map/mapView'
 import type { Target } from './request'
@@ -80,6 +80,11 @@ export default function DetectiveMap({ view, target, pickMode, pickEnabled, onPi
         locale: { 'Map.Title': mapLabel(live.current.pickEnabled, live.current.pickMode) },
       })
       m.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'bottom-right')
+      // Narrow screens open with the attribution folded to its button; maplibre opens it expanded.
+      m.once('idle', () => {
+        if (cancelled || m.getContainer().clientWidth >= READING_BREAKPOINT) return
+        m.getContainer().querySelector('.maplibregl-ctrl-attrib.maplibregl-compact')?.classList.remove('maplibregl-compact-show')
+      })
       const onDem = demErrorHandler(m, () => !cancelled && setFlat(true))
       m.on('load', () => {
         if (cancelled) return

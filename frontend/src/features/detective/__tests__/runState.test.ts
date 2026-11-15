@@ -75,3 +75,10 @@ test("events after stop are ignored", () => {
   const s = run([start, { type: "stop" }, ev(THINK)]);
   assert.equal(s.events.length, 0);
 });
+
+test("fail after stop or before any start is ignored", () => {
+  const stopped = run([start, { type: "stop" }, { type: "fail", message: "late" }]);
+  assert.equal(stopped.status, "stopped");
+  assert.notEqual(stopped.message, "late");
+  assert.deepEqual(runReducer(IDLE_RUN, { type: "fail", message: "x" }), IDLE_RUN);
+});
