@@ -162,6 +162,7 @@ REASONS = {
     "causal": "It claims a cause; say what changed and what the tests found, never why.",
     "jargon": "It uses statistics jargon; say it in plain words.",
     "length": "It is too long or empty; at most three short sentences.",
+    "groundwater": "The water data counts all the water stored, ground and surface: never call it groundwater alone.",
     "everyday": "It quotes an everyday figure (litres, a share in ten, most of it) that no tool worked out.",
 }
 OTHER_REASON = "It breaks a rule of the checker."
@@ -214,6 +215,16 @@ def _cell_said(text: str, cells: Iterable[Mapping]) -> bool:
     return any(abs(float(m.group(1)) - km) < 0.5 for m in _KM_SIZE.finditer(text) for km in sizes)
 
 
+GROUNDWATER = re.compile(r"\b(?:ground ?water|aquifers?)\b", re.IGNORECASE)
+# The answer may say "groundwater" only beside a plain word that the data counts all the water together.
+GROUNDWATER_HEDGE = re.compile(
+    r"\b(?:not (?:just|only|the) ground ?water(?: alone| on its own)?|ground ?water (?:alone|on its own)"
+    r"|(?:underground|ground) and (?:on the )?surface|surface and (?:underground|ground)"
+    r"|all (?:the )?water(?: stored)?|tell ground ?water apart|can(?:not|'t) see ground ?water)",
+    re.IGNORECASE,
+)
+
+
 def answer_rejections(text: str, report: Mapping, suspects: Iterable[Mapping] = ()) -> list[tuple[str, str]]:
     """(kind, detail) of every detective rule the final answer breaks, on top of the shared validator."""
     problems = [("cause", p) for p in cause_problems(text, suspects)]
@@ -236,6 +247,10 @@ def answer_rejections(text: str, report: Mapping, suspects: Iterable[Mapping] = 
     if cells and not _cell_said(text, cells):
         sizes = " or ".join(f"about {c['size_km']:.0f} km ({c['label'].lower()})" for c in cells)
         problems.append(("cell", f"the place is smaller than the data cell: say how big the cell is, {sizes}"))
+    hit = GROUNDWATER.search(text)
+    grace = any(row.get("id") == "grace_tws" for row in report.get("variables") or ())
+    if hit and grace and not GROUNDWATER_HEDGE.search(text):
+        problems.append(("groundwater", f"'{hit.group(0)}': the water data counts all the water stored, ground and surface"))
     asked = list(report.get("asked_not_measured") or ())
     if asked and not NOT_MEASURED_SAID.search(text):
         problems.append(("not_measured", f"the question asks about {', '.join(a.lower() for a in asked)}: say it could not be measured here and why (see not_measured)"))

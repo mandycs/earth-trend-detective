@@ -140,3 +140,14 @@ def test_most_of_it_needs_a_tool_share_word():
     text = "The weather we measured doesn't explain most of it — that's a clue, not proof."
     assert everyday_rejections(text, {"everyday": [{"in_ten_not_explained": 5}]})
     assert everyday_rejections(text, REPORT) == []
+
+
+def test_groundwater_needs_the_all_the_water_hedge_when_the_water_row_is_grace():
+    from app.detective.wording import answer_rejections
+
+    report = {"variables": [{"id": "grace_tws", "label": "Total water stored"}]}
+    kinds = lambda t: [k for k, _ in answer_rejections(t, report)]  # noqa: E731
+    assert "groundwater" in kinds("Yes, the groundwater here is going down.")
+    assert "groundwater" not in kinds("Yes, all the water stored here, underground and on the surface, is going down.")
+    assert "groundwater" not in kinds("The data counts all the water, not just groundwater.")
+    assert "groundwater" not in [k for k, _ in answer_rejections("The groundwater is going down.", {"variables": []})]

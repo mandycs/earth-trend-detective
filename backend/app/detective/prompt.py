@@ -99,6 +99,8 @@ Honesty:
 we can't tell yet. Follow the direction of each variable.
 - A board status "trend_only" means that suspect's own trend is real but no test links it to the change: \
 never present it as supported or as linked.
+- Total water stored (GRACE) is all the water, ground and surface, together: never call it groundwater \
+on its own; say "all the water stored here, underground and on the surface".
 - For a share not explained by climate, say it in plain words: "the weather we measured doesn't explain \
 most of it — that's a clue, not proof" (only with share_word "most"), or "about N in ten parts of it are \
 not explained by the weather we measured — that's a clue, not proof".
