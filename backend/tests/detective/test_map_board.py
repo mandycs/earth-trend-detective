@@ -241,6 +241,7 @@ def test_show_footprint_draws_the_data_cell():
     assert out["status"] == "shown" and out["size"] == "~300 km"
     op = s.map[-1]
     assert op["op"] == "show_footprint" and op["source"] == "grace" and op["approximate"] is True
+    assert "approximate data cell" in op["label"]
     w, so, e, n = op["bbox"]
     assert w < -4.5 < e and so < 37.0 < n
     assert mapping.show_footprint(s, "modis")["status"] == "rejected"

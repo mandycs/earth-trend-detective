@@ -188,7 +188,27 @@ def get_series(session: Session, var_id: str, start: int | None = None, end: int
     start = session.start if start is None else int(start)
     end = session.end if end is None else int(end)
     args = {"var_id": var_id, "start": start, "end": end}
-    return _through_ledger(session, "get_series", args, lambda: _fetch(session, var_id, start, end))
+    return _through_ledger(
+        session,
+        "get_series",
+        args,
+        lambda: _fetch(session, var_id, start, end),
+        on_hit=lambda hit: _ensure_loaded(session, hit, var_id, start, end),
+    )
+
+
+def _ensure_loaded(session: Session, hit: dict, var_id: str, start: int, end: int) -> dict:
+    """A cached `ok` whose series is gone (a restored thread without it in the store): fetch it
+    again under the same evidence id. A failed re-fetch is returned as is, never cached."""
+    series_id = hit.get("series_id")
+    if hit.get("status") != "ok" or series_id is None or series_id in session.series:
+        return hit
+    again = _fetch(session, var_id, start, end)
+    if again.pop(_TRANSIENT, False):
+        return {**again, "transient": True}
+    if again.get("status") != "ok" or series_id not in session.series:
+        return again
+    return hit
 
 
 def _fetch(session: Session, var_id: str, start: int, end: int) -> dict:

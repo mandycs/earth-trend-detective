@@ -8,9 +8,12 @@ everything the agent tried.
 from __future__ import annotations
 
 import json
+import math
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, fields, is_dataclass
 from typing import Any
+
+import numpy as np
 
 from app.stats.fdr import benjamini_hochberg
 from app.stats.trend import TrendResult
@@ -31,6 +34,28 @@ class TestRecord:
     slope: float | None
     too_short: bool
     result: TrendResult | None
+
+
+def json_safe(value: Any) -> Any:
+    """`value` as plain JSON types: dataclasses and mappings to dicts, tuples to lists,
+    numpy scalars to Python numbers, NaN and infinities to None."""
+    if is_dataclass(value) and not isinstance(value, type):
+        return json_safe(asdict(value))
+    if isinstance(value, np.generic):
+        value = value.item()
+    if isinstance(value, float):
+        return value if math.isfinite(value) else None
+    if value is None or isinstance(value, (bool, int, str)):
+        return value
+    if isinstance(value, Mapping):
+        return {str(k): json_safe(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple, set, frozenset, np.ndarray)):
+        return [json_safe(v) for v in value]
+    return str(value)
+
+
+def _float(x: Any) -> float:
+    return float("nan") if x is None else float(x)
 
 
 def _numbers(value: Any) -> list[float]:
@@ -85,6 +110,36 @@ class Ledger:
             verdict, direction = classify(q, t.p_value, t.slope if t.slope is not None else 0.0)
             out[t.id] = (q, verdict, direction)
         return out
+
+    def to_state(self) -> dict:
+        """JSON-safe copy (no `TrendResult`: only the fields the verdict and the board read)."""
+        tests = [
+            {f.name: getattr(t, f.name) for f in fields(TestRecord) if f.name != "result"}
+            for t in self._tests.values()
+        ]
+        return json_safe({"results": self.results, "by_key": self._by_key, "tests": tests})
+
+    @classmethod
+    def from_state(cls, state: Mapping) -> Ledger:
+        """Ledger rebuilt from `to_state()`; records come back with `result=None`, a NaN p stays NaN."""
+        ledger = cls()
+        ledger.results = {str(k): dict(v) for k, v in (state.get("results") or {}).items()}
+        ledger._by_key = {str(k): str(v) for k, v in (state.get("by_key") or {}).items()}
+        for t in state.get("tests") or []:
+            slope = t.get("slope")
+            ledger.add_test(
+                TestRecord(
+                    id=str(t["id"]),
+                    var_id=str(t["var_id"]),
+                    label=str(t["label"]),
+                    kind=str(t["kind"]),
+                    p_value=_float(t.get("p_value")),
+                    slope=None if slope is None else float(slope),
+                    too_short=bool(t["too_short"]),
+                    result=None,
+                )
+            )
+        return ledger
 
     def figures(self) -> list[float]:
         seen: list[float] = []

@@ -88,7 +88,7 @@ def _picture(session: Session, year_a: int, year_b: int) -> dict:
         session.map.append(
             {
                 "op": "show_before_after",
-                "layer": pair["layer"],
+                "layer_id": pair["layer"],
                 "year_a": year_a,
                 "year_b": year_b,
                 "before_url": before["url"],

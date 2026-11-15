@@ -30,9 +30,9 @@ DEFAULT_OPACITY = 0.8
 MAX_PITCH = 85.0  # MapLibre's limit
 FOOTPRINT_KM = {"grace": 300.0, "power": 50.0, "gldas": 25.0}
 FOOTPRINT_LABEL = {
-    "grace": "GRACE water storage data cell",
-    "power": "NASA POWER weather data cell",
-    "gldas": "GLDAS land model data cell",
+    "grace": "GRACE water storage approximate data cell",
+    "power": "NASA POWER weather approximate data cell",
+    "gldas": "GLDAS land model approximate data cell",
 }
 FOOTPRINT_NOTE = "One value covers this whole cell, not the exact point; the outline is approximate."
 _DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")

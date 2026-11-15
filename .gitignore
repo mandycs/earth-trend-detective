@@ -24,3 +24,6 @@ dist/
 .DS_Store
 .vscode/
 .idea/
+
+# Detective checkpoints and store (local SQLite)
+backend/data/detective/
