@@ -230,3 +230,30 @@
     flex: none;
   }
 }
+
+/* the honest line for a thin stack ("Only one record could be drawn as a map here.") */
+.note {
+  margin: 8px 0 0;
+  color: var(--ink);
+  font-size: 1rem;
+  line-height: 1.45;
+  max-width: 60ch;
+}
+
+/* a data cell, outlined on the ground: listed under the ground card */
+.cellBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--line);
+}
+
+.cellSwatch {
+  display: inline-block;
+  width: 22px;
+  vertical-align: middle;
+  border-top: 2px dashed var(--ink);
+  margin-right: 4px;
+}
