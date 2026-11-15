@@ -22,7 +22,9 @@ import datetime as dt
 import hashlib
 import logging
 import math
+import os
 import re
+import tempfile
 import threading
 import time
 from collections.abc import Callable, Sequence
@@ -148,15 +150,37 @@ def _cache_path(cache_dir: Path, dataset: str, url: str) -> Path:
     return cache_dir / dataset / f"{hashlib.sha256(url.encode()).hexdigest()[:20]}.csv"
 
 
-def _cached_frame(client: httpx.Client, dataset: str, variable: str, url: str, year: int, cache_dir: Path) -> pd.DataFrame:
+def _write_atomic(path: Path, text: str) -> None:
+    """Write `text` to `path` through a temp file in the same directory, then rename."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.", suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            fh.write(text)
+        os.replace(tmp, path)
+    except BaseException:
+        Path(tmp).unlink(missing_ok=True)
+        raise
+
+
+def _cached_frame(
+    client: httpx.Client, dataset: str, variable: str, url: str, year: int, cache_dir: Path, cacheable: bool = True
+) -> pd.DataFrame:
     path = _cache_path(cache_dir, dataset, url)
     if path.exists():
-        return parse_csv(path.read_text(encoding="utf-8"), variable)
+        try:
+            return parse_csv(path.read_text(encoding="utf-8"), variable)
+        except (ErddapError, OSError, UnicodeDecodeError) as exc:  # corrupt entry: drop it, fetch once more
+            logger.warning("ERDDAP %s: cache file %s unreadable (%s), fetching again", dataset, path.name, exc)
+            path.unlink(missing_ok=True)
     text = _request(client, url)
     frame = parse_csv(text, variable)  # validate before caching
-    if year < _today().year:  # the current year still grows: never cached
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(text, encoding="utf-8")
+    # The current year still grows and a clamped window is partial: neither is cached.
+    if cacheable and year < _today().year:
+        try:
+            _write_atomic(path, text)
+        except OSError as exc:  # a cache that cannot be written must not lose the data
+            logger.warning("ERDDAP %s: cache write failed: %s", dataset, exc)
     return frame
 
 
@@ -180,7 +204,7 @@ def _year_frame(
     for _ in range(2):
         url = griddap_url(dataset, variable, [_axis(lo.strftime(_TIME_FMT), hi.strftime(_TIME_FMT)), *space])
         try:
-            frame = _cached_frame(client, dataset, variable, url, year, cache_dir)
+            frame = _cached_frame(client, dataset, variable, url, year, cache_dir, cacheable=(lo, hi) == (first, last))
             return frame[(frame["time"] >= first) & (frame["time"] <= last)]
         except _NoResults as exc:
             bounds = {kind: pd.Timestamp(stamp).tz_localize(None) for kind, stamp in _AXIS_BOUND.findall(str(exc))}

@@ -409,3 +409,59 @@ def test_chlorophyll_zero_or_nan_becomes_nan_without_warning(transport):
         got = gather.FETCHERS["erddap"](site, (_var("chlorophyll"),), load_catalog(), 2010, 2010)["chlorophyll"]
     assert np.isnan(got.loc["2010-02-01"]) and np.isnan(got.loc["2010-03-01"])
     assert got.loc["2010-04-01"] == pytest.approx(math.log10(0.6155786))
+
+
+# --------------------------------------------------------------------------- cache hardening
+
+
+def test_clamped_past_year_is_never_cached(tmp_path, monkeypatch):
+    import datetime as dt
+
+    monkeypatch.setattr(erddap, "_today", lambda: dt.date(2030, 1, 1))
+    asked: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        asked.append(_axes(request.url)[0])
+        if len(asked) == 1:
+            return httpx.Response(404, text=_text("axis_maximum_404.txt"))
+        return httpx.Response(200, text=_for_year("chl_point_2010.csv", 2026))
+
+    erddap.fetch_point_monthly(
+        "erdMH1chlamday_R2022SQ", "chlor_a", 37.6, -0.75, 2026, 2026, client=_client(handler), cache_dir=tmp_path
+    )
+    assert len(asked) == 2  # it was clamped
+    assert not list(tmp_path.rglob("*.csv"))
+
+
+def test_cache_is_written_atomically(tmp_path, monkeypatch):
+    replaced: list[tuple[str, str]] = []
+    real = erddap.os.replace
+
+    def spy(src, dst):
+        replaced.append((str(src), str(dst)))
+        return real(src, dst)
+
+    monkeypatch.setattr(erddap.os, "replace", spy)
+    erddap.fetch_point_monthly(
+        "jplMURSST41mday", "sst", 36.0, -10.0, 2010, 2010, client=_client(lambda r: _csv("mur_point_2010.csv")), cache_dir=tmp_path
+    )
+    assert len(replaced) == 1
+    src, dst = replaced[0]
+    assert Path(src).parent == Path(dst).parent and src != dst and dst.endswith(".csv")
+    assert [p.name for p in tmp_path.rglob("*") if p.is_file()] == [Path(dst).name]  # no temp file left
+
+
+def test_corrupt_cache_file_is_deleted_and_fetched_again(tmp_path):
+    calls = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(1)
+        return _csv("mur_point_2010.csv")
+
+    first, _ = erddap.fetch_point_monthly("jplMURSST41mday", "sst", 36.0, -10.0, 2010, 2010, client=_client(handler), cache_dir=tmp_path)
+    (cached,) = list(tmp_path.rglob("*.csv"))
+    cached.write_text("<html>half-written", encoding="utf-8")
+    again, _ = erddap.fetch_point_monthly("jplMURSST41mday", "sst", 36.0, -10.0, 2010, 2010, client=_client(handler), cache_dir=tmp_path)
+    assert len(calls) == 2
+    pd.testing.assert_series_equal(first, again)
+    assert "half-written" not in cached.read_text(encoding="utf-8")  # healed
