@@ -173,6 +173,42 @@ variables:
     applies_to: [snow, glacier, mountain]
     drivers: [t2m, precip]
 
+  # --- Air over cities (NASA GIBS, no auth; app/extractors/gibs_values.py) ---
+  # OMI NO2 has no monthly layer on GIBS (nor a monthly product at GES DISC): the daily
+  # layer is read on 4 days a month and averaged, a year needs half of those days seen.
+  # AIRS carbon monoxide is a monthly layer; a year needs all 12 months.
+  - id: no2_omi
+    label: Nitrogen dioxide in the lower air (annual mean of daily values on 4 days a month)
+    definition: "Nitrogen dioxide, a gas given off when fuel is burned, in the air from the ground to about 10 km up, seen by NASA's OMI satellite instrument on cloud-free days."
+    role: impact
+    source: gibs
+    dataset: OMI_Nitrogen_Dioxide_Tropo_Column   # OMNO2d v004 daily, colormap OMI_Nitrogen_Dioxide_Tropo_Column
+    band: OMI_Nitrogen_Dioxide_Tropo_Column
+    units: "10^15 molecules/cm²"
+    scale: 1.0e-15
+    offset: 0.0
+    temporal: annual
+    resolution: "~25 km"
+    tags: [air, atmosphere]
+    applies_to: [city, atmosphere]
+    drivers: [precip, t2m]
+
+  - id: co_airs
+    label: Carbon monoxide in the mid air (annual mean of monthly values)
+    definition: "Carbon monoxide, a gas given off by fires and burning fuel, about 5 km up, seen by NASA's AIRS satellite; one value covers ~100 km: the region, not one city."
+    role: impact
+    source: gibs
+    dataset: AIRS_L3_Carbon_Monoxide_500hPa_Volume_Mixing_Ratio_Monthly_Day   # AIRS3STM v006, colormap AIRS_Carbon_Monoxide_Volume_Mixing_Ratio
+    band: AIRS_Carbon_Monoxide_Volume_Mixing_Ratio
+    units: "ppbv"
+    scale: 1.0
+    offset: 0.0
+    temporal: annual
+    resolution: "~100 km"
+    tags: [air, atmosphere]
+    applies_to: [city, atmosphere]
+    drivers: [precip, t2m]
+
   # --- Impact variables (GLDAS Noah monthly via Earthdata Cloud OPeNDAP, Earthdata Login) ---
   # Hydrology Data Rods and on-prem GES DISC OPeNDAP are retired (HTTP 410).
   - id: soil_moisture

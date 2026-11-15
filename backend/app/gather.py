@@ -66,7 +66,8 @@ SOURCES: Mapping[str, SourceInfo] = MappingProxyType(
             "The NOAA CoastWatch ERDDAP server (sea data) did not answer. Try again in a few minutes.",
         ),
         "gibs": SourceInfo(
-            "MODIS monthly NDVI, land surface temperature and snow cover via NASA GIBS (values read from colours)",
+            "NASA satellite layers via NASA GIBS, values read from colours (MODIS NDVI, land surface "
+            "temperature and snow cover; OMI nitrogen dioxide; AIRS carbon monoxide)",
             "https://www.earthdata.nasa.gov/engage/open-data-services-software/earthdata-developer-portal/gibs-api",
             "NASA GIBS (satellite pictures) gave no usable picture here. Try again in a few minutes.",
         ),
@@ -233,7 +234,7 @@ def _fetch_gibs(
         step = raw.attrs.get("palette_step")
         series.attrs = {**raw.attrs, "temporal": "annual"}
         if step is not None and np.isfinite(step):
-            series.attrs["precision"] = f"palette step ≈ {step:.2g} {var.units}"
+            series.attrs["precision"] = f"palette step ≈ {step * abs(var.scale):.2g} {var.units}"  # display units
         out[var.id] = series
     return out
 

@@ -1,10 +1,12 @@
-"""Yearly values at any point from NASA GIBS monthly layers (no auth): the `gibs` source.
+"""Yearly values at any point from NASA GIBS layers (no auth): the `gibs` source.
 
-GIBS serves MODIS monthly NDVI, land surface temperature and snow cover as coloured PNGs
-with a published colormap. For the place's box we read every month of each year at the
-product's own resolution (`assets/gibs_layers.yearly_values`), turn colours back into values
-(interval midpoints), average the months of the year, and keep the box mean: one value per
-year, for the annual trend path. Precision is one palette step (`attrs["palette_step"]`).
+GIBS serves MODIS monthly NDVI, land surface temperature and snow cover, AIRS monthly carbon
+monoxide and OMI daily nitrogen dioxide as coloured PNGs with a published colormap. For the
+place's box we read every month of each year (a daily layer: 4 sampled days a month, OMI NO2
+has no monthly layer on GIBS) at the product's own resolution
+(`assets/gibs_layers.yearly_values`), turn colours back into values (interval midpoints),
+average the pictures of the year, and keep the box mean: one value per year, for the annual
+trend path. Precision is one palette step (`attrs["palette_step"]`).
 
 A year whose pictures are transparent (no clear view) is dropped and listed in
 `attrs["dropped_years"]`; a year with a request GIBS failed on (after retries) is a gap in
@@ -59,7 +61,46 @@ SNOW_LAYER = GibsLayer(
     seasons={},
     transparent_value=0.0,
 )
-POINT_LAYERS: tuple[GibsLayer, ...] = (*LAYERS, SNOW_LAYER)
+OMI_CAVEAT = "OMI has a known sensor defect since 2007 (row anomaly); gaps are filled by neighbouring rows."
+NO2_DAYS = (1, 9, 17, 25)  # OMI NO2 is daily on GIBS: 4 days a month, every 8 days or so
+NO2_LAYER = GibsLayer(
+    id="no2_omi",
+    title="Nitrogen dioxide in the lower air",
+    gibs_layer="OMI_Nitrogen_Dioxide_Tropo_Column",  # OMNO2d v004, 0.25°, cloud-screened
+    colormap="OMI_Nitrogen_Dioxide_Tropo_Column",
+    native_m=27800.0,  # 0.25° grid
+    unit="molecules/cm²",
+    to_unit=0.0,
+    offset=0.0,
+    scale=1.0e13,
+    palette="YlOrRd",
+    legend={"more": "More nitrogen dioxide", "less": "Less", "transparent": "Transparent = no clear view that day"},
+    source={"name": "NASA OMI/Aura daily NO2 (OMNO2d), via NASA GIBS", "url": "https://disc.gsfc.nasa.gov/datasets/OMNO2d_004/summary"},
+    seasons={},
+    days=NO2_DAYS,
+    min_seen=len(NO2_DAYS) * 12 // 2,  # at least half of the sampled days show the box
+    first_year=2005,  # OMI data start in October 2004
+    caveat=OMI_CAVEAT,
+)
+CO_LAYER = GibsLayer(
+    id="co_airs",
+    title="Carbon monoxide at 500 hPa",
+    gibs_layer="AIRS_L3_Carbon_Monoxide_500hPa_Volume_Mixing_Ratio_Monthly_Day",  # AIRS3STM v006, 1°
+    colormap="AIRS_Carbon_Monoxide_Volume_Mixing_Ratio",
+    native_m=111000.0,  # 1° grid
+    unit="ppbv",
+    to_unit=0.0,
+    offset=0.0,
+    scale=0.01,
+    palette="Purples",
+    legend={"more": "More carbon monoxide", "less": "Less", "transparent": "Transparent = no data that month"},
+    source={"name": "NASA AIRS/Aqua monthly carbon monoxide (AIRS3STM), via NASA GIBS", "url": "https://disc.gsfc.nasa.gov/datasets/AIRS3STM_006/summary"},
+    seasons={},
+    min_seen=12,  # every month: carbon monoxide has a strong season, a missing month tilts the year
+    first_year=2003,  # AIRS data start in September 2002
+)
+POINT_LAYERS: tuple[GibsLayer, ...] = (*LAYERS, SNOW_LAYER, NO2_LAYER, CO_LAYER)
+MONTHLY_SUFFIX = "annual mean of monthly values"
 
 
 class GibsError(RuntimeError):
@@ -78,6 +119,13 @@ def layer_for(var: Variable) -> GibsLayer:
     raise GibsError(f"no GIBS layer {var.dataset!r} set up")
 
 
+def annual_suffix(layer: GibsLayer) -> str:
+    """What one yearly value of this layer is, in words for the user."""
+    if layer.days == (1,):
+        return MONTHLY_SUFFIX
+    return f"annual mean of daily values on {len(layer.days)} days a month"
+
+
 def palette_step(table: dict[tuple[int, int, int], float]) -> float:
     """Typical distance between neighbouring colormap values: the precision of a decoded value."""
     values = np.unique(np.round(np.array(sorted(table.values()), dtype=float), 9))
@@ -91,7 +139,10 @@ def last_complete_year() -> int:
 
 
 def _cache_path(cache_dir: Path, layer: GibsLayer, bbox: Sequence[float], year: int) -> Path:
-    key = json.dumps([layer.gibs_layer, [round(float(c), 6) for c in bbox], list(YEAR_MONTHS), year])
+    parts: list = [layer.gibs_layer, [round(float(c), 6) for c in bbox], list(YEAR_MONTHS), year]
+    if layer.days != (1,):  # monthly layers keep the keys they were cached under
+        parts.append(list(layer.days))
+    key = json.dumps(parts)
     return cache_dir / layer.id / f"{hashlib.sha256(key.encode()).hexdigest()[:20]}.json"
 
 
@@ -136,7 +187,7 @@ def fetch_annual(
     in `attrs["missing_years"]` and never cached.
     """
     cache = cache_dir_default if cache_dir is None else cache_dir
-    years = list(range(start, min(end, last_complete_year()) + 1))
+    years = list(range(max(start, layer.first_year), min(end, last_complete_year()) + 1))
     entries: dict[int, dict] = {}
     paths = {y: _cache_path(cache, layer, bbox, y) for y in years}
     for year in years:
@@ -186,6 +237,10 @@ def fetch_annual(
         "dropped_years": [y for y in years if y in entries and entries[y]["mean"] is None],
         "missing_years": sorted(failed),
     }
-    if layer.transparent_value is not None:
+    if layer.days != (1,):
+        series.attrs["days"] = list(layer.days)
+    if layer.caveat:
+        series.attrs["caveat"] = layer.caveat
+    elif layer.transparent_value is not None:
         series.attrs["caveat"] = SNOW_CAVEAT
     return series

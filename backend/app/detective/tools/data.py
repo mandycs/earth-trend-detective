@@ -50,7 +50,7 @@ WITHDRAWN: Mapping[str, str] = {"snow_gibs": SNOW_GIBS_REASON}
 TWIN_OF: Mapping[str, str] = {twin: base for base, twin in GIBS_TWINS.items()}
 SEA_TAGS = frozenset({"ocean", "coast", "reef"})
 ANNUAL = "annual"
-ANNUAL_SUFFIX = "annual mean of monthly values"
+ANNUAL_SUFFIX = gibs_values.MONTHLY_SUFFIX  # monthly GIBS layers; see gibs_values.annual_suffix
 NO_COMPLETED_YEAR_REASON = "no completed year in this range"
 GRACE_AT_SEA_REASON = "measures water stored on land; over open sea it is not meaningful"
 LAND_AT_SEA_REASON = "not_available_here: a land-only source; this place is open sea"
@@ -473,7 +473,10 @@ def _annual_trend(
     res = annual_trend(window)
     slope = None if res.too_short else res.sen_slope_per_decade
     label = var.label if var else var_id
-    suffix = ANNUAL_SUFFIX if var is not None and var.source == "gibs" else "yearly values"  # DHW: a yearly peak
+    if var is not None and var.source == "gibs":
+        suffix = gibs_values.annual_suffix(gibs_values.layer_for(var))
+    else:
+        suffix = "yearly values"  # DHW: a yearly peak
     test_id = f"t{session.ledger.n_tests + 1}"
     session.ledger.add_test(
         TestRecord(

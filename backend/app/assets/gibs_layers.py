@@ -56,6 +56,7 @@ BACKOFF_S = 1.0
 _sleep = time.sleep  # patched in tests
 _ENTRY_RE = re.compile(r"<ColorMapEntry\s+([^>]*)/>")
 _ATTR_RE = re.compile(r'(\w+)="([^"]*)"')
+_NUM_RE = re.compile(r"[-+]?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?")  # also "1.06e+14" (OMI NO2)
 
 
 @dataclass(frozen=True)
@@ -76,6 +77,12 @@ class GibsLayer:
     # Value of a transparent pixel when GIBS paints a real value transparent (snow: 0 % is
     # transparent); None = transparent means no data.
     transparent_value: float | None = None
+    # Days of each month read: (1,) for a monthly layer; a daily layer is sampled on these days.
+    days: tuple[int, ...] = (1,)
+    # Pictures with a coloured pixel a year needs (0: MIN_SEEN_MONTHS with `transparent_value`, else none).
+    min_seen: int = 0
+    first_year: int = 0  # first complete year of the product; earlier years are never asked
+    caveat: str = ""  # said with every value read from this layer
 
 
 LAYERS: tuple[GibsLayer, ...] = (
@@ -119,7 +126,7 @@ def parse_colormap(xml: str) -> dict[tuple[int, int, int], float]:
         attrs = dict(_ATTR_RE.findall(raw))
         if attrs.get("transparent") == "true" or attrs.get("nodata") == "true" or "value" not in attrs:
             continue
-        nums = [float(x) for x in re.findall(r"-?\d+(?:\.\d+)?(?:e-?\d+)?", attrs["value"])]
+        nums = [float(x) for x in _NUM_RE.findall(attrs["value"])]
         if not nums:
             continue
         mid = (nums[0] + nums[-1]) / 2 if len(nums) > 1 else nums[0]
@@ -229,20 +236,23 @@ def yearly_values(
 ) -> dict[int, np.ndarray]:
     """Season mean grid (display units) per year over `bbox`, for the years with enough pixels.
 
-    One GetMap per month; a month GIBS does not serve is skipped. A year keeps its grid when
-    at least MIN_VALID_SHARE of the pixels have a value (transparent years are dropped). With
-    `layer.transparent_value` set, a wholly transparent month is missing and a year needs
-    MIN_SEEN_MONTHS seen months. A month GIBS failed on (`TileFailed`) is skipped and its year
-    added to `failed` when given; a caller that cannot accept partial years leaves them out.
+    One GetMap per month (per sampled day, `layer.days`, for a daily layer); a date GIBS does
+    not serve is skipped. A year keeps its grid when at least MIN_VALID_SHARE of the pixels
+    have a value (transparent years are dropped) and it has `layer.min_seen` pictures with a
+    coloured pixel. With `layer.transparent_value` set, a wholly transparent month is missing
+    and a year needs MIN_SEEN_MONTHS seen months. A date GIBS failed on (`TileFailed`) is
+    skipped and its year added to `failed` when given; a caller that cannot accept partial
+    years leaves them out.
     """
     size = layer_size(bbox, layer) if size is None else size
     table = load_colormap(client, layer) if table is None else table
-    jobs = [(year, m) for year in years for m in months]
+    jobs = [(year, m, d) for year in years for m in months for d in layer.days]
+    need_seen = layer.min_seen or (MIN_SEEN_MONTHS if layer.transparent_value is not None else 0)
 
-    def get(job: tuple[int, int]) -> np.ndarray | None:
-        year, m = job
+    def get(job: tuple[int, int, int]) -> np.ndarray | None:
+        year, m, d = job
         try:
-            return _fetch(client, layer, bbox, f"{year}-{m:02d}-01", size)
+            return _fetch(client, layer, bbox, f"{year}-{m:02d}-{d:02d}", size)
         except TileFailed as exc:
             logger.warning("%s", exc)
             if failed is not None:
@@ -256,15 +266,15 @@ def yearly_values(
         tiles = [get(job) for job in jobs]
     by_year: dict[int, list[np.ndarray]] = {}
     seen: dict[int, int] = {}
-    for (year, _), rgba in zip(jobs, tiles):
+    for (year, _, _), rgba in zip(jobs, tiles):
         if rgba is None:
             continue
         seen[year] = seen.get(year, 0) + _seen(rgba)
         by_year.setdefault(year, []).append(_decode_tile(rgba, table, layer))
     yearly: dict[int, np.ndarray] = {}
     for year, grids in by_year.items():
-        if layer.transparent_value is not None and seen[year] < MIN_SEEN_MONTHS:
-            continue  # too few months seen to call it this year's snow
+        if seen[year] < need_seen:
+            continue  # too few pictures seen to stand for the whole year
         vals = season_mean(grids)
         if np.isfinite(vals).mean() >= MIN_VALID_SHARE:
             yearly[year] = vals
