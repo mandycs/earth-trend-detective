@@ -34,7 +34,15 @@ from langgraph.store.base import BaseStore
 from app.catalog import Variable, load_catalog
 from app.detective import board as case_board
 from app.detective.ledger import Ledger, json_safe
-from app.detective.nodes import ToolFailure, failed_message, narrate, run_call, text_of, tool_message
+from app.detective.nodes import (
+    ToolFailure,
+    failed_message,
+    narrate,
+    next_questions,
+    run_call,
+    text_of,
+    tool_message,
+)
 from app.detective.persistence import save_series, save_tests
 from app.detective.place import Place
 from app.detective.prompt import SYSTEM_PROMPT
@@ -92,6 +100,16 @@ def _pending_calls(state: DetectiveState) -> list[dict]:
 def _question(state: DetectiveState) -> str:
     human = [m for m in state.get("messages") or [] if isinstance(m, HumanMessage)]
     return text_of(human[-1]).strip() if human else ""
+
+
+def _earlier_answer(state: DetectiveState) -> str | None:
+    """The answer of the previous question in this thread (None on a first question)."""
+    messages = list(state.get("messages") or [])
+    last_human = max((i for i, m in enumerate(messages) if isinstance(m, HumanMessage)), default=None)
+    if last_human is None:
+        return None
+    before = [m for m in messages[:last_human] if isinstance(m, AIMessage) and not m.tool_calls]
+    return text_of(before[-1]).strip() or None if before else None
 
 
 def _place_note(case: dict) -> str:
@@ -176,7 +194,9 @@ def build_graph(
         judged = case_board.evaluate(session.board, session.ledger, session.catalog)
         board_rows = case_board.as_json(judged)
         report = ledger_report(session, _question(state))
-        text, checked, figures, source, rejected = narrate(narrator, _question(state), report, board_rows)
+        text, checked, figures, source, rejected = narrate(
+            narrator, _question(state), report, board_rows, earlier=_earlier_answer(state)
+        )
         answer = {
             "text": text,
             "checked": checked,
@@ -184,6 +204,7 @@ def build_graph(
             "source": source,
             "rejected": rejected,
             "n_tests": n_finite_tests(session.ledger),
+            "next_questions": next_questions(report, board_rows, session),
         }
         new_case = {**case, "board": json_safe({k: asdict(s) for k, s in judged.items()})}
         return {"messages": [*pending, AIMessage(text)], "case": new_case, "answer": answer}

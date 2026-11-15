@@ -12,6 +12,11 @@ It also carries:
 - `asked_not_measured`: labels of the variables the question names (catalog label or alias, e.g.
   "groundwater", "greener") that are in `not_measured` and have no measured row: the answer must
   say they could not be measured;
+- `everyday`: every `everyday` block the tools worked out (litres of water, change over the period,
+  "N in ten"), so the answer may say a figure in everyday words; each row also carries its own;
+- `other_periods`: per tested variable, its other trend tests (e.g. the recent years), so a "still" or
+  "lately" question can be answered; `comparisons`: the compare results (two periods or places);
+- `land_cover`: the biggest land cover moves the tools found, with their shares in ten;
 - `data_cells`: the data cells of the tested variables' sources that are bigger than the place
   (`{label, source, size_km}`), so the answer must say how big the cell is; their sizes are figures.
 """
@@ -23,6 +28,7 @@ import re
 from collections.abc import Iterable, Mapping
 from typing import Any
 
+from app.detective import everyday
 from app.detective.cells import CELL_KM
 from app.detective.ledger import Ledger
 from app.detective.scrub import scrub
@@ -143,6 +149,67 @@ def _var(session: Session, var_id: str):
     return next((v for v in session.catalog if v.id == var_id), None)
 
 
+def _other_periods(session: Session, rows: Mapping[str, dict], corrected: Mapping) -> None:
+    """Each row's other trend tests (another period of the same variable), shortest window last."""
+    for result in session.ledger.results.values():
+        record = session.ledger.test(str(result.get("test_id")))
+        if record is None or record.kind != "trend" or record.id not in corrected:
+            continue
+        row = rows.get(record.var_id)
+        if row is None or row.get("test_id") == record.id:
+            continue
+        _, verdict, direction = corrected[record.id]
+        row.setdefault("other_periods", []).append(
+            {
+                "years": result.get("years"),
+                "verdict": str(verdict),
+                "direction": str(direction),
+                "sen_slope_per_decade": result.get("slope_per_decade"),
+                **({"everyday": result["everyday"]} if result.get("everyday") else {}),
+            }
+        )
+
+
+def _comparisons(session: Session, corrected: Mapping) -> list[dict]:
+    out = []
+    for eid, result in session.ledger.results.items():
+        if session.ledger.tool_of(eid) != "compare" or not isinstance(result.get("a"), Mapping):
+            continue
+        sides = []
+        for key in ("a", "b"):
+            side = result[key]
+            q = corrected.get(str(side.get("test_id")))
+            sides.append(
+                {
+                    "years": side.get("years"),
+                    "place": side.get("place"),
+                    "sen_slope_per_decade": side.get("slope_per_decade"),
+                    "verdict": str(q[1]) if q else side.get("verdict"),
+                    "direction": str(q[2]) if q else side.get("direction"),
+                }
+            )
+        out.append({"var_id": result.get("var_id"), "unit": result.get("unit"), "a": sides[0], "b": sides[1],
+                    "difference_per_decade": result.get("difference_per_decade")})
+    return out
+
+
+MAX_LAND_COVER = 3
+
+
+def _land_cover(session: Session) -> list[dict]:
+    """The biggest moves of the last land cover comparison (by size of the move)."""
+    rows: list[dict] = []
+    for eid, result in session.ledger.results.items():
+        if session.ledger.tool_of(eid) == "land_cover_change" and isinstance(result.get("changes"), list):
+            rows = [
+                {**r, "years": [result.get("year_a"), result.get("year_b")]}
+                for r in result["changes"]
+                if isinstance(r, Mapping)
+            ]
+    rows.sort(key=lambda r: -abs(float(r.get("change_points") or 0)))
+    return rows[:MAX_LAND_COVER]
+
+
 def _trend_rows(session: Session, corrected: Mapping) -> dict[str, dict]:
     """One row per variable: its trend test over the most months (the first on a tie)."""
     best: dict[str, tuple[int, dict]] = {}
@@ -171,6 +238,7 @@ def _trend_rows(session: Session, corrected: Mapping) -> dict[str, dict]:
                 "years_needed": result.get("years_needed"),
                 "residual_pct_non_climate": None,
                 "residual_pct_range": None,
+                **({"everyday": result["everyday"]} if result.get("everyday") else {}),
             },
         )
     return {k: row for k, (_, row) in best.items()}
@@ -197,6 +265,8 @@ def _add_residuals(rows: dict[str, dict], session: Session, corrected: Mapping) 
             }
         row["residual_pct_non_climate"] = result["pct_not_explained"]
         row["residual_pct_range"] = result.get("pct_range")
+        if result.get("everyday"):
+            row["residual_everyday"] = result["everyday"]
         _, verdict, _ = corrected[record.id]
         row["residual_verdict"] = str(verdict)
 
@@ -205,6 +275,7 @@ def ledger_report(session: Session, question: str | None = None) -> dict:
     corrected = session.ledger.corrected()
     rows = _trend_rows(session, corrected)
     _add_residuals(rows, session, corrected)
+    _other_periods(session, rows, corrected)
     figures = list(session.ledger.figures())
     for size in _sizes(list(session.ledger.results.values())):
         if size not in figures:
@@ -227,6 +298,9 @@ def ledger_report(session: Session, question: str | None = None) -> dict:
         "not_measured": [row for _, row in missing],
         "asked_not_measured": _asked_not_measured(question, missing, rows),
         "data_cells": cells,
+        "everyday": [b for r in session.ledger.results.values() for b in everyday.blocks(r)],
+        "comparisons": _comparisons(session, corrected),
+        "land_cover": _land_cover(session),
     }
     if question:
         report["question"] = question  # the validator then keeps the answer to 3 sentences

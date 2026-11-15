@@ -22,8 +22,28 @@ def test_land_cover_change_gives_percentages_and_points(monkeypatch):
     monkeypatch.setattr(landcover, "land_cover_pair", lambda lat, lon, years: pair)
     out = context.land_cover_change(_session())
     crop = next(r for r in out["changes"] if r["class"] == "Cropland")
-    assert crop == {"class": "Cropland", "before_pct": 60.0, "after_pct": 41.2, "change_points": -18.8}
+    assert crop == {
+        "class": "Cropland", "before_pct": 60.0, "after_pct": 41.2, "change_points": -18.8,
+        "everyday": {"in_ten_before": 6, "in_ten_after": 4, "out_of": "ten", "class": "Cropland"},  # exact rounding, done by code
+    }
     assert "before" not in crop and "change" not in crop
+
+
+def test_report_carries_the_biggest_land_cover_moves_with_their_share_in_ten(monkeypatch):
+    from app.detective.nodes import check
+
+    pair = [LandCover(2003, {"Cropland": 0.2, "Savanna": 0.8}), LandCover(2023, {"Cropland": 0.7, "Savanna": 0.3})]
+    monkeypatch.setattr(landcover, "land_cover_pair", lambda lat, lon, years: pair)
+    s = _session()
+    context.land_cover_change(s)
+    report = ledger_report(s, "Has this land turned into fields?")
+    crop = next(r for r in report["land_cover"] if r["class"] == "Cropland")
+    assert crop["everyday"]["in_ten_after"] == 7 and crop["years"] == [2003, 2023]
+    assert {"in_ten_before": 2, "in_ten_after": 7, "out_of": "ten", "class": "Cropland"} in report["everyday"]
+    # "7 in 10" is a tool's share in ten; "6 in 10" is not
+    assert check("Now about 7 in 10 parts of the land are cropland.", report)[0]
+    ok, _, rejected = check("Now about 6 in 10 parts of the land are cropland.", report)
+    assert not ok and rejected
 
 
 def test_a_quoted_cover_percentage_passes_the_checker(monkeypatch):

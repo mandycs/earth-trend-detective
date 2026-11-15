@@ -120,6 +120,8 @@ def test_graph_runs_tools_and_concludes(offline):
         "source": "llm",
         "rejected": [],
         "n_tests": 1,
+        # written by code: the one variable was tested over the whole period only, in one place
+        "next_questions": ["Is it still going up in recent years?", "Is a place nearby changing the same way?"],
     }
     assert isinstance(state["messages"][-1], AIMessage) and state["messages"][-1].content == GOOD_ANSWER
 
@@ -337,4 +339,7 @@ def test_ledger_report_carries_a_real_residual_row_and_the_template_uses_detecti
     assert row["residual_pct_non_climate"] == res["pct_not_explained"]
     assert row["residual_pct_range"] == res["pct_range"]
     text, _ = template_answer(ledger_report(s, "Is the water going down?"))
-    assert "not explained by the climate we measured — a clue, not proof" in text, text
+    assert "not explained by the weather we measured — that's a clue, not proof" in text or (
+        "The weather we measured doesn't explain most of it" in text and "a clue, not proof" in text
+    ), text
+    assert "litres of water on each square metre" in text, text

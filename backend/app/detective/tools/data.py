@@ -17,6 +17,7 @@ import pandas as pd
 
 from app import gather
 from app.catalog import Variable, variables_for_site
+from app.detective import everyday
 from app.detective.ledger import TestRecord
 from app.detective.place import Place
 from app.detective.session import Session
@@ -404,7 +405,7 @@ def trend_test(session: Session, series_id: str, start: int | None = None, end: 
         session,
         "trend_test",
         args,
-        lambda: _trend_safe(session, series, series_id, start, end),
+        lambda: everyday.with_trend_everyday(_trend_safe(session, series, series_id, start, end)),
         on_hit=lambda hit: _refresh(session, hit),
     )
 

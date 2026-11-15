@@ -24,13 +24,14 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage, ToolMessage
 from pydantic import ValidationError
 
+from app.detective import plain
 from app.detective.ledger import json_safe
 from app.detective.prompt import CONCLUDE_PROMPT, conclude_request, retry_request
 from app.detective.session import Session
 from app.detective.tools import TOOLS, mapping
 from app.detective.tools.analysis import WORDING, refresh_verdicts
 from app.detective.wording import REASONS as REJECTION_REASONS  # noqa: F401 - re-exported for callers
-from app.detective.wording import RESIDUAL_WORDING, answer_rejections, cause_problems, reason_for
+from app.detective.wording import RESIDUAL_SAID, answer_rejections, cause_problems, mask_everyday, reason_for
 from app.explain.numbers import extract_numbers
 from app.explain.template import NO_SPLIT_SENTENCE, template_narrative
 from app.explain.validator import MAX_QUESTION_SENTENCES, SENTENCE_SPLIT, validate_narrative
@@ -138,7 +139,7 @@ def failed_message(call: Mapping, reason: str) -> ToolMessage:
 
 
 def _rejections(text: str, report: Mapping, board: Sequence[Mapping]) -> tuple[list[str], list[tuple[str, str]]]:
-    result = validate_narrative(text, report)
+    result = validate_narrative(mask_everyday(text), report)
     found = [(r.kind, r.detail) for r in result.rejected] + answer_rejections(text, report, board)
     return list(result.checked_numbers), found
 
@@ -182,7 +183,7 @@ def _cell_clause(report: Mapping) -> str | None:
     if not cells:
         return None
     sizes = " or ".join(f"about {c['size_km']:.0f} km" for c in cells)
-    return f"each data value covers a cell of {sizes} across, not just this place"
+    return f"one value of the data covers a big square around here, {sizes} across, not just this spot"
 
 
 def _missing_clause(report: Mapping) -> str | None:
@@ -202,12 +203,38 @@ def _extra_sentence(report: Mapping, board: Sequence[Mapping]) -> str | None:
     return text[0].upper() + text[1:] + "."
 
 
+def _impact_share(report: Mapping, focus: Mapping) -> str | None:
+    """The climate split of another real trend (a climate variable has no split of its own)."""
+    for row in report.get("variables") or ():
+        if row is not focus and row.get("verdict") == "real" and row.get("residual_pct_non_climate") is not None:
+            sentence = plain.share_sentence(row)
+            if sentence:
+                label = plain._short_label(str(row.get("label") or "")).lower()
+                return sentence.replace("of that change", f"of the change in {label}", 1)
+    return None
+
+
+def next_questions(report: Mapping, board: Sequence[Mapping], session: Session) -> list[str]:
+    """Plain next questions for the answer event: what this run did not test yet (no figure in them)."""
+    listed: list[Mapping] = []
+    for eid, result in session.ledger.results.items():
+        if session.ledger.tool_of(eid) == "list_variables" and isinstance(result.get("variables"), list):
+            listed = [r for r in result["variables"] if isinstance(r, Mapping)]
+    tested = {t.var_id for t in (session.ledger.test(tid) for tid in session.ledger.test_ids()) if t}
+    suspects = [{"id": s.get("id"), "label": s.get("label")} for s in board]
+    return plain.next_questions(report, board, tested, listed, lambda q: cause_problems(q, suspects))
+
+
 def template_answer(report: Mapping, board: Sequence[Mapping] = ()) -> tuple[str, list[str]]:
     """The code's own answer from the report (no model). With no test that ran it says so.
     Otherwise: what changed, the share not explained by the climate (else whether the change is
     real), then one sentence with what could not be measured, the data cell and the board."""
     if not report.get("n_tests"):
         text = _nothing_measured(report)
+    elif (focus := plain.focus_row(report)) is not None:
+        second = plain.share_sentence(focus) or _impact_share(report, focus) or plain.reality_sentence(focus)
+        extra = _extra_sentence(report, board)
+        text = " ".join(s for s in (plain.change_sentence(focus), second, extra) if s)
     else:
         narrative = template_narrative(report, residual_wording=WORDING).replace(NO_SPLIT_SENTENCE, NO_SPLIT)
         sentences = [s for s in SENTENCE_SPLIT.split(narrative.strip()) if s.strip()]
@@ -215,7 +242,7 @@ def template_answer(report: Mapping, board: Sequence[Mapping] = ()) -> tuple[str
         if extra is None:
             chosen = sentences[:MAX_QUESTION_SENTENCES]
         else:
-            share = next((s for s in sentences[1:] if RESIDUAL_WORDING in s.lower()), None)
+            share = next((s for s in sentences[1:] if RESIDUAL_SAID.search(s)), None)
             second = share or next((s for s in sentences[1:] if s != NO_SPLIT), None)
             chosen = [s for s in (sentences[0] if sentences else None, second) if s][: MAX_QUESTION_SENTENCES - 1]
             chosen.append(extra)
@@ -224,14 +251,18 @@ def template_answer(report: Mapping, board: Sequence[Mapping] = ()) -> tuple[str
 
 
 def narrate(
-    narrator: BaseChatModel, question: str, report: Mapping, board: Sequence[Mapping]
+    narrator: BaseChatModel,
+    question: str,
+    report: Mapping,
+    board: Sequence[Mapping],
+    earlier: str | None = None,
 ) -> tuple[str, bool, list[str], str, list[dict]]:
     """(text, checked, figures, source, rejected): the model's answer if the validator accepts it
     within two tries (three for a "why" question), else the template (generated by code from the
     report, so it counts as checked). `rejected` lists why each try was turned down."""
     request: list[BaseMessage] = [
         SystemMessage(CONCLUDE_PROMPT),
-        HumanMessage(conclude_request(question, report, board)),
+        HumanMessage(conclude_request(question, report, board, earlier)),
     ]
     why = bool(WHY_QUESTION.search(question or ""))
     log: list[dict] = []

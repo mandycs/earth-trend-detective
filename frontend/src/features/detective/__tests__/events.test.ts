@@ -129,6 +129,13 @@ test("newer payloads parse: unknown answer keys (rejected) are ignored, show_lay
   const a = parseEvent("answer", { ...(fixtures.answer as object), rejected: [{ try: 1, kind: "figure", reason: "x" }] });
   assert.equal(a?.kind, "answer");
   assert.equal(a?.kind === "answer" && "rejected" in a.data, false);
+  const q = (extra: object) => {
+    const e = parseEvent("answer", { ...(fixtures.answer as object), ...extra });
+    return e?.kind === "answer" ? e.data.next_questions : null;
+  };
+  assert.deepEqual(q({}), []);
+  assert.deepEqual(q({ next_questions: ["Is it still going down in recent years?", 3, ""] }), ["Is it still going down in recent years?"]);
+  assert.deepEqual(q({ next_questions: "nope" }), []);
   const m = parseEvent("map", { op: "show_layer", layer_id: "true_colour", year: 2019 });
   assert.ok(m?.kind === "map" && m.data.op === "show_layer" && m.data.date === null && m.data.year === 2019);
 });

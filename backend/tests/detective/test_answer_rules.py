@@ -232,3 +232,25 @@ def test_cell_rule_accepts_a_size_in_km(power, text):
     report = ledger_report(_tested(), "Is it getting warmer?")
     ok, _, rejected = check(text, report)
     assert not any("data cell" in r for r in rejected), (text, rejected)
+
+
+# --------------------------------------------------------------------------- everyday answers
+
+
+def test_trend_test_carries_the_temperature_over_the_period_and_the_report_the_recent_years(power):
+    s = _tested()
+    sid = next(iter(s.series))
+    recent = data.trend_test(s, series_id=sid, start=2014)
+    assert recent["everyday"]["over_years"] == recent["years"][1] - 2014
+    report = ledger_report(s, "Is it still getting warmer?")
+    row = next(r for r in report["variables"] if r["id"] == "t2m")
+    assert row["everyday"]["way"] in ("warmer", "cooler")
+    assert row["other_periods"][0]["years"][0] == 2014
+    change = row["everyday"]["change_over_period_c"]
+    years = row["everyday"]["over_years"]
+    ok, _, rejected = check(
+        f"Yes, the air here is getting warmer: about {change} °C over {years} years; "
+        "one value covers a big square around here, about 50 km across.",
+        report,
+    )
+    assert ok, rejected
