@@ -17,8 +17,9 @@ export function QuestionReading({ inv }: { inv: Investigation }) {
         How Alibi read your question
       </h2>
       <p className={styles.readingArrow}>
-        Your words became {reading.records.length === 1 ? 'this record' : 'these records'}, and this is where each
-        one comes from:
+        {reading.records.length === 1
+          ? 'Your words became this record, and this is where it comes from:'
+          : 'Your words became these records, and this is where each one comes from:'}
       </p>
       <ul className={styles.readingRecords}>
         {reading.records.map((r) => (

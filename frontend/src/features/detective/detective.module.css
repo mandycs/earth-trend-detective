@@ -889,6 +889,7 @@
 }
 
 .stepIcon {
+  flex: none;
   display: inline-block;
   width: 1.5ch;
   text-align: center;
