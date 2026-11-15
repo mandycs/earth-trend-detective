@@ -139,7 +139,7 @@
     <div class="cards">
       <div class="card"><p class="q">01 · sweep</p><h3>What is changing?</h3><p>Every NASA variable that applies to the place, not only the one you suspect.</p></div>
       <div class="card"><p class="q">02 · test</p><h3>Is it real?</h3><p>Mann-Kendall with Sen's slope, corrected for chance and for testing many variables.</p></div>
-      <div class="card"><p class="q">03 · subtract</p><h3>Is it the climate?</h3><p>Model the impact on rain, heat and sunlight. The leftover is the part that is us.</p></div>
+      <div class="card"><p class="q">03 · subtract</p><h3>Is it the climate?</h3><p>Model the impact on rain, heat and sunlight. What is left is not explained by the climate we measured: a clue, not proof.</p></div>
       <div class="card"><p class="q">04 · explain</p><h3>What does it mean?</h3><p>Plain words, with every figure checked by a validator before it reaches the screen.</p></div>
     </div>
     <div class="footer"><span>Three cases, two modes, one screen. No jargon on the surface.</span><span>3 / 7</span></div>
@@ -152,8 +152,8 @@
     <div class="shot"><img src="/deck/story-step2.jpg" alt="Story mode on Lake Mead: 3D terrain of the reservoir basin with the panel showing the trend and the verdict" /></div>
     <div class="calls">
       <div class="call"><b>9 variables</b><span>swept automatically for this basin</span></div>
-      <div class="call"><b>−6.47 cm / decade</b><span>of water stored, p = 0.0002 after correction</span></div>
-      <div class="call"><b>Real, not chance</b><span>and checked against 233 months of reservoir levels</span></div>
+      <div class="call"><b>−6.47 cm / decade</b><span>of water stored, q = 0.001 after correction</span></div>
+      <div class="call"><b>Real, not chance</b><span>and compared with 233 months of reservoir levels</span></div>
     </div>
     <div class="footer"><span>Story mode: the same three steps on every case.</span><span>4 / 7</span></div>
   </section></div>
@@ -163,7 +163,7 @@
     <p class="eyebrow">Why the answer can be trusted</p>
     <div class="two">
       <div>
-        <h2 style="font-size:40px">The part that is us</h2>
+        <h2 style="font-size:40px">What the climate does not explain</h2>
         <div class="big" style="font-size:112px">54–84%</div>
         <p class="lede">of Lake Mead's water loss is <b style="color:#fff">not</b> explained by rain, heat or sunlight. The range is across climate models, and we show it rather than pick one.</p>
       </div>
@@ -173,7 +173,7 @@
         <div class="note"><b>A clue, not an accusation.</b> What we do not measure ends up in that share, and the interface says so.</div>
       </div>
     </div>
-    <div class="footer"><span>Doñana, same method: 62% of its water trend is not climate either.</span><span>5 / 7</span></div>
+    <div class="footer"><span>Doñana, same method: 62% of its water trend is not explained by climate; there the trend is only "likely".</span><span>5 / 7</span></div>
   </section></div>
 
   <!-- 6 · NASA data -->
@@ -184,9 +184,11 @@
       <tr><th>Resource</th><th>What it does in the product</th></tr>
       <tr><td>GRACE / GRACE-FO mascons<br/><span class="muted">NASA PO.DAAC</span></td><td>The headline series: total water stored, in cm, per region.</td></tr>
       <tr><td>MODIS land surface temperature<br/><span class="muted">NASA AppEEARS</span></td><td>Per-pixel change on the 3D terrain: where it warms, and whether it passes the test.</td></tr>
-      <tr><td>GLDAS Noah 2.1<br/><span class="muted">NASA GES DISC</span></td><td>The climate drivers we subtract: soil moisture, runoff, snow.</td></tr>
+      <tr><td>GLDAS Noah 2.1<br/><span class="muted">NASA GES DISC</span></td><td>Topsoil moisture and surface runoff.</td></tr>
       <tr><td>NASA POWER<br/><span class="muted">MERRA-2 · IMERG · CERES</span></td><td>Rain, air temperature and sunlight for any point on Earth.</td></tr>
-      <tr><td>NASA GIBS</td><td>Satellite imagery behind the terrain, so a place looks like that place.</td></tr>
+      <tr><td>HLS Harmonized Landsat Sentinel-2<br/><span class="muted">NASA LP DAAC</span></td><td>Cloud-free 30 m base picture draped on the 3D terrain.</td></tr>
+      <tr><td>NASA GIBS<br/><span class="muted">MODIS yearly maps · MCD12Q1 land cover</span></td><td>Yearly temperature and vegetation maps; what kind of place a clicked point is.</td></tr>
+      <tr><td>U.S. Bureau of Reclamation<br/><span class="muted">not NASA</span></td><td>Lake Mead levels, used only to validate GRACE.</td></tr>
     </table>
     <div class="footer"><span>No NASA insignia is used. The data is NASA's; the tool is ours.</span><span>6 / 7</span></div>
   </section></div>
@@ -197,27 +199,25 @@
     <h2>What works today, what is next.</h2>
     <div class="three">
       <div class="col"><h3>Built</h3><ul>
-        <li>Sweep of 9 variables, 3 sites</li>
+        <li>Sweep of 6 to 9 variables per case, 3 cases</li>
         <li>Mann-Kendall, Sen, false-discovery control</li>
         <li>3D story mode on real layers</li>
-        <li>2D map shell</li>
+        <li>Investigator and explore on a 2D map</li>
+        <li>Range of the non-climate share (Lake Mead 54–84%)</li>
         <li>Figure validator for the narrator</li>
       </ul></div>
       <div class="col"><h3>Simulated</h3><ul>
         <li>Per-pixel maps for one variable only (MODIS temperature)</li>
-        <li>Click-to-diagnose on the map still uses regional series</li>
-        <li>Aletsch and Doñana lack per-pixel layers</li>
+        <li>Aletsch and Doñana have yearly observed maps only, no per-pixel trend</li>
       </ul></div>
       <div class="col"><h3>Next</h3><ul>
         <li>Per-pixel trend for every variable</li>
-        <li>Live sweep from the map</li>
-        <li>Sourced explanations (RAG)</li>
-        <li>Mobile and offline caching</li>
+        <li>Any point becomes a solved case</li>
+        <li>Ocean and atmosphere variables</li>
       </ul></div>
     </div>
     <div class="links">
       <a href="https://github.com/mandycs/earth-trend-detective">github.com/mandycs/earth-trend-detective</a>
-      <span class="placeholder">demo url: to be deployed</span>
     </div>
     <div class="footer"><span>Team: Mandy · Ale — Málaga, 14–15 November 2026</span><span>7 / 7</span></div>
   </section></div>
