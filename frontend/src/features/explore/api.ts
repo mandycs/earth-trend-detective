@@ -11,12 +11,12 @@ const TIMEOUT_MS = 90_000;
 export class FriendlyError extends Error {}
 
 const UNREACHABLE =
-  "We couldn't reach the analysis service. Check your connection (or that the backend is running) and try again.";
+  "We couldn't reach the analysis service. Check your internet connection and try again.";
 
 function messageForStatus(status: number): string {
   if (status === 504) return "NASA took too long to answer. Wait a minute and try again.";
-  if (status >= 500) return "Something went wrong while analysing this place. Try again, or pick a different point.";
-  return "We couldn't analyse this place. Pick a different point on the map and try again.";
+  if (status >= 500) return "Something went wrong while analyzing this place. Try again, or pick a different point.";
+  return "We couldn't analyze this place. Pick a different point on the map and try again.";
 }
 
 async function readDetail(res: Response): Promise<string | null> {

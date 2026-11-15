@@ -46,7 +46,7 @@ export function SceneChart({ model }: { model: ChartModel }) {
         <span>{last}</span>
       </div>
       <figcaption className={styles.chartLegend}>
-        {model.trend ? 'Yearly values · dashed: trend line · band: its likely range' : 'Yearly values'}
+        {model.trend ? 'Dots: yearly values · dashed line: the trend · shaded band: its likely range' : 'Dots: yearly values'}
       </figcaption>
     </figure>
   )

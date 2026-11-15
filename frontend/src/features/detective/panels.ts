@@ -6,7 +6,7 @@ import type { Target } from "./request.ts";
 import type { Scene, ToolState } from "./scenes.ts";
 
 export const TOOL_LABELS: Readonly<Record<string, string>> = {
-  get_series: "Fetching the record",
+  get_series: "Getting the record",
   trend_test: "Is it real?",
   climate_residual: "Is it the climate?",
   correlate: "Do they move together?",
@@ -34,24 +34,24 @@ export function toolLabel(tool: string): string {
   return Object.hasOwn(TOOL_LABELS, tool) ? TOOL_LABELS[tool] : OTHER_TOOL;
 }
 
-export const NO_TARGET_HINT = "Click a point or draw a box on the globe, then ask in plain words.";
+export const NO_TARGET_HINT = "Pick a point or draw a box on the globe, then ask in plain words.";
 export const QUESTION_PLACEHOLDER = "Is it getting hotter here? Is the water going down?";
 export const QUESTION_MAX = 400;
 
 /** Why the primary button is disabled, or null when it can be pressed. */
 export function askBlocker(target: Target | null, question: string): string | null {
-  if (!target) return "Pick a place first";
-  if (!question.trim()) return "Write a question";
+  if (!target) return "Pick a place on the globe first.";
+  if (!question.trim()) return "Type a question first.";
   return null;
 }
 
 export const isActiveRun = (s: RunStatus): boolean => s === "connecting" || s === "streaming";
 
-/** "15 Nov 2026" from an ISO timestamp, in UTC; the raw text when it does not parse. */
+/** "Nov 15, 2026" from an ISO timestamp, in UTC; the raw text when it does not parse. */
 export function recordedDate(startedAt: string): string {
   const t = Date.parse(startedAt);
   if (!startedAt || Number.isNaN(t)) return startedAt;
-  return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(t);
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(t);
 }
 
 export function replayLine(startedAt: string | null | undefined): string {
@@ -72,10 +72,10 @@ export function checkLine(answer: AnswerEvent, done: DoneEvent | null): string {
 }
 
 export const CLUE_LINE = "A clue, not proof.";
-export const TEMPLATE_LINE = "The plain summary, written from the results without the language model.";
+export const TEMPLATE_LINE = "This summary was written straight from the results, without the AI language model.";
 
 export const NEXT_TITLE = "Ask next";
-export const NEXT_REPLAY_LINE = "Run it live to ask these.";
+export const NEXT_REPLAY_LINE = "Start a live case to ask these.";
 export const NEXT_MAX = 3;
 
 /** The answer's suggested next questions, ready for chips: trimmed, no repeats, at most three. */

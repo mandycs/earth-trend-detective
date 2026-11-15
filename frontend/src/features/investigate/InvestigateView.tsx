@@ -198,7 +198,7 @@ export default function InvestigateView({ initialSite }: { initialSite?: string 
       out.push({
         spec: { id: 'thennow', kind: 'image', url: side.url, bbox: pictures.bbox, visible: true, opacity: 1 },
         title: 'Satellite picture',
-        source: 'MODIS Terra true colour, NASA GIBS',
+        source: 'MODIS Terra true color, NASA GIBS',
         pictureOnly: true,
         years,
       })
@@ -240,6 +240,7 @@ export default function InvestigateView({ initialSite }: { initialSite?: string 
         <Link href="/" className={`${styles.wordmark} wide`}>
           <Wordmark />
         </Link>
+        <h1 className="sr-only">Investigate a place</h1>
         <nav className={styles.nav} aria-label="Main">
           <Link href="/story/lake_mead">Solved cases</Link>
           <Link href="/explore">Explore</Link>
@@ -325,7 +326,7 @@ export default function InvestigateView({ initialSite }: { initialSite?: string 
             </div>
           ) : (
           <div className={styles.ask}>
-            <h1 className={`${styles.title} narrow`}>Ask the detective</h1>
+            <h2 className={`${styles.title} narrow`}>Ask the detective</h2>
             <p className={styles.lede}>
               Pick a place and ask a question. The detective plans its checks from a fixed list of NASA data, runs
               them one by one, and shows each answer on the map.

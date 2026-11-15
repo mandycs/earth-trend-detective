@@ -56,7 +56,7 @@ export function FootprintGlyph({ fp, mapKm, className }: { fp: Footprint; mapKm:
     )
   }
   const ratio = fp.km == null ? 2.2 : fp.km / Math.max(mapKm, 1)
-  // Map square and footprint square, both centred, the larger one fills the box.
+  // Map square and footprint square, both centered, the larger one fills the box.
   const big = 26
   const mapSide = ratio >= 1 ? big / Math.min(ratio, 6) : big
   const fpSide = ratio >= 1 ? big : big * Math.max(ratio, 0.12)

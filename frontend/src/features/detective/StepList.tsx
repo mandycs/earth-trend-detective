@@ -46,7 +46,7 @@ export function StepList({ inv, index, pinned, onGoto, onLive }: StepListProps) 
       </ol>
       {pinned && (
         <button type="button" className={styles.textBtn} onClick={onLive}>
-          Back to live
+          Jump to the latest step
         </button>
       )}
     </nav>

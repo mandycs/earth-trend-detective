@@ -31,7 +31,7 @@ export interface DetectiveMapProps {
 const BASE = 'earth'
 const FLY_MS = 2200
 const MAX_FIT_ZOOM = 12
-export const FLAT_NOTE = 'Relief could not load; the map is flat.'
+export const FLAT_NOTE = 'The hills and valleys could not load, so the map is flat.'
 export const MAP_FAILED = 'The map could not load. Check your connection and reload. You can still watch a recorded case.'
 
 function cameraOf(m: MlMap): CurtainCamera {
@@ -83,7 +83,7 @@ export default function DetectiveMap({ view, target, pickMode, pickEnabled, onPi
         locale: { 'Map.Title': mapLabel(live.current.pickEnabled, live.current.pickMode) },
       })
       m.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'bottom-right')
-      // The reading column covers the left of the map on wide screens: centre the globe in the free area.
+      // The reading column covers the left of the map on wide screens: center the globe in the free area.
       m.setPadding(restPadding(m.getContainer().clientWidth))
       const onResize = () => !cancelled && m.setPadding(restPadding(m.getContainer().clientWidth))
       m.on('resize', onResize)
@@ -234,7 +234,7 @@ export default function DetectiveMap({ view, target, pickMode, pickEnabled, onPi
         {waitingCorner ? (
           <p className={styles.mapHint}>
             {OPPOSITE_CORNER_HINT}
-            <span className={styles.mapHintSub}> · Esc to cancel</span>
+            <span className={styles.mapHintSub}> · Press Esc to cancel</span>
           </p>
         ) : null}
         {flat ? <p className={styles.mapNote}>{FLAT_NOTE}</p> : null}

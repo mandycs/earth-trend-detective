@@ -71,7 +71,7 @@ export function hasStack(m: StackModel | null): m is StackModel {
 
 /**
  * The solved case a place sits in, for its stack: the place's own `site_id`, else the case whose box holds the
- * place's centre (a point typed inside Lake Mead is in the Lake Mead case). A case the agent only cited from
+ * place's center (a point typed inside Lake Mead is in the Lake Mead case). A case the agent only cited from
  * elsewhere is not used: its layers would be of another place.
  */
 export function stackCaseSite(
@@ -273,8 +273,8 @@ function baseFor(bbox: Bbox, ctx: MapContext): StackBase {
         : null,
     };
   }
-  // A free point: no relief model, and a picture with no clouds on a flat plane. A daily true-colour picture is often
-  // mostly cloud; the Blue Marble composite (the same picture as the globe's base) never is. A true-colour picture
+  // A free point: no relief model, and a picture with no clouds on a flat plane. A daily true-color picture is often
+  // mostly cloud; the Blue Marble composite (the same picture as the globe's base) never is. A true-color picture
   // the run drew is a slab of its own.
   return {
     kind: "flat", title: "Flat base: no relief model for this place", source: BLUE_MARBLE.source, resolution: null,
@@ -335,7 +335,7 @@ export function stackFor(inv: Investigation, view: MapView, opts: { max?: number
 
 // ---- a solved case's own layers (story mode "Layers") ----
 
-/** Row kinds that are data layers a case ships, in the order they stack: the analysed trend first. */
+/** Row kinds that are data layers a case ships, in the order they stack: the analyzed trend first. */
 const CASE_SLAB_KINDS: readonly string[] = ["trend", "yearly"];
 
 /**

@@ -15,12 +15,12 @@ test("wrapLon folds into [-180, 180)", () => {
 
 test("box across the antimeridian is refused", () => {
   const r = boxFromCorners({ lat: 10, lon: wrapLon(179) }, { lat: 11, lon: wrapLon(-179) });
-  assert.deepEqual(r, { ok: false, message: "Boxes can't cross the 180° line yet. Draw it on one side." });
+  assert.deepEqual(r, { ok: false, message: "Boxes can't cross the 180° line yet. Draw the box on one side of it." });
 });
 
 test("tiny box is refused", () => {
   const r = boxFromCorners({ lat: 10, lon: 10 }, { lat: 10.005, lon: 11 });
-  assert.deepEqual(r, { ok: false, message: "That box is too small. Drag a little wider." });
+  assert.deepEqual(r, { ok: false, message: "That box is too small. Pick two corners farther apart." });
 });
 
 test("corners in any order give w<e, s<n", () => {

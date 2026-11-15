@@ -29,7 +29,7 @@ export function BeforeAfter({ pair, alt }: { pair: BeforeAfterPair; alt: string 
           max={100}
           value={split}
           onChange={(event) => setSplit(Number(event.target.value))}
-          aria-label={`Slide between ${pair.before.year} and ${pair.after.year}`}
+          aria-label={`Slide to compare ${pair.before.year} and ${pair.after.year}`}
         />
       </div>
       {pair.note || pair.source ? (

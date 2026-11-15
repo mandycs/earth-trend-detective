@@ -27,7 +27,7 @@ export const VAR_INSTRUMENTS: Readonly<Record<string, string>> = {
   degree_days: "NASA POWER · MERRA-2 weather model",
   winter_precip: "NASA POWER · GPM rain + MERRA-2",
   sst: "MUR sea temperature (several satellites)",
-  chlorophyll: "MODIS Aqua satellite · ocean colour",
+  chlorophyll: "MODIS Aqua satellite · ocean color",
   dhw: "NOAA Coral Reef Watch",
 };
 
@@ -45,10 +45,10 @@ export const SOURCE_INSTRUMENTS: Readonly<Record<string, string>> = {
 /** The method behind a step, for the disclosure only: never on the main line. */
 export const METHODS: Readonly<Record<string, string>> = {
   trend_test:
-    "Trend test: Mann-Kendall with the Hamed & Rao correction for months that follow each other, and the Sen slope (the median of all pairwise slopes) for its size.",
+    "Trend test: Mann-Kendall (it counts how often later values beat earlier ones), with the Hamed & Rao correction because months that follow each other look alike. The size of the change is the Sen slope: the middle value of the slopes between every pair of points.",
   climate_residual:
-    "Climate check (RESTREND-style): a least-squares fit of the record on the measured climate, month by month, with no time term; the trend of what is left over is what the measured climate does not explain. A clue, not proof.",
-  correlate: "Year-by-year match: Pearson correlation of year-on-year changes, also one year apart.",
+    "Climate check (RESTREND-style): we predict the record from the measured climate, month by month (a least-squares fit with no time term). The trend of what is left over is what the measured climate does not explain. A clue, not proof.",
+  correlate: "Year-by-year match: Pearson correlation (how closely two records rise and fall together) of the changes from one year to the next, also with one year of delay.",
   years_needed_for: "Record length: how many years the same test would need to tell a trend this size from noise.",
   years_needed: "Record length: how many years the same test would need to tell a trend this size from noise.",
   compare: "Two places: the same trend test run on each place.",
@@ -130,9 +130,9 @@ export function toolLine(scene: Scene, vars: Map<string, VarInfo>): string | nul
     case "profile_place":
       return join(["MODIS land cover map", typeof r.land_cover_year === "number" ? `${r.land_cover_year}` : null]);
     case "list_variables": {
-      if (!Array.isArray(r.variables)) return "Catalogue of records";
+      if (!Array.isArray(r.variables)) return "Catalog of records";
       const n = r.variables.filter((v) => isObj(v) && v.available === true).length;
-      return `Catalogue of records · ${n} usable here`;
+      return `Catalog of records · ${n} usable here`;
     }
     case "solved_case":
       return join(["Solved case file", str(r.name)]);

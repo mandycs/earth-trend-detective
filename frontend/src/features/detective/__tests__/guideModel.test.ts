@@ -78,7 +78,7 @@ test("step 2 names the records this run fetched", () => {
 });
 
 test("land cover words only name classes the key shows", () => {
-  assert.equal(landCoverWords([{ name: "Water", colours: ["blue"] }]), "Each colour is a kind of ground: blue = water.");
+  assert.equal(landCoverWords([{ name: "Water", colours: ["blue"] }]), "Each color is a kind of ground: blue = water.");
 });
 
 test("under the hood: records with dataset, provider and period from events; tool calls in order", () => {
@@ -112,7 +112,7 @@ test("tool calls: a failed call is marked, a running one stays running", () => {
   assert.equal(argsLine({ var_id: "ndvi" }), 'var_id: "ndvi"');
 });
 
-test("non-NASA servers are labelled honestly", () => {
+test("non-NASA servers are labeled honestly", () => {
   assert.match(providerOfSource("NOAA CoastWatch ERDDAP") ?? "", /not NASA/);
   assert.match(providerOfSource("NASA MODIS ..., via GIBS") ?? "", /GIBS/);
 });

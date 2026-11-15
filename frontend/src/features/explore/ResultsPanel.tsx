@@ -61,7 +61,7 @@ function IsItReal({ result }: { result: SweepResponse }) {
           <Badge verdict="real" direction="up" /> very unlikely to be chance.
         </li>
         <li>
-          <Badge verdict="likely" direction="up" /> a strong hint, not yet proof.
+          <Badge verdict="likely" direction="up" /> a strong hint, not yet certain.
         </li>
         <li>
           <Badge verdict="unknown" direction="flat" /> too noisy or too short to say.
@@ -95,14 +95,15 @@ function HowWeKnow({ variables, source }: { variables: VariableResult[]; source:
       <div className={styles.detailsBody}>
         <p>
           Data: {source}. We remove the normal yearly cycle (each month minus its usual value), then run a
-          Mann-Kendall trend test with the Hamed-Rao correction for autocorrelation. The size of the change is the
-          Theil-Sen slope with its 95% confidence interval.
+          Mann-Kendall trend test with the Hamed-Rao correction for autocorrelation (neighboring months look alike).
+          The size of the change is the Theil-Sen slope (the middle value of the slopes between every pair of points)
+          with its 95% confidence interval.
         </p>
         <p>
-          Because we test several variables at once, p-values are corrected with the Benjamini-Hochberg false
-          discovery rate. <strong>Real</strong> means q &lt; 0.05 after that correction; <strong>Likely</strong>{" "}
+          Because we test several variables at once, p-values (the chance of a trend this size showing up by luck) are
+          corrected with the Benjamini-Hochberg false discovery rate. <strong>Real</strong> means q &lt; 0.05 after that correction; <strong>Likely</strong>{" "}
           means p &lt; 0.10 before it. &ldquo;Years needed&rdquo; estimates how long the record must be for the
-          current slope to reach significance against the observed noise.
+          current slope to stand out from the observed noise.
         </p>
         <table className={styles.table}>
           <thead>

@@ -10,7 +10,7 @@ import { caseRowsFrom } from "./map/mapView.ts";
 import type { Recording } from "./replay.ts";
 
 const UNREACHABLE =
-  "We couldn't reach the investigator. Check your connection (or that the backend is running) and try again.";
+  "We couldn't reach the detective. Check your internet connection and try again.";
 
 export interface HistoryStep {
   checkpoint_id: string;

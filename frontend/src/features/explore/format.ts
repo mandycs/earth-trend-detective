@@ -59,7 +59,7 @@ export function badgeFor(verdict: Verdict, direction: Direction): BadgeInfo {
     text: "Likely",
     tone,
     strength: "likely",
-    meaning: `Probably going ${direction}. A strong hint, not yet proof.`,
+    meaning: `Probably going ${direction}. A strong hint, not yet certain.`,
   };
 }
 
@@ -97,7 +97,7 @@ export function summary(vars: VariableResult[]): string {
     return `${real.length} of ${n} climate signals ${real.length === 1 ? "is" : "are"} changing for real here: ${list(real)}.`;
   }
   if (likely.length > 0) {
-    return `Nothing is proven yet, but ${list(likely)} ${likely.length === 1 ? "is" : "are"} probably changing.`;
+    return `Nothing is certain yet, but ${list(likely)} ${likely.length === 1 ? "is" : "are"} probably changing.`;
   }
   return `None of the ${n} climate signals shows a change we can tell apart from chance yet.`;
 }

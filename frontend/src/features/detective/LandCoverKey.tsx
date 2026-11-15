@@ -6,7 +6,7 @@ import styles from './landCoverKey.module.css'
 export function LandCoverKey({ classes, compact = false }: { classes: readonly LandCoverClass[]; compact?: boolean }) {
   if (classes.length === 0) return null
   return (
-    <span className={`${styles.key} ${compact ? styles.compact : ''}`} role="list" aria-label="What the colours mean">
+    <span className={`${styles.key} ${compact ? styles.compact : ''}`} role="list" aria-label="What the colors mean">
       {classes.map((c) => (
         <span key={c.name} className={styles.item} role="listitem">
           <span className={styles.swatch} style={{ background: swatchBackground(c) }} aria-hidden="true" />

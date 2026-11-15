@@ -5,11 +5,11 @@ import type { RunStatus } from "./runState.ts";
 import type { Target } from "./request.ts";
 import { wrapLon } from "./request.ts";
 
-export const COORDS_HINT = "Or type a place as lat, lon";
+export const COORDS_HINT = "Or type a place as latitude, longitude";
 export const COORDS_PLACEHOLDER = "36.87, -4.17";
-const COORDS_BAD = "Type two numbers: latitude, then longitude. For example 36.87, -4.17.";
-const LAT_BAD = "Latitude goes from -90 to 90.";
-const LON_BAD = "Longitude goes from -180 to 180.";
+const COORDS_BAD = "Type two numbers: latitude, then longitude. For example: 36.87, -4.17.";
+const LAT_BAD = "Latitude must be between -90 and 90. Check the first number.";
+const LON_BAD = "Longitude must be between -180 and 180. Check the second number.";
 
 const NUM = String.raw`[-+]?(?:\d+(?:\.\d*)?|\.\d+)`;
 const PAIR = new RegExp(String.raw`^\s*(${NUM})\s*(?:[,;]\s*|\s+)(${NUM})\s*$`);
@@ -160,7 +160,7 @@ export function pointFromParams(lat: string | undefined, lon: string | undefined
   return r.ok ? r.target : null;
 }
 
-/** The detective link for a point picked elsewhere (explore), rounded to 5 decimals (about a metre). */
+/** The detective link for a point picked elsewhere (explore), rounded to 5 decimals (about a meter). */
 export function detectiveHref(lat: number, lon: number): string {
   const r = (n: number): string => String(Number(n.toFixed(5)));
   return `/detective?lat=${r(lat)}&lon=${r(wrapped(lon))}`;
