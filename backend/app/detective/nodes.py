@@ -28,7 +28,7 @@ from app.detective.prompt import CONCLUDE_PROMPT, conclude_request, retry_reques
 from app.detective.session import Session
 from app.detective.tools import TOOLS
 from app.detective.tools.analysis import WORDING, refresh_verdicts
-from app.detective.wording import RESIDUAL_WORDING, answer_rejections, cause_problems
+from app.detective.wording import RESIDUAL_WORDING, answer_rejections, cause_problems, without_quotes
 from app.explain.numbers import extract_numbers
 from app.explain.template import NO_SPLIT_SENTENCE, template_narrative
 from app.explain.validator import MAX_QUESTION_SENTENCES, SENTENCE_SPLIT, validate_narrative
@@ -45,7 +45,6 @@ MAX_BOARD_IN_TEMPLATE = 3
 TRIES = 2
 WHY_TRIES = 3
 WHY_QUESTION = re.compile(r"\bwhy\b|\bhow come\b|\bwhat(?:'s| is| are)?\s+(?:causing|behind|making)\b", re.IGNORECASE)
-_QUOTED = re.compile(r"'[^']*'")
 BOARD_WORDS = {
     "supported": "is supported by a test",
     "trend_only": "has a real trend of its own but is not linked to the change",
@@ -130,12 +129,6 @@ def check(text: str, report: Mapping, board: Sequence[Mapping] = ()) -> tuple[bo
     validator, then the detective's own rules (`wording.answer_rejections`)."""
     figures, found = _rejections(text, report, board)
     return not found, figures, [detail for _, detail in found]
-
-
-def _without_quotes(detail: str) -> str:
-    """A rejection reason with every quoted piece of the model's text taken out (no figure the
-    tools did not return, and no cause claim, travels with it)."""
-    return re.sub(r"\s{2,}", " ", _QUOTED.sub("…", detail)).strip()
 
 
 def _nothing_measured(report: Mapping) -> str:
@@ -233,7 +226,7 @@ def narrate(
         if not found:
             return text, True, figures, "llm", log
         logger.info("narrator answer rejected on %d point(s)", len(found))
-        log += [{"try": attempt, "kind": kind, "reason": _without_quotes(detail)} for kind, detail in found]
+        log += [{"try": attempt, "kind": kind, "reason": without_quotes(detail)} for kind, detail in found]
         request = [*request, AIMessage(text), HumanMessage(retry_request([d for _, d in found], why=why))]
     text, figures = template_answer(report, board)
     return text, True, figures, "template", log

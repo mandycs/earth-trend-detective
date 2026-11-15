@@ -133,6 +133,23 @@ def _suspect_rows(session: Session) -> list[dict]:
     return [{"id": s.id, "label": s.label} for s in session.board.values()]
 
 
+_QUOTED = re.compile(r"'[^']*'")
+
+
+def without_quotes(detail: str) -> str:
+    """A rejection reason with every quoted piece of the model's text replaced by '…' (no figure
+    the tools did not return, and no cause claim, travels with it)."""
+    return re.sub(r"\s{2,}", " ", _QUOTED.sub("…", detail)).strip()
+
+
+def note_problems(note: str | None, session: Session) -> list[str]:
+    """Why a board note is not shown, without the note's own words (empty: it is shown)."""
+    text = (note or "").strip()
+    if not text:
+        return []
+    return [without_quotes(p) for p in screen_problems(text, ledger_report(session), _suspect_rows(session))]
+
+
 def screen_note(note: str | None, session: Session) -> str:
     """The board note as it may be shown: the note itself, or "" when it fails the check."""
     text = (note or "").strip()

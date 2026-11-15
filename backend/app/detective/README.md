@@ -44,6 +44,9 @@ are listed in `final-fix-report.md` next to it. In short:
   `"its own trend is real, but no test links it to <target label>"`. Other `hint` reasons:
   `"fails correction over N tests"`, `"no test links it to <target label>"`, and
   `"no test links its own data to <target label>"` (when `suspect_var` is unknown).
+- `update_board` refuses a `suspect_var` equal to `target_var` (a suspect is a possible reason for the
+  change, never the changing variable). A note that fails the screen comes back as `note_removed` (asking
+  for a retry) and `note_problems` (the reasons, with the note's own words replaced by `…`).
 - **Opposite direction rules out.** `expects` (`up` / `down`, or `null`) is the way `suspect_var` must go
   for the suspect to hold; when the model gives none it is read from the name ("less", "lower"... -> down;
   "more", "warming"... -> up). A `trend` test of `suspect_var` in the evidence that is `real` (corrected,

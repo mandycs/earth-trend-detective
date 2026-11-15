@@ -35,3 +35,20 @@ def test_retry_of_a_why_question_points_to_the_board():
 
     assert "why question" in retry_request(["x"], why=True)
     assert "why question" not in retry_request(["x"])
+
+
+def test_system_prompt_answers_the_facet_of_the_question():
+    assert '"still", "recently"' in SYSTEM and "trend_test with start=2014" in SYSTEM
+    assert "compare the same variable over two periods (a: 2003-2013, b: 2014-2024)" in SYSTEM
+    assert '"fast", "faster"' in SYSTEM
+    assert '"groundwater"' in SYSTEM and "grace_tws" in SYSTEM and "soil_moisture" in SYSTEM
+
+
+def test_system_prompt_asks_for_two_suspects_that_are_reasons_with_their_own_series():
+    assert "suspects are possible reasons for the change" in SYSTEM
+    assert "never the changing variable itself" in SYSTEM
+    assert "open at least 2 suspects" in SYSTEM and "each with its own series" in SYSTEM
+
+
+def test_system_prompt_retries_a_removed_note():
+    assert "if update_board returns note_removed, call update_board again" in SYSTEM

@@ -18,6 +18,8 @@ The model asks for a status; the code decides what it may show:
   enough years (`too_short is False`), or a trend test of the suspect's own variable going the
   other way from the one the suspect `expects` (verdict `real` or `likely`); otherwise it is
   shown as `open`.
+- A call whose `suspect_var` is the `target_var` itself is refused: a suspect is a possible reason
+  for the change, never the changing variable.
 - Whatever was claimed, a suspect whose own variable has a `real` trend (corrected, enough
   years) opposite to what it `expects` is shown as `ruled_out`, flagged
   `downgraded = "its own data went <up|down>, not <down|up>"` ("less rain" while rain went up).
@@ -51,6 +53,10 @@ SHOWN_STATUSES = (*STATUSES, "trend_only")  # what the board may show
 KINDS = ("climate", "non_climate")
 DIRECTIONS = ("up", "down")
 OPPOSITE = "its own data went {went}, not {expected}"
+NOT_A_REASON = (
+    "a suspect is a possible reason for the change, not the variable under investigation: give as "
+    "suspect_var the variable that measures that reason (e.g. precip for 'less rain'), or none"
+)
 RULED_OUT_DOWNGRADE = "needs a test with enough years and no clear trend"
 NO_LINK = "no test links it to {target}"
 NO_OWN_DATA = "no test links its own data to {target}"
@@ -292,6 +298,9 @@ def apply_update(
         raise ValueError(f"unknown status {claimed!r}; use one of {', '.join(STATUSES)}")
     kind = str(update.get("kind") or "").strip() or None
     expects = str(update.get("expects") or "").strip().lower() or None
+    target_var, suspect_var = _var_id(update.get("target_var")), _var_id(update.get("suspect_var"))
+    if target_var is not None and suspect_var == target_var:
+        raise ValueError(NOT_A_REASON)
     corrected = ledger.corrected()
     requested = _clean_ids(update.get("evidence_ids"))
     evidence = [e for e in requested if _test_ids(e, ledger, corrected) is not None]
@@ -305,9 +314,9 @@ def apply_update(
         note=str(update.get("note") or ""),
         claimed=claimed,
         dropped=dropped,
-        target_var=_var_id(update.get("target_var")),
+        target_var=target_var,
         kind=kind if kind in KINDS else None,
-        suspect_var=_var_id(update.get("suspect_var")),
+        suspect_var=suspect_var,
         expects=expects if expects in DIRECTIONS else None,
     )
     return {**board, suspect_id: _judge(suspect, ledger, corrected, _catalog(catalog))}

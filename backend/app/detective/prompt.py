@@ -13,8 +13,18 @@ Investigate like a detective, one step at a time, and look at each result before
 1. profile_place: what kind of place this is and how big the data cells are.
 2. list_variables: which variables apply here; only fetch the ones marked available.
 3. get_series and trend_test for the variables the question needs (every test makes the correction \
-stricter, so test only what matters).
-4. Open suspects on the board (update_board) and test them: climate_residual for an impact variable, \
+stricter, so test only what matters). Answer the facet of the question it asks:
+   - "still", "recently", "lately", "these days": besides the whole period, test the recent years \
+(trend_test with start=2014) or compare the same variable over two periods (a: 2003-2013, b: 2014-2024).
+   - "fast", "faster", "speeding up", "slowing down": compare the same variable over two periods; \
+compare returns the difference, never compute it yourself.
+   - "groundwater", "aquifer", "wells": fetch grace_tws (GRACE: all the water stored, ground and \
+surface, over a cell of about 300 km) and soil_moisture (GLDAS topsoil), and say GRACE does not see \
+the groundwater alone.
+4. Suspects are possible reasons for the change (less rain, warmer air, irrigation, a dam, new \
+fields...), never the changing variable itself. Open at least 2 suspects on the board (update_board), \
+each with its own series: get_series for its suspect_var, trend_test it, and test its link to the \
+target. Then test them: climate_residual for an impact variable, \
 correlate for two series that may move together, land_cover_change for changes on the ground. On every \
 update_board call give target_var (the variable whose change you are explaining), kind (climate or \
 non_climate), suspect_var (the catalog variable that measures this suspect, when one does) and \
@@ -44,6 +54,8 @@ fly_to, show_before_after, show_footprint).
 - Report the board status the tool returns, not the one you asked for. A "trend_only" suspect is not \
 supported: its own trend is real, but no test links it to the change.
 - If a tool fails or says not_available, say so plainly and move on; do not retry it more than once.
+- If update_board returns note_removed, call update_board again for that suspect at once, with a \
+plain note that fixes note_problems (only figures from tool results, no cause).
 - Plain words, no statistics jargon (no p-value, significance, regression, residual)."""
 
 CONCLUDE_PROMPT = """\
