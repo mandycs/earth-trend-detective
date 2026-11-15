@@ -119,7 +119,7 @@ export function CaseLayersButton({ siteId, bbox, className }: { siteId: string; 
         aria-busy={busy}
       >
         <span>
-          Layer<span className="st-hide-sm"> stack</span>
+          Compare<span className="st-hide-sm"> layers</span>
           {busy ? '…' : ''}
         </span>
       </button>
@@ -152,7 +152,7 @@ export function CaseLayersButton({ siteId, bbox, className }: { siteId: string; 
             reducedMotion={reducedMotion}
             lede={LEDE}
             closeLabel="Close"
-            pickHint="Close the stack."
+            pickHint="Close the comparison."
           />,
           document.body,
         )}

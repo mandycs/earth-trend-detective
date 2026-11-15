@@ -1411,3 +1411,25 @@
   color: var(--ink-3);
   margin: 0;
 }
+
+/* Map tools read as one group: glass ground, hairline dividers, ink focus ring
+   instead of the browser's own (it showed orange on the attribution button). */
+.mapWrap :global(.maplibregl-ctrl-group) {
+  background: var(--glass-bg, rgba(14, 16, 18, 0.72));
+  -webkit-backdrop-filter: var(--glass-blur, blur(14px) saturate(1.3));
+  backdrop-filter: var(--glass-blur, blur(14px) saturate(1.3));
+}
+
+.mapWrap :global(.maplibregl-ctrl-group button + button) {
+  border-top: 1px solid var(--glass-line, rgba(233, 236, 238, 0.12));
+}
+
+.mapWrap :global(.maplibregl-ctrl button:focus) {
+  box-shadow: none;
+  outline: none;
+}
+
+.mapWrap :global(.maplibregl-ctrl button:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
