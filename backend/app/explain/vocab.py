@@ -88,4 +88,4 @@ JARGON_WORDS = re.compile(
     re.IGNORECASE,
 )
 
-LEAD_PHRASE = re.compile(r"\ba lead,? not (?:a )?proof\b", re.IGNORECASE)
+LEAD_PHRASE = re.compile(r"\ba (?:lead|clue),? not (?:a )?proof\b", re.IGNORECASE)  # detective says "a clue"

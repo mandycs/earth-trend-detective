@@ -34,7 +34,7 @@ from app.explain.vocab import (
 
 MAX_SENTENCES = 5
 MAX_QUESTION_SENTENCES = 3  # the investigator's answer block already carries the headline
-_SENTENCE_SPLIT = re.compile(r"(?<=[.!?])\s+(?=[A-Z\"'(])")
+SENTENCE_SPLIT = re.compile(r"(?<=[.!?])\s+(?=[A-Z\"'(])")
 _CLAUSE_SPLIT = re.compile(r"[;:,()—]|\s–\s|\b(?:while|but|whereas|although|though|and|yet)\b", re.IGNORECASE)
 _PRONOUN_START = re.compile(r"^\s*(?:it|this|that|the change|the drop|the rise|its)\b", re.IGNORECASE)
 
@@ -120,7 +120,7 @@ def _check_trends(text: str, report: Mapping) -> list[Rejection]:
     trends = _trends(report)
     rejected: list[Rejection] = []
     subject: _Trend | None = None
-    for sentence in _SENTENCE_SPLIT.split(text):
+    for sentence in SENTENCE_SPLIT.split(text):
         if not _PRONOUN_START.match(sentence):
             subject = None
         for clause in _CLAUSE_SPLIT.split(sentence):
@@ -142,7 +142,7 @@ def _check_language(text: str, report: Mapping) -> list[Rejection]:
     without_negated = NEGATED_PROOF.sub(" ", text)
     for hit in PROOF_WORDS.finditer(without_negated):
         rejected.append(Rejection("proof", f"'{hit.group(0)}': the climate split is a lead, never proof"))
-    clauses = [c for s in _SENTENCE_SPLIT.split(text) for c in _CLAUSE_SPLIT.split(s)]
+    clauses = [c for s in SENTENCE_SPLIT.split(text) for c in _CLAUSE_SPLIT.split(s)]
     for clause in clauses:
         hit = CAUSAL_WORDS.search(clause or "")
         if hit and not HEDGE_WORDS.search(clause):
@@ -164,7 +164,7 @@ def validate_narrative(text: str, report: Mapping) -> ValidationResult:
     checked, rejected = _check_numbers(text, report)
     rejected += _check_trends(text, report)
     rejected += _check_language(text, report)
-    sentences = [s for s in _SENTENCE_SPLIT.split(text.strip()) if s.strip()]
+    sentences = [s for s in SENTENCE_SPLIT.split(text.strip()) if s.strip()]
     limit = MAX_QUESTION_SENTENCES if report.get("question") else MAX_SENTENCES
     if len(sentences) > limit:
         rejected.append(Rejection("length", f"{len(sentences)} sentences, keep it to {limit} at most"))

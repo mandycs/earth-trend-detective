@@ -186,3 +186,16 @@ def test_question_facts_carry_answer_with():
     facts = report_facts(report)
     assert facts["question"] == "Is it hotter?"
     assert facts["answer_with"] == ["Air temperature"]
+
+
+def test_a_clue_not_proof_satisfies_the_lead_rule(report):
+    clue = GOOD.replace("That is a lead, not proof.", "That is a clue, not proof.")
+    assert validate_narrative(clue, report).ok
+    assert "proof" in kinds(validate_narrative(GOOD + " This is proof.", report))
+
+
+def test_template_takes_the_detective_residual_wording(report):
+    wording = "not explained by the climate we measured — a clue, not proof"
+    text = template_narrative(report, residual_wording=wording)
+    assert wording in text and "a lead, not proof" not in text
+    assert "a lead, not proof" in template_narrative(report)  # /investigate unchanged

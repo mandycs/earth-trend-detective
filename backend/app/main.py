@@ -6,6 +6,8 @@ import os
 import datetime as dt
 import logging
 import math
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 import httpx
@@ -27,7 +29,22 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 
 POWER_FIRST_YEAR = 1981
 
-app = FastAPI(title="Earth Trend Detective API", version="0.1.0")
+@asynccontextmanager
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    # The detective's checkpointer and store: one SQLite pair per process.
+    from app.detective.router import shutdown_persistence, startup_persistence
+
+    try:
+        startup_persistence()
+    except Exception as exc:  # noqa: BLE001 - the rest of the API must still start; /detective answers 503
+        logger.error("detective persistence failed to open: %s", type(exc).__name__)
+    try:
+        yield
+    finally:
+        shutdown_persistence()
+
+
+app = FastAPI(title="Earth Trend Detective API", version="0.1.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -185,6 +202,11 @@ app.include_router(explain_router)
 from app.investigate.router import router as investigate_router  # noqa: E402
 
 app.include_router(investigate_router)
+
+# /detective: the LangGraph investigator streamed as Server-Sent Events (app/detective/).
+from app.detective.router import router as detective_router  # noqa: E402
+
+app.include_router(detective_router)
 
 # /layers/suggest: LLM-picked map layer stack for a question (app/layer_suggest.py).
 from app.layer_suggest import router as layers_router  # noqa: E402

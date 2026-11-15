@@ -153,3 +153,12 @@ def test_plain_site_gets_no_extra_drivers(power_calls):
     assert EXTRA_DRIVERS.isdisjoint(result.series) and EXTRA_DRIVERS.isdisjoint(result.missing)
     assert len(power_calls) == 1
     assert gather_mod.SOURCES["power"]
+
+
+def test_power_with_only_an_upstream_variable_skips_the_local_call(power_calls):
+    # the detective asks for one variable at a time: an empty local band list made POWER answer 422
+    precip_up = next(v for v in load_catalog() if v.id == "precip_upstream")
+    out = gather_mod._fetch_power(MEAD, (precip_up,), load_catalog(), 2003, 2024)
+    assert [b for *_, b in power_calls] == [{"precip_upstream": "PRECTOTCORR"}] * 2  # the two upstream points only
+    assert all(bands for *_, bands in power_calls)
+    assert list(out) == ["precip_upstream"] and not out["precip_upstream"].dropna().empty
