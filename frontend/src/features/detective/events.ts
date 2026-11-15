@@ -17,7 +17,7 @@ export type MapOp =
   | { op: "show_before_after"; layer_id: string; year_a: number; year_b: number; before_url: string | null; after_url: string | null; bbox: Bbox | null }
   | { op: "fly_to"; bbox: Bbox; pitch: number; bearing: number }
   | { op: "show_footprint"; source: string; label: string; size: string; bbox: Bbox; approximate: true };
-export type SuspectStatus = "open" | "supported" | "hint" | "ruled_out";
+export type SuspectStatus = "open" | "supported" | "hint" | "ruled_out" | "trend_only";
 export interface Suspect { id: string; label: string; status: SuspectStatus; evidence: string[]; note: string; downgraded: string | null }
 export interface BoardEvent { suspects: Suspect[]; n_tests: number; verdicts: Record<string, { verdict: Verdict; direction: Direction }> }
 export interface NotMeasured { label: string; reason: string | null }
@@ -76,7 +76,7 @@ const mapOp = z.discriminatedUnion("op", [
 const suspect = z.object({
   id: str,
   label: str,
-  status: z.enum(["open", "supported", "hint", "ruled_out"]).catch("open"),
+  status: z.enum(["open", "supported", "hint", "ruled_out", "trend_only"]).catch("open"), // unknown → open
   evidence: strArr.catch([]),
   note: str.catch(""),
   downgraded: nullStr,

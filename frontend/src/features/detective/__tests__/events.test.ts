@@ -83,3 +83,8 @@ test("parseSseMessage on bad JSON is null", () => {
   assert.equal(parseSseMessage({ event: "place", data: "{nope" }), null);
   assert.equal(parseSseMessage({ event: "thinking", data: '{"text":"hi"}' })?.kind, "thinking");
 });
+
+test("board status trend_only is kept", () => {
+  const e = parseEvent("board", { suspects: [{ id: "x", label: "x", status: "trend_only" }], n_tests: 0 });
+  assert.equal(e?.kind === "board" && e.data.suspects[0].status, "trend_only");
+});

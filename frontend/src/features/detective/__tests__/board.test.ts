@@ -32,7 +32,14 @@ test("verdictFor prefers the board's corrected verdict", () => {
 });
 
 test("status words carry icon and text", () => {
-  for (const k of ["supported", "ruled_out", "hint", "open"] as const) {
+  for (const k of ["supported", "ruled_out", "hint", "open", "trend_only"] as const) {
     assert.ok(STATUS_WORDS[k].icon && STATUS_WORDS[k].text && STATUS_WORDS[k].meaning);
   }
+});
+
+test("trend_only has its own words and is a beat", () => {
+  assert.equal(STATUS_WORDS.trend_only.text, "TREND REAL · NOT LINKED");
+  assert.equal(STATUS_WORDS.trend_only.meaning, "Its own trend is real, but no test links it to the change.");
+  const out = stampsBetween(null, { suspects: [s("a", "trend_only")], n_tests: 1, verdicts: {} });
+  assert.equal(out[0].status, "trend_only");
 });

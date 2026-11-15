@@ -4,7 +4,7 @@ import type { Verdict, Direction } from "../../story/types";
 export interface StampBeat {
   suspectId: string;
   label: string;
-  status: "supported" | "ruled_out" | "hint";
+  status: Exclude<SuspectStatus, "open">;
   downgraded: string | null;
 }
 
@@ -12,6 +12,7 @@ export const STATUS_WORDS: Record<SuspectStatus, { icon: string; text: string; m
   supported: { icon: "✓", text: "SUPPORTED", meaning: "Its evidence holds after correcting for every test run." },
   ruled_out: { icon: "✕", text: "RULED OUT", meaning: "Tested with enough years and no clear change." },
   hint: { icon: "~", text: "HINT", meaning: "Points this way, but not strong enough yet." },
+  trend_only: { icon: "◐", text: "TREND REAL · NOT LINKED", meaning: "Its own trend is real, but no test links it to the change." },
   open: { icon: "○", text: "OPEN", meaning: "Not tested yet." },
 };
 
