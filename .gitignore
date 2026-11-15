@@ -34,3 +34,6 @@ backend/data/cache
 
 # Agent working notes
 .superpowers/
+
+# HyperFrames studio previews (generated)
+.hyperframes/preview/

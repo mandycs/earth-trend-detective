@@ -94,7 +94,7 @@ Reglas técnicas del formulario, ✅ **VERIFICADO**:
 
 ⚠️ **NO PUBLICADO**: no hay límite de palabras ni de caracteres publicado para el **High-Level Project Summary**.
 Tampoco para la Detailed Description.
-🔶 **INTERNO**: usamos **50–200 palabras** en el resumen (criterio de equipo, viene de `PLAN.md`). No citarlo como
+🔶 **INTERNO**: usamos **50–200 palabras** en el resumen (criterio de equipo, viene de `docs/team/PLAN.md`). No citarlo como
 requisito de NASA.
 
 ---
@@ -127,7 +127,7 @@ audio se reproduce mal). Guion en `video-30s.md`.
 ✅ **VERIFICADO**: "You must use English language on the project submission page and in any linked materials."
 Aplica a: nombre, resumen, descripción, referencias, textos de la UI enlazada, README del repo, slides, subtítulos.
 
-🔶 **INTERNO**: los documentos internos (`PLAN.md`, `docs/IDEA.md`, este archivo) siguen en español; no se enlazan
+🔶 **INTERNO**: los documentos internos (`docs/team/PLAN.md`, `docs/IDEA.md`, este archivo) siguen en español; no se enlazan
 desde la página del proyecto. Todo lo enlazado desde el formulario va en inglés.
 
 ---

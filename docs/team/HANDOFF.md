@@ -1,7 +1,7 @@
 # Handoff — sesión backend/datos de Mandy (sáb 14 nov 2026, ~18:00)
 
 > Para empezar una sesión nueva en limpio. Interno, en español. Lo entregable va en inglés.
-> Documentos que mandan: [`PLAN.md`](../../PLAN.md) · [`AGENTS.md`](../../AGENTS.md) · [`MANDY.md`](MANDY.md) · [`../UX-CHECKLIST.md`](../UX-CHECKLIST.md).
+> Documentos que mandan: [`PLAN.md`](PLAN.md) · [`AGENTS.md`](../../AGENTS.md) · [`MANDY.md`](MANDY.md) · [`../UX-CHECKLIST.md`](../UX-CHECKLIST.md).
 
 ## 1. Estado del repo
 

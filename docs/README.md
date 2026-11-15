@@ -25,7 +25,7 @@ Start with the [repository README](../README.md).
 
 ## Internal team notes (Spanish)
 
-- [`../PLAN.md`](../PLAN.md): overall plan, schedule, judging criteria and cuts.
+- [`team/PLAN.md`](team/PLAN.md): overall plan, schedule, judging criteria and cuts.
 - [`IDEA.md`](IDEA.md): the idea as first written down.
 - [`UX-CHECKLIST.md`](UX-CHECKLIST.md): UX self-review before showing the demo.
 - [`submission/rules.md`](submission/rules.md): submission and judging rules, NASA branding and AI rules.

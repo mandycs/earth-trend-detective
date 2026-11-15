@@ -3,7 +3,7 @@ Generate FAKE placeholder assets for sites/_example so the 3D story mode can be
 built and demoed before the real pipeline exists.
 
 Nothing here is real data. Every output is synthetic. The filenames and formats
-match the story-mode contract in PLAN.md section 6:
+match the story-mode contract in docs/team/PLAN.md section 6:
 
     heightmap.png         8-bit grayscale, 512x512, white = high
     base.jpg              1024x1024 satellite-like colour
