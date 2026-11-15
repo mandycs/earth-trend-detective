@@ -41,6 +41,7 @@ def sse(events: Iterator[Event]) -> Iterator[str]:
         yield f"event: {e['event']}\ndata: {json.dumps(e['data'], ensure_ascii=False, allow_nan=False)}\n\n"
 
 
+# TODO(reef Task 7/9): this resolves the sea site great_barrier_reef with land logic; decide there.
 @router.post("/investigate")
 def post_investigate(
     body: InvestigateRequest,

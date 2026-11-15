@@ -45,3 +45,22 @@ def test_sweep_endpoint_refuses_sea_site():
     assert r.status_code == 409
     assert "precomputed" in r.json()["detail"]
     assert "great_barrier_reef" in {s["id"] for s in client.get("/sites").json()}
+
+
+def test_export_and_layers_skip_and_refuse_the_reef(monkeypatch, capsys):
+    from app import layers, site_export
+
+    exported, written = [], []
+    monkeypatch.setattr(site_export, "export_site", lambda sid, *a, **k: exported.append(sid) or {
+        "headline": "h", "variables": [], "missing": []})
+    monkeypatch.setattr(layers, "write_layers", lambda sid, d: written.append(sid))
+
+    assert site_export.main(["--all"]) == 0
+    assert layers.main(["--all"]) == 0
+    assert exported and written
+    assert "great_barrier_reef" not in exported + written
+
+    assert site_export.main(["great_barrier_reef"]) == 2
+    assert layers.main(["great_barrier_reef"]) == 2
+    assert "great_barrier_reef" not in exported + written
+    assert "is a sea site; it is built by app.reef.build" in capsys.readouterr().err

@@ -151,6 +151,7 @@ def suggest_layers(question: str, layers_doc: Mapping, mode: str, llm: LLM | Non
 router = APIRouter(tags=["layers"])
 
 
+# TODO(reef Task 7/9): this resolves the sea site great_barrier_reef with land logic; decide there.
 @router.post("/layers/suggest")
 def post_suggest(
     body: SuggestRequest, llm: LLM | None = Depends(get_llm), sites_dir: Path = Depends(get_sites_dir)

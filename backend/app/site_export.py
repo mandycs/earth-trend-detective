@@ -26,7 +26,7 @@ from app.gather import gather_site_series
 from app.layers import write_layers
 from app.site_report import GatherFn, report_from_gathered
 from app.site_story import badge, headline, round_floats
-from app.sites import Site, load_sites
+from app.sites import Site, load_sites, require_land
 from app.validation.mead_grace import SOURCE_TITLE, validate_grace_vs_mead
 from app.validation.usbr import USBR_MEAD_URL
 
@@ -249,8 +249,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     logging.getLogger("httpx").setLevel(logging.WARNING)  # signed URLs carry the user id
     if args.all == bool(args.site_id):
         parser.error("give a site id or --all (not both)")
-    ids = [s.id for s in load_sites().sites] if args.all else [args.site_id]
+    ids = load_sites().land_ids() if args.all else [args.site_id]
     for site_id in ids:
+        try:
+            require_land(site_id)
+        except ValueError as exc:
+            print(exc, file=sys.stderr)
+            return 2
         try:
             doc = export_site(site_id)
         except KeyError as exc:

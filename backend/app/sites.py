@@ -71,6 +71,15 @@ def _parse_upstream(site_id: str, raw: object) -> UpstreamClimate | None:
     return UpstreamClimate(points=tuple(points), label=str(raw.get("label") or "upstream"))
 
 
+def parse_pipeline(site_id: str, raw: object) -> str:
+    pipeline = str(raw if raw is not None else "land")
+    if pipeline not in PIPELINES:
+        raise ValueError(
+            f"site {site_id!r}: pipeline {pipeline!r} must be one of {sorted(PIPELINES)}"
+        )
+    return pipeline
+
+
 def _parse_site(raw: dict) -> Site:
     site_id = str(raw["id"])
     bbox = tuple(float(x) for x in raw["bbox"])
@@ -87,11 +96,7 @@ def _parse_site(raw: dict) -> Site:
         )
     if not (min_lon <= lon <= max_lon and min_lat <= lat <= max_lat):
         raise ValueError(f"site {site_id!r}: point {point} is outside its bbox")
-    pipeline = str(raw.get("pipeline", "land"))
-    if pipeline not in PIPELINES:
-        raise ValueError(
-            f"site {site_id!r}: pipeline {pipeline!r} must be one of {sorted(PIPELINES)}"
-        )
+    pipeline = parse_pipeline(site_id, raw.get("pipeline"))
     return Site(
         id=site_id,
         name=str(raw["name"]),
@@ -102,6 +107,13 @@ def _parse_site(raw: dict) -> Site:
         snow_terms=bool(raw.get("snow_terms", False)),
         pipeline=pipeline,
     )
+
+
+def require_land(site_id: str, catalog: SiteCatalog | None = None) -> None:
+    """Raise ValueError if `site_id` is a sea site (land tools must not build it)."""
+    site = (catalog or load_sites()).get(site_id)
+    if site is not None and site.pipeline == "sea":
+        raise ValueError(f"{site_id} is a sea site; it is built by app.reef.build")
 
 
 def load_sites(path: Path = SITES_PATH) -> SiteCatalog:

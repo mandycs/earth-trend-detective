@@ -13,6 +13,7 @@ Usage (from backend/, venv active):
 from __future__ import annotations
 
 import argparse
+import sys
 import json
 import logging
 import re
@@ -20,7 +21,7 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 from app.assets.build import BASE_IMAGERY
-from app.sites import load_sites
+from app.sites import load_sites, require_land
 
 logger = logging.getLogger(__name__)
 
@@ -389,8 +390,13 @@ def main(argv: Sequence[str] | None = None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     if args.all == bool(args.site_ids):
         parser.error("give site ids or --all (not both)")
-    ids = [s.id for s in load_sites().sites] if args.all else args.site_ids
+    ids = load_sites().land_ids() if args.all else args.site_ids
     for site_id in ids:
+        try:
+            require_land(site_id)
+        except ValueError as exc:
+            print(exc, file=sys.stderr)
+            return 2
         write_layers(site_id, SITES_DIR / site_id)
     return 0
 
