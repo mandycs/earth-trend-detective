@@ -193,6 +193,9 @@ export function drawnWhen(lv: LayerView): string | null {
   return lv.year != null ? `Year drawn: ${lv.year}` : null;
 }
 
+/** The value as written, with a real minus sign. */
+const signed = (n: number): string => String(n).replace("-", "−");
+
 export interface LegendEntry {
   key: string; role: string; title: string; when: string | null; unit: string | null; range: string | null;
   ramp: string[]; labels: string[]; source: string; resolution: string | null;
@@ -203,7 +206,8 @@ function entryFor(lv: LayerView, role: string, when: string | null): LegendEntry
   return {
     key: `${role}:${lv.key}`, role, title: lv.title, when,
     unit: lg?.unit ?? null,
-    range: lg && lg.min != null && lg.max != null ? `${lg.min}–${lg.max}` : null,
+    // "−1.6 to 1.6", not "-1.6–1.6": a dash between two signed numbers reads as a third minus.
+    range: lg && lg.min != null && lg.max != null ? `${signed(lg.min)} to ${signed(lg.max)}` : null,
     // TODO(catalog): GIBS catalog legends carry only a `colormap` XML URL (layerCatalog.generated.ts), no stops, so
     // they get no ramp here. Copy the stops into the catalog at generation time; never invent them on the front.
     ramp: lg?.stops ?? [], labels: lg?.labels ?? [],

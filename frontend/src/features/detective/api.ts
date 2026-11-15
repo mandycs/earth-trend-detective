@@ -6,6 +6,7 @@ import { createSseParser } from "./sse.ts";
 import { messageForResponse } from "./request.ts";
 import type { DetectiveBody } from "./request.ts";
 import type { CaseLayerRow } from "./map/types.ts";
+import { caseRowsFrom } from "./map/mapView.ts";
 import type { Recording } from "./replay.ts";
 
 const UNREACHABLE =
@@ -100,5 +101,5 @@ export async function fetchRecording(name: string, signal: AbortSignal): Promise
 export async function fetchCaseLayers(siteId: string, signal: AbortSignal): Promise<Record<string, CaseLayerRow>> {
   const res = await send(`/sites/${encodeURIComponent(siteId)}/layers.json`, {}, signal);
   if (!res.ok) throw new FriendlyError("This case has no layers.");
-  return json<Record<string, CaseLayerRow>>(res, "This case has no layers.");
+  return caseRowsFrom(await json<unknown>(res, "This case has no layers."));
 }

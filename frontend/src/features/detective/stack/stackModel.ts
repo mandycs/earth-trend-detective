@@ -6,7 +6,7 @@ import type { StampBeat } from "../board.ts";
 import { verdictFor } from "../board.ts";
 import type { Bbox, MapOp } from "../events.ts";
 import type { Investigation, Scene } from "../scenes.ts";
-import { catalogLayer, dateFor, wmsUrl } from "../map/catalog.ts";
+import { BLUE_MARBLE, blueMarbleUrl, catalogLayer, wmsUrl } from "../map/catalog.ts";
 import { applyMapOp, openingView } from "../map/mapView.ts";
 import type { FootprintView, LayerLegend, LayerView, MapContext, MapView } from "../map/mapView.ts";
 
@@ -196,7 +196,7 @@ function rowSource(row: CaseRowLike): string {
   return str((row.source as { name?: unknown } | null)?.name) ?? "";
 }
 
-function baseFor(bbox: Bbox, drawn: Drawn[], ctx: MapContext): StackBase {
+function baseFor(bbox: Bbox, ctx: MapContext): StackBase {
   const cl = ctx.caseLayers;
   const rows = cl ? (Object.values(cl.rows) as CaseRowLike[]) : [];
   const relief = rows.find((r) => r.kind === "heightmap" && r.file);
@@ -214,14 +214,13 @@ function baseFor(bbox: Bbox, drawn: Drawn[], ctx: MapContext): StackBase {
         : null,
     };
   }
-  // A free point: no relief model, the true-colour picture on a flat plane (the date it was drawn in the run, if any).
-  const tc = catalogLayer("true_colour");
-  const shown = [...drawn].reverse().find((d) => d.kind === "layer" && d.layer.layerId === "true_colour" && d.layer.date);
-  const date = shown?.kind === "layer" && shown.layer.date ? shown.layer.date : tc ? dateFor(tc, {}, ctx.now) : null;
+  // A free point: no relief model, and a picture with no clouds on a flat plane. A daily true-colour picture is often
+  // mostly cloud; the Blue Marble composite (the same picture as the globe's base) never is. A true-colour picture
+  // the run drew is a slab of its own.
   return {
-    kind: "flat", title: "Flat base: no relief model for this place", source: tc?.source ?? "", resolution: tc?.resolution ?? null,
+    kind: "flat", title: "Flat base: no relief model for this place", source: BLUE_MARBLE.source, resolution: null,
     heightmap: null,
-    picture: tc && date ? { url: wmsUrl(tc, date, bbox), title: tc.title, source: tc.source, resolution: tc.resolution } : null,
+    picture: { url: blueMarbleUrl(bbox), title: BLUE_MARBLE.title, source: BLUE_MARBLE.source, resolution: null },
   };
 }
 
@@ -262,5 +261,5 @@ export function stackFor(inv: Investigation, view: MapView, opts: { max?: number
   const recentFirst = drawn.map((d) => draftFor(d, bbox, tested, sources, inv, ctx)).reverse();
   const picked = [...recentFirst.filter((s) => s.verdict), ...recentFirst.filter((s) => !s.verdict)].slice(0, max);
   const slabs = picked.map((s, i): Slab => ({ ...s, height: picked.length - i }));
-  return { bbox, base: baseFor(bbox, drawn, ctx), slabs };
+  return { bbox, base: baseFor(bbox, ctx), slabs };
 }

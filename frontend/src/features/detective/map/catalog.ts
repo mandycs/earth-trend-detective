@@ -134,3 +134,21 @@ export function wmsUrl(layer: CatalogLayer, date: string, bbox: [number, number,
   if (!jpeg) params.set('TRANSPARENT', 'TRUE')
   return `${GIBS}/wms/epsg4326/best/wms.cgi?${params.toString()}`
 }
+
+/** The cloud-free picture under the globe (explore/mapStyle.ts uses the same GIBS layer as its base tiles). */
+export const BLUE_MARBLE = {
+  gibs_layer: 'BlueMarble_ShadedRelief_Bathymetry',
+  title: 'Blue Marble, cloud-free',
+  source: 'Blue Marble imagery, NASA Earth Observatory via GIBS',
+} as const
+
+/** One WMS GetMap of the Blue Marble for an exact bbox. A single fixed composite: it takes no date. */
+export function blueMarbleUrl(bbox: [number, number, number, number], width = 1024): string {
+  const [w, s, e, n] = bbox
+  const [wd, ht] = wmsSize(bbox, width)
+  const params = new URLSearchParams({
+    SERVICE: 'WMS', REQUEST: 'GetMap', VERSION: '1.3.0', LAYERS: BLUE_MARBLE.gibs_layer, STYLES: '', CRS: 'EPSG:4326',
+    BBOX: [s, w, n, e].join(','), WIDTH: String(wd), HEIGHT: String(ht), FORMAT: 'image/jpeg',
+  })
+  return `${GIBS}/wms/epsg4326/best/wms.cgi?${params.toString()}`
+}

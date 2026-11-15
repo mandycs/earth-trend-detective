@@ -29,6 +29,23 @@ export interface MapView {
   curtain: CurtainView | null; footprints: FootprintView[]; camera: CameraView | null; notes: string[];
 }
 export interface CaseLayers { siteId: string; bbox: Bbox; rows: Record<string, CaseLayerRow> }
+
+/**
+ * The rows of a `sites/<id>/layers.json` file (`{site, version, layers: [...], timeline}`), keyed by row id. Rows
+ * without a string id are skipped; anything that is not that shape gives no rows.
+ */
+export function caseRowsFrom(json: unknown): Record<string, CaseLayerRow> {
+  const layers = json && typeof json === "object" ? (json as { layers?: unknown }).layers : undefined;
+  const out: Record<string, CaseLayerRow> = {};
+  if (!Array.isArray(layers)) return out;
+  for (const r of layers) {
+    if (r && typeof r === "object" && typeof (r as { id?: unknown }).id === "string") {
+      const row = r as CaseLayerRow;
+      out[row.id] = row;
+    }
+  }
+  return out;
+}
 export interface MapContext {
   caseLayers: CaseLayers | null;
   /** Today as YYYY-MM-DD, for the safe default date of ongoing layers. Omitted: each layer's end date stands in. */

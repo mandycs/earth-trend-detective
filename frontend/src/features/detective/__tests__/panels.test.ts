@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   askBlocker, boardToggleLabel, checkLine, compareSides, forkLine, historyEnabled, notMeasuredLine,
-  recordedDate, replayLine, stepRow, toolLabel,
+  historyLine, recordedDate, replayLine, sceneSummary, stepRow, toolLabel,
 } from "../panels.ts";
 import { chartView } from "../chartView.ts";
 import type { ChartModel } from "../chart.ts";
@@ -119,4 +119,23 @@ test("chart view includes the band in the y-domain", () => {
   assert.ok(v.trend && v.band);
   // The high line's last value (15) is the top of the canvas.
   assert.ok(v.band.split(" ").some((p) => p.endsWith(",0.0")));
+});
+
+test("scene summaries drop empty words and machine verdict lines already shown as a stamp", () => {
+  assert.equal(sceneSummary("Done.", false), null);
+  assert.equal(sceneSummary(null, false), null);
+  assert.equal(sceneSummary("grace_tws. verdict real.", true), null);
+  assert.equal(sceneSummary("grace_tws. verdict real.", false), "grace_tws. verdict real.");
+  assert.equal(sceneSummary("A curtain to compare two years by eye.", true), "A curtain to compare two years by eye.");
+});
+
+test("history rows speak in labels, never raw tool names or verdict lines", () => {
+  assert.equal(historyLine({ kind: "answer", tool: null, summary: "Yes, the water fell." }), "The answer");
+  assert.equal(historyLine({ kind: "tool", tool: "trend_test", summary: "precip_upstream. verdict real." }), "Is it real?");
+  assert.equal(historyLine({ kind: "tool", tool: "profile_place", summary: "Done." }), "What kind of place is this?");
+  assert.equal(
+    historyLine({ kind: "tool", tool: "show_before_after", summary: "A curtain to compare two years by eye." }),
+    "A comparison on the map: A curtain to compare two years by eye.",
+  );
+  assert.equal(historyLine({ kind: "tool", tool: null, summary: "" }), "A step");
 });

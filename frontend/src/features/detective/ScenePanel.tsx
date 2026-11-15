@@ -2,7 +2,7 @@ import type { Ref } from 'react'
 import { Stamp } from '../../lib/Stamp'
 import { verdictFor } from './board'
 import type { ChartModel } from './chart'
-import { compareSides, toolLabel } from './panels'
+import { compareSides, sceneSummary, toolLabel } from './panels'
 import type { Investigation, Scene } from './scenes'
 import { SceneChart } from './SceneChart'
 import styles from './detective.module.css'
@@ -37,6 +37,7 @@ export function ScenePanel({ inv, scene, chart, onRetry, focusRef }: ScenePanelP
   }
 
   const sides = tool?.tool === 'compare' && tool.state === 'done' ? compareSides(tool.result) : null
+  const summary = tool?.state === 'done' ? sceneSummary(tool.summary, !!chart?.verdict) : null
 
   return (
     <section className={styles.scene} aria-label="Current step" tabIndex={-1} ref={focusRef}>
@@ -57,7 +58,7 @@ export function ScenePanel({ inv, scene, chart, onRetry, focusRef }: ScenePanelP
       )}
       {tool?.state === 'unfinished' && <p className={styles.sceneState}>Did not finish</p>}
 
-      {tool?.state === 'done' && tool.summary && <p className={styles.sceneSummary}>{tool.summary}</p>}
+      {summary && <p className={styles.sceneSummary}>{summary}</p>}
       {scene.kind === 'note' && scene.note && <p className={styles.sceneSummary}>{scene.note}</p>}
 
       {chart && <SceneChart model={chart} />}

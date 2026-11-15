@@ -134,10 +134,13 @@ test("catalog layers become one WMS GetMap for the exact box and the drawn date"
   assert.equal(url.searchParams.get("TIME"), m.slabs[0].date);
   assert.equal(m.slabs[0].year, 2024);
   assert.deepEqual(m.bbox, POINT.bbox);
-  // A free point has no relief model: a flat base with the true-colour picture.
+  // A free point has no relief model: a flat base with a cloud-free picture (never a cloudy day's true colour).
   assert.equal(m.base?.kind, "flat");
   assert.equal(m.base?.heightmap, null);
-  assert.ok(m.base?.picture?.url.includes("MODIS_Terra_CorrectedReflectance_TrueColor"));
+  const pic = new URL(m.base?.picture?.url ?? "");
+  assert.equal(pic.searchParams.get("LAYERS"), "BlueMarble_ShadedRelief_Bathymetry");
+  assert.equal(pic.searchParams.get("BBOX"), "44.9,59.4,45.1,59.6");
+  assert.equal(pic.searchParams.get("TIME"), null);
 });
 
 test("a curtain gives both drawn years; a layer shown twice is one slab", () => {

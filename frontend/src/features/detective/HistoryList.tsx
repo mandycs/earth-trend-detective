@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { FriendlyError } from '../explore/api'
 import { fetchHistory } from './api'
 import type { HistoryStep } from './api'
+import { historyLine } from './panels'
 import styles from './detective.module.css'
 
 type Load =
@@ -63,7 +64,7 @@ export function HistoryList({
             {load.steps.map((s) => (
               <li key={s.checkpoint_id} className={styles.historyRow}>
                 <span>
-                  Step {s.step} · {s.summary}
+                  Step {s.step} · {historyLine(s)}
                 </span>
                 <button type="button" className={styles.textBtn} onClick={() => onFork(s, load.steps)}>
                   Re-run from this step

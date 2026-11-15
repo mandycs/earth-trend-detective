@@ -18,6 +18,14 @@ export const TOOL_LABELS: Readonly<Record<string, string>> = {
   years_needed: "How many years would it take?",
   years_needed_for: "How many years would it take?", // the backend's real tool name
   solved_case: "A solved case",
+  trend_map: "Where does it change?",
+  // Map and board tools never get a scene; these name them in the history list.
+  show_layer: "A layer on the map",
+  set_year: "Another year on the map",
+  show_before_after: "A comparison on the map",
+  fly_to: "Moving the map",
+  show_footprint: "The data cell on the map",
+  update_board: "The case board",
 };
 export const OTHER_TOOL = "Checking the data";
 
@@ -51,8 +59,8 @@ export function replayLine(startedAt: string | null | undefined): string {
   return d ? `Replay of a recorded run · recorded ${d}` : "Replay of a recorded run";
 }
 
-export function forkLine(step: number, summary: string): string {
-  return `Re-running from step ${step}: ${summary}`;
+export function forkLine(step: number, what: string): string {
+  return `Re-running from step ${step}: ${what}`;
 }
 
 /** The check line under the answer. Only the tests part goes when `done` or its count is missing. */
@@ -118,4 +126,25 @@ export function compareSides(result: Record<string, unknown> | null): [CompareSi
   const a = side(result.a);
   const b = side(result.b);
   return a && b ? [a, b] : null;
+}
+
+/**
+ * The tool summary worth a line under the scene title. "Done." says nothing the step list does not, and a verdict
+ * summary ("grace_tws. verdict real.") repeats, in machine words, the chart and stamp drawn right under it.
+ */
+export function sceneSummary(summary: string | null, hasVerdictStamp: boolean): string | null {
+  const s = summary?.trim() ?? "";
+  if (s === "" || /^done\.?$/i.test(s)) return null;
+  if (hasVerdictStamp && /\bverdict\b/i.test(s)) return null;
+  return s;
+}
+
+/** A history step in plain words: what the step did (its tool's label, or "The answer"), then any summary worth
+ * reading. Raw tool names and machine verdict lines never show. */
+export function historyLine(step: { kind: string; tool: string | null; summary: string }): string {
+  if (step.kind === "answer") return "The answer";
+  const what = step.tool ? toolLabel(step.tool) : null;
+  const more = sceneSummary(step.summary, true);
+  if (what && more) return `${what}: ${more}`;
+  return what ?? more ?? "A step";
 }

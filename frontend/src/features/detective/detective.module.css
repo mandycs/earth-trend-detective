@@ -1163,6 +1163,10 @@
   .mapArea :global(.maplibregl-ctrl-attrib) {
     max-width: calc(52vw - 32px);
   }
+  /* Desktop opens the attribution expanded (two lines): the legend sits above it, not on it. */
+  .legend {
+    bottom: 92px;
+  }
 }
 
 /* the ending's closing beat: explode the evidence (Task 17) */

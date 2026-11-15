@@ -133,7 +133,7 @@ test("legend lists every drawn layer with source, resolution and range from the 
   if (!m) return;
   assert.deepEqual(m.entries.map((e) => e.role), ["Evidence"]);
   const ev = m.entries[0];
-  assert.equal(ev.range, "0–1");
+  assert.equal(ev.range, "0 to 1");
   assert.equal(ev.unit, "NDVI (no unit)");
   assert.match(ev.resolution ?? "", / pixels, smoothed for display$/);
   assert.ok(ev.source.length > 0);

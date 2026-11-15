@@ -9,7 +9,7 @@ import type { Target } from './request'
 import { targetLabel } from './request'
 import type { RunStatus } from './runState'
 import {
-  NO_TARGET_HINT, QUESTION_MAX, QUESTION_PLACEHOLDER, askBlocker, forkLine, isActiveRun, replayLine,
+  NO_TARGET_HINT, QUESTION_MAX, QUESTION_PLACEHOLDER, askBlocker, forkLine, historyLine, isActiveRun, replayLine,
 } from './panels'
 import styles from './detective.module.css'
 
@@ -88,7 +88,7 @@ export function QuestionBox({
 
       {forkFrom && (
         <div className={styles.forkLine}>
-          <p>{forkLine(forkFrom.step, forkFrom.summary)}</p>
+          <p>{forkLine(forkFrom.step, historyLine(forkFrom))}</p>
           <button type="button" className={styles.textBtn} onClick={onCancelFork}>
             Cancel
           </button>

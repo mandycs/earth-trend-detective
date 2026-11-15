@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
-  CONTEXT_LAYER_IDS, CURTAIN_YEAR_NOTE, EMPTY_VIEW, NO_PLACE_NOTE, UNKNOWN_LAYER_NOTE, applyMapOp, mapViewAt, openingView,
+  CONTEXT_LAYER_IDS, CURTAIN_YEAR_NOTE, caseRowsFrom, EMPTY_VIEW, NO_PLACE_NOTE, UNKNOWN_LAYER_NOTE, applyMapOp, mapViewAt, openingView,
 } from "../map/mapView.ts";
 import type { CaseLayers, MapContext, MapView } from "../map/mapView.ts";
 import type { CaseLayerRow } from "../map/types.ts";
@@ -359,4 +359,14 @@ test("an overlay replaces a curtain, and an address that is not http(s) or a pat
   const bad = applyMapOp(openingView(PLACE), { ...(OVERLAY_OP as Extract<MapOp, { op: "overlay" }>), url: "javascript:alert(1)" }, NO_CASE);
   assert.equal(bad.evidence, null);
   assert.equal(bad.notes.length, 1);
+});
+
+test("a layers.json file becomes rows keyed by id (the file is {site, layers: [...]}, not a map)", () => {
+  const raw = JSON.parse(readFileSync(join(import.meta.dirname, "../../../../../sites/lake_mead/layers.json"), "utf8"));
+  const rows = caseRowsFrom(raw);
+  assert.equal(rows.lst_gibs?.kind, "yearly");
+  assert.equal(rows.trend_lst_day?.file, "trend_lst_day.png");
+  assert.equal(rows.layers, undefined);
+  assert.deepEqual(caseRowsFrom(null), {});
+  assert.deepEqual(caseRowsFrom({ layers: [{ id: 3 }, null, { id: "a", kind: "image" }] }), { a: { id: "a", kind: "image" } });
 });
