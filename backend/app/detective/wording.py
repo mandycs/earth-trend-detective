@@ -153,7 +153,7 @@ REASONS = {
     "cause": "It claims a cause; say what changed and what the tests found, never why.",
     "human": f"It says a part is human; say '{RESIDUAL_WORDING}' instead.",
     "lead": "Say 'a clue, not proof', not 'a lead, not proof'.",
-    "residual_wording": f"A share not explained by climate must be said as '{RESIDUAL_WORDING} — a clue, not proof'.",
+    "residual_wording": "A share not explained by climate must be said as 'not explained by the weather we measured' or 'the weather we measured doesn't explain', with 'a clue, not proof'.",
     "nothing_measured": "Nothing was measured, so say that nothing could be measured here, not that nothing changes.",
     "cell": "The place is smaller than the data cell: say how big the cell is, in km.",
     "not_measured": "The question asks about something that could not be measured here: say so and why.",
@@ -237,7 +237,7 @@ def answer_rejections(text: str, report: Mapping, suspects: Iterable[Mapping] = 
     has_share = any(row.get("residual_pct_non_climate") is not None for row in report.get("variables") or ())
     if has_share and not RESIDUAL_SAID.search(text):
         problems.append(
-            ("residual_wording", f"a share not explained by climate must be said as '{RESIDUAL_WORDING} — a clue, not proof'")
+            ("residual_wording", "a share not explained by climate must be said as 'not explained by the weather we measured — that's a clue, not proof' or 'the weather we measured doesn't explain most of it — that's a clue, not proof' (most only with share_word most)")
         )
     if not report.get("n_tests"):
         hit = NO_CHANGE_CLAIM.search(text)

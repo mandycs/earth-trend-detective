@@ -102,7 +102,7 @@ def test_detective_check_rejects_a_lead_not_proof():
 def test_detective_check_requires_the_residual_wording_when_a_share_is_in_the_report():
     ok, _, rejected = check("Water stored went down from 2003 to 2024, a clue, not proof.", REPORT)
     assert not ok
-    assert any("not explained by the climate we measured" in r for r in rejected), rejected
+    assert any("not explained by the weather we measured" in r for r in rejected), rejected  # the plain wording
 
 
 # --------------------------------------------------------------------------- I-2 nothing measured
