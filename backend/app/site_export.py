@@ -83,7 +83,8 @@ FOOTPRINTS: Mapping[str, dict] = {
     "appeears_water": {"km": 0.5, "label": "the site's 500 m MODIS pixels"},
 }
 UPSTREAM_FOOTPRINT = {"km": 50, "label": "two climate cells far upstream, in the river's mountain headwaters (NASA POWER)"}
-_TREND_RE = re.compile(r"^trend_(?P<var>.+)\.png$")
+# trend_<var>.png; its trend_<var>_values.png / _significant.png sidecars are not variables
+_TREND_RE = re.compile(r"^trend_(?P<var>.+?)(?P<sidecar>_values|_significant)?\.png$")
 _YEAR_RE = re.compile(r"^year_(?P<var>.+)_(?P<year>\d{4})\.png$")
 
 Validator = Callable[[pd.Series, int, int], Mapping]
@@ -96,7 +97,8 @@ def find_assets(site_dir: Path) -> dict:
     yearly: dict[str, str] = {}
     for name in names:
         if m := _TREND_RE.match(name):
-            trend[m["var"]] = name
+            if not m["sidecar"]:
+                trend[m["var"]] = name
         elif m := _YEAR_RE.match(name):
             yearly[m["var"]] = f"year_{m['var']}_{{YYYY}}.png"
     meta_path = site_dir / "heightmap.json"

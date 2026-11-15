@@ -14,7 +14,7 @@ from __future__ import annotations
 import datetime as dt
 import json
 import logging
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from pathlib import Path
 
 import httpx
@@ -87,11 +87,13 @@ def write_dhw_maps(
     cache_dir: Path | None,
     client: httpx.Client | None,
     offline: bool = False,
+    fetch_day: Callable[..., object] = erddap.fetch_day_grid,
 ) -> list[Path]:
     """Write the DHW map of each hot year; returns the files (empty when no year was hot).
 
     A day that cannot be read is left out and listed in `missing_years`; if none can be read,
-    `ErddapError` is raised and nothing is written.
+    `ErddapError` is raised and nothing is written. `fetch_day` has the signature of
+    `erddap.fetch_day_grid` (the reef build injects its own).
     """
     dates = hot_years(summary, bbox)
     if not dates:
@@ -104,7 +106,7 @@ def write_dhw_maps(
     missing: list[int] = []
     for year, day in dates.items():  # strictly sequential
         try:
-            grid = erddap.fetch_day_grid(
+            grid = fetch_day(
                 dhw.DHW_DATASET, dhw.DHW_VAR, box, dt.date.fromisoformat(day), 1, client, cache_dir
             )
         except erddap.ErddapError as exc:
