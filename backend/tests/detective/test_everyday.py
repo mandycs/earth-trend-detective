@@ -151,3 +151,14 @@ def test_groundwater_needs_the_all_the_water_hedge_when_the_water_row_is_grace()
     assert "groundwater" not in kinds("Yes, all the water stored here, underground and on the surface, is going down.")
     assert "groundwater" not in kinds("The data counts all the water, not just groundwater.")
     assert "groundwater" not in [k for k, _ in answer_rejections("The groundwater is going down.", {"variables": []})]
+
+
+def test_small_land_cover_move_is_not_shown_as_a_jump_in_tenths():
+    # 93.3 -> 95.6 % rounds to "9 in ten -> 10 in ten", which reads bigger than 2.3 points.
+    out = everyday.with_land_cover_everyday({"class": "Urban", "before_pct": 93.3, "after_pct": 95.6, "change_points": 2.3})
+    assert out["everyday"] == {"in_ten_after": 10, "out_of": "ten", "class": "Urban", "move": "small"}
+
+
+def test_land_cover_move_of_ten_points_keeps_both_tenths():
+    out = everyday.with_land_cover_everyday({"class": "Barren", "before_pct": 12.0, "after_pct": 31.0, "change_points": 19.0})
+    assert out["everyday"] == {"in_ten_before": 1, "in_ten_after": 3, "out_of": "ten", "class": "Barren"}

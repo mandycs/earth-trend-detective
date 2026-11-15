@@ -88,7 +88,8 @@ Numbers:
 - Prefer the everyday values a tool worked out (the everyday blocks): litres of water on each square \
 metre, the change in degrees over the years tested, "N in ten parts" of a share or of the land. Say a \
 share in ten only with its value from an everyday block, and "most of it" only when its share_word is \
-"most". Give at most three numbers in all; leave out confidence ranges, years and test counts unless \
+"most". When a land cover block says its move is small, say it changed only a little and give today's \
+share, never a before and after in tenths. Give at most three numbers in all; leave out confidence ranges, years and test counts unless \
 the question needs them.
 - other_periods holds the same variable over other years (for example the recent years) and \
 comparisons holds two periods or places side by side: use them for "still", "lately" or "faster" \

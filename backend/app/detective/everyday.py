@@ -83,16 +83,35 @@ def _in_ten(pct: Any) -> int | None:
     return n if 1 <= n <= 10 else None
 
 
+SMALL_MOVE_POINTS = 10.0  # under this, rounding to tenths can turn a small move into "9 in ten -> 10 in ten"
+
+
+def _small_move(row: Mapping) -> bool:
+    before, after = row.get("before_pct"), row.get("after_pct")
+    if not all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in (before, after)):
+        return False
+    return abs(float(after) - float(before)) < SMALL_MOVE_POINTS
+
+
 def with_land_cover_everyday(row: Mapping) -> dict:
-    """A copy of one land cover change row with its shares as "N in ten"."""
+    """A copy of one land cover change row with its shares as "N in ten".
+
+    A move under ten points keeps only today's share and says the move was small, so the
+    rounding never reads as a jump.
+    """
+    small = _small_move(row)
     block: dict[str, Any] = {}
     for key, name in (("before_pct", "in_ten_before"), ("after_pct", "in_ten_after")):
+        if small and name == "in_ten_before":
+            continue
         n = _in_ten(row.get(key))
         if n is not None:
             block[name] = n
     out = dict(row)
     if block:
         out["everyday"] = {**block, "out_of": "ten", "class": str(row.get("class") or "")}
+        if small:
+            out["everyday"]["move"] = "small"
     return out
 
 
