@@ -404,16 +404,24 @@ def fetch_min_elevation(
     A box wider than about 2° gets a larger stride, so one request stays under about
     GEBCO_MAX_SIDE x GEBCO_MAX_SIDE points.
     """
+    text = _gebco_text(bbox, stride, client, cache_dir)
+    return _min_elevation(text)
+
+
+def _gebco_text(
+    bbox: tuple[float, float, float, float], stride: int, client: httpx.Client | None, cache_dir: Path | None
+) -> str:
+    """The GEBCO_2020 CSV for bbox (west, south, east, north), cached forever once valid."""
     west, south, east, north = bbox
     side = max(abs(east - west), abs(north - south))
     stride = max(stride, math.ceil(side * GEBCO_CELLS_PER_DEGREE / GEBCO_MAX_SIDE))
     url = griddap_url("GEBCO_2020", "elevation", [_axis(south, north, stride), _axis(west, east, stride)])
     path = _cache_path(cache_dir_default if cache_dir is None else cache_dir, "GEBCO_2020", url)
-    text = None
     if path.exists():
         try:
             text = path.read_text(encoding="utf-8")
-            return _min_elevation(text)
+            _min_elevation(text)
+            return text
         except (ErddapError, OSError, UnicodeDecodeError):
             path.unlink(missing_ok=True)
     own = client is None
@@ -425,12 +433,30 @@ def fetch_min_elevation(
     finally:
         if own:
             client.close()
-    low = _min_elevation(text)  # validate before caching
+    _min_elevation(text)  # validate before caching
     try:
         _write_atomic(path, text)
     except OSError as exc:
         logger.warning("ERDDAP GEBCO: cache write failed: %s", exc)
-    return low
+    return text
+
+
+def fetch_elevation_grid(
+    bbox: tuple[float, float, float, float],
+    stride: int = 2,
+    client: httpx.Client | None = None,
+    cache_dir: Path | None = None,
+) -> xr.DataArray:
+    """GEBCO_2020 elevation (m, negative below sea level) over bbox (west, south, east, north).
+
+    Dims `latitude, longitude`, latitude ascending (south first, as ERDDAP answers); callers
+    that draw it flip it to north -> south. Same cache and stride rules as `fetch_min_elevation`.
+    """
+    text = _gebco_text(bbox, stride, client, cache_dir)
+    frame = pd.read_csv(StringIO(text), skiprows=[1])
+    frame["elevation"] = pd.to_numeric(frame["elevation"], errors="coerce")
+    grid = frame.groupby(["latitude", "longitude"])["elevation"].mean().to_xarray()
+    return grid.rename("elevation").transpose("latitude", "longitude")
 
 
 def _min_elevation(text: str) -> float:
@@ -494,3 +520,34 @@ def fetch_grid(
     out = cube.rename(variable).transpose("time", "latitude", "longitude")
     out.attrs["missing_years"] = failures.failed
     return out
+
+
+def fetch_day_grid(
+    dataset: str,
+    variable: str,
+    bbox: tuple[float, float, float, float],
+    day: dt.date,
+    stride: int = 1,
+    client: httpx.Client | None = None,
+    cache_dir: Path | None = None,
+) -> xr.DataArray:
+    """One day of a daily product (DHW at 12:00 UTC) over bbox (west, south, east, north).
+
+    Dims `latitude, longitude`, latitude ascending, raw units, NaN for masked cells. Cached
+    for past years only. Raises `ErddapError` when the day cannot be read or is not in the dataset.
+    """
+    west, south, east, north = bbox
+    stamp = f"{day.isoformat()}T12:00:00Z"
+    url = griddap_url(dataset, variable, [_axis(stamp), _axis(south, north, stride), _axis(west, east, stride)])
+    cache = cache_dir_default if cache_dir is None else cache_dir
+    own = client is None
+    client = client or new_client()
+    try:
+        frame = _cached_frame(client, dataset, variable, url, day.year, cache)
+    except _NoResults as exc:
+        raise ErddapError(f"ERDDAP {dataset} has no data for {day}") from exc
+    finally:
+        if own:
+            client.close()
+    cube = frame.groupby(["latitude", "longitude"])["value"].mean().to_xarray()
+    return cube.rename(variable).transpose("latitude", "longitude")

@@ -27,3 +27,6 @@ dist/
 
 # Detective checkpoints and store (local SQLite)
 backend/data/detective/
+
+# Worktrees symlink the cache (a symlink is not matched by a trailing slash)
+backend/data/cache
