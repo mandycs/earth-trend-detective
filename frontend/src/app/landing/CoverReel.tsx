@@ -19,7 +19,7 @@ export interface ReelCase {
 const SECONDS = 7
 
 /**
- * Documentary cover: the three real cases, one at a time, full screen.
+ * Documentary cover: every real case, one at a time, full screen.
  * Case names sit top center like chapters; one subtitle; a progress line.
  * Everything on screen comes from each case's site.json.
  */
@@ -82,7 +82,7 @@ export function CoverReel({ cases, years }: { cases: ReelCase[]; years: string }
   if (!current) return null
 
   return (
-    <section ref={section} className={styles.reel} aria-label="Three solved cases">
+    <section ref={section} className={styles.reel} aria-label={`${cases.length} solved cases`}>
       {cases.map((c, i) =>
         warm.has(i) || i === index ? (
           // next/image serves a WebP sized to the screen instead of the 2-4k source JPEG.

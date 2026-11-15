@@ -26,6 +26,13 @@ function coverPicture(site: { id: string; assets: { base: string; base_hq?: stri
   }
 }
 
+/** Small counts as words, from the real number of cases: the copy never states a count by hand. */
+function countWord(n: number, capital = false): string {
+  const words = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten']
+  const w = words[n] ?? String(n)
+  return capital ? w.charAt(0).toUpperCase() + w.slice(1) : w
+}
+
 export default function HomePage() {
   const cases = readCases()
   const reel: ReelCase[] = cases.map((site) => {
@@ -56,7 +63,7 @@ export default function HomePage() {
           <div className={styles.ownShade} aria-hidden="true" />
           <div className={styles.ownText}>
             <h2 id="own-title" className={`${styles.ownTitle} narrow`}>
-              Three places, three answers. Now pick yours.
+              {countWord(cases.length, true)} places, {countWord(cases.length)} answers. Now pick yours.
             </h2>
             <p>
               Click anywhere on the globe and ask in plain words. The detective picks the satellite records that fit the place,
