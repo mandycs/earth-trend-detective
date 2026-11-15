@@ -48,10 +48,20 @@
   height: 44px;
   background-position: center;
   background-repeat: no-repeat;
+  /* maplibre draws a black "i" on a pale disc: on this dark box it vanished. White "i", no disc. */
+  background-color: transparent !important;
+  filter: invert(1);
 }
 
 .mapWrap :global(.maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-inner) {
-  padding: 10px 0 10px 8px;
+  padding: 10px 4px 10px 12px;
+  line-height: 1.5;
+}
+
+/* Map controls and the attribution keep the page gutter (16 px on phones, wider on desktop), not maplibre's 10 px. */
+.mapWrap :global(.maplibregl-ctrl-bottom-right) {
+  right: calc(var(--gutter) - 10px);
+  bottom: calc(var(--gutter) - 10px);
 }
 
 .mapWrap :global(.maplibregl-ctrl-attrib a) {
@@ -127,9 +137,9 @@
 
 .legend {
   position: absolute;
-  right: 76px;
-  bottom: 60px; /* clear of the 44 px attribution line */
-  width: min(380px, calc(100% - 92px));
+  right: calc(var(--gutter) + 60px); /* beside the 48 px map controls */
+  bottom: calc(var(--gutter) + 44px); /* clear of the 44 px attribution line */
+  width: min(380px, calc(100% - var(--gutter) * 2 - 60px));
   display: flex;
   flex-direction: column-reverse;
   z-index: 3;
@@ -1165,7 +1175,7 @@
   }
   /* Desktop opens the attribution expanded (two lines): the legend sits above it, not on it. */
   .legend {
-    bottom: 92px;
+    bottom: calc(var(--gutter) + 76px);
   }
 }
 

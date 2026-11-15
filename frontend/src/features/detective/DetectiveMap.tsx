@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Map as MlMap, Marker } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { STYLE } from '../explore/mapStyle'
-import { OPPOSITE_CORNER_HINT, READING_BREAKPOINT, drawSpecs, fitPadding, mapLabel, overlaySpecs, pickStep } from './map/draw'
+import { OPPOSITE_CORNER_HINT, READING_BREAKPOINT, drawSpecs, fitPaddingOverRest, mapLabel, overlaySpecs, pickStep, restPadding } from './map/draw'
 import type { Corner, PickMode, PickResult } from './map/draw'
 import type { MapView } from './map/mapView'
 import type { Target } from './request'
@@ -33,7 +33,7 @@ export const MAP_FAILED = 'The map could not load. Check your connection and rel
 
 function cameraOf(m: MlMap): CurtainCamera {
   const c = m.getCenter()
-  return { center: [c.lng, c.lat], zoom: m.getZoom(), pitch: m.getPitch(), bearing: m.getBearing() }
+  return { center: [c.lng, c.lat], zoom: m.getZoom(), pitch: m.getPitch(), bearing: m.getBearing(), padding: m.getPadding() }
 }
 
 export default function DetectiveMap({ view, target, pickMode, pickEnabled, onPick, reducedMotion }: DetectiveMapProps) {
@@ -80,6 +80,10 @@ export default function DetectiveMap({ view, target, pickMode, pickEnabled, onPi
         locale: { 'Map.Title': mapLabel(live.current.pickEnabled, live.current.pickMode) },
       })
       m.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'bottom-right')
+      // The reading column covers the left of the map on wide screens: centre the globe in the free area.
+      m.setPadding(restPadding(m.getContainer().clientWidth))
+      const onResize = () => !cancelled && m.setPadding(restPadding(m.getContainer().clientWidth))
+      m.on('resize', onResize)
       // Narrow screens open with the attribution folded to its button; maplibre opens it expanded.
       m.once('idle', () => {
         if (cancelled || m.getContainer().clientWidth >= READING_BREAKPOINT) return
@@ -192,7 +196,7 @@ export default function DetectiveMap({ view, target, pickMode, pickEnabled, onPi
         [e, n],
       ],
       {
-        pitch: cam.pitch, bearing: cam.bearing, padding: fitPadding(el.clientWidth, el.clientHeight),
+        pitch: cam.pitch, bearing: cam.bearing, padding: fitPaddingOverRest(el.clientWidth, el.clientHeight),
         maxZoom: MAX_FIT_ZOOM, duration: reducedMotion ? 0 : FLY_MS,
       },
     )
