@@ -16,7 +16,9 @@ test('catalog matches the yaml', () => {
   const ids = [...yaml.matchAll(/^  - id: (\S+)/gm)].map((m) => m[1])
   const gibs = [...yaml.matchAll(/^    gibs_layer: (\S+)/gm)].map((m) => m[1])
   const fromYaml = ids.map((id, i) => [id, gibs[i]])
-  assert.equal(fromYaml.length, 12)
+  // The count comes from the yaml itself: a layer added there without regenerating fails here.
+  assert.ok(fromYaml.length > 0)
+  assert.equal(ids.length, gibs.length)
   assert.deepEqual(fromYaml, LAYER_CATALOG.map((l) => [l.id, l.gibs_layer]))
 })
 

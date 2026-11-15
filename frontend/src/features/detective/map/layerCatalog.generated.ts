@@ -306,5 +306,61 @@ export const LAYER_CATALOG: CatalogLayer[] = [
     ],
     "source": "NASA MODIS Aqua L2 Ocean Color Chlorophyll-a, via GIBS",
     "resolution": "~1 km"
+  },
+  {
+    "id": "no2",
+    "title": "Nitrogen dioxide in the lower air (OMI, daily)",
+    "gibs_layer": "OMI_Nitrogen_Dioxide_Tropo_Column",
+    "kind": "wmts",
+    "format": "image/png",
+    "tile_matrix_set": "GoogleMapsCompatible_Level6",
+    "legend": {
+      "unit": "molecules/cm²",
+      "min": 0.0,
+      "max": 2e+16,
+      "colormap": "https://gibs.earthdata.nasa.gov/colormaps/v1.3/OMI_Nitrogen_Dioxide_Tropo_Column.xml"
+    },
+    "dates": {
+      "start": "2004-10-01",
+      "end": "2026-11-09",
+      "step": "daily",
+      "ongoing": true
+    },
+    "zones": [
+      "city"
+    ],
+    "source": "NASA OMI/Aura NO2 Tropospheric Column (OMNO2d), via GIBS",
+    "resolution": "~25 km"
+  },
+  {
+    "id": "co",
+    "title": "Carbon monoxide at 500 hPa (AIRS, monthly)",
+    "gibs_layer": "AIRS_L3_Carbon_Monoxide_500hPa_Volume_Mixing_Ratio_Monthly_Day",
+    "kind": "wmts",
+    "format": "image/png",
+    "tile_matrix_set": "GoogleMapsCompatible_Level6",
+    "legend": {
+      "unit": "ppbv",
+      "min": 0.0,
+      "max": 350.0,
+      "colormap": "https://gibs.earthdata.nasa.gov/colormaps/v1.3/AIRS_Carbon_Monoxide_Volume_Mixing_Ratio.xml"
+    },
+    "dates": {
+      "start": "2002-09-01",
+      "end": "2026-09-01",
+      "step": "monthly",
+      "ongoing": false,
+      "gaps": [
+        [
+          "2025-05-01",
+          "2025-06-30"
+        ]
+      ]
+    },
+    "zones": [
+      "city"
+    ],
+    "source": "NASA AIRS/Aqua L3 Monthly Carbon Monoxide (AIRS3STM), via GIBS",
+    "resolution": "~100 km"
   }
 ]
