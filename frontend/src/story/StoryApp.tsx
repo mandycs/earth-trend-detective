@@ -465,7 +465,7 @@ export default function StoryApp({ caseId }: { caseId: string }) {
         </nav>
         <Link href={`/detective?site=${caseId}`} className="st-explore st-ask">
           <span>
-            Ask<span className="st-hide-sm"> the detective</span>
+            Ask Alibi
           </span>
         </Link>
         {site && <CaseLayersButton siteId={caseId} bbox={site.bbox} className="st-explore st-stack-btn" />}
@@ -483,9 +483,14 @@ export default function StoryApp({ caseId }: { caseId: string }) {
             {site && mode === 'doc' ? (
               <div className="doc">
                 <div className="doc-top">
-                  <Link href="/" className="doc-wordmark wide">
-                    <Wordmark />
-                  </Link>
+                  <div className="doc-start">
+                    <Link href="/" className="doc-wordmark wide">
+                      <Wordmark />
+                    </Link>
+                    <Link href={`/detective?site=${caseId}`} className="doc-ask">
+                      Ask Alibi
+                    </Link>
+                  </div>
                   <ol className="doc-chapters" aria-label="Chapters">
                     {CHAPTER_NAMES.map((name, i) => (
                       <li key={name}>
@@ -544,9 +549,16 @@ export default function StoryApp({ caseId }: { caseId: string }) {
                     <button type="button" className="doc-quiet" onClick={() => setDocPlaying((p) => !p)} aria-pressed={!docPlaying}>
                       {docPlaying ? 'Pause' : 'Play'}
                     </button>
-                    <button type="button" className="btn btn-primary" onClick={nextChapter}>
-                      {chapter >= CHAPTER_NAMES.length - 1 ? 'Explore freely →' : `Next: ${CHAPTER_NAMES[chapter + 1].replace(/\?$/, '').toLowerCase()} →`}
-                    </button>
+                    {chapter >= CHAPTER_NAMES.length - 1 ? (
+                      // The story ends here: "Explore" (above) stays for this case, the detective takes any other place.
+                      <Link href="/detective" className="btn btn-primary">
+                        Ask Alibi about another place →
+                      </Link>
+                    ) : (
+                      <button type="button" className="btn btn-primary" onClick={nextChapter}>
+                        {`Next: ${CHAPTER_NAMES[chapter + 1].replace(/\?$/, '').toLowerCase()} →`}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
