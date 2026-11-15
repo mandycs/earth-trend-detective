@@ -67,9 +67,11 @@ export function HeatStressRecord({ heat }: { heat: HeatStress }) {
           <ul>
             {heat.points.map((point) => {
               const years = point.years_at_or_above[firstKey] ?? []
+              const gaps = point.yearly_max.filter((r) => r.value == null).map((r) => r.year)
               return (
                 <li key={point.id}>
                   <strong>{point.name}</strong>: {years.length > 0 ? years.join(', ') : `no year at or above ${thresholdText(first.value, heat.unit)}`}
+                  {gaps.length > 0 ? ` (no data for ${gaps.join(', ')})` : null}
                 </li>
               )
             })}

@@ -239,3 +239,29 @@ def test_solved_case_reads_reef(monkeypatch, tmp_path):
     out = context.solved_case(session, site_id=SITE_ID)
     assert out["status"] == "ok"
     assert "dhw" in {v["id"] for v in out["variables"]}
+
+
+def _heat_with_gaps() -> dict:
+    yearly = copy.deepcopy(_scout_yearly())
+    outer = next(p.id for p in REEF_POINTS if p.id == "outer")
+    heron = next(p.id for p in REEF_POINTS if p.id == "heron")
+    for y in (2012, 2013, 2014):
+        yearly[outer].pop(y, None)
+    yearly[heron].pop(2022, None)
+    return dhw.heat_stress_summary(yearly, list(REEF_POINTS), START, END)
+
+
+def test_reef_years_without_data_are_listed_and_said(tmp_path):
+    heat = _heat_with_gaps()
+    site = load_sites().get(SITE_ID)
+    series = reef_export.ReefSeries(sst=_sst(), chlorophyll_log10=_chl())
+    doc = reef_export.build_reef_site_json(site, load_catalog(), START, END, tmp_path / SITE_ID, series, heat, today=TODAY)
+    assert doc["missing"]["dhw"] == (
+        "no data for 4 reef-years (fetch failed): Outer shelf (central) 2012, 2013, 2014; Heron Reef (south) 2022"
+    )
+    assert doc["headline"].endswith("(4 reef-years without data are not counted).")
+    dhw_row = next(v for v in doc["variables"] if v["id"] == "dhw")
+    assert dhw_row["note"].endswith(" 4 reef-years without data are not counted.")
+    # no gaps: nothing listed, nothing added
+    assert "dhw" not in _doc(tmp_path)["missing"]
+    assert "without data" not in _doc(tmp_path)["headline"]

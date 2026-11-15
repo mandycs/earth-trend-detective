@@ -98,6 +98,34 @@ def reef_missing(series: ReefSeries) -> dict[str, str]:
     return {var: missing_text(years) for var, years in failed.items() if years}
 
 
+def _heat_gaps(heat: Mapping) -> list[tuple[str, list[int]]]:
+    """(reef name, years without a value) for every reef point that has any."""
+    out = []
+    for point in heat["points"]:
+        years = [r["year"] for r in point["yearly_max"] if r["value"] is None]
+        if years:
+            out.append((point["name"], years))
+    return out
+
+
+def heat_missing(heat: Mapping) -> dict[str, str]:
+    """`{"dhw": text}` naming the reef-years whose fetch failed; empty when none did."""
+    gaps = _heat_gaps(heat)
+    if not gaps:
+        return {}
+    n = sum(len(years) for _name, years in gaps)
+    where = "; ".join(f"{name} {', '.join(str(y) for y in years)}" for name, years in gaps)
+    return {"dhw": f"no data for {_reef_years(n)} (fetch failed): {where}"}
+
+
+def _uncounted_text(heat: Mapping) -> str:
+    """"N reef-years without data are not counted", or "" when every reef-year was measured."""
+    n = sum(int(p.get("reef_years_missing", 0)) for p in heat["periods"])
+    if not n:
+        return ""
+    return f"{_reef_years(n)} without data {'is' if n == 1 else 'are'} not counted"
+
+
 def reef_catalog(catalog: Sequence[Variable]) -> tuple[Variable, ...]:
     """The catalog with chlorophyll in log10 units (its series is log10); nothing else changes."""
     return tuple(
@@ -153,7 +181,7 @@ def dhw_note(heat: Mapping) -> str:
     return (
         f"Not a trend test. Reef-years at or above {shown}, five reefs: "
         f"{a} in {p0}–{p1}, {b} in {q0}–{q1}."
-    )
+    ) + (f" {gap}." if (gap := _uncounted_text(heat)) else "")
 
 
 def reef_headline(sst_row: Mapping | None, heat: Mapping) -> str | None:
@@ -165,8 +193,8 @@ def reef_headline(sst_row: Mapping | None, heat: Mapping) -> str | None:
     slope = format_number(sst_row["sen_slope_per_decade"])
     return (
         f"Sea temperature over the reef is going up for real ({slope} °C per decade). "
-        f"Heat stress at or above {shown}: {_reef_years(a)} in {p0}–{p1}, {b} in {q0}–{q1}."
-    )
+        f"Heat stress at or above {shown}: {_reef_years(a)} in {p0}–{p1}, {b} in {q0}–{q1}"
+    ) + (f" ({gap})." if (gap := _uncounted_text(heat)) else ".")
 
 
 def dhw_row(heat: Mapping) -> dict:
@@ -219,6 +247,7 @@ def build_reef_site_json(
     sst_row = lead[0] if lead else None
     return {
         **doc,
+        "missing": {**doc.get("missing", {}), **heat_missing(heat)},
         "variables": [*lead, dhw_row(heat), *rest],
         "heat_stress": heat,
         "headline": reef_headline(sst_row, heat),
