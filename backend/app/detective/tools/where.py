@@ -358,7 +358,7 @@ def _render(session: Session, var: Variable, bbox: tuple[float, ...], grid: _Gri
         "labels": {
             "more": style.more,
             "less": style.less,
-            "faded": f"Faded = not statistically significant (Mann-Kendall p ≥ {site_maps.SIG_LEVEL})",
+            "faded": "Faded = could be chance at this pixel",
             "transparent": "Transparent = not enough data",
         },
         "stops": site_maps.legend_stops(style.colormap),

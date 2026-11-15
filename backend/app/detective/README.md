@@ -69,3 +69,9 @@ are listed in `final-fix-report.md` next to it. In short:
   `median_slope_per_decade` are quotable; bounds, legend and the area test's numbers sit under `map`. GIBS grids have their own disk cache (`backend/data/cache/gibs_grids/`),
   separate from the point-series cache, so the first map of a GIBS variable fetches the pictures again
   (NO₂: about 2.5 minutes).
+- `water_extent` (reservoir or lake area, km² at 30 m) reads NASA JPL OPERA DSWx-HLS from GIBS (scene days from
+  CMR): open water plus the partial-water pixels touching it, one clear scene a month, yearly median, 9 clear
+  months a year. OPERA has no scenes from mid-August 2020 to the end of 2022, so a box gets at most 7 years
+  (2016–2019, 2023–2025) and its `trend_test` (annual path) is "too short" until about 2028. It refuses an
+  unprofiled place, a box with sea tags or ground below −5 m (GEBCO), and an unanswered sea check. The first call
+  takes about 2 minutes for 2016–2025 (cache: `backend/data/cache/water_extent/`).

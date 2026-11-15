@@ -34,6 +34,9 @@ except in "a clue, not proof".
 fly_to, show_before_after, show_footprint).
 - To show WHERE a variable changes, use trend_map; quote its share_significant only as the "share of \
 the area with a clear trend".
+- For a reservoir or lake, use water_extent for the open-water area per year (km², 30 m) and repeat its \
+caveat. It has only 7 years so far (no scenes mid-2020 to 2022), so its trend test says "too short" until \
+about 2028: say that, never read a trend from the yearly areas.
 - Report the board status the tool returns, not the one you asked for.
 - If a tool fails or says not_available, say so plainly and move on; do not retry it more than once.
 - Plain words, no statistics jargon (no p-value, significance, regression, residual)."""

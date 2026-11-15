@@ -19,7 +19,9 @@ Per year:
   otherwise it is dropped (`attrs["dropped_years"]`).
 
 A year with no scene at all is listed in `attrs["no_scene_years"]` (the product gap) and not
-cached (a later reprocessing may fill it). A year where a request failed (CMR or GIBS, after
+cached (a later reprocessing may fill it); nor is a year with a month without any scene (2020,
+at the edge of the gap). A month counts as failed only when a request failed and no clear
+scene was found in it. A year where a request failed (CMR or GIBS, after
 the GIBS retries) is a gap in `attrs["missing_years"]` and never cached. Completed years are
 cached on disk, written atomically. If nothing usable comes back, `WaterExtentError` is raised.
 """
@@ -248,10 +250,11 @@ def _write_atomic(path: Path, text: str) -> None:
 
 
 class _Year:
-    def __init__(self, months: dict[int, float], failed: bool, no_scene: bool):
+    def __init__(self, months: dict[int, float], failed: bool, no_scene: bool, scene_months: int = 0):
         self.months = months
         self.failed = failed
         self.no_scene = no_scene
+        self.scene_months = scene_months  # months with at least one scene day in the product
 
 
 def _month_area(
@@ -270,7 +273,7 @@ def _month_area(
             continue
         km2 = scene_water_area(classes_from_rgba(rgba), area)
         if km2 is not None:
-            return km2, failed
+            return km2, False  # a flaky day before a clear one loses nothing
     return None, failed
 
 
@@ -293,7 +296,7 @@ def _fetch_year(client: httpx.Client, bbox: Sequence[float], year: int, size: tu
         failed = failed or month_failed
         if km2 is not None:
             months[month] = km2
-    return _Year(months, failed=failed, no_scene=False)
+    return _Year(months, failed=failed, no_scene=False, scene_months=len(by_month))
 
 
 def year_value(months: dict[int, float], min_months: int = MIN_MONTHS) -> float | None:
@@ -346,6 +349,8 @@ def fetch_yearly_water(
                     no_scene.append(year)
                     continue
                 months_of[year] = got.months
+                if got.scene_months < 12:
+                    continue  # the product does not cover the whole year (2020): a reprocessing may fill it
                 try:
                     _write_atomic(paths[year], json.dumps({"months": {str(m): v for m, v in got.months.items()}}))
                 except OSError as exc:  # a cache that cannot be written must not lose the data

@@ -16,7 +16,14 @@ from app.detective.session import Session
 from app.detective.tools import TOOLS
 from app.detective.tools import data as tools
 from app.detective.tools import water
+from app.extractors import erddap
 from app.extractors import water_extent as wx
+
+@pytest.fixture(autouse=True)
+def _land_box(monkeypatch):
+    """GEBCO never reached in tests: by default the box is land (lowest point 100 m)."""
+    monkeypatch.setattr(erddap, "fetch_min_elevation", lambda bbox, **k: 100.0)
+
 
 FIXTURE = Path(__file__).parent / "fixtures" / "opera_dswx_vinuela.png"
 VINUELA = (-4.27, 36.77, -4.07, 36.97)  # the ~20 km box the detective draws around 36.87 N, 4.17 W
@@ -351,3 +358,81 @@ def test_tool_no_clear_year_is_a_plain_answer(monkeypatch):
     monkeypatch.setattr(wx, "last_complete_year", lambda: 2025)
     got = water.water_extent(_session())
     assert got["status"] == "not_available" and "transient" not in got and got["evidence_id"]
+
+
+# --------------------------------------------------------------------------- fix round 1
+
+
+def test_tool_refuses_an_unprofiled_place(fetch):
+    got = water.water_extent(_session(tags=()))
+    assert got["status"] == "not_available" and got["reason"] == water.PROFILE_FIRST_REASON
+    assert "profile_place" in got["reason"] and fetch == []
+
+
+def test_tool_refuses_when_the_sea_check_fails(fetch, monkeypatch):
+    def down(*a, **k):
+        raise erddap.ErddapError("GEBCO down")
+
+    monkeypatch.setattr(erddap, "fetch_min_elevation", down)
+    got = water.water_extent(_session())
+    assert got["status"] == "not_available" and got["reason"] == water.SEA_UNKNOWN_REASON
+    assert got["transient"] is True and fetch == []
+
+
+def test_tool_refuses_when_the_box_dips_below_sea_level(fetch, monkeypatch):
+    monkeypatch.setattr(erddap, "fetch_min_elevation", lambda bbox, **k: -40.0)
+    got = water.water_extent(_session())  # tags say land: the profile's own sea check had failed
+    assert got["status"] == "not_available" and got["reason"] == water.AT_SEA_REASON and fetch == []
+
+
+def test_tool_clips_caller_years_to_the_product(fetch):
+    s = _session()
+    got = water.water_extent(s, year_a=2010, year_b=2030)
+    assert fetch == [(tuple(s.place.bbox), 2016, 2025)]
+    assert got["years"] == [2016, 2025] and got["series_id"] == "water_extent:2016-2025"
+    assert got["yearly"][0]["year"] == 2016
+
+
+def test_tool_start_after_end(fetch):
+    got = water.water_extent(_session(), year_a=2020, year_b=2018)
+    assert got["status"] == "not_available" and "after" in got["reason"] and fetch == []
+
+
+def test_caveat_says_cloudy_months_are_left_out():
+    assert "winter" in water.CAVEAT and "drier" in water.CAVEAT
+
+
+def test_a_flaky_day_does_not_drop_the_year(sky):
+    scenes = _scenes({2016: _year(0.5)})
+    for m in range(1, 13):
+        scenes[2016][f"2016-{m:02d}-01"] = "fail"  # tried first, then the clear day of the 15th
+    sky(scenes)
+    s = wx.fetch_yearly_water(SMALL, 2016, 2016, client=httpx.Client())
+    assert list(s.index.year) == [2016] and s.attrs["missing_years"] == []
+
+
+def test_a_month_failing_with_no_clear_scene_is_a_gap(sky):
+    scenes = _scenes({2016: _year(0.5), 2017: _year(0.5)})
+    scenes[2016]["2016-03-15"] = "fail"
+    sky(scenes)
+    s = wx.fetch_yearly_water(SMALL, 2016, 2017, client=httpx.Client())
+    assert s.attrs["missing_years"] == [2016] and list(s.index.year) == [2017]
+
+
+def test_a_year_at_the_edge_of_the_product_gap_is_not_cached(sky, tmp_path):
+    fake = sky(_scenes({2020: _year(0.5, months=8)}))  # scenes stop in August: dropped, not forever
+    with pytest.raises(wx.WaterExtentError):
+        wx.fetch_yearly_water(SMALL, 2020, 2020, client=httpx.Client())
+    assert not list((tmp_path / "cache").glob("*.json"))
+    gets = fake.gets
+    with pytest.raises(wx.WaterExtentError):
+        wx.fetch_yearly_water(SMALL, 2020, 2020, client=httpx.Client())
+    assert fake.gets > gets
+
+
+def test_a_cloudy_year_with_scenes_every_month_is_cached_as_dropped(sky, tmp_path):
+    scenes = _scenes({2016: {f"{{y}}-{m:02d}-15": ("cloud" if m <= 4 else 0.5) for m in range(1, 13)}})
+    sky(scenes)
+    with pytest.raises(wx.WaterExtentError):
+        wx.fetch_yearly_water(SMALL, 2016, 2016, client=httpx.Client())  # 8 clear months: dropped
+    assert len(list((tmp_path / "cache").glob("*.json"))) == 1

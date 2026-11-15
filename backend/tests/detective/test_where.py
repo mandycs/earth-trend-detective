@@ -83,7 +83,7 @@ def test_trend_map_writes_png_and_overlay_op(grid_calls, _dirs):
     assert got["basis"] == "monthly"  # sea temperature stays on its own basis
     legend = got["map"]["legend"]
     assert legend["unit"] == "°C per decade"
-    assert legend["labels"]["faded"].startswith("Faded = not statistically significant")
+    assert legend["labels"]["faded"] == "Faded = could be chance at this pixel"
     assert legend["labels"]["transparent"] == "Transparent = not enough data"
     assert len(legend["stops"]) == 9 and legend["range"][0] == -legend["range"][1]
     assert "share of the area with a clear trend" in got["note"]

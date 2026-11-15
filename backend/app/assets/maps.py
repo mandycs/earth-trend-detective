@@ -281,7 +281,7 @@ def write_variable_maps(
         "legend": {
             "more": style.more,
             "less": style.less,
-            "faded": f"Faded = not statistically significant (Mann-Kendall p ≥ {SIG_LEVEL})",
+            "faded": "Faded = could be chance at this pixel",
             "transparent": "Transparent = not enough data",
         },
         "alpha": {"significant": ALPHA_SIGNIFICANT, "faded": ALPHA_FADED},

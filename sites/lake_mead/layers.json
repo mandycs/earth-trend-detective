@@ -343,7 +343,7 @@
         "labels": {
           "more": "↑ more heat (warmer ground)",
           "less": "↓ less heat (cooler ground)",
-          "faded": "Faded = not statistically significant (Mann-Kendall p ≥ 0.05)",
+          "faded": "Faded = could be chance at this pixel",
           "transparent": "Transparent = not enough data"
         },
         "stops": [

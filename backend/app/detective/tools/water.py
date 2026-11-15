@@ -12,6 +12,7 @@ import logging
 
 from app.detective.session import Session
 from app.detective.tools import data
+from app.extractors import erddap
 from app.extractors import water_extent as wx
 from app.stats.annual import n_years
 
@@ -27,16 +28,25 @@ DEFINITION = (
 CAVEAT = (
     "Counts every lake, reservoir and river in the box; a partial-water pixel at the shore counts as a whole "
     "30 m pixel, scattered partial-water pixels away from open water are left out. "
+    "Months without a clear scene (mostly winter) are left out, so the yearly median leans to the drier months. "
     "OPERA has no scenes from mid-August 2020 to the end of 2022."
 )
+PROFILE_FIRST_REASON = (
+    "not_available_here: the land cover of this place is not known yet; call profile_place first"
+)
+SEA_UNKNOWN_REASON = "Could not check whether the box reaches the sea (GEBCO did not answer). Try again in a few minutes."
 AT_SEA_REASON = "not_available_here: the box reaches the sea, so its water area would be mostly sea"
 NO_YEARS_REASON = f"OPERA water maps start in {wx.FIRST_YEAR}; no completed year in this range"
 FAILED_REASON = "The water maps (NASA GIBS / CMR) did not answer. Try again in a few minutes."
 
 
 def water_extent(session: Session, year_a: int | None = None, year_b: int | None = None) -> dict:
-    start = max(session.start, wx.FIRST_YEAR) if year_a is None else int(year_a)
-    end = min(session.end, wx.last_complete_year()) if year_b is None else int(year_b)
+    first = session.start if year_a is None else int(year_a)
+    last = session.end if year_b is None else int(year_b)
+    if first > last:
+        return data._not_available("start year is after end year", var_id=VAR_ID)
+    # Clipped to the product before anything is keyed or quoted: no year the maps do not cover.
+    start, end = max(first, wx.FIRST_YEAR), min(last, wx.last_complete_year())
     args = {"start": start, "end": end, "bbox": [round(float(c), 6) for c in session.place.bbox]}
     return data._through_ledger(
         session,
@@ -68,11 +78,19 @@ def _safe(session: Session, start: int, end: int) -> dict:
 
 def _water(session: Session, start: int, end: int) -> dict:
     if start > end:
-        return data._not_available("start year is after end year", var_id=VAR_ID)
+        return data._not_available(NO_YEARS_REASON, var_id=VAR_ID)
+    if not session.place.tags:  # not profiled, or its land cover failed: the box is unknown
+        return data._not_available(PROFILE_FIRST_REASON, var_id=VAR_ID)
     if data.SEA_TAGS & set(session.place.tags) or data._open_sea(session):
         return data._not_available(AT_SEA_REASON, var_id=VAR_ID)
-    if max(start, wx.FIRST_YEAR) > min(end, wx.last_complete_year()):
-        return data._not_available(NO_YEARS_REASON, var_id=VAR_ID)
+    # The profile treats a failed sea check as land; here an unknown answer is a refusal.
+    try:
+        lowest = erddap.fetch_min_elevation(tuple(float(c) for c in session.place.bbox))
+    except Exception as exc:  # noqa: BLE001 - unknown is not land
+        logger.warning("water_extent: GEBCO failed: %s: %s", type(exc).__name__, exc)
+        return data._not_available(SEA_UNKNOWN_REASON, transient=True, var_id=VAR_ID)
+    if lowest <= data.SEA_MAX_ELEVATION_M:
+        return data._not_available(AT_SEA_REASON, var_id=VAR_ID)
     try:
         series = wx.fetch_yearly_water(session.place.bbox, start, end)
     except wx.WaterExtentError as exc:
