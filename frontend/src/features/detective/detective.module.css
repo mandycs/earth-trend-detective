@@ -862,6 +862,46 @@
   line-height: 1.5;
 }
 
+/* suggested next questions: one tap asks it in the same thread */
+.nextAsk {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nextRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nextRow li {
+  max-width: 100%;
+}
+
+.nextChip {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 10px 14px;
+  text-align: left;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.nextChipStatic {
+  cursor: default;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+.nextChipStatic:hover {
+  background: var(--surface);
+}
+
 /* steps */
 
 .steps ol {

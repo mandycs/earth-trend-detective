@@ -6,7 +6,7 @@ export interface CatalogLayer {
   format: string
   tile_matrix_set: string
   legend: { unit: string; min: number | null; max: number | null; colormap?: string }
-  dates: { start: string; end: string; step: string; ongoing: boolean; years?: number[] }
+  dates: { start: string; end: string; step: string; ongoing: boolean; years?: number[]; gaps?: string[][] }
   zones: string[]
   source: string
   resolution: string

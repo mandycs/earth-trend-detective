@@ -769,7 +769,12 @@
      "2",
      "300"
     ],
-    "source": "llm"
+    "source": "llm",
+    "next_questions": [
+     "Is it still going down in recent years?",
+     "Can we test the link with less rain / warmer air (climate)?",
+     "What about air temperature here?"
+    ]
    }
   },
   {

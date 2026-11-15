@@ -112,3 +112,19 @@ def test_sweep_include_series_returns_monthly_points(client):
     assert isinstance(t2m[0]["value"], float) and isinstance(t2m[0]["anomaly"], float)
     may = next(p for p in t2m if p["date"] == "2003-05")
     assert may["value"] is None and may["anomaly"] is None
+
+
+@pytest.mark.parametrize(
+    ("origin", "allowed"),
+    [
+        ("http://127.0.0.1:5196", True),
+        ("http://localhost:5181", True),
+        ("http://100.70.153.87:5199", True),
+        ("http://evil.example:5180", False),
+        ("http://127.0.0.1.evil.example", False),
+    ],
+)
+def test_dev_hosts_on_any_port_may_read_the_sites(origin, allowed):
+    r = TestClient(app).get("/sites", headers={"Origin": origin})
+    assert r.status_code == 200
+    assert (r.headers.get("access-control-allow-origin") == origin) is allowed

@@ -1,7 +1,9 @@
 import { sitesSchema, sweepSchema } from "./schema";
 import type { Site, SweepResponse } from "./types";
 
-export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
+// The API's documented port (README). The old :8000 default reached another service on the demo machine
+// and every call (the explore examples first) came back empty with no visible reason.
+export const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8765").replace(/\/$/, "");
 
 const TIMEOUT_MS = 90_000;
 
@@ -57,13 +59,26 @@ export async function fetchSweep(lat: number, lon: number, signal: AbortSignal):
   return parsed.data;
 }
 
+/**
+ * The known cases for the example buttons. No list means no buttons, never an error on screen, but the
+ * reason goes to the console: a blocked origin (CORS) or a wrong NEXT_PUBLIC_API_URL looks exactly like
+ * an empty list otherwise.
+ */
 export async function fetchSites(signal: AbortSignal): Promise<Site[]> {
+  const url = `${API_URL}/sites`;
   try {
-    const res = await fetch(`${API_URL}/sites`, { signal });
-    if (!res.ok) return [];
+    const res = await fetch(url, { signal });
+    if (!res.ok) {
+      console.warn(`Example cases not loaded: ${url} answered ${res.status}.`);
+      return [];
+    }
     const parsed = sitesSchema.safeParse(await res.json());
+    if (!parsed.success) console.warn(`Example cases not loaded: ${url} sent an unexpected list.`);
     return parsed.success ? parsed.data : [];
-  } catch {
+  } catch (err) {
+    if (!signal.aborted) {
+      console.warn(`Example cases not loaded: ${url} could not be reached (check NEXT_PUBLIC_API_URL and the API's CORS origins).`, err);
+    }
     return [];
   }
 }

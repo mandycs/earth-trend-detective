@@ -24,6 +24,24 @@ from app.stats import run_sweep
 from app.stats.deseason import monthly_anomalies
 
 logger = logging.getLogger(__name__)
+
+
+def configure_app_logging(level: int = logging.INFO) -> None:
+    """`app.*` at INFO on stderr, next to uvicorn's own lines; uvicorn only sets up its own loggers.
+
+    Idempotent (one handler, however often the module is imported). Messages stay plain: no keys or URLs
+    are logged by the app (see `app.detective.scrub.log_reason`).
+    """
+    app_logger = logging.getLogger("app")
+    app_logger.setLevel(level)
+    if not any(getattr(h, "_alibi", False) for h in app_logger.handlers):
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter("%(levelname)s:     %(name)s: %(message)s"))
+        handler._alibi = True  # type: ignore[attr-defined]
+        app_logger.addHandler(handler)
+
+
+configure_app_logging()
 # httpx logs full request URLs at INFO; signed Earthdata download links carry the user id.
 logging.getLogger("httpx").setLevel(logging.WARNING)
 
@@ -68,6 +86,11 @@ app.add_middleware(
         ).split(",")
         if o.strip()
     ],
+    # Any port on the dev hosts (loopback and the demo's Tailscale address, as in next.config): a second dev
+    # server on another port otherwise gets no examples on /explore and no error, only a blocked request.
+    allow_origin_regex=os.environ.get(
+        "CORS_ORIGIN_REGEX", r"http://(localhost|127\.0\.0\.1|100\.70\.153\.87)(:\d+)?"
+    ),
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )

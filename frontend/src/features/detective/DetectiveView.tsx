@@ -477,7 +477,16 @@ export default function DetectiveView({ cases, recordings, initialSite, initialP
 
           {inv.place && <CaseBoard board={inv.board} beats={scene?.stamps ?? []} />}
 
-          {outcome?.answer && <AnswerPanel answer={outcome.answer} done={outcome.done} headingRef={answerRef} />}
+          {outcome?.answer && (
+            <AnswerPanel
+              answer={outcome.answer}
+              done={outcome.done}
+              headingRef={answerRef}
+              // Same path as a typed follow-up: the question lands in the box and runs in this thread.
+              onAskNext={followUp && !active ? ask : undefined}
+              replay={replaying}
+            />
+          )}
 
           {hasStack(stack) && (
             <div className={styles.explodeRow}>
