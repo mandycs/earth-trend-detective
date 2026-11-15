@@ -32,6 +32,7 @@ OFF_CASE_REASON = "not_available_here: only precomputed for the solved cases"
 EXTRA_DRIVER_REASON = "not_available_here: only set up for the solved cases that need it"
 UNKNOWN_CASE_REASON = "not_available_here: this solved case is not in the site list"
 SOURCE_DOWN_REASON = "The data source did not answer. Try again in a few minutes."
+ANNUAL_PENDING_REASON = "not_available_here: one value per year; the yearly trend test is not connected yet"
 # Native grid of each catalog dataset (matched on the `dataset` prefix in variables.yaml).
 DATASET_RESOLUTION: tuple[tuple[str, str], ...] = (
     ("NASA POWER", "~50 km"),
@@ -54,6 +55,8 @@ def _num(x: float | None, ndigits: int = 4) -> float | None:
 
 
 def resolution_of(var: Variable) -> str:
+    if var.resolution:
+        return var.resolution
     return next((r for prefix, r in DATASET_RESOLUTION if var.dataset.startswith(prefix)), NATIVE_RESOLUTION)
 
 
@@ -100,6 +103,8 @@ def _is_opt_in(var: Variable) -> bool:
 
 
 def _unavailable_reason(session: Session, var: Variable, extra_ids: frozenset[str]) -> str | None:
+    if var.temporal == "annual":  # not on the monthly-anomaly trend path
+        return ANNUAL_PENDING_REASON
     if var.source in APPEEARS_SOURCES and session.place.site_id is None:
         return OFF_CASE_REASON
     if _is_opt_in(var) and var.id not in extra_ids:
@@ -235,6 +240,7 @@ def _fetch(session: Session, var_id: str, start: int, end: int) -> dict:
     try:
         raw = fetcher(session.place.as_site(), (var,), session.catalog, start, end)
         series = raw.get(var_id) if isinstance(raw, Mapping) else None
+        cell = series.attrs.get("cell") if isinstance(series, pd.Series) else None
         if series is not None:
             series = gather.conform(series, start, end).rename(var_id)
     except Exception as exc:  # noqa: BLE001 - a failing source is a result, not a crash
@@ -246,6 +252,7 @@ def _fetch(session: Session, var_id: str, start: int, end: int) -> dict:
     series_id = f"{var_id}:{start}-{end}"
     session.series[series_id] = series
     annual = series.groupby(series.index.year).mean().dropna()
+    extra = {"cell": [_num(c) for c in cell]} if cell is not None else {}
     return {
         "status": "ok",
         "series_id": series_id,
@@ -255,6 +262,7 @@ def _fetch(session: Session, var_id: str, start: int, end: int) -> dict:
         "n_months": int(series.notna().sum()),
         "years": [start, end],
         "chart": [{"year": int(y), "value": _num(v)} for y, v in annual.items()],
+        **extra,
     }
 
 

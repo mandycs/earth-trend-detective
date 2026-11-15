@@ -247,3 +247,63 @@ variables:
     tags: [climate, snow, water]
     applies_to: []
     drivers: []
+
+  # --- Sea variables (NOAA CoastWatch ERDDAP griddap, no auth; app/extractors/erddap.py) ---
+  # dataset = ERDDAP dataset id, band = ERDDAP variable. One request per year, sequential.
+  # Dataset ids checked live on 2026-11-15 with the ERDDAP search:
+  #   coastwatch.pfeg.noaa.gov/erddap/search/index.csv?searchFor=chlorophyll+aqua+monthly
+  #   coastwatch.noaa.gov/erddap/search/index.csv?searchFor=degree+heating
+  - id: sst
+    label: Sea surface temperature
+    definition: "How warm the top of the sea is, averaged over each month, from NASA JPL's MUR map built from several satellites."
+    role: driver
+    source: erddap
+    dataset: jplMURSST41mday    # NASA JPL MUR SST (GHRSST L4) monthly: the primary SST product
+    band: sst
+    units: "°C"
+    scale: 1.0
+    offset: 0.0
+    temporal: monthly
+    resolution: "~1 km"
+    tags: [climate, temperature, sea]
+    applies_to: [ocean, coast, reef]
+    drivers: []
+
+  - id: chlorophyll
+    label: Chlorophyll in the sea (log10)
+    definition: "How much green algae colours the sea, from NASA's MODIS Aqua satellite; shown as a log10 value, so +1 means ten times more."
+    role: impact
+    source: erddap
+    # query "chlorophyll aqua monthly": erdMH1chlamday_R2022SQ = MODIS Aqua L3SMI 4 km, R2022
+    # science quality, monthly composite. Trend on log10 (transform); clipped to the study period.
+    dataset: erdMH1chlamday_R2022SQ
+    band: chlor_a
+    units: "log10(mg/m³)"
+    scale: 1.0
+    offset: 0.0
+    transform: log10
+    temporal: monthly
+    resolution: "~4 km"
+    tags: [sea, water_quality]
+    applies_to: [ocean, coast, reef]
+    drivers: [sst, precip, solar]
+
+  # Heat stress: yearly maximum, January-June, of NOAA Coral Reef Watch daily degree heating
+  # weeks at the point (query "degree heating" -> noaacrwdhwDaily, the only match;
+  # NOAA_DHW_monthly has no DHW). One value per year: NOT trend-tested on the monthly path,
+  # so applies_to stays empty (not offered) until the annual path exists.
+  - id: dhw
+    label: Heat stress on corals (degree heating weeks, NOAA, not NASA)
+    definition: "How much heat has built up in the sea over the last 12 weeks, the yearly peak from NOAA Coral Reef Watch; 4 or more stresses corals."
+    role: driver
+    source: erddap
+    dataset: noaacrwdhwDaily
+    band: degree_heating_week
+    units: "°C-weeks"
+    scale: 1.0
+    offset: 0.0
+    temporal: annual
+    resolution: "~5 km"
+    tags: [sea, temperature, heat_stress]
+    applies_to: []
+    drivers: []

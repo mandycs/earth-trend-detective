@@ -11,7 +11,8 @@ import yaml
 CATALOG_PATH = Path(__file__).resolve().parent.parent / "catalog" / "variables.yaml"
 
 ROLES = frozenset({"driver", "impact"})
-SOURCES = frozenset({"power", "appeears", "appeears_water", "datarods", "gldas", "grace"})
+SOURCES = frozenset({"power", "appeears", "appeears_water", "datarods", "gldas", "grace", "erddap"})
+TRANSFORMS = frozenset({"", "log10"})
 
 
 @dataclass(frozen=True)
@@ -30,6 +31,8 @@ class Variable:
     applies_to: tuple[str, ...]
     drivers: tuple[str, ...]
     definition: str = ""
+    resolution: str = ""  # native grid, e.g. "~1 km"; empty -> looked up from the dataset
+    transform: str = ""  # "log10": the fetcher returns log10 of the dataset value
 
 
 def _parse_variable(raw: dict) -> Variable:
@@ -37,6 +40,8 @@ def _parse_variable(raw: dict) -> Variable:
         raise ValueError(f"variable {raw['id']!r}: invalid role {raw['role']!r}")
     if raw["source"] not in SOURCES:
         raise ValueError(f"variable {raw['id']!r}: invalid source {raw['source']!r}")
+    if raw.get("transform", "") not in TRANSFORMS:
+        raise ValueError(f"variable {raw['id']!r}: invalid transform {raw['transform']!r}")
     return Variable(
         id=str(raw["id"]),
         label=str(raw["label"]),
@@ -52,6 +57,8 @@ def _parse_variable(raw: dict) -> Variable:
         applies_to=tuple(raw.get("applies_to") or ()),
         drivers=tuple(raw.get("drivers") or ()),
         definition=str(raw.get("definition", "")),
+        resolution=str(raw.get("resolution", "")),
+        transform=str(raw.get("transform", "")),
     )
 
 

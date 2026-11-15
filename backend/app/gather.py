@@ -14,10 +14,11 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from types import MappingProxyType
 
+import numpy as np
 import pandas as pd
 
 from app.catalog import Variable, variables_for_site
-from app.extractors import appeears, gldas, grace, power, water
+from app.extractors import appeears, erddap, gldas, grace, power, water
 from app.sites import Site
 from app.stats.residual import SNOW_DRIVERS, UPSTREAM_DRIVERS, degree_days, winter_precip
 
@@ -57,6 +58,12 @@ SOURCES: Mapping[str, SourceInfo] = MappingProxyType(
             "MODIS MOD09A1 surface reflectance via NASA AppEEARS (open-water NDWI)",
             "https://appeears.earthdatacloud.nasa.gov",
             "We could not read the satellite water data downloaded from NASA AppEEARS. Try again later.",
+        ),
+        "erddap": SourceInfo(
+            "Sea data via NOAA CoastWatch ERDDAP (NASA JPL MUR sea temperature, NASA MODIS Aqua "
+            "chlorophyll, NOAA Coral Reef Watch heat stress)",
+            "https://coastwatch.pfeg.noaa.gov/erddap/",
+            "The NOAA CoastWatch ERDDAP server (sea data) did not answer. Try again in a few minutes.",
         ),
     }
 )
@@ -178,6 +185,29 @@ def _fetch_appeears_water(
     return {v.id: series.rename(v.id) for v in variables}
 
 
+def _fetch_erddap(
+    site: Site,
+    variables: Sequence[Variable],
+    _: Sequence[Variable],
+    start: int,
+    end: int,
+) -> dict[str, pd.Series]:
+    """Sea variables at the site point, one variable after another (ERDDAP answers 408 to
+    parallel calls). Annual variables (DHW) come as the yearly maximum; `attrs["cell"]` keeps
+    the grid cell actually used."""
+    out: dict[str, pd.Series] = {}
+    for var in variables:
+        fetch = erddap.fetch_point_yearly_max if var.temporal == "annual" else erddap.fetch_point_monthly
+        raw, cell = fetch(var.dataset, var.band, site.lat, site.lon, start, end)
+        values = raw * var.scale + var.offset
+        if var.transform == "log10":
+            values = np.log10(values.where(values > 0))
+        series = values.astype(float).rename(var.id)
+        series.attrs = {**raw.attrs, "cell": cell}
+        out[var.id] = series
+    return out
+
+
 FETCHERS: Mapping[str, Fetcher] = MappingProxyType(
     {
         "power": _fetch_power,
@@ -185,6 +215,7 @@ FETCHERS: Mapping[str, Fetcher] = MappingProxyType(
         "gldas": _fetch_gldas,
         "appeears": _fetch_appeears,
         "appeears_water": _fetch_appeears_water,
+        "erddap": _fetch_erddap,
     }
 )
 
