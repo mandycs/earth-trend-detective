@@ -1,6 +1,6 @@
 # Ale — 3D, historia, copy, demo y pitch
 
-Plan general: [`PLAN.md`](../../PLAN.md) · Compañera: [`MANDY.md`](MANDY.md)
+Plan general: [`PLAN.md`](PLAN.md) · Compañera: [`MANDY.md`](MANDY.md)
 **Plan detallado con horarios, puertas y recortes: [`ALE-PLAN.md`](ALE-PLAN.md)** ← empieza por ahí.
 **Qué falta y qué mejoraría con más tiempo: [`ALE-NEXT.md`](ALE-NEXT.md).**
 

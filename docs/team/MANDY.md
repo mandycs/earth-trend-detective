@@ -1,6 +1,6 @@
 # Mandy (+ Claude) — Datos, estadística, backend, web 2D, IA, deploy
 
-Plan general: [`PLAN.md`](../../PLAN.md) · Compañera: [`ALE.md`](ALE.md)
+Plan general: [`PLAN.md`](PLAN.md) · Compañera: [`ALE.md`](ALE.md)
 
 **Entregas a Ale:** `sites/<id>/` con PNGs reales + `site.json` (contrato en PLAN §6).
 **Recibo de Ale:** guion y textos en inglés de cada caso para meter en `site.json`.

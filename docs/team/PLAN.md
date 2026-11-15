@@ -1,7 +1,7 @@
 # Earth Trend Detective — Plan de trabajo (interno)
 
 > NASA Space Apps Challenge 2026 · Málaga · Reto: **Be An Earth System Trend Detective!** (Advanced)
-> Equipo: **Mandy** (+ Claude) y **Ale** · Tareas por persona: [`docs/team/MANDY.md`](docs/team/MANDY.md) · [`docs/team/ALE.md`](docs/team/ALE.md)
+> Equipo: **Mandy** (+ Claude) y **Ale** · Tareas por persona: [`docs/team/MANDY.md`](MANDY.md) · [`docs/team/ALE.md`](ALE.md)
 >
 > ⚠️ Documento interno en español. Todo lo que se entrega (README, página Project, demo, slides, UI) va **en inglés**.
 
@@ -115,7 +115,7 @@ sites/<id>/trend_<var>.png        # Sen por píxel, divergente, no signif. atenu
 sites/<id>/year_<var>_<YYYY>.png  # anomalía anual para la línea de tiempo
 sites/<id>/site.json              # bbox, exageración vertical, variables, veredictos, textos, fuentes
 ```
-Ejemplo con datos falsos para empezar ya: [`sites/_example/site.json`](sites/_example/site.json).
+Ejemplo con datos falsos para empezar ya: [`sites/_example/site.json`](../../sites/_example/site.json).
 
 ## 7. Reparto
 

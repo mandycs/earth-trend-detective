@@ -1,6 +1,6 @@
 # Earth Trend Detective — La idea (interno)
 
-> Documento interno en español. Resumen ejecutable en [`PLAN.md`](../PLAN.md). Explicación visual para mentores: [`mentor-explainer.html`](mentor-explainer.html).
+> Documento interno en español. Resumen ejecutable en [`PLAN.md`](team/PLAN.md). Explicación visual para mentores: [`mentor-explainer.html`](mentor-explainer.html).
 
 ## Pitch en una frase
 

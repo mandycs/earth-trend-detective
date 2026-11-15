@@ -4,7 +4,7 @@ Hackathon NASA Space Apps 2026 (Málaga). Equipo de dos: **Mandy** (datos, estad
 deploy) y **Ale** (3D, historia, copy, demo, pitch).
 
 **Documentos que mandan**, en este orden:
-1. [`PLAN.md`](PLAN.md) — plan general, calendario, criterios del jurado, recortes.
+1. [`docs/team/PLAN.md`](docs/team/PLAN.md) — plan general, calendario, criterios del jurado, recortes.
 2. [`docs/team/ALE-PLAN.md`](docs/team/ALE-PLAN.md) — mi parte, hora a hora, con puertas y plan B.
 3. [`docs/team/MANDY.md`](docs/team/MANDY.md) — la otra mitad.
 4. [`docs/UX-CHECKLIST.md`](docs/UX-CHECKLIST.md) — lo que hay que pasar antes de enseñar la demo.

@@ -15,7 +15,7 @@ MINUS = "−"  # U+2212, typographic minus for display text
 
 
 def badge(verdict: str, direction: str) -> str:
-    """UX badge: icon + text, never colour only (PLAN.md §5)."""
+    """UX badge: icon + text, never colour only (docs/team/PLAN.md §5)."""
     word = _VERDICT_WORD.get(verdict)
     arrow = _ARROWS.get(direction)
     if word is None or arrow is None:
