@@ -391,15 +391,17 @@ function whenText(s: Slab): string | null {
 }
 
 function SlabCard({
-  slab, picture, active, onPick, onHover, cardRef, pickHint,
+  slab, picture, active, onPick, onHover, cardRef, pickHint, showKey,
 }: {
   slab: Slab; picture: PictureStatus | undefined; active: boolean; onPick: (key: string) => void; onHover: (key: string | null) => void
   cardRef: (el: HTMLButtonElement | null) => void; pickHint: string
+  /** The colour key of a classed layer: on its first card only, so two years of land cover do not repeat it. */
+  showKey: boolean
 }) {
   const when = whenText(slab)
   const st = slab.stamp ? (STATUS_WORDS[slab.stamp.status] ?? STATUS_WORDS.open) : null
   const stops = slab.legend?.stops ?? []
-  const classes = landCoverClasses(slab.show.layer.layerId)
+  const classes = showKey ? landCoverClasses(slab.show.layer.layerId) : []
   return (
     <button
       type="button"
@@ -724,8 +726,9 @@ export default function EvidenceStack({ model, exploded, onPick, onClose, onColl
         </div>
 
         <div className={styles.column} ref={column}>
-          {slabs.map((s) => (
+          {slabs.map((s, i) => (
             <SlabCard
+              showKey={slabs.findIndex((o) => o.show.layer.layerId === s.show.layer.layerId) === i}
               key={s.key}
               slab={s}
               picture={pictures[s.key]}

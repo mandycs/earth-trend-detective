@@ -130,9 +130,9 @@ export function toolLine(scene: Scene, vars: Map<string, VarInfo>): string | nul
     case "profile_place":
       return join(["MODIS land cover map", typeof r.land_cover_year === "number" ? `${r.land_cover_year}` : null]);
     case "list_variables": {
-      if (!Array.isArray(r.variables)) return "Catalogue of NASA records";
+      if (!Array.isArray(r.variables)) return "Catalogue of records";
       const n = r.variables.filter((v) => isObj(v) && v.available === true).length;
-      return `Catalogue of NASA records · ${n} usable here`;
+      return `Catalogue of records · ${n} usable here`;
     }
     case "solved_case":
       return join(["Solved case file", str(r.name)]);

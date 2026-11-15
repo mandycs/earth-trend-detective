@@ -1247,17 +1247,6 @@
   text-transform: uppercase;
 }
 
-.readingWords {
-  margin: 0;
-  font-size: 1.0625rem;
-  font-style: italic;
-  line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
 .readingArrow {
   margin: 0;
   color: var(--ink-2);

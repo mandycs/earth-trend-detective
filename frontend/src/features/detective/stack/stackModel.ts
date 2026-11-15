@@ -186,13 +186,16 @@ function varsOfCell(fp: FootprintView, tested: Tested[], sources: Map<string, st
   return out;
 }
 
+/** When several suspects share this evidence, the firmest finding is the one stamped (ties: the latest). */
+const STAMP_RANK: Readonly<Record<string, number>> = { supported: 3, ruled_out: 2, hint: 1, trend_only: 0 };
+
 function stampFor(evidence: Set<string>, board: Investigation["board"]): StampBeat | undefined {
   let found: StampBeat | undefined;
   for (const sp of board?.suspects ?? []) {
     if (sp.status === "open") continue;
-    if (sp.evidence.some((e) => evidence.has(e))) {
-      found = { suspectId: sp.id, label: sp.label, status: sp.status, downgraded: sp.downgraded };
-    }
+    if (!sp.evidence.some((e) => evidence.has(e))) continue;
+    if (found && (STAMP_RANK[sp.status] ?? 0) < (STAMP_RANK[found.status] ?? 0)) continue;
+    found = { suspectId: sp.id, label: sp.label, status: sp.status, downgraded: sp.downgraded };
   }
   return found;
 }
@@ -235,7 +238,9 @@ function covers(cell: Bbox, box: Bbox): boolean {
 function cellFor(fp: FootprintView, box: Bbox, tested: Tested[], sources: Map<string, string>, inv: Investigation): StackCell {
   const { mine, verdict, stamp } = findings(varsOfCell(fp, tested, sources), tested, inv);
   const label = [...mine].reverse().find((t) => t.label)?.label ?? null;
-  const period = [...mine].reverse().find((t) => t.years)?.years ?? null;
+  // The widest period tested, not the last one: a recent-years test must not relabel the whole record.
+  const period = mine.reduce<[number, number] | null>(
+    (best, t) => (t.years && (!best || t.years[1] - t.years[0] > best[1] - best[0]) ? t.years : best), null);
   return {
     key: `cell:${fp.source}`, title: label ?? "Data cell", label: fp.label, size: fp.size, cellKm: cellKmOf(fp.size),
     bbox: [...fp.bbox] as Bbox, period, coversBox: covers(fp.bbox, box), footprint: fp,

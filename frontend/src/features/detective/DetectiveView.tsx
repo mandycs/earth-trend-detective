@@ -461,7 +461,7 @@ export default function DetectiveView({ cases, recordings, initialSite, initialP
             </p>
           )}
 
-          <QuestionReading inv={inv} question={replaying ? (recording?.question ?? '') : lastQuestion} />
+          <QuestionReading inv={inv} />
 
           {scene && (
             <ScenePanel

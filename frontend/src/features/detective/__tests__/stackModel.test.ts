@@ -304,3 +304,20 @@ test("the story button says why no stack opened: a failed load is not an empty c
   assert.equal(caseStackNote({ slabs: 3 }), null);
   assert.notEqual(CASE_STACK_FAILED, CASE_STACK_EMPTY);
 });
+
+test("the live Lake Mead point run: real strata, and the GRACE cell keeps its whole period and firmest stamp", async () => {
+  const { parseRecording, replaySchedule } = await import("../replay.ts");
+  const raw = JSON.parse(readFileSync(join(import.meta.dirname, "../../../../../backend/data/recordings/mead.json"), "utf8"));
+  const rec = parseRecording(raw);
+  assert.ok(rec);
+  const ctx: MapContext = { caseLayers: lakeMeadCase(), now: NOW };
+  const m = stack(replaySchedule(rec).map((e) => e.event), ctx);
+  assert.equal(m.slabs.length, STACK_MAX);
+  assert.deepEqual(m.slabs.slice(0, 2).map((s) => s.year), [2023, 2003]);
+  assert.ok(m.slabs.slice(2).every((s) => s.fromCase));
+  assert.equal(m.cells.length, 1);
+  // A recent-years test (2014–2024) must not relabel the record; the residual's "supported" outranks a hint.
+  assert.deepEqual(m.cells[0].period, [2003, 2024]);
+  assert.equal(m.cells[0].stamp?.status, "supported");
+  assert.equal(m.note, null);
+});

@@ -4,10 +4,11 @@ import type { Investigation } from './scenes'
 import styles from './detective.module.css'
 
 /**
- * "How Alibi read your question": the visitor's own words, then the records the detective chose to answer them,
- * each with the instrument that measured it. The methods sit in a disclosure, for whoever wants the real names.
+ * "How Alibi read your question": the records the detective chose to answer the visitor's words (shown just above,
+ * in the question box), each with the satellite or model behind it. The methods sit in a disclosure, for whoever
+ * wants the real names.
  */
-export function QuestionReading({ inv, question }: { inv: Investigation; question: string }) {
+export function QuestionReading({ inv }: { inv: Investigation }) {
   const reading = useMemo(() => questionReading(inv), [inv])
   if (!inv.place || reading.records.length === 0) return null
   return (
@@ -15,10 +16,9 @@ export function QuestionReading({ inv, question }: { inv: Investigation; questio
       <h2 id="reading-title" className={styles.readingTitle}>
         How Alibi read your question
       </h2>
-      {question && <p className={styles.readingWords}>“{question}”</p>}
       <p className={styles.readingArrow}>
-        <span aria-hidden="true">↓ </span>
-        {reading.records.length === 1 ? 'turned into this record:' : 'turned into these records:'}
+        Your words became {reading.records.length === 1 ? 'this record' : 'these records'}, and this is where each
+        one comes from:
       </p>
       <ul className={styles.readingRecords}>
         {reading.records.map((r) => (

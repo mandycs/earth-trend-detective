@@ -8,8 +8,10 @@
   color: var(--ink-2);
 }
 .compact {
+  display: flex;
+  flex-wrap: wrap;
   font-size: 13px;
-  gap: 4px 10px;
+  gap: 4px 12px;
 }
 .item {
   display: flex;
