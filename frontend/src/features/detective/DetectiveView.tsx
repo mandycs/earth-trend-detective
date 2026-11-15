@@ -23,6 +23,9 @@ import { StepList } from './StepList'
 import { useDetectiveRun } from './useDetectiveRun'
 import type { StartOpts } from './useDetectiveRun'
 import { useScenePlayer } from './useScenePlayer'
+import { STACK_MAX, stackFor } from './stack/stackModel'
+import type { Slab } from './stack/stackModel'
+import { showSlab, slabCaption } from './stack/showSlab'
 import {
   ANSWER_READY, COORDS_HINT, COORDS_PLACEHOLDER, focusTargetFor, forkTurn, localDate, parseLatLon, previewCamera,
 } from './viewModel'
@@ -37,6 +40,8 @@ const DetectiveMap = dynamic(() => import('./DetectiveMap'), {
     </div>
   ),
 })
+
+const EvidenceStack = dynamic(() => import('./stack/EvidenceStack'), { ssr: false })
 
 export interface CaseChip { id: string; name: string; bbox: Bbox }
 
@@ -207,10 +212,48 @@ export default function DetectiveView({ cases, recordings, initialSite, replay }
     return () => ctl.abort()
   }, [siteId, caseBboxKey])
 
-  const view = useMemo(() => {
+  const sceneView = useMemo(() => {
     if (!inv.place && preview && run.mode === 'live') return { ...EMPTY_VIEW, camera: previewCamera(preview.target, preview.seq) }
     return mapViewAt(inv, player.state.index, { caseLayers, now })
   }, [inv, player.state.index, caseLayers, now, preview, run.mode])
+
+  // ---- the exploded evidence stack (Task 17): the ending's closing beat ----
+  const atEnding = player.scene?.kind === 'ending'
+  const stack = useMemo(
+    () => (atEnding ? stackFor(inv, sceneView, { max: STACK_MAX, ctx: { caseLayers, now } }) : null),
+    [atEnding, inv, sceneView, caseLayers, now],
+  )
+  const [stackMounted, setStackMounted] = useState(false)
+  const [exploded, setExploded] = useState(false)
+  const [shownSlab, setShownSlab] = useState<Slab | null>(null)
+  const explodeRef = useRef<HTMLButtonElement>(null)
+  // A slab picked from the stack stays on the map only while the ending is on screen.
+  useEffect(() => {
+    if (!atEnding) setShownSlab(null)
+  }, [atEnding])
+  useEffect(() => {
+    if (!stackMounted) return
+    const raf = requestAnimationFrame(() => setExploded(true))
+    return () => cancelAnimationFrame(raf)
+  }, [stackMounted])
+  const openStack = () => {
+    setShownSlab(null)
+    setExploded(false)
+    setStackMounted(true)
+  }
+  const closeStack = useCallback(() => setExploded(false), [])
+  const pickSlab = useCallback(
+    (key: string) => {
+      setShownSlab(stack?.slabs.find((s) => s.key === key) ?? null)
+      setExploded(false)
+    },
+    [stack],
+  )
+  const onStackCollapsed = useCallback(() => {
+    setStackMounted(false)
+    explodeRef.current?.focus({ preventScroll: true })
+  }, [])
+  const view = useMemo(() => (shownSlab ? showSlab(sceneView, shownSlab) : sceneView), [sceneView, shownSlab])
 
   const active = isActiveRun(run.status)
   const replaying = run.mode === 'replay'
@@ -398,6 +441,22 @@ export default function DetectiveView({ cases, recordings, initialSite, replay }
 
           {outcome?.answer && <AnswerPanel answer={outcome.answer} done={outcome.done} headingRef={answerRef} />}
 
+          {stack && stack.slabs.length > 0 && (
+            <div className={styles.explodeRow}>
+              <button type="button" ref={explodeRef} className="btn" onClick={openStack} aria-haspopup="dialog">
+                Explode the evidence
+              </button>
+              {shownSlab && (
+                <p className={styles.runNote} role="status">
+                  On the map: {slabCaption(shownSlab)}.{' '}
+                  <button type="button" className={styles.textBtn} onClick={() => setShownSlab(null)}>
+                    Back to the ending view
+                  </button>
+                </p>
+              )}
+            </div>
+          )}
+
           {player.running && (
             <div className={styles.playerRow}>
               <button type="button" className={styles.textBtn} onClick={player.state.paused ? player.resume : player.pause}>
@@ -417,6 +476,17 @@ export default function DetectiveView({ cases, recordings, initialSite, replay }
           <HistoryList threadId={run.threadId} enabled={historyEnabled(run.status, run.mode, run.threadId)} onFork={fork} />
         </main>
       </div>
+
+      {stackMounted && stack && (
+        <EvidenceStack
+          model={stack}
+          exploded={exploded}
+          onPick={pickSlab}
+          onClose={closeStack}
+          onCollapsed={onStackCollapsed}
+          reducedMotion={reducedMotion}
+        />
+      )}
     </div>
   )
 }

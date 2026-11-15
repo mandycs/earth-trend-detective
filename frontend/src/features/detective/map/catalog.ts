@@ -101,3 +101,36 @@ export function maxZoomOf(layer: CatalogLayer): number {
   const m = /Level(\d+)$/.exec(layer.tile_matrix_set)
   return m ? Number(m[1]) : 0
 }
+
+/** Picture size for one WMS GetMap: `width` across, the height following the bbox's degree ratio (EPSG:4326). */
+function wmsSize(bbox: [number, number, number, number], width: number): [number, number] {
+  const [w, s, e, n] = bbox
+  const ratio = e > w ? (n - s) / (e - w) : 1
+  return [width, Math.max(64, Math.min(2048, Math.round(width * ratio)))]
+}
+
+/**
+ * One GIBS WMS GetMap for an exact bbox (west, south, east, north) and date, as a single picture in EPSG:4326.
+ * WMS 1.3.0 with EPSG:4326 takes the bbox as lat,lon: south, west, north, east. Same layer, format and date as the
+ * tiles from `tileUrl`; vector layers come back as a png, like their tile fallback.
+ */
+export function wmsUrl(layer: CatalogLayer, date: string, bbox: [number, number, number, number], width = 1024): string {
+  const [w, s, e, n] = bbox
+  const [wd, ht] = wmsSize(bbox, width)
+  const jpeg = layer.format === 'image/jpeg'
+  const params = new URLSearchParams({
+    SERVICE: 'WMS',
+    REQUEST: 'GetMap',
+    VERSION: '1.3.0',
+    LAYERS: layer.gibs_layer,
+    STYLES: '',
+    CRS: 'EPSG:4326',
+    BBOX: [s, w, n, e].join(','),
+    WIDTH: String(wd),
+    HEIGHT: String(ht),
+    FORMAT: jpeg ? 'image/jpeg' : 'image/png',
+    TIME: date,
+  })
+  if (!jpeg) params.set('TRANSPARENT', 'TRUE')
+  return `${GIBS}/wms/epsg4326/best/wms.cgi?${params.toString()}`
+}

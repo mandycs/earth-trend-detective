@@ -1,0 +1,219 @@
+/* The exploded evidence stack: a full-screen view over the case, ink on ground, square corners. */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  background: var(--ground);
+  color: var(--ink);
+  overflow-y: auto;
+  animation: stackIn 260ms var(--ease) both;
+}
+
+.overlay.still {
+  animation: none;
+}
+
+@keyframes stackIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px var(--gutter);
+  border-bottom: 1px solid var(--line);
+  flex: none;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-stretch: 75%;
+  font-weight: 800;
+  font-size: 1.5rem;
+  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.lede {
+  margin: 6px 0 0;
+  color: var(--ink-2);
+  font-size: 1rem;
+  line-height: 1.45;
+  max-width: 60ch;
+}
+
+.head :global(.btn) {
+  white-space: nowrap;
+  flex: none;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.canvasBox {
+  position: relative;
+  height: 36svh;
+  min-height: 260px;
+  flex: none;
+  touch-action: pan-y;
+}
+
+.leaders {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.leaders line {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.leaders line.leaderOn {
+  stroke: var(--ink);
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px var(--gutter) 32px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  width: 100%;
+  min-height: 48px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 0;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.4;
+  text-align: left;
+  cursor: pointer;
+}
+
+.card:hover,
+.cardOn {
+  border-color: var(--ink);
+  background: var(--surface-2);
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.cardTitle {
+  font-weight: 800;
+}
+
+.cardLine {
+  color: var(--ink-2);
+}
+
+.cardMuted {
+  color: var(--ink-3);
+}
+
+.cardRamp {
+  display: block;
+  width: 100%;
+  max-width: 220px;
+  height: 8px;
+  margin: 2px 0;
+}
+
+.cardVerdict,
+.cardStamp {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.cardStampMark {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border: 1px solid var(--ink);
+  font-weight: 800;
+  font-size: 0.875rem;
+  letter-spacing: 0.08em;
+}
+
+.baseCard {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--line);
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+@media (min-width: 900px) {
+  .body {
+    position: relative;
+    display: block;
+  }
+
+  .canvasBox {
+    position: absolute;
+    inset: 0;
+    height: auto;
+    min-height: 0;
+  }
+
+  /* Cards follow their slabs (positioned from the 3D view); the ground card sits at the bottom. */
+  .column {
+    position: absolute;
+    top: 24px;
+    right: var(--gutter);
+    bottom: 24px;
+    width: min(380px, 34vw);
+    padding: 0;
+  }
+
+  .card {
+    position: absolute;
+    top: 0;
+    left: 0;
+    will-change: transform;
+  }
+
+  .baseCard {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--ground);
+  }
+}

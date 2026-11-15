@@ -1150,3 +1150,12 @@
     max-width: calc(52vw - 32px);
   }
 }
+
+/* the ending's closing beat: explode the evidence (Task 17) */
+
+.explodeRow {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
