@@ -1,0 +1,44 @@
+# Local run of the two services (separate origins, like the production deploy).
+#   cp .env.docker.example .env.docker   # fill in a key (or pass it from the shell)
+#   docker compose up -d --build
+# api -> http://127.0.0.1:8777   web -> http://127.0.0.1:5190
+name: etd
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: etd-api:local
+    ports:
+      - "127.0.0.1:8777:8000"
+    env_file:
+      - path: .env.docker
+        required: false
+    environment:
+      CORS_ORIGINS: http://127.0.0.1:5190,http://localhost:5190
+      DETECTIVE_DB: /app/backend/data/detective/detective.sqlite
+      LANGSMITH_TRACING: "false"
+      LANGCHAIN_TRACING_V2: "false"
+    volumes:
+      - etd-cache:/app/backend/data/cache
+      - etd-detective:/app/backend/data/detective
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://127.0.0.1:8777
+    image: etd-web:local
+    ports:
+      - "127.0.0.1:5190:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  etd-cache:
+  etd-detective:

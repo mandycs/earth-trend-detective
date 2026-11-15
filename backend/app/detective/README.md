@@ -13,6 +13,7 @@
 | `DETECTIVE_DB` | `backend/data/detective/detective.sqlite` | SQLite file for the checkpointer and the store (WAL). If it cannot be opened, the rest of the API still starts and `/detective` answers 503. |
 | `DETECTIVE_MAX_TOOL_CALLS` | `40` | Tool calls per run. |
 | `DETECTIVE_MAX_SECONDS` | unset (no limit) | Wall clock per run. |
+| `SSE_KEEPALIVE_SECONDS` | `15` | Seconds of silence on an open `/detective` or `/investigate` stream before an SSE comment line (`: keepalive`) is sent, so proxies (Traefik, Cloudflare ~100 s idle cut) do not drop a run while a slow source is fetching. Clients ignore comments. Non-positive or invalid values fall back to 15. |
 | `LANGSMITH_TRACING` / `LANGCHAIN_TRACING_V2` | unset | **Keep tracing off in production.** Traces would send prompts, tool results and place coordinates to a third party. |
 
 Model calls time out after 60 s and are retried twice (`model.py`).
@@ -32,6 +33,24 @@ are listed in `final-fix-report.md` next to it. In short:
 
 - `board {suspects, n_tests, verdicts}`. `verdicts` is `{test_id: {verdict, direction}}`, corrected over the
   whole family. A board event is also sent after every tools step that changed a verdict or added a test.
+- Each suspect in `board.suspects` is `{id, label, status, claimed, evidence, dropped, note, downgraded,
+  target_var, kind, suspect_var}`. `status` is one of `open`, `supported`, `hint`, `ruled_out` or
+  **`trend_only`** (shown as "TREND REAL · NOT LINKED"). The model can only ask for the first four; the
+  code decides what is shown (`board.py`). `supported` needs an evidence test that links the suspect to the
+  variable under investigation and survives the correction: a `correlate` test between the target and the
+  suspect's own variable `suspect_var` (any lag), or, for a non-climate suspect only, the target's
+  residual with a real verdict. With no `suspect_var`, no correlate counts as a link. When only the trend of
+  `suspect_var` is real, the status is `trend_only` and `downgraded` is
+  `"its own trend is real, but no test links it to <target label>"`. Other `hint` reasons:
+  `"fails correction over N tests"`, `"no test links it to <target label>"`, and
+  `"no test links its own data to <target label>"` (when `suspect_var` is unknown).
+- `target_var`, `kind` (`climate` / `non_climate`) and `suspect_var` are what the model gave, or `null` on
+  older calls and boards. When they are `null`, the code infers them:
+  - the target from the residual test, else the first trend-tested series, else `series_a` of the
+    first correlate;
+  - `suspect_var` from the first non-target variable of the suspect's non-correlate evidence;
+  - the kind from whether `suspect_var` (else the evidence variables, else the suspect's name matched
+    against the catalog driver labels) is a climate driver.
 - `done {thread_id, n_tests, n_tests_branch, n_tool_calls}`. `n_tests` counts the thread's whole family;
   `n_tests_branch` counts the tests on this branch.
 - `thinking {text}` and board notes are checked. A line with a figure no tool returned, a cause claim,
